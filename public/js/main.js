@@ -1,8 +1,8 @@
 class App {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
-            this.$para = document.getElementById('main')
-            this.$para.innerHTML = 'Hello from JS!'
+            //this.$para = document.getElementById('main')
+            //this.$para.innerHTML = 'Hello from JS!'
 
             let params = {
                 user: 'server',

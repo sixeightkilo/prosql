@@ -7,10 +7,16 @@ require __DIR__ . '/../vendor/autoload.php';
 
 $app = AppFactory::create();
 
-$app->get('/', function (Request $request, Response $response, $args) {
+$app->get('[/{params:.*}]', function($req, $res, $args) {
+	$params = explode('/', $req->getAttribute('params'));
+
     $pug = new Pug;
-    $response->getBody()->write($pug->renderFile(__DIR__ . "/index.pug"));
-    return $response;
+	switch ($params[0]) {
+	case '':
+        $res->getBody()->write($pug->renderFile(__DIR__ . "/templates/app.pug"));
+        return $res;
+    }
+
 });
 
 $app->run();
