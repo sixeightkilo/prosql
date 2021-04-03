@@ -1,8 +1,16 @@
-div#login-container
-    input(type="text" id="user" value="server" placeholder="user")
-    input(type="text" id="pass" value="dev-server" placeholder="pass")
-    input(type="text" id="ip" value="127.0.0.1" placeholder="ip")
-    input(type="text" id="port" value="3306" placeholder="port")
-    input(type="text" id="db" value="test-generico" placeholder="db")
-    button(id="test") Test connection
-    button(id="login") Login
+doctype html
+html
+    head
+        link(rel='stylesheet', href='/css/styles.css')
+    body
+        include navbar.pug
+		div
+			input(type="text" id="user" value="server" placeholder="user")
+			input(type="text" id="pass" value="dev-server" placeholder="pass")
+			input(type="text" id="ip" value="127.0.0.1" placeholder="ip")
+			input(type="text" id="port" value="3306" placeholder="port")
+			input(type="text" id="db" value="test-generico" placeholder="db")
+			button(id="test") Test connection
+			button(id="login") Login 
+
+        script(type='module' src='/js/login.js')

@@ -1,4 +1,7 @@
-class Main {
+import { Utils } from './modules/utils.js'
+import { Constants } from './modules/constants.js'
+
+class Login {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.init()
@@ -14,10 +17,6 @@ class Main {
     }
 
     init() {
-        //pages
-        this.$loginPage = document.getElementById('login-container')
-        this.$appPage = document.getElementById('app-container')
-
         this.$testConn = document.getElementById('test')
         this.$login = document.getElementById('login')
         this.$user = document.getElementById('user')
@@ -28,9 +27,6 @@ class Main {
     }
 
     async login() {
-        this.$loginPage.style.display = 'none'
-        this.$appPage.style.display = 'block'
-
         let params = {
             user: this.$user.value,
             pass: this.$pass.value,
@@ -39,9 +35,11 @@ class Main {
             db: this.$db.value
         }
 
-        let response = await fetch('http://localhost:23890/login?' + new URLSearchParams(params))
+        let response = await fetch(Constants.URL + '/login?' + new URLSearchParams(params))
         let json = await response.json()
         console.log(JSON.stringify(json))
+        Utils.saveToSession(Constants.SESSION_ID, json.data[Constants.SESSION_ID])
+        window.location = '/app';
     }
 
     async testConn() {
@@ -53,10 +51,10 @@ class Main {
             db: this.$db.value
         }
 
-        let response = await fetch('http://localhost:23890/ping?' + new URLSearchParams(params))
+        let response = await fetch(Constants.URL + '/ping?' + new URLSearchParams(params))
         let json = await response.json()
         console.log(JSON.stringify(json))
     }
 }
 
-new Main()
+new Login()
