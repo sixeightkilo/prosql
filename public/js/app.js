@@ -25,7 +25,7 @@ class App {
             query: encodeURIComponent(this.$query.value)
         }
 
-        let response = await fetch(Constants.URL + '/check?' + new URLSearchParams(params))
+        let response = await fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
         let json = await response.json()
         console.log(JSON.stringify(json))
         this.showResults(json)
