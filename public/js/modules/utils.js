@@ -1,3 +1,5 @@
+import { Err } from './error.js'
+
 class Utils {
     static saveToSession(key, val) {
         sessionStorage.setItem(key, val)
@@ -20,10 +22,40 @@ class Utils {
         });
 
         let template = document.createElement('template');
-        //let html = html.trim(); // Never return a text node of whitespace as the result
         template.innerHTML = templ.trim()
         return template.content.firstChild;
     }
 
+    static async fetch(url) {
+        try {
+            let response = await fetch(url)
+            let json = await response.json()
+            if (json.status == 'error') {
+                throw json
+            }
+
+            return json
+        } catch (e) {
+            console.log(e)
+            if (e['error-code'] == Err.ERR_INVALID_SESSION_ID) {
+                window.location = '/';
+                return
+            }
+
+            if (e.msg) {
+                //normal error
+                alert(e.msg)
+                return e
+            }
+
+            //something terrible happened
+            alert("Unrecoverable error. Most likely prosql agent is dead :-(")
+            return {
+                'status' : 'error',
+                'msg': e,
+                'data': null,
+            }
+        }
+    }
 }
 export { Utils }

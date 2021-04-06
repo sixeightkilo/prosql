@@ -35,9 +35,9 @@ class Login {
             db: this.$db.value
         }
 
-        let response = await fetch(Constants.URL + '/login?' + new URLSearchParams(params))
-        let json = await response.json()
+        let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(params))
         console.log(JSON.stringify(json))
+
         Utils.saveToSession(Constants.SESSION_ID, json.data[Constants.SESSION_ID])
         window.location = '/app';
     }
@@ -51,8 +51,7 @@ class Login {
             db: this.$db.value
         }
 
-        let response = await fetch(Constants.URL + '/ping?' + new URLSearchParams(params))
-        let json = await response.json()
+        let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(params))
         console.log(JSON.stringify(json))
     }
 }

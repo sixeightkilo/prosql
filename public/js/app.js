@@ -25,25 +25,38 @@ class App {
             query: encodeURIComponent(this.$query.value)
         }
 
-        let response = await fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
-        let json = await response.json()
+        let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
         console.log(JSON.stringify(json))
         this.showResults(json)
     }
 
+    showNoData() {
+        console.log("No data")
+    }
+
     showResults(json) {
-        //show column headers
+        let $h = document.getElementById('results-header-tr')
+        let $b = document.getElementById('results-body')
+
+        $h.replaceChildren()
+        $b.replaceChildren()
+
+        if (json.data == null) {
+            this.showNoData()
+            return
+        }
+
+        if (json.data.length == 0) {
+            this.showNoData()
+            return
+        }
+
         let $ht = document.getElementById('results-header-col-template')
         let ht = $ht.innerHTML
 
         let $bt = document.getElementById('results-body-col-template')
         let bt = $bt.innerHTML
 
-        let $h = document.getElementById('results-header-tr')
-        let $b = document.getElementById('results-body')
-
-        $h.replaceChildren()
-        $b.replaceChildren()
 
         for (let i = 0; i < json.data.length; i++) {
             if (i == 0) {
