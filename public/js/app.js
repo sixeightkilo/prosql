@@ -42,12 +42,15 @@ class App {
         let $h = document.getElementById('results-header-tr')
         let $b = document.getElementById('results-body')
 
+        $h.replaceChildren()
+        $b.replaceChildren()
+
         for (let i = 0; i < json.data.length; i++) {
             if (i == 0) {
                 //create column headers
-                for (let c in json.data[0]) {
+                for (let j = 0; j < json.data[0].length; j += 2) {
                     let h = Utils.generateNode(ht, {
-                        heading: c
+                        heading: json.data[0][j]
                     })
                     $h.appendChild(h)
                 }
@@ -59,13 +62,12 @@ class App {
 
             let $row = $b.lastChild
 
-            for (let v in json.data[i]) {
+            for (let j = 1; j < json.data[i].length; j += 2) {
                 let h = Utils.generateNode(bt, {
-                    value: json.data[i][v]
+                    value: json.data[i][j]
                 })
                 $row.appendChild(h)
             }
-//
         }
     }
 }
