@@ -9,12 +9,17 @@ class App {
             this.$submit.addEventListener('click', async () => {
                 this.submit()
             })
+
+            this.$next.addEventListener('click', async () => {
+                this.next()
+            })
         })
     }
 
     init() {
         this.$query = document.getElementById('query')
         this.$submit = document.getElementById('submit')
+        this.$next = document.getElementById('next')
         this.sessionId = Utils.getFromSession(Constants.SESSION_ID)
         console.log(this.sessionId)
     }
@@ -26,7 +31,38 @@ class App {
         }
 
         let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
+        this.cursorId = json.data
+
+        params = {
+            'session-id': this.sessionId,
+            'cursor-id': json.data,
+            'num-of-rows': 100
+        }
+
+        json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params))
         console.log(JSON.stringify(json))
+
+        if (json.eof) {
+            this.$next.disabled = true
+        } else {
+            this.$next.disabled = false
+        }
+
+        this.showResults(json)
+    }
+
+    async next() {
+        let params = {
+            'session-id': this.sessionId,
+            'cursor-id': this.cursorId,
+            'num-of-rows': 100
+        }
+
+        let json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params))
+        if (json.eof) {
+            this.$next.disabled = true
+        }
+
         this.showResults(json)
     }
 
