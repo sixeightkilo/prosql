@@ -37,9 +37,19 @@ class Utils {
             return json
         } catch (e) {
             console.log(e)
-            if (e['error-code'] == Err.ERR_INVALID_SESSION_ID) {
+            if (e['msg'] == Err.ERR_INVALID_SESSION_ID) {
+                //user must login
                 window.location = '/';
                 return
+            }
+
+            if (e['msg'] == Err.ERR_INVALID_CURSOR_ID) {
+                //let caller handle this
+                return {
+                    'status' : 'error',
+                    'msg': e['msg'],
+                    'data': null,
+                }
             }
 
             if (e.msg) {

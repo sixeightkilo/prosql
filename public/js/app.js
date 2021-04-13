@@ -1,3 +1,4 @@
+import { Err } from './modules/error.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
 
@@ -59,6 +60,13 @@ class App {
         }
 
         let json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params))
+        if (json.status == 'error') {
+            if (json['msg'] == Err.ERR_INVALID_CURSOR_ID) {
+                //quietly call submit
+                this.submit()
+                return
+            }
+        }
         if (json.eof) {
             this.$next.disabled = true
         }

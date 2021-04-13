@@ -7,6 +7,10 @@ class Err {
         return 'invalid-session-id'
     }
 
+    static get ERR_INVALID_CURSOR_ID() {
+        return 'invalid-cursor-id'
+    }
+
     static get ERR_DB_ERROR() {
         return 'db-error'
     }
