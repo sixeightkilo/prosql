@@ -24,6 +24,7 @@ class Login {
         this.$ip = document.getElementById('ip')
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
+        this.utils = new Utils()
     }
 
     async login() {
@@ -53,6 +54,7 @@ class Login {
 
         let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(params))
         console.log(JSON.stringify(json))
+        this.utils.showAlert('Connection successful!', 2000)
     }
 }
 

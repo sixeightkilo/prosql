@@ -13,6 +13,10 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
     $pug = new Pug;
 	switch ($params[0]) {
 	case '':
+        $res->getBody()->write($pug->renderFile(__DIR__ . "/templates/index.pug"));
+        return $res;
+
+	case 'login':
         $res->getBody()->write($pug->renderFile(__DIR__ . "/templates/login.pug"));
         return $res;
 

@@ -4,13 +4,31 @@ html
         link(rel='stylesheet', href='/css/styles.css')
     body
         include navbar.pug
-		div
-			input(type="text" id="user" value="server" placeholder="user")
-			input(type="text" id="pass" value="dev-server" placeholder="pass")
-			input(type="text" id="ip" value="127.0.0.1" placeholder="ip")
-			input(type="text" id="port" value="3306" placeholder="port")
-			input(type="text" id="db" value="test-generico" placeholder="db")
-			button(id="test") Test connection
-			button(id="login") Login 
+        include common.pug
+
+        div#login-container
+            div#login-left-container
+                #login-fav-title Favorites
+            div#login-right-container
+                div#login-form-container
+                    div#login-user-container
+                        label(for=user) Username
+                        input(type="text" id="user" value="server" placeholder="user")
+                    div#login-pass-container
+                        label(for=pass) Password
+                        input(type="text" id="pass" value="dev-server" placeholder="pass")
+                    div#login-host-container
+                        label(for=ip) Host
+                        input(type="text" id="ip" value="127.0.0.1" placeholder="ip")
+                    div#login-port-container
+                        label(for=port) Port
+                        input(type="text" id="port" value="3306" placeholder="port")
+                    div#login-db-container
+                        label(for=db) Database
+                        input(type="text" id="db" value="test-generico" placeholder="db")
+
+                div#login-btn-container
+                    button(id="test") Test connection
+                    button(id="login") Login 
 
         script(type='module' src='/js/login.js')

@@ -1,6 +1,15 @@
 import { Err } from './error.js'
 
 class Utils {
+    constructor() {
+        //new Utils() must be called after DOMContentLoaded
+        this.init()
+    }
+
+    init() {
+        this.$alert = document.getElementById('alert')
+    }
+
     static saveToSession(key, val) {
         sessionStorage.setItem(key, val)
     }
@@ -53,19 +62,27 @@ class Utils {
             }
 
             if (e.msg) {
-                //normal error
+                //normal error. Display to user
                 alert(e.msg)
                 return e
             }
 
             //something terrible happened
-            alert("Unrecoverable error. Most likely prosql agent is dead :-(")
+            alert("Unrecoverable error. Most likely prosql agent is dead or not installed:-(")
             return {
                 'status' : 'error',
                 'msg': e,
                 'data': null,
             }
         }
+    }
+
+    showAlert(msg, t) {
+        this.$alert.innerHTML = msg;
+        this.$alert.style.visibility = 'visible';
+        setTimeout(() => {
+            this.$alert.style.visibility = 'hidden';
+        }, t)
     }
 }
 export { Utils }

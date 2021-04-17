@@ -1,4 +1,8 @@
 class Err {
+    static get ERR_NO_AGENT () {
+        return 'no-agent'
+    }
+
     static get ERR_INVALID_USER_INPUT() {
         return 'invalid-user-input'
     }
