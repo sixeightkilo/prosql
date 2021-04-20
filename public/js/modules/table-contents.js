@@ -30,8 +30,8 @@ class TableContents {
                          where \`${this.$columNames.value}\`
                          ${this.$operators.value}
                          ${this.$searchText.value}`
-        let rows = await DbUtils.fetch(this.sessionId, query)
-        console.log(rows) 
+        let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(query))
+        Utils.showResults(rows)
     }
 
     async show(table) {

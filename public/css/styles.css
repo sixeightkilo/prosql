@@ -1672,6 +1672,16 @@ sup {
 	overflow:scroll;
 }
 
+#table-contents thead th {
+	position:sticky;
+	background-color:#fff;
+	top: 0;
+}
+
+#table-contents thead th {
+	border-bottom:1px solid #e1e1e1;
+}
+
 #search-bar {
 	width:100%;
 	padding:0.25em;

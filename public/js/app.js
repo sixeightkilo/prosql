@@ -32,25 +32,24 @@ class App {
         console.log(this.sessionId)
 
         this.showDatabases()
+
+        //fix height of table-contents div
+        let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
+        let sbDims = document.getElementById('search-bar').getBoundingClientRect()
+        //let rp = rightPanel.getBoundingClientRect()
+        //let rp = rightPanel.getBoundingClientRect()
+        console.log(`rph: ${rpDims.height} sbh ${sbDims.height}`)
+        let tc = document.getElementById('table-contents')
+        tc.style.height = (rpDims.height - sbDims.height) + 'px'
     }
 
     async showDatabases() {
-        let dbs = await DbUtils.getDatabases(this.sessionId)
-
-        let $ot = document.getElementById('option-template')
-        let ot = $ot.innerHTML
-
-        dbs.forEach((db) => {
-            let h = Utils.generateNode(ot, {value: db[1]})
-            this.$databases.append(h)
-        })
-
-        //select none to start with
-        this.$databases.value = ''
+        let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
+        Utils.setOptions(this.$databases, dbs, '')
     }
 
     async showTables(db) {
-        let tables = await DbUtils.getTables(this.sessionId, db)
+        let tables = await DbUtils.fetchAll(this.sessionId, `show tables from \`${db}\``)
         this.$tables.replaceChildren()
         let $t = document.getElementById('table-template')
         let t = $t.innerHTML
