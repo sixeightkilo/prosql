@@ -18,5 +18,9 @@ class Constants {
     static get CONNECTIONS() {
         return 'connections'
     }
+
+    static get BATCH_SIZE() {
+        return 100
+    }
 }
 export { Constants }

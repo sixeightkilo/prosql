@@ -1,0 +1,37 @@
+#app-content
+    #app-left-panel
+        div#table-filter-container
+            i.icon-search
+            input(type="text" id="table-filter")
+        div Tables and Views
+        div#tables
+        div#table-info Table Info
+
+    #app-right-panel
+        #search-bar
+            div Search
+            div
+                select#column-names
+            div
+                select#operators
+            div
+                input#search-text(type="text")
+            div
+                button#search Filter
+        #table-contents
+            table
+                thead#results-header
+                        tr#results-header-tr
+                tbody#results-body
+                tfoot#results-footer
+
+    script(type="code" id="table-template")
+        div
+            i.icon-table 
+            span.table-name {table}
+
+	script(type='code' id='results-header-col-template')
+            th {heading}
+
+	script(type='code' id='results-body-col-template')
+            td {value}

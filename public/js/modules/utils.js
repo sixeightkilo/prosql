@@ -77,12 +77,69 @@ class Utils {
         }
     }
 
+    static async setOptions($ctx, values, def) {
+        $ctx.replaceChildren()
+
+        let $ot = document.getElementById('option-template')
+        let ot = $ot.innerHTML
+
+        values.forEach((v) => {
+            let h = Utils.generateNode(ot, {value: v[1]})
+            $ctx.append(h)
+        })
+
+        $ctx.value = def
+    }
+
     showAlert(msg, t) {
         this.$alert.innerHTML = msg;
         this.$alert.style.visibility = 'visible';
         setTimeout(() => {
             this.$alert.style.visibility = 'hidden';
         }, t)
+    }
+
+    static showNoData() {
+        console.log("No data")
+    }
+
+    static showResults(rows) {
+        let $h = document.getElementById('results-header-tr')
+        let $b = document.getElementById('results-body')
+
+        $h.replaceChildren()
+        $b.replaceChildren()
+
+        let $ht = document.getElementById('results-header-col-template')
+        let ht = $ht.innerHTML
+
+        let $bt = document.getElementById('results-body-col-template')
+        let bt = $bt.innerHTML
+
+        for (let i = 0; i < rows.length; i++) {
+            if (i == 0) {
+                //create column headers
+                for (let j = 0; j < rows[0].length; j += 2) {
+                    let h = Utils.generateNode(ht, {
+                        heading: rows[0][j]
+                    })
+                    $h.appendChild(h)
+                }
+            }
+
+            //append a new row
+            let $tr = Utils.generateNode('<tr></tr>', {})
+            $b.appendChild($tr)
+
+            let $row = $b.lastChild
+
+            for (let j = 1; j < rows[i].length; j += 2) {
+                let h = Utils.generateNode(bt, {
+                    value: rows[i][j]
+                })
+                $row.appendChild(h)
+            }
+        }
     }
 }
 export { Utils }
