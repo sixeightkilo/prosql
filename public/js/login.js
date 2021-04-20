@@ -1,5 +1,6 @@
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
+import { Db } from './modules/db.js'
 
 class Login {
     constructor() {
@@ -16,7 +17,7 @@ class Login {
         })
     }
 
-    init() {
+    async init() {
         this.$testConn = document.getElementById('test')
         this.$login = document.getElementById('login')
         this.$user = document.getElementById('user')
@@ -25,6 +26,16 @@ class Login {
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
         this.utils = new Utils()
+
+        this.db = new Db()
+        try {
+            await this.db.openDb()
+            await this.db.save({
+                'name': 'dev'
+            })
+        } catch (e) {
+            console.log(e)
+        }
     }
 
     async login() {

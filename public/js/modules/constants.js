@@ -6,5 +6,17 @@ class Constants {
     static get URL() {
         return 'http://localhost:23890'
     }
+
+    static get DB_NAME() {
+        return 'prosql'
+    }
+
+    static get DB_VERSION() {
+        return 1
+    }
+
+    static get CONNECTIONS() {
+        return 'connections'
+    }
 }
 export { Constants }
