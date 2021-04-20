@@ -1,5 +1,6 @@
 import { Err } from './modules/error.js'
 import { Utils } from './modules/utils.js'
+import { DbUtils } from './modules/dbutils.js'
 import { Constants } from './modules/constants.js'
 
 class App {
@@ -7,22 +8,37 @@ class App {
         document.addEventListener('DOMContentLoaded', async () => {
             this.init()
 
-            this.$submit.addEventListener('click', async () => {
-                this.submit()
-            })
+            //this.$submit.addEventListener('click', async () => {
+                //this.submit()
+            //})
 
-            this.$next.addEventListener('click', async () => {
-                this.next()
-            })
+            //this.$next.addEventListener('click', async () => {
+                //this.next()
+            //})
         })
     }
 
-    init() {
+    async init() {
         this.$query = document.getElementById('query')
-        this.$submit = document.getElementById('submit')
-        this.$next = document.getElementById('next')
+        this.$databases = document.getElementById('databases')
+
         this.sessionId = Utils.getFromSession(Constants.SESSION_ID)
         console.log(this.sessionId)
+
+        this.showDatabases()
+    }
+
+    async showDatabases() {
+        let dbs = await DbUtils.getDatabases(this.sessionId)
+
+        let $ot = document.getElementById('option-template')
+        let ot = $ot.innerHTML
+        let $dbselect = document.getElementById('databases')
+
+        dbs.forEach((db) => {
+            let h = Utils.generateNode(ot, {value: db[1]})
+            $dbselect.append(h)
+        })
     }
 
     async submit() {

@@ -79,3 +79,10 @@ sup {
 	width: 30em;
 	column-gap:0.5em;
 }
+
+#appbar {
+	padding-left:1em;
+	padding-top:1em;
+	padding-bottom:1em;
+	background-color:#eee;
+}

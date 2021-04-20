@@ -3,20 +3,23 @@ html
     head
         link(rel='stylesheet', href='/css/styles.css')
     body
-        include navbar.pug
-        div
-            input(type="text" id="query" value="select * from users" placeholder="query")
-            button(id="submit") Submit 
-            button(id="next" disabled) Next
-        div
-            table#results
-                thead#results-header
-                    tr#results-header-tr
-                tbody#results-body
-                tfoot#results-footer
+        include appbar.pug
+
+        //div
+            //input(type="text" id="query" value="select * from users" placeholder="query")
+            //button(id="submit") Submit 
+            //button(id="next" disabled) Next
+        //div
+            //table#results
+                //thead#results-header
+                    //tr#results-header-tr
+                //tbody#results-body
+                //tfoot#results-footer
 
         script(type='module' src='/js/app.js')
         script(type='code' id='results-header-col-template')
             th {heading}
         script(type='code' id='results-body-col-template')
             td {value}
+        script(type="code" id="option-template")
+            option(value="{value}") {value}
