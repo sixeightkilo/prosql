@@ -25,8 +25,15 @@ class TableContents {
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
+
         this.$search.addEventListener('click', async () => {
             this.search()
+        })
+
+        this.$searchText.addEventListener('keyup', async (e) => {
+            if (e.key == "Enter") {
+                this.search()
+            }
         })
     }
 

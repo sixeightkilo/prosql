@@ -4,6 +4,7 @@ import { Utils } from './modules/utils.js'
 import { DbUtils } from './modules/dbutils.js'
 import { Constants } from './modules/constants.js'
 import { TableContents } from './modules/table-contents.js'
+import { Tables } from './modules/tables.js'
 
 const TAG = "app"
 class App {
@@ -11,13 +12,19 @@ class App {
         document.addEventListener('DOMContentLoaded', async () => {
             this.init()
             this.$databases.addEventListener('change', async () => {
+                //update db in creds
                 let db = this.$databases.value
                 this.creds.db = db 
                 Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds))
 
+                //if db has changed we have to create new session
                 this.sessionId = await DbUtils.login(this.creds)
+
+                //update session id in all modules
                 this.tableContents.setSessionId(this.sessionId)
-                this.showTables(db)
+                this.tables.setSessionId(this.sessionId)
+
+                this.tables.show(db)
             })
 
             this.$tables.addEventListener('click', async (e) => {
@@ -47,6 +54,8 @@ class App {
         Log(TAG, this.sessionId)
 
         this.tableContents = new TableContents(this.sessionId)
+        this.tables = new Tables(this.sessionId)
+
         this.showDatabases()
 
         //fix height of table-contents div
@@ -60,18 +69,6 @@ class App {
     async showDatabases() {
         let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
         Utils.setOptions(this.$databases, dbs, '')
-    }
-
-    async showTables(db) {
-        let tables = await DbUtils.fetchAll(this.sessionId, `show tables from \`${db}\``)
-        this.$tables.replaceChildren()
-        let $t = document.getElementById('table-template')
-        let t = $t.innerHTML
-        tables.forEach((tbl) => {
-            Log(TAG, tbl)
-            let h = Utils.generateNode(t, {table: tbl[1]})
-            this.$tables.append(h)
-        })
     }
 }
 
