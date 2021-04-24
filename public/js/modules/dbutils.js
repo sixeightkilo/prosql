@@ -1,6 +1,8 @@
+import { Log } from './logger.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
 
+const TAG = "DbUtils"
 class DbUtils {
 
     static async fetch(sessionId, query) {
@@ -29,6 +31,11 @@ class DbUtils {
         }
 
         let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
+        if (json.status == 'error') {
+            Log(TAG, JSON.stringify(json))
+            return []
+        }
+
         let cursorId = json.data
 
         params = {
@@ -42,15 +49,27 @@ class DbUtils {
 
         do {
             json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params))
-            if (json['error-code']) {
-                break
+            if (json.status == "error") {
+                Log(TAG, JSON.stringify(json))
+                return []
             }
-            console.log(JSON.stringify(json))
+
+            Log(TAG, JSON.stringify(json))
             rows = rows.concat(json.data)
             eof = json.eof
         } while (!eof)
 
         return rows
+    }
+
+    static async login(creds) {
+        let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds))
+        if (json.status == 'error') {
+            Log(TAG, JSON.stringify(json))
+            return ""
+        }
+
+        return json.data['session-id']
     }
 }
 export { DbUtils }

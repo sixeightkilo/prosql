@@ -9,10 +9,6 @@ class Index {
             this.$getStarted.addEventListener('click', async () => {
                 this.getStarted()
             })
-
-            this.$login.addEventListener('click', async () => {
-                this.login()
-            })
         })
     }
 

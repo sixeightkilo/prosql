@@ -22,5 +22,9 @@ class Constants {
     static get BATCH_SIZE() {
         return 100
     }
+
+    static get CREDS() {
+        return 'creds'
+    }
 }
 export { Constants }

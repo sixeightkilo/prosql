@@ -1,15 +1,23 @@
+import { Log } from './modules/logger.js'
 import { Err } from './modules/error.js'
 import { Utils } from './modules/utils.js'
 import { DbUtils } from './modules/dbutils.js'
 import { Constants } from './modules/constants.js'
 import { TableContents } from './modules/table-contents.js'
 
+const TAG = "app"
 class App {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.init()
             this.$databases.addEventListener('change', async () => {
-                this.showTables(this.$databases.value)
+                let db = this.$databases.value
+                this.creds.db = db 
+                Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds))
+
+                this.sessionId = await DbUtils.login(this.creds)
+                this.tableContents.setSessionId(this.sessionId)
+                this.showTables(db)
             })
 
             this.$tables.addEventListener('click', async (e) => {
@@ -26,19 +34,25 @@ class App {
     async init() {
         this.$databases = document.getElementById('databases')
         this.$tables = document.getElementById('tables')
-        this.tableContents = new TableContents()
 
-        this.sessionId = Utils.getFromSession(Constants.SESSION_ID)
-        console.log(this.sessionId)
+        let creds = Utils.getFromSession(Constants.CREDS)
+        if (!creds) {
+            window.location = '/login';
+            return
+        }
 
+        this.creds = JSON.parse(creds)
+        this.sessionId = await DbUtils.login(this.creds)
+
+        Log(TAG, this.sessionId)
+
+        this.tableContents = new TableContents(this.sessionId)
         this.showDatabases()
 
         //fix height of table-contents div
         let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
         let sbDims = document.getElementById('search-bar').getBoundingClientRect()
-        //let rp = rightPanel.getBoundingClientRect()
-        //let rp = rightPanel.getBoundingClientRect()
-        console.log(`rph: ${rpDims.height} sbh ${sbDims.height}`)
+        Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
         let tc = document.getElementById('table-contents')
         tc.style.height = (rpDims.height - sbDims.height) + 'px'
     }
@@ -54,7 +68,7 @@ class App {
         let $t = document.getElementById('table-template')
         let t = $t.innerHTML
         tables.forEach((tbl) => {
-            console.log(tbl)
+            Log(TAG, tbl)
             let h = Utils.generateNode(t, {table: tbl[1]})
             this.$tables.append(h)
         })

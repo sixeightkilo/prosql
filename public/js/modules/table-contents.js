@@ -1,3 +1,4 @@
+import { Log } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
@@ -17,12 +18,21 @@ const OPERATORS = [
     ['operator', 'IS NOT NULL'],
 ]
 
+const TAG = "table-contents"
+
 class TableContents {
-    constructor() {
+    constructor(sessionId) {
+        this.sessionId = sessionId
+        Log(TAG, `sessionId: ${sessionId}`)
         this.init()
         this.$search.addEventListener('click', async () => {
             this.search()
         })
+    }
+
+    setSessionId(sessionId) {
+        this.sessionId = sessionId
+        Log(TAG, `sessionId: ${sessionId}`)
     }
 
     async search() {
@@ -36,16 +46,16 @@ class TableContents {
 
     async show(table) {
         this.table = table
-        console.log(`Displaying ${table}`)
+        Log(TAG, `Displaying ${table}`)
         let columns = await DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        console.log(columns)
+        Log(TAG, columns)
 
         //update the column name selector
         Utils.setOptions(this.$columNames, columns, '')
 
         //show BATCH_SIZE rows from table
         let rows = await DbUtils.fetch(this.sessionId, `select * from \`${this.table}\``)
-        console.log(rows) 
+        Log(TAG, rows) 
 
         Utils.showResults(rows)
     }
@@ -55,9 +65,6 @@ class TableContents {
         this.$operators = document.getElementById('operators')
         this.$searchText = document.getElementById('search-text')
         this.$search = document.getElementById('search')
-
-        this.sessionId = Utils.getFromSession(Constants.SESSION_ID)
-        console.log(this.sessionId)
 
         //update operators
         Utils.setOptions(this.$operators, OPERATORS, '')

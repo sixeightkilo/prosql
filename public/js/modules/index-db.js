@@ -1,27 +1,27 @@
+import { Log } from './logger.js'
 import { Constants } from './constants.js'
 
-class Db {
-    async openDb() {
+const TAG = "index-db"
+class IndexDB {
+    async open() {
         return new Promise((resolve, reject) => {
             var req = indexedDB.open(Constants.DB_NAME, Constants.DB_VERSION);
 
-            req.onsuccess = (evt) => {
-                console.log("openDb.onsuccess");
+            req.onsuccess = (e) => {
+                Log(TAG, "open.onsuccess");
                 this.db = req.result
                 resolve(0)
             };
 
-            req.onerror = (evt) => {
-                console.log("openDb.onerror");
-                reject(evt.target.errorCode);
+            req.onerror = (e) => {
+                Log(TAG, "open.onerror");
+                reject(e.target.errorCode);
             };
 
-            req.onupgradeneeded = (evt) => {
-                console.log("openDb.onupgradeneeded");
-                var store = evt.currentTarget.result.createObjectStore(
+            req.onupgradeneeded = (e) => {
+                Log(TAG, "open.onupgradeneeded");
+                var store = e.currentTarget.result.createObjectStore(
                     Constants.CONNECTIONS, { keyPath: 'id', autoIncrement: true });
-
-                store.createIndex('name', 'name', { unique: true });
             };
         })
     }
@@ -30,12 +30,12 @@ class Db {
 		return new Promise((resolve, reject) => {
             let transaction = this.db.transaction([Constants.CONNECTIONS], "readwrite")
 
-			transaction.oncomplete = (event) => {
-				resolve(0)
+			transaction.oncomplete = (e) => {
+				resolve(e.target.result)
 			};
 
-			transaction.onerror = (event) => {
-                reject(evt.target.errorCode);
+			transaction.onerror = (e) => {
+                reject(e.target.error);
 			};
 
 			let objectStore = transaction.objectStore(Constants.CONNECTIONS)
@@ -43,4 +43,4 @@ class Db {
 		})
 	}
 }
-export { Db }
+export { IndexDB }
