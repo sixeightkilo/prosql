@@ -21,8 +21,8 @@ class App {
                 this.sessionId = await DbUtils.login(this.creds)
 
                 //update session id in all modules
-                this.tableContents.setSessionId(this.sessionId)
-                this.tables.setSessionId(this.sessionId)
+                this.tableContents.setSessionInfo(this.sessionId, db)
+                this.tables.setSessionInfo(this.sessionId, db)
 
                 this.tables.show(db)
             })

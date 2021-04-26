@@ -17,9 +17,10 @@ class Tables {
         Log(TAG, `sessionId: ${sessionId}`)
     }
 
-    setSessionId(sessionId) {
+    setSessionInfo(sessionId, db) {
         this.sessionId = sessionId
-        Log(TAG, `sessionId: ${sessionId}`)
+        this.db = db
+        Log(TAG, `sessionId: ${sessionId} db: ${db}`)
     }
 
     filter() {

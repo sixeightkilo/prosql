@@ -48,7 +48,7 @@ class Utils {
             console.log(e)
             if (e['msg'] == Err.ERR_INVALID_SESSION_ID) {
                 //user must login
-                window.location = '/';
+                window.location = '/login';
                 return
             }
 
@@ -101,45 +101,6 @@ class Utils {
 
     static showNoData() {
         console.log("No data")
-    }
-
-    static showResults(rows) {
-        let $h = document.getElementById('results-header-tr')
-        let $b = document.getElementById('results-body')
-
-        $h.replaceChildren()
-        $b.replaceChildren()
-
-        let $ht = document.getElementById('results-header-col-template')
-        let ht = $ht.innerHTML
-
-        let $bt = document.getElementById('results-body-col-template')
-        let bt = $bt.innerHTML
-
-        for (let i = 0; i < rows.length; i++) {
-            if (i == 0) {
-                //create column headers
-                for (let j = 0; j < rows[0].length; j += 2) {
-                    let h = Utils.generateNode(ht, {
-                        heading: rows[0][j]
-                    })
-                    $h.appendChild(h)
-                }
-            }
-
-            //append a new row
-            let $tr = Utils.generateNode('<tr></tr>', {})
-            $b.appendChild($tr)
-
-            let $row = $b.lastChild
-
-            for (let j = 1; j < rows[i].length; j += 2) {
-                let h = Utils.generateNode(bt, {
-                    value: rows[i][j]
-                })
-                $row.appendChild(h)
-            }
-        }
     }
 }
 export { Utils }

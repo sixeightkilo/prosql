@@ -1594,7 +1594,7 @@ sup {
 
 #appbar-right-panel {
 	display:grid;
-	grid-template-columns: 1fr 1fr 10fr;
+	grid-template-columns: 1fr 1fr 6fr 2fr;
 	column-gap:0.25em;
 	text-align:center;
 	font-size:smaller;
@@ -1697,3 +1697,26 @@ sup {
 	width:100%;
 }
 
+.fk-ref {
+	display:none;
+	cursor:pointer
+}
+
+i#fwd,
+i#back {
+	margin-right:0.25em;
+	font-size:larger;
+	cursor:pointer
+}
+
+i#back {
+	margin-right:0.25em;
+}
+
+.stack-disable {
+	opacity:0.2;
+}
+
+.stack-enable {
+	opacity:1.0;
+}
