@@ -104,7 +104,7 @@ class TableContents {
         this.stack.push(table)
 
         let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let rows = DbUtils.fetch(this.sessionId, `select * from \`${this.table}\``)
+        let rows = DbUtils.fetch(this.sessionId, `select * from \`${this.table}\` limit 1000`)
         let contraints = DbUtils.fetch(this.sessionId, `SELECT
                 TABLE_NAME,
                 COLUMN_NAME,

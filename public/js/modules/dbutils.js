@@ -12,11 +12,11 @@ class DbUtils {
         }
 
         let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
-        let cursorId = json.data
+        let cursorId = json.data['cursor-id']
 
         params = {
             'session-id': sessionId,
-            'cursor-id': json.data,
+            'cursor-id': cursorId,
             'num-of-rows': Constants.BATCH_SIZE
         }
 
@@ -36,11 +36,11 @@ class DbUtils {
             return []
         }
 
-        let cursorId = json.data
+        let cursorId = json.data['cursor-id']
 
         params = {
             'session-id': sessionId,
-            'cursor-id': json.data,
+            'cursor-id': cursorId,
             'num-of-rows': Constants.BATCH_SIZE
         }
 
