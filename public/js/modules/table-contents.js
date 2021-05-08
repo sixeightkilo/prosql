@@ -84,6 +84,7 @@ class TableContents {
         Log(TAG, JSON.stringify(fkMap))
 
         //show BATCH_SIZE rows from table
+        this.showCols(values[0])
         this.showResults(values[1], fkMap)
     }
 
@@ -125,6 +126,7 @@ class TableContents {
         Log(TAG, JSON.stringify(fkMap))
 
         //show BATCH_SIZE rows from table
+        this.showCols(values[0])
         this.showResults(values[1], fkMap)
     }
 
@@ -191,30 +193,34 @@ class TableContents {
         Log(TAG, "Done navigate")
     }
 
-    showResults(rows, fkMap) {
+    showCols(cols) {
         let $h = document.getElementById('results-header-tr')
-        let $b = document.getElementById('results-body')
-
         $h.replaceChildren()
-        $b.replaceChildren()
 
         let $ht = document.getElementById('results-header-col-template')
         let ht = $ht.innerHTML
+
+        //create column headers
+        for (let j = 0; j < cols.length; j++) {
+            let h = Utils.generateNode(ht, {
+                heading: cols[j][1] 
+            })
+            $h.appendChild(h)
+        }
+    }
+
+    showResults(rows, fkMap) {
+        let $b = document.getElementById('results-body')
+        $b.replaceChildren()
+
+        if (rows.length == 0) {
+            return
+        }
 
         let $bt = document.getElementById('results-body-col-template')
         let bt = $bt.innerHTML
 
         for (let i = 0; i < rows.length; i++) {
-            if (i == 0) {
-                //create column headers
-                for (let j = 0; j < rows[0].length; j += 2) {
-                    let h = Utils.generateNode(ht, {
-                        heading: rows[0][j]
-                    })
-                    $h.appendChild(h)
-                }
-            }
-
             //append a new row
             let $tr = Utils.generateNode('<tr></tr>', {})
             $b.appendChild($tr)

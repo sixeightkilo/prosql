@@ -55,6 +55,11 @@ class DbUtils {
             }
 
             Log(TAG, JSON.stringify(json))
+            if (!json.data) {
+                //if batch size == num of rows in query result, then we might get json.data = null
+                //but we should still return results fetched till this point
+                return rows
+            }
             rows = rows.concat(json.data)
             eof = json.eof
         } while (!eof)
