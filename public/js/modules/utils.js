@@ -1,5 +1,7 @@
+import { Log } from './logger.js'
 import { Err } from './error.js'
 
+const TAG = "utils"
 class Utils {
     constructor() {
         //new Utils() must be called after DOMContentLoaded
@@ -42,14 +44,17 @@ class Utils {
                     'X-Request-ID': this.uuid()
                 }
             })
+
             let json = await response.json()
+
             if (json.status == 'error') {
                 throw json
             }
 
             return json
         } catch (e) {
-            console.log(e)
+            Log(TAG, e)
+
             if (e['msg'] == Err.ERR_INVALID_SESSION_ID) {
                 //user must login
                 window.location = '/login';
@@ -72,6 +77,7 @@ class Utils {
             }
 
             //something terrible happened
+            Log(TAG, `${url}: Unrecoverable error`)
             alert("Unrecoverable error. Most likely prosql agent is dead or not installed:-(")
             return {
                 'status' : 'error',
@@ -104,7 +110,7 @@ class Utils {
     }
 
     static showNoData() {
-        console.log("No data")
+        Log(TAG, "No data")
     }
 
 	//https://gist.github.com/gordonbrander/2230317
