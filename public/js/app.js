@@ -35,41 +35,42 @@ class App {
                 
                 this.tableContents.show(target.innerHTML)
             })
-        })
-    }
 
-    async init() {
-        this.$databases = document.getElementById('databases')
-        this.$tables = document.getElementById('tables')
+		})
+	}
 
-        let creds = Utils.getFromSession(Constants.CREDS)
-        if (!creds) {
-            window.location = '/login';
-            return
-        }
+	async init() {
+		this.$databases = document.getElementById('databases')
+		this.$tables = document.getElementById('tables')
 
-        this.creds = JSON.parse(creds)
-        this.sessionId = await DbUtils.login(this.creds)
+		let creds = Utils.getFromSession(Constants.CREDS)
+		if (!creds) {
+			window.location = '/login';
+			return
+		}
 
-        Log(TAG, this.sessionId)
+		this.creds = JSON.parse(creds)
+		this.sessionId = await DbUtils.login(this.creds)
 
-        this.tableContents = new TableContents(this.sessionId)
-        this.tables = new Tables(this.sessionId)
+		Log(TAG, this.sessionId)
 
-        this.showDatabases()
+		this.tableContents = new TableContents(this.sessionId)
+		this.tables = new Tables(this.sessionId)
 
-        //fix height of table-contents div
-        let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
-        let sbDims = document.getElementById('search-bar').getBoundingClientRect()
-        Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
-        let tc = document.getElementById('table-contents')
-        tc.style.height = (rpDims.height - sbDims.height) + 'px'
-    }
+		this.showDatabases()
 
-    async showDatabases() {
-        let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
-        Utils.setOptions(this.$databases, dbs, '')
-    }
+		//fix height of table-contents div
+		let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
+		let sbDims = document.getElementById('search-bar').getBoundingClientRect()
+		Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
+		let tc = document.getElementById('table-contents')
+		tc.style.height = (rpDims.height - sbDims.height) + 'px'
+	}
+
+	async showDatabases() {
+		let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
+		Utils.setOptions(this.$databases, dbs, '')
+	}
 }
 
 new App()
