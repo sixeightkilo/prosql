@@ -26,29 +26,6 @@ class TableContents {
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
-
-        this.$search.addEventListener('click', async () => {
-            this.search()
-        })
-
-        this.$searchText.addEventListener('keyup', async (e) => {
-            if (e.key == "Enter") {
-                this.search()
-            }
-        })
-
-        this.$tableContents.addEventListener('click', async (e) => {
-            let target = event.target;
-            if (target.className != 'fk-ref icon-new-tab') {
-                return
-            }
-
-            let value = target.parentElement.textContent
-
-            Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
-            await this.showFkRef(target.dataset.table, target.dataset.column, value)
-            this.stack.push(target.dataset.table, target.dataset.column, value)
-        })
     }
 
     setSessionInfo(sessionId, db) {
@@ -93,8 +70,69 @@ class TableContents {
                          where \`${this.$columNames.value}\`
                          ${this.$operators.value}
                          ${this.$searchText.value}`
+        Log(TAG, query)
         let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(query))
-        this.showResults(rows)
+        //todo: fk map must be created here as well
+        this.showResults(rows, {})
+    }
+
+    async enable() {
+        Log(TAG, 'enable')
+
+        if (this.isEnabled) {
+            Log(TAG, 'skipping enable')
+            return
+        }
+
+        this.$root.style.gridTemplateRows = "2em auto"
+        this.$root.replaceChildren()
+        let n = Utils.generateNode(this.$rootTemplate, {})
+        this.$root.append(n)
+
+        this.$columNames = document.getElementById('column-names')
+        this.$operators = document.getElementById('operators')
+        this.$searchText = document.getElementById('search-text')
+        this.$search = document.getElementById('search')
+        this.$tableContents = document.getElementById('table-contents')
+
+        this.$search.addEventListener('click', async () => {
+            this.search()
+        })
+
+        this.$searchText.addEventListener('keyup', async (e) => {
+            if (e.key == "Enter") {
+                this.search()
+            }
+        })
+
+        this.$tableContents.addEventListener('click', async (e) => {
+            let target = event.target;
+            if (target.className != 'fk-ref icon-new-tab') {
+                return
+            }
+
+            let value = target.parentElement.textContent
+
+            Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
+            await this.showFkRef(target.dataset.table, target.dataset.column, value)
+            this.stack.push(target.dataset.table, target.dataset.column, value)
+        })
+
+        //update operators
+        Utils.setOptions(this.$operators, OPERATORS, '')
+
+        if (this.table) {
+            this.show(this.table)
+        }
+
+        this.adjustView()
+
+        this.isEnabled = true
+    }
+
+    async disable() {
+        Log(TAG, 'disable')
+        this.isEnabled = false
     }
 
     async show(table) {
@@ -167,27 +205,26 @@ class TableContents {
     }
 
     async init() {
-        this.$columNames = document.getElementById('column-names')
-        this.$operators = document.getElementById('operators')
-        this.$searchText = document.getElementById('search-text')
-        this.$search = document.getElementById('search')
-        this.$tableContents = document.getElementById('table-contents')
+        this.$root = document.getElementById('app-right-panel')
+        this.$rootTemplate = document.getElementById('table-contents-template').innerHTML
+        Log(TAG, this.$rootTemplate)
+
         this.stack = new Stack(async (e) => {
             await this.navigate(e)
         })
-        //update operators
-        Utils.setOptions(this.$operators, OPERATORS, '')
+
+        this.enable()
     }
 
     async navigate(e) {
         Log(TAG, JSON.stringify(e))
         switch (e.type) {
-        case 'table':
-            await this.show(e.table)
-            break
+            case 'table':
+                await this.show(e.table)
+                break
 
-        case 'fk-ref':
-            await this.showFkRef(e.table, e.column, e.value)
+            case 'fk-ref':
+                await this.showFkRef(e.table, e.column, e.value)
             break
         }
         Log(TAG, "Done navigate")
@@ -256,6 +293,15 @@ class TableContents {
             }
         }
     }
+
+    async adjustView() {
+        //fix height of table-contents div
+        let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
+        let sbDims = document.getElementById('search-bar').getBoundingClientRect()
+        Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
+        this.$tableContents.style.height = (rpDims.height - sbDims.height) + 'px'
+    }
+
 }
 
 export { TableContents }

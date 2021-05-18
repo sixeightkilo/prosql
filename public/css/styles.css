@@ -1594,7 +1594,7 @@ sup {
 
 #appbar-right-panel {
 	display:grid;
-	grid-template-columns: 1fr 1fr 6fr 2fr;
+	grid-template-columns: 1fr 1fr 1fr 6fr 2fr;
 	column-gap:0.25em;
 	text-align:center;
 	font-size:smaller;
@@ -1602,6 +1602,10 @@ sup {
 
 #structure-menu {
 	opacity:0.2;
+}
+
+[id$="-menu"] {
+	cursor:pointer;
 }
 
 #databases,
@@ -1660,10 +1664,14 @@ sup {
 }
 
 /* app right panel */
-
 #app-right-panel {
 	display:grid;
-	grid-template-rows: 3em auto;
+	grid-template-rows: 2em auto;
+}
+
+#query-container {
+	display:grid;
+	grid-template-rows: 1fr 1fr
 }
 
 #table-contents {
@@ -1720,3 +1728,4 @@ i#back {
 .stack-enable {
 	opacity:1.0;
 }
+

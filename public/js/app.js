@@ -5,72 +5,95 @@ import { DbUtils } from './modules/dbutils.js'
 import { Constants } from './modules/constants.js'
 import { TableContents } from './modules/table-contents.js'
 import { Tables } from './modules/tables.js'
+import { QueryManager } from './modules/query-manager.js'
 
 const TAG = "app"
 class App {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.init()
-            this.$databases.addEventListener('change', async () => {
-                //update db in creds
-                let db = this.$databases.value
-                this.creds.db = db 
-                Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds))
+        })
+    }
 
-                //if db has changed we have to create new session
-                this.sessionId = await DbUtils.login(this.creds)
+    async initHandlers() {
+        this.$databases = document.getElementById('databases')
 
-                //update session id in all modules
-                this.tableContents.setSessionInfo(this.sessionId, db)
-                this.tables.setSessionInfo(this.sessionId, db)
+        this.$databases.addEventListener('change', async () => {
+            //update db in creds
+            let db = this.$databases.value
+            this.creds.db = db 
+            Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds))
 
-                this.tables.show(db)
-            })
+            //if db has changed we have to create new session
+            this.sessionId = await DbUtils.login(this.creds)
 
-            this.$tables.addEventListener('click', async (e) => {
-                let target = event.target;
-                if (target.className != 'table-name') {
-                    return
-                }
-                
-                this.tableContents.show(target.innerHTML)
-            })
+            //update session id in all modules
+            this.tableContents.setSessionInfo(this.sessionId, db)
+            this.tables.setSessionInfo(this.sessionId, db)
 
-		})
+            this.tables.show(db)
+        })
+
+        this.$tables = document.getElementById('tables')
+
+        this.$tables.addEventListener('click', async (e) => {
+            let target = e.target;
+            if (target.className != 'table-name') {
+                return
+            }
+
+            this.tableContents.show(target.innerHTML)
+        })
+
+		let elementsArray = document.querySelectorAll('[id$="-menu"]');
+
+		elementsArray.forEach((elem) => {
+			elem.addEventListener("click", (e) => {
+                Log(TAG, `${e.currentTarget.id} clicked `)
+                this.handleMenu(e.currentTarget.id)
+			});
+		});
 	}
 
-	async init() {
-		this.$databases = document.getElementById('databases')
-		this.$tables = document.getElementById('tables')
+    async handleMenu(id) {
+        switch (id) {
+            case 'query-menu':
+                this.tableContents.disable()
+                this.queryManager.enable()
+                break;
 
-		let creds = Utils.getFromSession(Constants.CREDS)
-		if (!creds) {
-			window.location = '/login';
-			return
-		}
+            case 'content-menu':
+                this.queryManager.disable()
+                this.tableContents.enable()
+                break;
+        }
+    }
 
-		this.creds = JSON.parse(creds)
-		this.sessionId = await DbUtils.login(this.creds)
+    async init() {
+        this.queryManager = new QueryManager(this.sessionId)
+        this.tableContents = new TableContents(this.sessionId)
+        this.tables = new Tables(this.sessionId)
 
-		Log(TAG, this.sessionId)
+        this.initHandlers()
 
-		this.tableContents = new TableContents(this.sessionId)
-		this.tables = new Tables(this.sessionId)
+        let creds = Utils.getFromSession(Constants.CREDS)
+        if (!creds) {
+            window.location = '/login';
+            return
+        }
 
-		this.showDatabases()
+        this.creds = JSON.parse(creds)
+        this.sessionId = await DbUtils.login(this.creds)
 
-		//fix height of table-contents div
-		let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
-		let sbDims = document.getElementById('search-bar').getBoundingClientRect()
-		Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
-		let tc = document.getElementById('table-contents')
-		tc.style.height = (rpDims.height - sbDims.height) + 'px'
-	}
+        Log(TAG, this.sessionId)
 
-	async showDatabases() {
-		let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
-		Utils.setOptions(this.$databases, dbs, '')
-	}
+        this.showDatabases()
+    }
+
+    async showDatabases() {
+        let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
+        Utils.setOptions(this.$databases, dbs, '')
+    }
 }
 
 new App()

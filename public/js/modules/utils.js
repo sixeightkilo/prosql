@@ -34,7 +34,7 @@ class Utils {
 
         let template = document.createElement('template');
         template.innerHTML = templ.trim()
-        return template.content.firstChild;
+        return template.content
     }
 
     static async fetch(url) {

@@ -8,6 +8,24 @@
         div#table-info Table Info
 
     #app-right-panel
+
+    script(type="code" id="table-template")
+        div
+            i.icon-table 
+            span.table-name {table}
+
+	script(type='code' id='results-header-col-template')
+            th {heading}
+
+	script(type='code' id='results-body-col-template')
+            td {value}
+                i.fk-ref.icon-new-tab("data-table"="{ref-table}" "data-column"="{ref-column}")
+
+    script(type='code' id='query-container-template')
+        textarea Enter query here
+        table
+
+    script(type='code' id='table-contents-template')
         #search-bar
             div Search
             div
@@ -24,15 +42,3 @@
                         tr#results-header-tr
                 tbody#results-body
                 tfoot#results-footer
-
-    script(type="code" id="table-template")
-        div
-            i.icon-table 
-            span.table-name {table}
-
-	script(type='code' id='results-header-col-template')
-            th {heading}
-
-	script(type='code' id='results-body-col-template')
-            td {value}
-                i.fk-ref.icon-new-tab("data-table"="{ref-table}" "data-column"="{ref-column}")
