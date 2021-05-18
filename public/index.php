@@ -5,6 +5,7 @@ use Slim\Factory\AppFactory;
 
 require __DIR__ . '/../vendor/autoload.php';
 
+
 $app = AppFactory::create();
 
 $app->get('[/{params:.*}]', function($req, $res, $args) {
@@ -23,8 +24,16 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
 	case 'app':
         $res->getBody()->write($pug->renderFile(__DIR__ . "/templates/app.pug"));
         return $res;
-    }
 
+	//case 'prettify':
+        //$query = "SELECT count(*),`Column1`,`Testing`, `Testing Three` FROM `Table1`
+            //WHERE Column1 = 'testing' AND ( (`Column2` = `Column3` OR Column4 >= NOW()) )
+            //GROUP BY Column1 ORDER BY Column3 DESC LIMIT 5,10";
+//
+        //$res->getBody()->write(SqlFormatter::format($query));
+//
+        //return $res;
+    }
 });
 
 $app->run();
