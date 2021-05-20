@@ -1729,3 +1729,21 @@ i#back {
 	opacity:1.0;
 }
 
+#query {
+	overflow: auto;
+	resize:vertical;
+}
+
+#query-sub-menu {
+	background:#ebebeb;
+	padding:0.25em;
+	padding-left:1em;
+	display:grid;
+	grid-template-columns: 1fr 2fr 2fr 8fr 1fr;
+}
+
+#query-results {
+	width:100%;
+	height:100%;
+	overflow:scroll;
+}

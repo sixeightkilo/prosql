@@ -22,8 +22,16 @@
                 i.fk-ref.icon-new-tab("data-table"="{ref-table}" "data-column"="{ref-column}")
 
     script(type='code' id='query-container-template')
-        textarea Enter query here
-        table
+        #query-sub-menu
+            i.icon-paint-format#format-query
+            i.icon-play3#run-query
+        textarea#query-editor select * from `bills-1`
+        #query-results
+            table
+                thead#results-header
+                        tr#results-header-tr
+                tbody#results-body
+                tfoot#results-footer
 
     script(type='code' id='table-contents-template')
         #search-bar

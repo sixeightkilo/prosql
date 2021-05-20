@@ -30,6 +30,7 @@ class App {
             //update session id in all modules
             this.tableContents.setSessionInfo(this.sessionId, db)
             this.tables.setSessionInfo(this.sessionId, db)
+            this.queryManager.setSessionInfo(this.sessionId, db)
 
             this.tables.show(db)
         })
@@ -88,6 +89,9 @@ class App {
         Log(TAG, this.sessionId)
 
         this.showDatabases()
+
+        //debug
+        //this.queryManager.enable()
     }
 
     async showDatabases() {

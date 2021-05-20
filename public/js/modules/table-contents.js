@@ -62,7 +62,7 @@ class TableContents {
 
         //show BATCH_SIZE rows from table
         this.showCols(values[0])
-        this.showResults(values[1], fkMap)
+        TableContents.showResults(values[1], fkMap)
     }
 
     async search() {
@@ -73,7 +73,7 @@ class TableContents {
         Log(TAG, query)
         let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(query))
         //todo: fk map must be created here as well
-        this.showResults(rows, {})
+        TableContents.showResults(rows, {})
     }
 
     async enable() {
@@ -165,7 +165,7 @@ class TableContents {
 
         //show BATCH_SIZE rows from table
         this.showCols(values[0])
-        this.showResults(values[1], fkMap)
+        TableContents.showResults(values[1], fkMap)
     }
 
     createFKMap(constraints) {
@@ -246,7 +246,7 @@ class TableContents {
         }
     }
 
-    showResults(rows, fkMap) {
+    static showResults(rows, fkMap) {
         let $b = document.getElementById('results-body')
         $b.replaceChildren()
 
@@ -301,7 +301,6 @@ class TableContents {
         Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
         this.$tableContents.style.height = (rpDims.height - sbDims.height) + 'px'
     }
-
 }
 
 export { TableContents }
