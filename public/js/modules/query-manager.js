@@ -4,6 +4,7 @@ import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 import { TableContents } from './table-contents.js'
+import { CodeJar } from 'https://medv.io/codejar/codejar.js'
 
 const TAG = "query-manager"
 
@@ -35,50 +36,75 @@ class QueryManager {
         let n = Utils.generateNode(this.$rootTemplate, {})
         this.$root.append(n)
 
-        this.$queryEditor = document.getElementById('query-editor')
-        this.$formatQuery = document.getElementById('format-query')
+        let editor = document.querySelector('#query-editor')
+		const highlight = (editor) => {
+			const code = editor.textContent
+			// Do something with code and set html.
+			editor.innerHTML = code
+		}
 
-        this.$formatQuery.addEventListener('click', async (e) => {
-            this.formatQuery()
-        })
+		this.jar = CodeJar(editor, highlight)
+        //debug
+		this.jar.updateCode("select id, name from `stores`")
 
-        this.$runQuery = document.getElementById('run-query')
-        this.$runQuery.addEventListener('click', async (e) => {
-            this.runQuery()
-        })
+		this.$formatQuery = document.getElementById('format-query')
 
-        this.isEnabled = true
-    }
+		this.$formatQuery.addEventListener('click', async (e) => {
+			this.formatQuery()
+		})
 
-    async runQuery() {
-        if (!this.db) {
-            alert('No database selected')
-            return
+		this.$runQuery = document.getElementById('run-query')
+		this.$runQuery.addEventListener('click', async (e) => {
+			this.runQuery()
+		})
+
+		this.isEnabled = true
+	}
+
+	async runQuery() {
+		if (!this.db) {
+			alert('No database selected')
+			return
+		}
+
+		let q = this.jar.toString()
+		let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(q))
+		TableContents.showCols(this.extractCols(rows))
+		TableContents.showResults(rows, {})
+	}
+
+    extractCols(rows) {
+        if (rows.length == 0) {
+            return []
         }
 
-        let q = this.$queryEditor.value
-        let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(q))
-        TableContents.showResults([rows[0]], {})
+        let cols = []
+        for (let j = 0; j < rows[0].length; j += 2) {
+            cols.push(rows[0][j])
+        }
+        return cols
     }
 
-    async formatQuery() {
-        let q = this.$queryEditor.value
-        Log(TAG, q)
-        let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}))
-        this.$queryEditor.value = json.query;
-    }
+	async formatQuery() {
+		let q = this.jar.toString()
+		Log(TAG, q)
+		let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}))
+		//this.$queryEditor.value = json.query;
+		this.jar.updateCode(json.query)
+	}
 
-    async disable() {
-        this.isEnabled = false
-    }
+	async disable() {
+        this.jar.destroy()
+		this.isEnabled = false
+	}
 
-    async adjustView() {
-        //fix height of table-contents div
-        let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
-        let sbDims = document.getElementById('search-bar').getBoundingClientRect()
-        Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
-        this.$tableContents.style.height = (rpDims.height - sbDims.height) + 'px'
-    }
+	async adjustView() {
+		//fix height of table-contents div
+		let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
+		let sbDims = document.getElementById('search-bar').getBoundingClientRect()
+		Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
+		this.$tableContents.style.height = (rpDims.height - sbDims.height) + 'px'
+	}
 }
 
 export { QueryManager }

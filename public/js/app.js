@@ -96,8 +96,14 @@ class App {
 
     async showDatabases() {
         let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
-        Utils.setOptions(this.$databases, dbs, '')
-    }
+        //Utils.setOptions(this.$databases, dbs, '')
+        //debug
+        Utils.setOptions(this.$databases, dbs, 'test-generico')
+		var event = new Event('change');
+
+		// Dispatch it.
+		this.$databases.dispatchEvent(event);
+	}
 }
 
 new App()

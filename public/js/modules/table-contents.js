@@ -61,7 +61,7 @@ class TableContents {
         Log(TAG, JSON.stringify(fkMap))
 
         //show BATCH_SIZE rows from table
-        this.showCols(values[0])
+        TableContents.showCols(this.extractColumns(values[0]))
         TableContents.showResults(values[1], fkMap)
     }
 
@@ -136,6 +136,11 @@ class TableContents {
     }
 
     async show(table) {
+        if (!this.isEnabled) {
+            //ignore if tables contents are not being displayed
+            return
+        }
+
         this.table = table
         Log(TAG, `Displaying ${table}`)
 
@@ -164,8 +169,18 @@ class TableContents {
         Log(TAG, JSON.stringify(fkMap))
 
         //show BATCH_SIZE rows from table
-        this.showCols(values[0])
+        Log(TAG, JSON.stringify(values[0]))
+        TableContents.showCols(this.extractColumns(values[0]))
         TableContents.showResults(values[1], fkMap)
+    }
+
+    extractColumns(arr) {
+        let cols = []
+        arr.forEach((e) => {
+            cols.push(e[1])
+        })
+
+        return cols
     }
 
     createFKMap(constraints) {
@@ -230,7 +245,7 @@ class TableContents {
         Log(TAG, "Done navigate")
     }
 
-    showCols(cols) {
+    static showCols(cols) {
         let $h = document.getElementById('results-header-tr')
         $h.replaceChildren()
 
@@ -240,7 +255,7 @@ class TableContents {
         //create column headers
         for (let j = 0; j < cols.length; j++) {
             let h = Utils.generateNode(ht, {
-                heading: cols[j][1] 
+                heading: cols[j] 
             })
             $h.appendChild(h)
         }
