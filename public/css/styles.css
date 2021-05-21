@@ -1767,3 +1767,24 @@ i#back {
 	max-height:200px;
 	overflow:scroll;
 }
+
+#footer {
+	position:fixed;
+	height: 1em;
+	width:100%;
+	left:0;
+	bottom:0;
+	background:#fafafa;
+	border-top:1px solid #eee;
+	display:grid;
+	grid-template-columns: 2fr 8fr;
+}
+
+#footer-left-panel {
+	border-right:1px solid #888;
+}
+
+#footer-right-panel {
+	padding: 0.1em;
+	font-size:smaller;
+}

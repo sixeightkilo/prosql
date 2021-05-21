@@ -141,6 +141,8 @@ class TableContents {
             return
         }
 
+        let s = new Date()
+
         this.table = table
         Log(TAG, `Displaying ${table}`)
 
@@ -172,6 +174,9 @@ class TableContents {
         Log(TAG, JSON.stringify(values[0]))
         TableContents.showCols(this.extractColumns(values[0]))
         TableContents.showResults(values[1], fkMap)
+
+        let e = new Date()
+        this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
     }
 
     extractColumns(arr) {
@@ -222,7 +227,7 @@ class TableContents {
     async init() {
         this.$root = document.getElementById('app-right-panel')
         this.$rootTemplate = document.getElementById('table-contents-template').innerHTML
-        Log(TAG, this.$rootTemplate)
+        this.$footer = document.getElementById('footer-right-panel')
 
         this.stack = new Stack(async (e) => {
             await this.navigate(e)

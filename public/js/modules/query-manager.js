@@ -24,6 +24,7 @@ class QueryManager {
     async init() {
         this.$root = document.getElementById('app-right-panel')
         this.$rootTemplate = document.getElementById('query-container-template').innerHTML
+        this.$footer = document.getElementById('footer-right-panel')
     }
 
     async enable() {
@@ -67,10 +68,15 @@ class QueryManager {
 			return
 		}
 
+        let s = new Date()
+
 		let q = this.jar.toString()
 		let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(q))
 		TableContents.showCols(this.extractCols(rows))
 		TableContents.showResults(rows, {})
+
+        let e = new Date()
+        this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
 	}
 
     extractCols(rows) {
