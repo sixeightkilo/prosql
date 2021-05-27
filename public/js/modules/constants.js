@@ -7,6 +7,10 @@ class Constants {
         return 'http://localhost:23890'
     }
 
+    static get WS_URL() {
+        return 'ws://localhost:23890'
+    }
+
     static get DB_NAME() {
         return 'prosql'
     }

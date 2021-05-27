@@ -5,6 +5,7 @@ import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 
 const TAG = "tables"
+const USE_WS = true
 
 class Tables {
     constructor(sessionId) {
@@ -39,26 +40,66 @@ class Tables {
     }
 
     async show(db) {
+        if (USE_WS) {
+            return this.show_ws(db)
+        }
+
+        this.show_ajax(db)
+    }
+
+    async show_ajax(db) {
         let tables = await DbUtils.fetchAll(this.sessionId, `show tables from \`${db}\``)
         this.tables = []
 
-        //save the table list in a more convinent form
+        //save the table list in a more convenient form
         tables.forEach((t) => {
             this.tables.push(t[1])
         })
         this.render(this.tables)
     }
 
-    render(tables) {
-        this.$tables.replaceChildren()
-        let $t = document.getElementById('table-template')
-        let t = $t.innerHTML
+	async show_ws(db) {
+        Log(TAG, "show_ws")
+        let params = {
+            'session-id': this.sessionId,
+            query: `show tables from \`${db}\``
+        }
 
-        tables.forEach((tbl) => {
-            let h = Utils.generateNode(t, {table: tbl})
-            this.$tables.append(h)
-        })
-    }
+        let s = new Date()
+        let ws = new WebSocket(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+
+		this.$tables.replaceChildren()
+		let $t = document.getElementById('table-template')
+		let t = $t.innerHTML
+
+		ws.onclose = function(evt) {
+			Log(TAG, "CLOSE");
+			ws = null;
+		}
+
+		ws.onmessage = (evt) => {
+			let e = new Date()
+            let json = JSON.parse(evt.data)
+
+			let h = Utils.generateNode(t, {table: json.k[1]})
+			this.$tables.append(h)
+		}
+
+		ws.onerror = function(evt) {
+			Log(TAG, "ERROR: " + evt.data);
+		}
+	}
+
+	render(tables) {
+		this.$tables.replaceChildren()
+		let $t = document.getElementById('table-template')
+		let t = $t.innerHTML
+
+		tables.forEach((tbl) => {
+			let h = Utils.generateNode(t, {table: tbl})
+			this.$tables.append(h)
+		})
+	}
 }
 
 export { Tables }

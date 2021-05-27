@@ -2,7 +2,7 @@ import { Log } from './logger.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
 
-const TAG = "DbUtils"
+const TAG = "dbutils"
 class DbUtils {
 
     static async fetch(sessionId, query) {
