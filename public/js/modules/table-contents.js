@@ -4,6 +4,7 @@ import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 import { Stack } from './stack.js'
+import { Stream } from './stream.js'
 
 const OPERATORS = [
     ['operator', '='],
@@ -20,6 +21,7 @@ const OPERATORS = [
 ]
 
 const TAG = "table-contents"
+const USE_WS = true
 
 class TableContents {
     constructor(sessionId) {
@@ -141,13 +143,113 @@ class TableContents {
             return
         }
 
-        let s = new Date()
-
         this.table = table
         Log(TAG, `Displaying ${table}`)
 
         this.stack.reset()
         this.stack.push(table)
+
+        if (USE_WS) {
+            return this.show_ws(table)
+        }
+
+        this.show_ajax(table)
+    }
+
+    async show_ws(table) {
+        let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
+        let contraints = DbUtils.fetch(this.sessionId, `SELECT
+                TABLE_NAME,
+                COLUMN_NAME,
+                CONSTRAINT_NAME,
+                REFERENCED_TABLE_NAME,
+                REFERENCED_COLUMN_NAME
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                WHERE
+                TABLE_SCHEMA = '${this.db}\' and
+                TABLE_NAME = '${this.table}\'`)
+
+        let values = await Promise.all([columns, contraints])
+
+        //update the column name selector
+        Utils.setOptions(this.$columNames, values[0], '')
+
+        let fkMap = this.createFKMap(values[1])
+        TableContents.showCols(this.extractColumns(values[0]))
+
+        this.showContents(table, fkMap)
+    }
+
+    async showContents(table, fkMap) {
+        let s = new Date()
+        Log(TAG, "show_ws")
+        let params = {
+            'session-id': this.sessionId,
+            query: `select * from \`${this.table}\` limit ${Constants.BATCH_SIZE}`
+        }
+
+        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+
+        let $b = document.getElementById('results-body')
+        $b.replaceChildren()
+
+        let $bt = document.getElementById('results-body-col-template')
+        let bt = $bt.innerHTML
+
+        let i = 0
+        while (true) {
+            let row = await stream.get()
+            if (i == 0) {
+                let e = new Date()
+                this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
+                i++
+            }
+
+            if (row.length == 1 && row[0] == "eos") {
+                break
+            }
+
+            TableContents.appendRow($b, bt, row, fkMap)
+        }
+    }
+
+    static appendRow($b, bt, row, fkMap) {
+        let $tr = Utils.generateNode('<tr></tr>', {})
+        $b.appendChild($tr)
+
+        let $row = $b.lastChild
+
+        for (let j = 1; j < row.length; j += 2) {
+            let v = row[j]
+            let c = row[j - 1] //this is column name
+            let refTable = ''
+            let refColumn = ''
+
+            //get reftable and refColumn if any. Only for Non NULL values
+            if (fkMap[c] && v != "NULL") {
+                refTable = fkMap[c]['ref-table']
+                refColumn = fkMap[c]['ref-column']
+            }
+
+            let h = Utils.generateNode(bt, {
+                value: v,
+                'ref-table': refTable,
+                'ref-column': refColumn
+            })
+
+            $row.appendChild(h)
+
+            //show link if required
+            if (refTable) {
+                let $col = $row.lastChild
+                let $link = $col.querySelector('i')
+                $link.style.display = 'inline'
+            }
+        }
+    }
+
+    async show_ajax(table) {
+        let s = new Date()
 
         let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
         let rows = DbUtils.fetch(this.sessionId, `select * from \`${this.table}\``)
@@ -245,7 +347,7 @@ class TableContents {
 
             case 'fk-ref':
                 await this.showFkRef(e.table, e.column, e.value)
-            break
+                break
         }
         Log(TAG, "Done navigate")
     }
@@ -278,39 +380,7 @@ class TableContents {
         let bt = $bt.innerHTML
 
         for (let i = 0; i < rows.length; i++) {
-            //append a new row
-            let $tr = Utils.generateNode('<tr></tr>', {})
-            $b.appendChild($tr)
-
-            let $row = $b.lastChild
-
-            for (let j = 1; j < rows[i].length; j += 2) {
-                let v = rows[i][j]
-                let c = rows[i][j - 1] //this is column name
-                let refTable = ''
-                let refColumn = ''
-
-                //get reftable and refColumn if any. Only for Non NULL values
-                if (fkMap[c] && v != "NULL") {
-                    refTable = fkMap[c]['ref-table']
-                    refColumn = fkMap[c]['ref-column']
-                }
-
-                let h = Utils.generateNode(bt, {
-                    value: v,
-                    'ref-table': refTable,
-                    'ref-column': refColumn
-                })
-
-                $row.appendChild(h)
-
-                //show link if required
-                if (refTable) {
-                    let $col = $row.lastChild
-                    let $link = $col.querySelector('i')
-                    $link.style.display = 'inline'
-                }
-            }
+            TableContents.appendRow($b, bt, rows[i], fkMap)
         }
     }
 

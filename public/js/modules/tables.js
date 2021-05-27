@@ -5,7 +5,7 @@ import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 
 const TAG = "tables"
-const USE_WS = true
+const USE_WS = false
 
 class Tables {
     constructor(sessionId) {
@@ -72,7 +72,7 @@ class Tables {
 		let $t = document.getElementById('table-template')
 		let t = $t.innerHTML
 
-		ws.onclose = function(evt) {
+		ws.onclose = (evt) => {
 			Log(TAG, "CLOSE");
 			ws = null;
 		}
@@ -85,7 +85,7 @@ class Tables {
 			this.$tables.append(h)
 		}
 
-		ws.onerror = function(evt) {
+		ws.onerror = (evt) => {
 			Log(TAG, "ERROR: " + evt.data);
 		}
 	}
