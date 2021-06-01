@@ -1788,3 +1788,43 @@ i#back {
 	padding: 0.1em;
 	font-size:smaller;
 }
+
+#table-contents table {
+	table-layout:fixed;
+	border-collapse:collapse;
+}
+
+#table-contents td {
+	white-space:nowrap;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	position:relative;
+}
+
+.fk-ref {
+	position:absolute;
+	right:0;
+}
+
+#table-contents th {
+	border:1px solid #cfcfcf;
+	position: relative;
+}
+
+.resizer {
+	/* Displayed at the right side of column */
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 1px;
+	cursor: col-resize;
+	user-select: none;
+}
+
+.null {
+	opacity: 0.5;
+}
+
+#table-contents tbody tr:nth-child(odd) {
+   background-color: #eee;
+}

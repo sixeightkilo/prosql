@@ -24,7 +24,7 @@ class Constants {
     }
 
     static get BATCH_SIZE() {
-        return 1000
+        return 100
     }
 
     static get CREDS() {

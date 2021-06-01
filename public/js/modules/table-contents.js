@@ -22,6 +22,42 @@ const OPERATORS = [
 
 const TAG = "table-contents"
 const USE_WS = true
+const MIN_COL_WIDTH = 100//px
+
+const createResizableColumn = function(col, resizer) {
+		// Track the current position of mouse
+		let x = 0;
+		let w = 0;
+
+		const mouseDownHandler = function(e) {
+			// Get the current mouse position
+			x = e.clientX;
+
+			// Calculate the current width of column
+			const styles = window.getComputedStyle(col);
+			w = parseInt(styles.width, 10);
+
+			// Attach listeners for document's events
+			document.addEventListener('mousemove', mouseMoveHandler);
+			document.addEventListener('mouseup', mouseUpHandler);
+		};
+
+		const mouseMoveHandler = function(e) {
+			// Determine how far the mouse has been moved
+			const dx = e.clientX - x;
+
+			// Update the width of column
+			col.style.width = `${w + dx}px`;
+		};
+
+		// When user releases the mouse, remove the existing event listeners
+		const mouseUpHandler = function() {
+			document.removeEventListener('mousemove', mouseMoveHandler);
+			document.removeEventListener('mouseup', mouseUpHandler);
+		};
+
+		resizer.addEventListener('mousedown', mouseDownHandler);
+};
 
 class TableContents {
     constructor(sessionId) {
@@ -63,7 +99,7 @@ class TableContents {
         Log(TAG, JSON.stringify(fkMap))
 
         //show BATCH_SIZE rows from table
-        TableContents.showCols(this.extractColumns(values[0]))
+        this.showHeaders(this.extractColumns(values[0]))
         TableContents.showResults(values[1], fkMap)
     }
 
@@ -96,6 +132,8 @@ class TableContents {
         this.$searchText = document.getElementById('search-text')
         this.$search = document.getElementById('search')
         this.$tableContents = document.getElementById('table-contents')
+		this.$table = this.$tableContents.querySelector('table')
+		this.contentWidth = this.$tableContents.getBoundingClientRect().width
 
         this.$search.addEventListener('click', async () => {
             this.search()
@@ -175,7 +213,9 @@ class TableContents {
         Utils.setOptions(this.$columNames, values[0], '')
 
         let fkMap = this.createFKMap(values[1])
-        TableContents.showCols(this.extractColumns(values[0]))
+        let cols = this.extractColumns(values[0])
+
+        this.showHeaders(cols)
 
         this.showContents(table, fkMap)
     }
@@ -211,6 +251,8 @@ class TableContents {
 
             TableContents.appendRow($b, bt, row, fkMap)
         }
+
+        Log(TAG, 'done showContents')
     }
 
     static appendRow($b, bt, row, fkMap) {
@@ -238,6 +280,10 @@ class TableContents {
             })
 
             $row.appendChild(h)
+
+            if (v == "NULL") {
+                $row.lastChild.classList.add('null')
+            }
 
             //show link if required
             if (refTable) {
@@ -274,7 +320,7 @@ class TableContents {
 
         //show BATCH_SIZE rows from table
         Log(TAG, JSON.stringify(values[0]))
-        TableContents.showCols(this.extractColumns(values[0]))
+        this.showHeaders(this.extractColumns(values[0]))
         TableContents.showResults(values[1], fkMap)
 
         let e = new Date()
@@ -352,7 +398,7 @@ class TableContents {
         Log(TAG, "Done navigate")
     }
 
-    static showCols(cols) {
+    showHeaders(cols) {
         let $h = document.getElementById('results-header-tr')
         $h.replaceChildren()
 
@@ -366,6 +412,30 @@ class TableContents {
             })
             $h.appendChild(h)
         }
+
+        Log(TAG, `w: ${this.contentWidth}`)
+        this.$table.style.width = MIN_COL_WIDTH * cols.length + 'px'
+        let hdrs = this.$tableContents.querySelectorAll('th')
+
+        hdrs.forEach((h) => {
+            h.style.width = `${MIN_COL_WIDTH}px`
+            this.appendResizer(h)
+        })
+    }
+
+    appendResizer(h) {
+        // Create a resizer element
+        const resizer = document.createElement('div');
+        resizer.classList.add('resizer');
+
+        // Set the height
+        resizer.style.height = `${this.$table.offsetHeight}px`;
+
+        // Add a resizer element to the column
+        h.appendChild(resizer);
+
+        // Will be implemented in the next section
+        createResizableColumn(h, resizer);
     }
 
     static showResults(rows, fkMap) {
