@@ -1709,7 +1709,8 @@ sup {
 
 .fk-ref {
 	display:none;
-	cursor:pointer
+	cursor:pointer;
+	float:right;
 }
 
 i#fwd,
@@ -1798,12 +1799,6 @@ i#back {
 	white-space:nowrap;
 	overflow:hidden;
 	text-overflow:ellipsis;
-	position:relative;
-}
-
-.fk-ref {
-	position:absolute;
-	right:0;
 }
 
 #table-contents th {
@@ -1822,9 +1817,12 @@ i#back {
 }
 
 .null {
-	opacity: 0.5;
+	color:#ddd;
 }
 
 #table-contents tbody tr:nth-child(odd) {
    background-color: #eee;
+}
+body, html {
+	overscroll-behavior-x: none;
 }

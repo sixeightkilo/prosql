@@ -18,8 +18,12 @@
             th {heading}
 
 	script(type='code' id='results-body-col-template')
-            td {value}
-                i.fk-ref.icon-new-tab("data-table"="{ref-table}" "data-column"="{ref-column}")
+            //td {value}
+                //i.fk-ref.icon-new-tab("data-table"="{ref-table}" "data-column"="{ref-column}")
+            td
+                div.td
+                    span {value}
+                    i.fk-ref.icon-new-tab("data-table"="{ref-table}" "data-column"="{ref-column}")
 
     script(type='code' id='query-container-template')
         #query-sub-menu

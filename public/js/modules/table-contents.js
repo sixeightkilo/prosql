@@ -151,7 +151,7 @@ class TableContents {
                 return
             }
 
-            let value = target.parentElement.textContent
+            let value = target.previousSibling.textContent
 
             Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
             await this.showFkRef(target.dataset.table, target.dataset.column, value)
@@ -289,7 +289,7 @@ class TableContents {
             if (refTable) {
                 let $col = $row.lastChild
                 let $link = $col.querySelector('i')
-                $link.style.display = 'inline'
+                $link.style.display = 'block'
             }
         }
     }
