@@ -143,8 +143,10 @@ class QueryManager {
     }
 
     async disable() {
-        this.jar.destroy()
-        this.isEnabled = false
+        if (this.isEnabled) {
+            this.jar.destroy()
+            this.isEnabled = false
+        }
     }
 
     async adjustView() {

@@ -64,7 +64,9 @@ class TableContents {
         Log(TAG, JSON.stringify(fkMap))
 
         //show BATCH_SIZE rows from table
-        this.showHeaders(this.extractColumns(values[0]))
+        //this.showHeaders(this.extractColumns(values[0]))
+        let cols = this.extractColumns(values[0])
+        this.tableUtils.showHeaders(this.$table, cols)
         TableContents.showResults(values[1], fkMap)
     }
 
@@ -310,7 +312,7 @@ class TableContents {
         let bt = $bt.innerHTML
 
         for (let i = 0; i < rows.length; i++) {
-            TableContents.appendRow($b, bt, rows[i], fkMap)
+            TableUtils.appendRow($b, bt, rows[i], fkMap)
         }
     }
 

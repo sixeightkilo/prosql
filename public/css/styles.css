@@ -1797,7 +1797,7 @@ i#back {
 	text-overflow:ellipsis;
 }
 
-#query-contents th,
+#query-results th,
 #table-contents th {
 	border:1px solid #cfcfcf;
 	position: relative;
