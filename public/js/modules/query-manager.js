@@ -5,6 +5,8 @@ import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 import { TableContents } from './table-contents.js'
 import { CodeJar } from 'https://medv.io/codejar/codejar.js'
+import { TableUtils } from './table-utils.js'
+import { Stream } from './stream.js'
 
 const TAG = "query-manager"
 const USE_WS = true
@@ -26,6 +28,7 @@ class QueryManager {
         this.$root = document.getElementById('app-right-panel')
         this.$rootTemplate = document.getElementById('query-container-template').innerHTML
         this.$footer = document.getElementById('footer-right-panel')
+        this.tableUtils = new TableUtils()
     }
 
     async enable() {
@@ -99,24 +102,8 @@ class QueryManager {
             'req-id': Utils.uuid()
         }
 
-        let ws = new WebSocket(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
-        ws.onclose = (evt) => {
-            Log(TAG, "CLOSE");
-            ws = null;
-        }
-
-        let i = 0
-        ws.onmessage = (evt) => {
-            if (i == 0) {
-                let e = new Date()
-                this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
-                i++
-            }
-        }
-
-        ws.onerror = (evt) => {
-            Log(TAG, "ERROR: " + evt.data);
-        }
+        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        this.tableUtils.showContents.apply(this, [stream, {}])
     }
 
     extractCols(rows) {
