@@ -4,12 +4,76 @@ import { Utils } from './utils.js'
 import { Constants } from './constants.js'
 
 const TAG = "table-utils"
+const MIN_COL_WIDTH = 100//px
+
+const createResizableColumn = function(col, resizer) {
+		// Track the current position of mouse
+		let x = 0;
+		let w = 0;
+
+		const mouseDownHandler = function(e) {
+			// Get the current mouse position
+			x = e.clientX;
+
+			// Calculate the current width of column
+			const styles = window.getComputedStyle(col);
+			w = parseInt(styles.width, 10);
+
+			// Attach listeners for document's events
+			document.addEventListener('mousemove', mouseMoveHandler);
+			document.addEventListener('mouseup', mouseUpHandler);
+		};
+
+		const mouseMoveHandler = function(e) {
+			// Determine how far the mouse has been moved
+			const dx = e.clientX - x;
+
+			// Update the width of column
+			col.style.width = `${w + dx}px`;
+		};
+
+		// When user releases the mouse, remove the existing event listeners
+		const mouseUpHandler = function() {
+			document.removeEventListener('mousemove', mouseMoveHandler);
+			document.removeEventListener('mouseup', mouseUpHandler);
+		};
+
+		resizer.addEventListener('mousedown', mouseDownHandler);
+};
+
 class TableUtils {
-    async showContents(stream, fkMap) {
+    showHeaders($table, cols) {
+        let $h = document.getElementById('results-header-tr')
+        $h.replaceChildren()
+
+        let $ht = document.getElementById('results-header-col-template')
+        let ht = $ht.innerHTML
+
+        //create column headers
+        for (let j = 0; j < cols.length; j++) {
+            let h = Utils.generateNode(ht, {
+                heading: cols[j] 
+            })
+            $h.appendChild(h)
+        }
+
+        Log(TAG, `w: ${this.contentWidth}`)
+        $table.style.width = MIN_COL_WIDTH * cols.length + 'px'
+        let hdrs = $table.querySelectorAll('th')
+
+        hdrs.forEach((h) => {
+            h.style.width = `${MIN_COL_WIDTH}px`
+            this.appendResizer($table, h)
+        })
+    }
+
+    async showContents(stream, fkMap, clear = true) {
         let s = new Date()
 
         let $b = document.getElementById('results-body')
-        $b.replaceChildren()
+        if (clear) {
+            $b.replaceChildren()
+        }
 
         let $bt = document.getElementById('results-body-col-template')
         let bt = $bt.innerHTML
@@ -70,6 +134,21 @@ class TableUtils {
                 $link.style.display = 'block'
             }
         }
+    }
+
+    appendResizer($table, h) {
+        // Create a resizer element
+        const resizer = document.createElement('div');
+        resizer.classList.add('resizer');
+
+        // Set the height
+        resizer.style.height = `${$table.offsetHeight}px`;
+
+        // Add a resizer element to the column
+        h.appendChild(resizer);
+
+        // Will be implemented in the next section
+        createResizableColumn(h, resizer);
     }
 }
 

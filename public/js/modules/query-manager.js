@@ -41,6 +41,11 @@ class QueryManager {
         let n = Utils.generateNode(this.$rootTemplate, {})
         this.$root.append(n)
 
+		this.$queryResults = document.getElementById('query-results')
+		this.$table = this.$queryResults.querySelector('table')
+
+        this.adjustView()
+
         let editor = document.querySelector('#query-editor')
 		const highlight = (editor) => {
 			const code = editor.textContent
@@ -103,17 +108,28 @@ class QueryManager {
         }
 
         let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents.apply(this, [stream, {}])
+
+        //extract headers from the first row
+        let row = await stream.get()
+        let cols = this.extractCols(row)
+        this.tableUtils.showHeaders(this.$table, cols)
+
+        //append first row manually
+        let $b = document.getElementById('results-body')
+        $b.replaceChildren()
+
+        let $bt = document.getElementById('results-body-col-template')
+        let bt = $bt.innerHTML
+        TableUtils.appendRow($b, bt, row, {})
+
+        //append rest of rows
+        this.tableUtils.showContents.apply(this, [stream, {}, false])
     }
 
-    extractCols(rows) {
-        if (rows.length == 0) {
-            return []
-        }
-
+    extractCols(row) {
         let cols = []
-        for (let j = 0; j < rows[0].length; j += 2) {
-            cols.push(rows[0][j])
+        for (let j = 0; j < row.length; j += 2) {
+            cols.push(row[j])
         }
         return cols
     }
@@ -132,11 +148,17 @@ class QueryManager {
     }
 
     async adjustView() {
-        //fix height of table-contents div
+        //fix height of query editor and results div
         let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
-        let sbDims = document.getElementById('search-bar').getBoundingClientRect()
-        Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
-        this.$tableContents.style.height = (rpDims.height - sbDims.height) + 'px'
+        let sbDims = document.getElementById('query-sub-menu').getBoundingClientRect()
+        let footerDims = document.getElementById('footer').getBoundingClientRect()
+        let editor = document.getElementById('query-editor')
+        let results = document.getElementById('query-results')
+
+        let h = (rpDims.height - sbDims.height - footerDims.height) / 2
+
+        editor.style.height = h + 'px'
+        results.style.height = h + 'px'
     }
 }
 

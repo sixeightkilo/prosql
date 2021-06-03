@@ -1688,6 +1688,7 @@ sup {
 	top: 0;
 }
 
+#query-results thead th,
 #table-contents thead th {
 	border-bottom:1px solid #e1e1e1;
 }
@@ -1745,12 +1746,6 @@ i#back {
 	grid-template-columns: 1fr 2fr 2fr 8fr 1fr;
 }
 
-#query-results {
-	width:100%;
-	height:100%;
-	overflow:scroll;
-}
-
 #query-editor {
 	box-shadow: 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12), 0 3px 1px -2px rgba(0, 0, 0, 0.2);
 	font-family: 'Source Code Pro', monospace;
@@ -1765,7 +1760,6 @@ i#back {
 }
 
 #query-results {
-	max-height:200px;
 	overflow:scroll;
 }
 
@@ -1790,17 +1784,20 @@ i#back {
 	font-size:smaller;
 }
 
+#query-results table,
 #table-contents table {
 	table-layout:fixed;
 	border-collapse:collapse;
 }
 
+#query-results td,
 #table-contents td {
 	white-space:nowrap;
 	overflow:hidden;
 	text-overflow:ellipsis;
 }
 
+#query-contents th,
 #table-contents th {
 	border:1px solid #cfcfcf;
 	position: relative;
@@ -1820,6 +1817,7 @@ i#back {
 	color:#ddd;
 }
 
+#query-results tbody tr:nth-child(odd),
 #table-contents tbody tr:nth-child(odd) {
    background-color: #eee;
 }
