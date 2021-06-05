@@ -22,7 +22,7 @@ const OPERATORS = [
 ]
 
 const TAG = "table-contents"
-const USE_WS = true
+const USE_WS = false
 
 class TableContents {
     constructor(sessionId) {
@@ -192,6 +192,7 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        //this.tableUtils.showContents_batch.apply(this, [stream, fkMap])
         this.tableUtils.showContents.apply(this, [stream, fkMap])
     }
 
@@ -221,7 +222,9 @@ class TableContents {
 
         //show BATCH_SIZE rows from table
         Log(TAG, JSON.stringify(values[0]))
-        this.showHeaders(this.extractColumns(values[0]))
+        //this.showHeaders(this.extractColumns(values[0]))
+        let cols = this.extractColumns(values[0])
+        this.tableUtils.showHeaders(this.$table, cols)
         TableContents.showResults(values[1], fkMap)
 
         let e = new Date()

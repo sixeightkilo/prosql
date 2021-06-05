@@ -5,6 +5,7 @@ import { Constants } from './constants.js'
 
 const TAG = "table-utils"
 const MIN_COL_WIDTH = 100//px
+const BATCH_SIZE = 50
 
 const createResizableColumn = function(col, resizer) {
 		// Track the current position of mouse
@@ -67,6 +68,44 @@ class TableUtils {
         })
     }
 
+    async showContents_batch(stream, fkMap, clear = true) {
+        Log(TAG, 'showContents_batch');
+        let s = new Date()
+
+        let $b = document.getElementById('results-body')
+        if (clear) {
+            $b.replaceChildren()
+        }
+
+        let $bt = document.getElementById('results-body-col-template')
+        let bt = $bt.innerHTML
+
+        let $fragment = new DocumentFragment()
+        let i = 0;
+
+        while (true) {
+            let row = await stream.get()
+
+            if (row.length == 1 && row[0] == "eos") {
+                break
+            }
+
+            TableUtils.appendRow($fragment, bt, row, fkMap)
+            i++;
+            if (i == BATCH_SIZE) {
+                $b.append($fragment);
+                i = 0;
+                $fragment = new DocumentFragment()
+            }
+        }
+
+        $b.append($fragment);
+
+        let e = new Date()
+        this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
+        Log(TAG, 'done showContents')
+    }
+
     async showContents(stream, fkMap, clear = true) {
         let s = new Date()
 
@@ -78,22 +117,18 @@ class TableUtils {
         let $bt = document.getElementById('results-body-col-template')
         let bt = $bt.innerHTML
 
-        let i = 0
         while (true) {
             let row = await stream.get()
-            if (i == 0) {
-                let e = new Date()
-                this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
-                i++
-            }
 
             if (row.length == 1 && row[0] == "eos") {
                 break
             }
 
-            TableUtils.appendRow($b, bt, row, fkMap)
+            //TableUtils.appendRow($b, bt, row, fkMap)
         }
 
+        let e = new Date()
+        this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
         Log(TAG, 'done showContents')
     }
 
