@@ -1,4 +1,6 @@
 import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
+import { columnTemplate } from './column-template.js'
+import { cellTemplate } from './cell-template.js'
 import { Log } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
@@ -132,6 +134,8 @@ class TableUtils {
                     columns.push({
                         'prop': row[j],
                         'name': row[j],
+                        'columnTemplate': columnTemplate,
+                        'cellTemplate': cellTemplate,
                     });
                 }
                 i++;
@@ -139,7 +143,7 @@ class TableUtils {
 
             let item = {};
             for (let j = 0; j < row.length; j += 2) {
-                item[row[j]] = row[j + 1];
+                item[row[j]] = {v: row[j + 1]};
             }
 
             items.push(item);
