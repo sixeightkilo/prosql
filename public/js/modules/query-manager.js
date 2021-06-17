@@ -109,20 +109,6 @@ class QueryManager {
 
         let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
 
-        //extract headers from the first row
-        let row = await stream.get()
-        let cols = this.extractCols(row)
-        this.tableUtils.showHeaders(this.$table, cols)
-
-        //append first row manually
-        let $b = document.getElementById('results-body')
-        $b.replaceChildren()
-
-        let $bt = document.getElementById('results-body-col-template')
-        let bt = $bt.innerHTML
-        TableUtils.appendRow($b, bt, row, {})
-
-        //append rest of rows
         this.tableUtils.showContents.apply(this, [stream, {}, false])
     }
 

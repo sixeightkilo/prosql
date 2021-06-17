@@ -29,11 +29,7 @@
             i.icon-play3#run-query
         #query-editor
         #query-results
-            table
-                thead#results-header
-                        tr#results-header-tr
-                tbody#results-body
-                tfoot#results-footer
+            revo-grid.grid-component
 
     script(type='code' id='table-contents-template')
         #search-bar
@@ -47,4 +43,4 @@
             div
                 button#search Filter
         #table-contents
-            <revo-grid class="grid-component"></revo-grid>
+            revo-grid.grid-component

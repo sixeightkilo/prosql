@@ -7,18 +7,18 @@ const TAG = "stream"
 
 class Stream {
     constructor(url) {
-        this.promises = []
-        this.registered = false
+        this.promises = [];
+        this.registered = false;
 
-        this.ws = new WebSocket(url)
+        this.ws = new WebSocket(url);
 
         this.ws.onerror = (evt) => {
-            Log(TAG, "onerror:" + evt.data)
-            this.rej(evt.data)
+            Log(TAG, "onerror:" + evt.data);
+            this.rej(evt.data);
         }
 
         this.ws.onclose = (evt) => {
-            Log(TAG, "onclose")
+            Log(TAG, "onclose");
             this.ws = null;
         }
     }
@@ -27,15 +27,15 @@ class Stream {
         return new Promise((res, rej) => {
             if (!this.registered) {
                 this.ws.onmessage = (evt) => {
-                    let res = this.promises.shift()
-                    let json = JSON.parse(evt.data)
-                    res(json['k'])
+                    let res = this.promises.shift();
+                    let json = JSON.parse(evt.data);
+                    res(json['k']);
                 }
-                this.registered = true
+                this.registered = true;
             }
 
-            this.promises.push(res)
-            this.rej = rej
+            this.promises.push(res);
+            this.rej = rej;
         })
     }
 }
