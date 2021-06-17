@@ -1,3 +1,4 @@
+import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
 import { Log } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
@@ -43,6 +44,10 @@ const createResizableColumn = function(col, resizer) {
 };
 
 class TableUtils {
+    constructor() {
+        defineCustomElements();
+    }
+
     showHeaders($table, cols) {
         let $h = document.getElementById('results-header-tr')
         $h.replaceChildren()
@@ -109,23 +114,40 @@ class TableUtils {
     async showContents(stream, fkMap, clear = true) {
         let s = new Date()
 
-        let $b = document.getElementById('results-body')
-        if (clear) {
-            $b.replaceChildren()
-        }
+        const grid = document.querySelector('revo-grid');
 
-        let $bt = document.getElementById('results-body-col-template')
-        let bt = $bt.innerHTML
+        let i = 0;
+        let columns = [];
+        let items = [];
 
         while (true) {
-            let row = await stream.get()
+            let row = await stream.get();
 
             if (row.length == 1 && row[0] == "eos") {
-                break
+                break;
             }
 
-            //TableUtils.appendRow($b, bt, row, fkMap)
+            if (i == 0) {
+                for (let j = 0; j < row.length; j += 2) {
+                    columns.push({
+                        'prop': row[j],
+                        'name': row[j],
+                    });
+                }
+                i++;
+            }
+
+            let item = {};
+            for (let j = 0; j < row.length; j += 2) {
+                item[row[j]] = row[j + 1];
+            }
+
+            items.push(item);
         }
+
+        grid.resize = true;
+		grid.columns = columns;
+		grid.source = items;
 
         let e = new Date()
         this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'

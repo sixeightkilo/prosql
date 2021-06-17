@@ -22,7 +22,7 @@ const OPERATORS = [
 ]
 
 const TAG = "table-contents"
-const USE_WS = false
+const USE_WS = true
 
 class TableContents {
     constructor(sessionId) {
@@ -99,7 +99,7 @@ class TableContents {
         this.$searchText = document.getElementById('search-text')
         this.$search = document.getElementById('search')
         this.$tableContents = document.getElementById('table-contents')
-		this.$table = this.$tableContents.querySelector('table')
+		//this.$table = this.$tableContents.querySelector('table')
 		this.contentWidth = this.$tableContents.getBoundingClientRect().width
 
         this.$search.addEventListener('click', async () => {
@@ -184,7 +184,7 @@ class TableContents {
         let fkMap = this.createFKMap(values[1])
         let cols = this.extractColumns(values[0])
 
-        this.tableUtils.showHeaders(this.$table, cols)
+        //this.tableUtils.showHeaders(this.$table, cols)
 
         let params = {
             'session-id': this.sessionId,
