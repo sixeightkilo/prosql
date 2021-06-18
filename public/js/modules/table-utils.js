@@ -134,7 +134,6 @@ class TableUtils {
                     columns.push({
                         'prop': row[j],
                         'name': row[j],
-                        'columnTemplate': columnTemplate,
                         'cellTemplate': cellTemplate,
                     });
                 }
@@ -143,7 +142,21 @@ class TableUtils {
 
             let item = {};
             for (let j = 0; j < row.length; j += 2) {
-                item[row[j]] = {v: row[j + 1]};
+                let c = row[j];//column name
+                let v = row[j + 1];//column value
+                let refTable = ''
+                let refColumn = ''
+
+                if (fkMap[c] && v != "NULL") {
+                    refTable = fkMap[c]['ref-table']
+                    refColumn = fkMap[c]['ref-column']
+                }
+
+                item[c] = {
+                    v: v,
+                    'ref-table': refTable,
+                    'ref-column': refColumn
+                };
             }
 
             items.push(item);

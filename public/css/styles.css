@@ -1824,3 +1824,6 @@ i#back {
 body, html {
 	overscroll-behavior-x: none;
 }
+.icon-new-tab {
+	cursor:pointer;
+}

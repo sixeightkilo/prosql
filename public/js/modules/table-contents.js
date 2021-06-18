@@ -1,3 +1,6 @@
+import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
+import { columnTemplate } from './column-template.js'
+import { cellTemplate } from './cell-template.js'
 import { Log } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
@@ -41,9 +44,6 @@ class TableContents {
         this.table = table
         Log(TAG, `Displaying ${table}`)
         let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let query = `select * from \`${table}\` 
-                         where \`${col}\` = '${val}'`
-        let rows = DbUtils.fetch(this.sessionId, encodeURIComponent(query))
         let contraints = DbUtils.fetch(this.sessionId, encodeURIComponent(`SELECT
                 TABLE_NAME,
                 COLUMN_NAME,
@@ -55,19 +55,28 @@ class TableContents {
                 TABLE_SCHEMA = '${this.db}\' and
                 TABLE_NAME = '${this.table}\'`))
 
-        let values = await Promise.all([columns, rows, contraints])
+        let values = await Promise.all([columns, contraints])
 
         //update the column name selector
         Utils.setOptions(this.$columNames, values[0], '')
 
-        let fkMap = this.createFKMap(values[2])
+        let fkMap = this.createFKMap(values[1])
         Log(TAG, JSON.stringify(fkMap))
 
         //show BATCH_SIZE rows from table
         //this.showHeaders(this.extractColumns(values[0]))
-        let cols = this.extractColumns(values[0])
-        this.tableUtils.showHeaders(this.$table, cols)
-        TableContents.showResults(values[1], fkMap)
+        //let cols = this.extractColumns(values[0])
+        //this.tableUtils.showHeaders(this.$table, cols)
+        let query = `select * from \`${table}\` 
+                         where \`${col}\` = '${val}'`
+
+        let params = {
+            'session-id': this.sessionId,
+            query: query
+        }
+
+        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        this.tableUtils.showContents.apply(this, [stream, fkMap])
     }
 
     async search() {
@@ -99,8 +108,8 @@ class TableContents {
         this.$searchText = document.getElementById('search-text')
         this.$search = document.getElementById('search')
         this.$tableContents = document.getElementById('table-contents')
-		//this.$table = this.$tableContents.querySelector('table')
-		this.contentWidth = this.$tableContents.getBoundingClientRect().width
+        //this.$table = this.$tableContents.querySelector('table')
+        this.contentWidth = this.$tableContents.getBoundingClientRect().width
 
         this.$search.addEventListener('click', async () => {
             this.search()
@@ -114,7 +123,7 @@ class TableContents {
 
         this.$tableContents.addEventListener('click', async (e) => {
             let target = event.target;
-            if (target.className != 'fk-ref icon-new-tab') {
+            if (target.className != 'icon-new-tab') {
                 return
             }
 
@@ -200,7 +209,7 @@ class TableContents {
         let s = new Date()
 
         let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let rows = DbUtils.fetch(this.sessionId, `select * from \`${this.table}\``)
+        let rows = DbUtils.fetch(this.sessionId, `select * from \`${this.table}\` limit ${Constants.BATCH_SIZE}`)
         let contraints = DbUtils.fetch(this.sessionId, `SELECT
                 TABLE_NAME,
                 COLUMN_NAME,
@@ -220,11 +229,6 @@ class TableContents {
         let fkMap = this.createFKMap(values[2])
         Log(TAG, JSON.stringify(fkMap))
 
-        //show BATCH_SIZE rows from table
-        Log(TAG, JSON.stringify(values[0]))
-        //this.showHeaders(this.extractColumns(values[0]))
-        let cols = this.extractColumns(values[0])
-        this.tableUtils.showHeaders(this.$table, cols)
         TableContents.showResults(values[1], fkMap)
 
         let e = new Date()
@@ -304,19 +308,32 @@ class TableContents {
     }
 
     static showResults(rows, fkMap) {
-        let $b = document.getElementById('results-body')
-        $b.replaceChildren()
-
-        if (rows.length == 0) {
-            return
-        }
-
-        let $bt = document.getElementById('results-body-col-template')
-        let bt = $bt.innerHTML
+        const grid = document.querySelector('revo-grid');
+        let columns = [];
+        let items = [];
 
         for (let i = 0; i < rows.length; i++) {
-            TableUtils.appendRow($b, bt, rows[i], fkMap)
+            if (i == 0) {
+                for (let j = 0; j < rows[i].length; j += 2) {
+                    columns.push({
+                        'prop': rows[i][j],
+                        'name': rows[i][j],
+                        'cellTemplate': cellTemplate,
+                    });
+                }
+            }
+
+            let item = {};
+            for (let j = 0; j < rows[i].length; j += 2) {
+                item[rows[i][j]] = {v: rows[i][j + 1]};
+            }
+
+            items.push(item);
         }
+
+        grid.resize = true;
+        grid.columns = columns;
+        grid.items = items;
     }
 
     async adjustView() {
