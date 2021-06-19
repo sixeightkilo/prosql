@@ -1,32 +1,37 @@
 import { Log } from './logger.js'
 
 const TAG = 'cell-template';
-const cellTemplate = (createElement, props) => {
+const cellTemplate = (createElement, props, fkMap) => {
     let p = props.model[props.prop]
-    //let e = createElement('span', {
-      //style: {
-        //color: 'red'
-      //},
-    //}, createElement('div', {
-        //class: 'me'
-    //}, p['v']));
-//
-    //return e;
     let nullClass = '';
-    if (p['v'] == "NULL") {
+
+    let c = props.prop;//column name
+    let v = props.model[props.prop];//column value
+
+    let refTable = ''
+    let refColumn = ''
+
+    if (fkMap[c] && v != "NULL") {
+        refTable = fkMap[c]['ref-table']
+        refColumn = fkMap[c]['ref-column']
+    }
+
+    if (v == "NULL") {
         nullClass = 'null'
     }
 
-    if (p['ref-table']) {
+    if (refTable) {
         return createElement('div', {},
-                                createElement('span', {}, p['v']),
-                                createElement('i', {
-                                    'class': 'icon-new-tab',
-                                    'data-table': p['ref-table'],
-                                    'data-column': p['ref-column'],
-                                }));
+            createElement('span', {}, v),
+            createElement('i', {
+                'class': 'icon-new-tab',
+                'data-table': refTable,
+                'data-column': refColumn,
+            }));
     }
 
-    return createElement('div', {class: nullClass}, p['v']);
+    return createElement('div', {class: nullClass}, v);
+
 };
+
 export { cellTemplate }
