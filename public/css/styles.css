@@ -1616,15 +1616,20 @@ sup {
 
 #app-content {
 	display:grid;
-	grid-template-columns: 2fr 8fr;
+	grid-template-columns: 2fr 2px 8fr;
 	height:100%;
+}
+
+#app-content-resizer {
+	cursor:col-resize;
+	background-color:#ddd;
 }
 
 #app-left-panel {
 	padding-top:0.25em;
 	background-color:#ddd;
 	display:grid;
-	grid-template-rows: minmax(auto, 2em) minmax(auto, 2em) minmax(auto, 500px) 4fr;
+	grid-template-rows: minmax(auto, 2em) minmax(auto, 2em) minmax(auto, 500px) 4fr 1px;
 }
 
 #app-left-panel div {
@@ -1672,7 +1677,12 @@ sup {
 
 #query-container {
 	display:grid;
-	grid-template-rows: 1fr 1fr
+	grid-template-rows: 1fr 2px 1fr;
+}
+
+#query-container-resizer {
+	cursor:row-resize;
+	background:#dedede;
 }
 
 #table-contents {
@@ -1733,11 +1743,6 @@ i#back {
 	opacity:1.0;
 }
 
-#query {
-	overflow: auto;
-	resize:vertical;
-}
-
 #query-sub-menu {
 	background:#ebebeb;
 	padding:0.25em;
@@ -1755,8 +1760,6 @@ i#back {
 	line-height: 20px;
 	padding: 10px;
 	tab-size: 4;
-	resize:vertical;
-	margin-bottom:5px;
 }
 
 #query-results {
@@ -1801,16 +1804,6 @@ i#back {
 #table-contents th {
 	border:1px solid #cfcfcf;
 	position: relative;
-}
-
-.resizer {
-	/* Displayed at the right side of column */
-	position: absolute;
-	top: 0;
-	right: 0;
-	width: 1px;
-	cursor: col-resize;
-	user-select: none;
 }
 
 .null {

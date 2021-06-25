@@ -6,6 +6,7 @@ import { Constants } from './modules/constants.js'
 import { TableContents } from './modules/table-contents.js'
 import { Tables } from './modules/tables.js'
 import { QueryManager } from './modules/query-manager.js'
+import { GridResizerH } from './modules/grid-resizer-h.js'
 
 const TAG = "app"
 class App {
@@ -46,15 +47,15 @@ class App {
             this.tableContents.show(target.innerHTML)
         })
 
-		let elementsArray = document.querySelectorAll('[id$="-menu"]');
+        let elementsArray = document.querySelectorAll('[id$="-menu"]');
 
-		elementsArray.forEach((elem) => {
-			elem.addEventListener("click", (e) => {
+        elementsArray.forEach((elem) => {
+            elem.addEventListener("click", (e) => {
                 Log(TAG, `${e.currentTarget.id} clicked `)
                 this.handleMenu(e.currentTarget.id)
-			});
-		});
-	}
+            });
+        });
+    }
 
     async handleMenu(id) {
         switch (id) {
@@ -90,6 +91,12 @@ class App {
 
         this.showDatabases()
 
+        let $g1 = document.getElementById('app-content');
+        let $e1 = document.getElementById('app-left-panel-container');
+        let $e2 = document.getElementById('app-right-panel');
+        let $resizer = document.getElementById('app-content-resizer');
+        new GridResizerH($g1, $e1, $resizer, $e2, 'horizontal');
+
         //debug
         //this.queryManager.enable()
     }
@@ -99,11 +106,11 @@ class App {
         //Utils.setOptions(this.$databases, dbs, '')
         //debug
         Utils.setOptions(this.$databases, dbs, 'test-generico')
-		var event = new Event('change');
+        var event = new Event('change');
 
-		// Dispatch it.
-		this.$databases.dispatchEvent(event);
-	}
+        // Dispatch it.
+        this.$databases.dispatchEvent(event);
+    }
 }
 
 new App()

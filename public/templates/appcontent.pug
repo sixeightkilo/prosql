@@ -1,11 +1,14 @@
 #app-content
-    #app-left-panel
-        div#table-filter-container
-            i.icon-search
-            input(type="text" id="table-filter")
-        div Tables and Views
-        div#tables
-        div#table-info Table Info
+    #app-left-panel-container
+        #app-left-panel
+            div#table-filter-container
+                i.icon-search
+                input(type="text" id="table-filter")
+            div Tables and Views
+            div#tables
+            div#table-info Table Info
+
+    #app-content-resizer
 
     #app-right-panel
 
@@ -27,9 +30,11 @@
         #query-sub-menu
             i.icon-paint-format#format-query
             i.icon-play3#run-query
-        #query-editor
-        #query-results
-            revo-grid.grid-component
+        #query-container
+            #query-editor(contenteditable="true")
+            #query-container-resizer
+            #query-results
+                revo-grid.grid-component
 
     script(type='code' id='table-contents-template')
         #search-bar
