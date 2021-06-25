@@ -1,4 +1,9 @@
 class Constants {
+    //events
+    static get TABLE_SELECTED() {
+        return 'tables.table-selected'
+    }
+
     static get SESSION_ID() {
         return 'session-id'
     }

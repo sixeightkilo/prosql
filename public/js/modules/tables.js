@@ -4,6 +4,7 @@ import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 import { Stream } from './stream.js'
+import { PubSub } from './pubsub.js'
 
 const TAG = "tables"
 const USE_WS = false
@@ -16,6 +17,17 @@ class Tables {
         this.$tableFilter.addEventListener('keyup', () => {
             this.filter()
         })
+
+        this.$tables.addEventListener('click', async (e) => {
+            let target = e.target;
+            if (target.className != 'table-name') {
+                return
+            }
+
+            //this.tableContents.show(target.innerHTML)
+            PubSub.publish(Constants.TABLE_SELECTED, {table: target.innerHTML});
+        })
+
         Log(TAG, `sessionId: ${sessionId}`)
     }
 

@@ -7,6 +7,7 @@ import { TableContents } from './modules/table-contents.js'
 import { Tables } from './modules/tables.js'
 import { QueryManager } from './modules/query-manager.js'
 import { GridResizerH } from './modules/grid-resizer-h.js'
+import { PubSub } from './modules/pubsub.js'
 
 const TAG = "app"
 class App {
@@ -38,14 +39,9 @@ class App {
 
         this.$tables = document.getElementById('tables')
 
-        this.$tables.addEventListener('click', async (e) => {
-            let target = e.target;
-            if (target.className != 'table-name') {
-                return
-            }
-
-            this.tableContents.show(target.innerHTML)
-        })
+        PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
+            this.tableContents.show(data.table);
+        });
 
         let elementsArray = document.querySelectorAll('[id$="-menu"]');
 
