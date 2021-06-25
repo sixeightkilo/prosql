@@ -41,6 +41,7 @@ class App {
 
         PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
             this.tableContents.show(data.table);
+            this.selectedTable = data.table;
         });
 
         let elementsArray = document.querySelectorAll('[id$="-menu"]');
@@ -63,6 +64,9 @@ class App {
             case 'content-menu':
                 this.queryManager.disable()
                 this.tableContents.enable()
+                if (this.selectedTable) {
+                    this.tableContents.show(this.selectedTable)
+                }
                 break;
         }
     }

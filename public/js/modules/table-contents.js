@@ -83,7 +83,7 @@ class TableContents {
         let query = `select * from \`${this.table}\` 
                          where \`${this.$columNames.value}\`
                          ${this.$operators.value}
-                         ${this.$searchText.value}`
+                         '${this.$searchText.value}'`
         Log(TAG, query)
         let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(query))
         //todo: fk map must be created here as well
@@ -318,22 +318,27 @@ class TableContents {
                     columns.push({
                         'prop': rows[i][j],
                         'name': rows[i][j],
-                        'cellTemplate': cellTemplate,
+                        cellTemplate: (createElement, props) => {
+                            return cellTemplate(createElement, props, {});
+                        },
                     });
                 }
             }
 
             let item = {};
             for (let j = 0; j < rows[i].length; j += 2) {
-                item[rows[i][j]] = {v: rows[i][j + 1]};
+                item[rows[i][j]] = rows[i][j + 1];
             }
 
             items.push(item);
         }
 
+        Log(TAG, JSON.stringify(columns));
+        Log(TAG, JSON.stringify(items));
+
         grid.resize = true;
         grid.columns = columns;
-        grid.items = items;
+        grid.source = items;
     }
 
     async adjustView() {

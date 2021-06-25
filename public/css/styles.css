@@ -1716,6 +1716,7 @@ sup {
 #operators,
 #search-text {
 	width:100%;
+	box-sizing:border-box;
 }
 
 .fk-ref {
