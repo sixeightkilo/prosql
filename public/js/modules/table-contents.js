@@ -9,6 +9,7 @@ import { Constants } from './constants.js'
 import { Stack } from './stack.js'
 import { Stream } from './stream.js'
 import { TableUtils } from './table-utils.js'
+import { PubSub } from './pubsub.js'
 
 const OPERATORS = [
     ['operator', '='],
@@ -58,6 +59,8 @@ class TableContents {
 
         //update the column name selector
         Utils.setOptions(this.$columNames, values[0], '')
+        Utils.setOptions(this.$operators, OPERATORS, '')
+        this.$searchText.value = '';
 
         let fkMap = this.createFKMap(values[1])
         Log(TAG, JSON.stringify(fkMap))
@@ -129,6 +132,7 @@ class TableContents {
             let value = target.previousSibling.textContent
 
             Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
+            PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
             await this.showFkRef(target.dataset.table, target.dataset.column, value)
             this.stack.push(target.dataset.table, target.dataset.column, value)
         })
@@ -183,6 +187,8 @@ class TableContents {
 
         //update the column name selector
         Utils.setOptions(this.$columNames, values[0], '')
+        Utils.setOptions(this.$operators, OPERATORS, '')
+        this.$searchText.value = '';
 
         this.fkMap = this.createFKMap(values[1])
         this.columns = this.extractColumns(values[0])
@@ -256,6 +262,8 @@ class TableContents {
 
     async navigate(e) {
         Log(TAG, JSON.stringify(e))
+        PubSub.publish(Constants.TABLE_CHANGED, {table: e.table});
+
         switch (e.type) {
             case 'table':
                 await this.show(e.table)

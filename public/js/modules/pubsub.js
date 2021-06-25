@@ -8,7 +8,6 @@ class PubSub {
         if (!subscribers[evt]) {
             subscribers[evt] = new Set();
         }
-
         subscribers[evt].add(cb);
     }
 

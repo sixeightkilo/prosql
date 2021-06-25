@@ -36,6 +36,25 @@ class Tables {
             PubSub.publish(Constants.TABLE_SELECTED, {table: target.innerHTML});
         })
 
+        //update highlighted table if table is changed from elsewhere
+        PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
+            //remove highlight on all element first
+            let list = this.$tables.querySelectorAll('.highlight');
+            list.forEach((e) => {
+                e.classList.remove('highlight');
+            });
+
+            //highlight new table
+            list = this.$tables.querySelectorAll('.table-name');
+            for (let i = 0; i < list.length; i++) {
+                if (list[i].innerHTML == data.table) {
+                    let parent = list[i].parentElement;
+                    parent.classList.add('highlight');
+                    break;
+                }
+            }
+        });
+
         Log(TAG, `sessionId: ${sessionId}`)
     }
 

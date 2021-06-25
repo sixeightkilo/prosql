@@ -4,6 +4,10 @@ class Constants {
         return 'tables.table-selected'
     }
 
+    static get TABLE_CHANGED() {
+        return 'table-contents.table-changed'
+    }
+
     static get SESSION_ID() {
         return 'session-id'
     }
