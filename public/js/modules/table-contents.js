@@ -25,7 +25,6 @@ const OPERATORS = [
 ]
 
 const TAG = "table-contents"
-const USE_WS = true
 
 class TableContents {
     constructor(sessionId) {
@@ -63,10 +62,6 @@ class TableContents {
         let fkMap = this.createFKMap(values[1])
         Log(TAG, JSON.stringify(fkMap))
 
-        //show BATCH_SIZE rows from table
-        //this.showHeaders(this.extractColumns(values[0]))
-        //let cols = this.extractColumns(values[0])
-        //this.tableUtils.showHeaders(this.$table, cols)
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
 
@@ -85,9 +80,13 @@ class TableContents {
                          ${this.$operators.value}
                          '${this.$searchText.value}'`
         Log(TAG, query)
-        let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(query))
-        //todo: fk map must be created here as well
-        TableContents.showResults(rows, {})
+        let params = {
+            'session-id': this.sessionId,
+            query: query
+        }
+
+        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        this.tableUtils.showContents.apply(this, [stream, this.fkMap])
     }
 
     async enable() {
@@ -142,7 +141,6 @@ class TableContents {
         }
 
         this.adjustView()
-
         this.isEnabled = true
     }
 
@@ -163,11 +161,7 @@ class TableContents {
         this.stack.reset()
         this.stack.push(table)
 
-        if (USE_WS) {
-            return this.show_ws()
-        }
-
-        this.show_ajax(table)
+        return this.show_ws()
     }
 
     async show_ws() {
@@ -190,10 +184,8 @@ class TableContents {
         //update the column name selector
         Utils.setOptions(this.$columNames, values[0], '')
 
-        let fkMap = this.createFKMap(values[1])
-        let cols = this.extractColumns(values[0])
-
-        //this.tableUtils.showHeaders(this.$table, cols)
+        this.fkMap = this.createFKMap(values[1])
+        this.columns = this.extractColumns(values[0])
 
         let params = {
             'session-id': this.sessionId,
@@ -201,38 +193,7 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
-        //this.tableUtils.showContents_batch.apply(this, [stream, fkMap])
-        this.tableUtils.showContents.apply(this, [stream, fkMap])
-    }
-
-    async show_ajax(table) {
-        let s = new Date()
-
-        let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let rows = DbUtils.fetch(this.sessionId, `select * from \`${this.table}\` limit ${Constants.BATCH_SIZE}`)
-        let contraints = DbUtils.fetch(this.sessionId, `SELECT
-                TABLE_NAME,
-                COLUMN_NAME,
-                CONSTRAINT_NAME,
-                REFERENCED_TABLE_NAME,
-                REFERENCED_COLUMN_NAME
-                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-                WHERE
-                TABLE_SCHEMA = '${this.db}\' and
-                TABLE_NAME = '${this.table}\'`)
-
-        let values = await Promise.all([columns, rows, contraints])
-
-        //update the column name selector
-        Utils.setOptions(this.$columNames, values[0], '')
-
-        let fkMap = this.createFKMap(values[2])
-        Log(TAG, JSON.stringify(fkMap))
-
-        TableContents.showResults(values[1], fkMap)
-
-        let e = new Date()
-        this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
+        this.tableUtils.showContents.apply(this, [stream, this.fkMap])
     }
 
     extractColumns(arr) {
@@ -305,40 +266,6 @@ class TableContents {
                 break
         }
         Log(TAG, "Done navigate")
-    }
-
-    static showResults(rows, fkMap) {
-        const grid = document.querySelector('revo-grid');
-        let columns = [];
-        let items = [];
-
-        for (let i = 0; i < rows.length; i++) {
-            if (i == 0) {
-                for (let j = 0; j < rows[i].length; j += 2) {
-                    columns.push({
-                        'prop': rows[i][j],
-                        'name': rows[i][j],
-                        cellTemplate: (createElement, props) => {
-                            return cellTemplate(createElement, props, {});
-                        },
-                    });
-                }
-            }
-
-            let item = {};
-            for (let j = 0; j < rows[i].length; j += 2) {
-                item[rows[i][j]] = rows[i][j + 1];
-            }
-
-            items.push(item);
-        }
-
-        Log(TAG, JSON.stringify(columns));
-        Log(TAG, JSON.stringify(items));
-
-        grid.resize = true;
-        grid.columns = columns;
-        grid.source = items;
     }
 
     async adjustView() {
