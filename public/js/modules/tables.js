@@ -3,6 +3,7 @@ import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
+import { Stream } from './stream.js'
 
 const TAG = "tables"
 const USE_WS = false
@@ -58,48 +59,41 @@ class Tables {
         this.render(this.tables)
     }
 
-	async show_ws(db) {
+    async show_ws(db) {
         Log(TAG, "show_ws")
         let params = {
             'session-id': this.sessionId,
             query: `show tables from \`${db}\``
         }
 
-        let s = new Date()
-        let ws = new WebSocket(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
 
-		this.$tables.replaceChildren()
-		let $t = document.getElementById('table-template')
-		let t = $t.innerHTML
+        this.$tables.replaceChildren()
+        let $t = document.getElementById('table-template')
+        let t = $t.innerHTML
 
-		ws.onclose = (evt) => {
-			Log(TAG, "CLOSE");
-			ws = null;
-		}
+        while (true) {
+            let row = await stream.get();
 
-		ws.onmessage = (evt) => {
-			let e = new Date()
-            let json = JSON.parse(evt.data)
+            if (row.length == 1 && row[0] == "eos") {
+                break;
+            }
 
-			let h = Utils.generateNode(t, {table: json.k[1]})
-			this.$tables.append(h)
-		}
+            let h = Utils.generateNode(t, {table: row[1]})
+            this.$tables.append(h)
+        }
+    }
 
-		ws.onerror = (evt) => {
-			Log(TAG, "ERROR: " + evt.data);
-		}
-	}
+    render(tables) {
+        this.$tables.replaceChildren()
+        let $t = document.getElementById('table-template')
+        let t = $t.innerHTML
 
-	render(tables) {
-		this.$tables.replaceChildren()
-		let $t = document.getElementById('table-template')
-		let t = $t.innerHTML
-
-		tables.forEach((tbl) => {
-			let h = Utils.generateNode(t, {table: tbl})
-			this.$tables.append(h)
-		})
-	}
+        tables.forEach((tbl) => {
+            let h = Utils.generateNode(t, {table: tbl})
+            this.$tables.append(h)
+        })
+    }
 }
 
 export { Tables }
