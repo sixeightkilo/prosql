@@ -24,7 +24,15 @@ class Tables {
                 return
             }
 
-            //this.tableContents.show(target.innerHTML)
+            //remove highlight on all element first
+            let list = this.$tables.querySelectorAll('.highlight');
+            list.forEach((e) => {
+                e.classList.remove('highlight');
+            });
+
+            let parent = target.parentElement;
+            parent.classList.add('highlight');
+
             PubSub.publish(Constants.TABLE_SELECTED, {table: target.innerHTML});
         })
 

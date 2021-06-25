@@ -21,7 +21,7 @@ const cellTemplate = (createElement, props, fkMap) => {
     }
 
     if (refTable) {
-        return createElement('div', {},
+        return createElement('div', {'class': 'cell'},
             createElement('span', {}, v),
             createElement('i', {
                 'class': 'icon-new-tab',

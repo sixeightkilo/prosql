@@ -1820,3 +1820,12 @@ body, html {
 .icon-new-tab {
 	cursor:pointer;
 }
+
+.highlight {
+	background:#888;
+}
+
+.cell .icon-new-tab {
+	margin-left:2px;
+	font-size:larger;
+}
