@@ -105,7 +105,7 @@ class Tables {
             query: `show tables from \`${db}\``
         }
 
-        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
 
         this.$tables.replaceChildren()
         let $t = document.getElementById('table-template')

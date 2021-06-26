@@ -115,7 +115,7 @@ class QueryManager {
             'req-id': Utils.uuid()
         }
 
-        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
 
         this.tableUtils.showContents.apply(this, [stream, {}, false])
     }

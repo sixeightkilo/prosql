@@ -73,7 +73,7 @@ class TableContents {
             query: query
         }
 
-        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
         this.tableUtils.showContents.apply(this, [stream, fkMap])
     }
 
@@ -88,7 +88,7 @@ class TableContents {
             query: query
         }
 
-        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
         this.tableUtils.showContents.apply(this, [stream, this.fkMap])
     }
 
@@ -198,7 +198,7 @@ class TableContents {
             query: `select * from \`${this.table}\` limit ${Constants.BATCH_SIZE}`
         }
 
-        let stream = new Stream(Constants.WS_URL + '/execute_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
         this.tableUtils.showContents.apply(this, [stream, this.fkMap])
     }
 
