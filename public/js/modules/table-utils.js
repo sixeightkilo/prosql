@@ -1,6 +1,5 @@
 import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
-import { columnTemplate } from './column-template.js'
-import { cellTemplate } from './cell-template.js'
+import { CellHandler } from './cell-handler.js'
 import { Log } from './logger.js'
 
 const TAG = "table-utils"
@@ -19,6 +18,8 @@ class TableUtils {
         let columns = [];
         let items = [];
 
+        let cellHandler = new CellHandler(grid, fkMap);
+
         while (true) {
             let row = await stream.get();
 
@@ -32,8 +33,8 @@ class TableUtils {
                         prop: row[j],
                         name: row[j],
                         cellTemplate: (createElement, props) => {
-                            return cellTemplate(createElement, props, fkMap);
-                        },
+                            return cellHandler.cellTemplate(createElement, props);
+                        }
                     });
                 }
                 i++;

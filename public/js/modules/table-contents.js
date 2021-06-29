@@ -1,6 +1,4 @@
 import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
-import { columnTemplate } from './column-template.js'
-import { cellTemplate } from './cell-template.js'
 import { Log } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
@@ -213,12 +211,16 @@ class TableContents {
 
     createFKMap(constraints) {
         let fkMap = {}
-        let colIndex, refTblIndex, refColIndex
+        let colIndex, refTblIndex, refColIndex, constraintNameIndex
 
         //first get indexes of columns of interest
         let i = 0
         constraints[0].forEach((c) => {
             switch (c) {
+                case 'CONSTRAINT_NAME':
+                    constraintNameIndex = (i + 1)
+                    break
+
                 case 'COLUMN_NAME':
                     colIndex = (i + 1)
                     break
@@ -242,6 +244,10 @@ class TableContents {
                     'ref-column': row[refColIndex],
                 }
             }
+
+            if (row[constraintNameIndex] == 'PRIMARY') {
+                fkMap['primary-key'] = row[colIndex]
+            }
         })
 
         return fkMap
@@ -258,6 +264,14 @@ class TableContents {
         })
 
         this.enable()
+
+        PubSub.subscribe('cell-edited', async (data) => {
+            Log(TAG, JSON.stringify(data));
+            let res = await DbUtils.execute(this.sessionId, 
+                encodeURIComponent(`update \`${this.table}\`
+                    set \`${data.col.name}\` = '${data.col.value}' 
+                    where \`${data.key.name}\` = '${data.key.value}'`));
+        });
     }
 
     async navigate(e) {

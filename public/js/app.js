@@ -105,7 +105,7 @@ class App {
         let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
         //Utils.setOptions(this.$databases, dbs, '')
         //debug
-        Utils.setOptions(this.$databases, dbs, 'test-generico')
+        Utils.setOptions(this.$databases, dbs, 'prod3-generico')
         var event = new Event('change');
 
         // Dispatch it.

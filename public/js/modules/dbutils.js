@@ -76,5 +76,15 @@ class DbUtils {
 
         return json.data['session-id']
     }
+
+    static async execute(sessionId, query) {
+        let params = {
+            'session-id': sessionId,
+            query: query
+        }
+
+        let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
+        return json.data
+    }
 }
 export { DbUtils }
