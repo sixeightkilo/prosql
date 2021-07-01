@@ -56,37 +56,40 @@ class Utils {
             return json
         } catch (e) {
             Log(TAG, e)
-            let res = {
-                'status' : 'error',
-                'msg': e,
-                'data': null,
-            };
+            if (e instanceof TypeError) {
+                //user must install agent
+                window.location = '/install';
+                return;
+            }
 
-            if (e['msg'] == Err.ERR_INVALID_SESSION_ID) {
+            let msg = e.msg;
+            if (msg == Err.ERR_INVALID_SESSION_ID) {
                 //user must login
                 window.location = '/login';
                 return;
             }
+
+            let res = {
+                'status' : 'error',
+                'msg': msg,
+                'data': null,
+            };
 
             //let client handle this
             if (!handleError) {
                 return res
             }
 
-            if (e['msg'] == Err.ERR_INVALID_CURSOR_ID) {
+            if (msg == Err.ERR_INVALID_CURSOR_ID) {
                 //let caller handle this too
                 return res
             }
 
             //common error handling
-            if (e.msg) {
+            if (msg) {
                 //normal error. Display to user
                 alert(e.msg)
             }
-
-            //something terrible happened
-            Log(TAG, `${url}: Unrecoverable error`)
-            alert("Unrecoverable error. Most likely prosql agent is dead or not installed:-(")
         }
     }
 
@@ -116,12 +119,12 @@ class Utils {
         Log(TAG, "No data")
     }
 
-	//https://gist.github.com/gordonbrander/2230317
-	static uuid() {
-		// Math.random should be unique because of its seeding algorithm.
-		// Convert it to base 36 (numbers + letters), and grab the first 9 characters
-		// after the decimal.
-		return '_' + Math.random().toString(36).substr(2, 9);
-	};
+    //https://gist.github.com/gordonbrander/2230317
+    static uuid() {
+        // Math.random should be unique because of its seeding algorithm.
+        // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+        // after the decimal.
+        return '_' + Math.random().toString(36).substr(2, 9);
+    };
 }
 export { Utils }
