@@ -29,6 +29,10 @@ class Stream {
                 this.ws.onmessage = (evt) => {
                     let res = this.promises.shift();
                     let json = JSON.parse(evt.data);
+                    if (json.status == "error") {
+                        this.rej(json.msg);
+                        return;
+                    }
                     res(json['k']);
                 }
                 this.registered = true;

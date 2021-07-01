@@ -56,25 +56,31 @@ class Utils {
             return json
         } catch (e) {
             Log(TAG, e)
+            let res = {
+                'status' : 'error',
+                'data': null,
+            };
+
+            let msg;
+
             if (e instanceof TypeError) {
+                if (!handleError) {
+                    res.msg = Err.ERR_NO_AGENT;
+                    return res;
+                }
                 //user must install agent
                 window.location = '/install';
                 return;
             }
 
-            let msg = e.msg;
+            msg = e.msg;
             if (msg == Err.ERR_INVALID_SESSION_ID) {
                 //user must login
                 window.location = '/login';
                 return;
             }
 
-            let res = {
-                'status' : 'error',
-                'msg': msg,
-                'data': null,
-            };
-
+            res.msg = msg;
             //let client handle this
             if (!handleError) {
                 return res

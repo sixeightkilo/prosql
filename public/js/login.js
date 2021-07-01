@@ -1,3 +1,4 @@
+import { Err } from './modules/error.js'
 import { Log } from './modules/logger.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
@@ -66,7 +67,17 @@ class Login {
 
     async ping(creds) {
         let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(creds), false)
-        return json.status
+        if (json.status == "error") {
+            if (json.msg == Err.ERR_NO_AGENT) {
+                window.location = '/install';
+                return "error";
+            }
+
+            alert(json.msg);
+            return "error";
+        }
+
+        return "ok";
     }
 
     getCreds() {

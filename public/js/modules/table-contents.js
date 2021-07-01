@@ -30,6 +30,12 @@ class TableContents {
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
+
+        PubSub.subscribe(Constants.STREAM_ERROR, (data) => {
+            if (this.isEnabled) {
+                alert(data.error);
+            }
+        });
     }
 
     setSessionInfo(sessionId, db) {

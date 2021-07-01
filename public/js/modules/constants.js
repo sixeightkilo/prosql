@@ -1,5 +1,9 @@
 class Constants {
     //events
+    static get STREAM_ERROR() {
+        return 'stream.stream-error'
+    }
+
     static get TABLE_SELECTED() {
         return 'tables.table-selected'
     }

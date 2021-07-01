@@ -1,7 +1,9 @@
 import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
 import { CellHandler } from './cell-handler.js'
 import { Log } from './logger.js'
+import { Constants } from './constants.js'
 import { Utils } from './utils.js'
+import { PubSub } from './pubsub.js'
 
 const TAG = "table-utils"
 
@@ -29,7 +31,15 @@ class TableUtils {
         let cellHandler = new CellHandler(grid, fkMap);
 
         while (true) {
-            let row = await stream.get();
+            let row
+            try {
+                row = await stream.get();
+            } catch (e) {
+                PubSub.publish(Constants.STREAM_ERROR, {
+                    'error': e
+                });
+                break;
+            }
 
             if (row.length == 1 && row[0] == "eos") {
                 break;

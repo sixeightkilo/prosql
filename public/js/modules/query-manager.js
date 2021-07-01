@@ -8,6 +8,7 @@ import { CodeJar } from 'https://medv.io/codejar/codejar.js'
 import { TableUtils } from './table-utils.js'
 import { Stream } from './stream.js'
 import { GridResizerV } from './grid-resizer-v.js'
+import { PubSub } from './pubsub.js'
 
 const TAG = "query-manager"
 const USE_WS = true
@@ -17,6 +18,11 @@ class QueryManager {
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
+        PubSub.subscribe(Constants.STREAM_ERROR, (data) => {
+            if (this.isEnabled) {
+                alert(data.error);
+            }
+        });
     }
 
     setSessionInfo(sessionId, db) {
