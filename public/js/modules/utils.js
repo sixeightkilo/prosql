@@ -56,39 +56,35 @@ class Utils {
             return json
         } catch (e) {
             Log(TAG, e)
-
-            if (e['msg'] == Err.ERR_INVALID_SESSION_ID) {
-                //user must login
-                window.location = '/login';
-                return
-            }
-
-            if (e['msg'] == Err.ERR_INVALID_CURSOR_ID) {
-                //let caller handle this
-                return {
-                    'status' : 'error',
-                    'msg': e['msg'],
-                    'data': null,
-                }
-            }
-
-            if (e.msg) {
-                //normal error. Display to user
-                alert(e.msg)
-                return e
-            }
-
-            //something terrible happened
             let res = {
                 'status' : 'error',
                 'msg': e,
                 'data': null,
             };
 
+            if (e['msg'] == Err.ERR_INVALID_SESSION_ID) {
+                //user must login
+                window.location = '/login';
+                return;
+            }
+
+            //let client handle this
             if (!handleError) {
                 return res
             }
 
+            if (e['msg'] == Err.ERR_INVALID_CURSOR_ID) {
+                //let caller handle this too
+                return res
+            }
+
+            //common error handling
+            if (e.msg) {
+                //normal error. Display to user
+                alert(e.msg)
+            }
+
+            //something terrible happened
             Log(TAG, `${url}: Unrecoverable error`)
             alert("Unrecoverable error. Most likely prosql agent is dead or not installed:-(")
         }

@@ -1,14 +1,9 @@
 doctype html
 html
     head
-        meta(name="viewport" content="width=device-width, initial-scale=1")
-        link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css")
-        link(rel="stylesheet" href="/css/styles.css")
+        include head.pug
     body
-		nav.navbar(role='navigation' aria-label='main navigation')
-			.navbar-brand
-				a.navbar-item(href='/')
-					h1.is-size-3 Prosql
+        include navbar.pug
 		.columns
 	        .column	
 	        .column.is-one-third
@@ -19,7 +14,7 @@ html
 								| Prosql-agent not detected
 							button.card-header-icon
 								span.icon
-									i.icon-wondering.has-text-black-bis
+									i.fas.fa-spinner.fa-spin
                 section.instructions
                     section.mt-5
                         .h1.is-size-2 Just one small step ...

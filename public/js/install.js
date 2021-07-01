@@ -38,12 +38,13 @@ class Install {
     updateCard() {
         this.$card.classList.remove('has-background-light');
         this.$cardText.classList.remove('has-text-black-bis');
-        this.$cardIcon.classList.remove('icon-wondering');
+        this.$cardIcon.classList.remove('fa-spinner');
+        this.$cardIcon.classList.remove('fa-spin');
 
-        this.$card.classList.add('has-background-success-dark');
+        this.$card.classList.add('has-background-success');
         this.$cardText.classList.add('has-text-white-bis');
         this.$cardText.innerHTML = 'Prosql-agent working fine!';
-        this.$cardIcon.classList.add('icon-smile');
+        this.$cardIcon.classList.add('fa-check-circle');
         this.$cardIcon.classList.add('has-text-white-bis');
     }
 

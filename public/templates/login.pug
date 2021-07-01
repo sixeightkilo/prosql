@@ -1,10 +1,9 @@
 doctype html
 html
     head
-        meta(name="viewport" content="width=device-width, initial-scale=1")
-        link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css")
-        link(rel='stylesheet', href='/css/styles.css')
+        include head.pug
     body
+        include navbar.pug
         div#login-container.content
             div#login-left-container
                 #login-fav-title Favorites
@@ -37,7 +36,11 @@ html
                             input(type="text" id="db" value="prod3-generico" placeholder="db")
 
                 div#login-btn-container
-                    button.button(id="test") Test connection
+                    button.button(id="test")
+                        span Test connection
+                        span.icon.is-small
+                            i.test-icon.fas
+
                     button.button(id="login") Login 
 
         script(type='module' src='/js/login.js')

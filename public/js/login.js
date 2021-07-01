@@ -21,6 +21,7 @@ class Login {
 
     async init() {
         this.$testConn = document.getElementById('test')
+        this.$testIcon = document.querySelector('.test-icon')
         this.$login = document.getElementById('login')
         this.$user = document.getElementById('user')
         this.$pass = document.getElementById('pass')
@@ -39,14 +40,32 @@ class Login {
     }
 
     async testConn() {
+        this.$testIcon.classList.add('fa-spinner');
+        this.$testIcon.classList.add('fa-spin');
+
         let creds = this.getCreds()
-        if (await this.ping(creds) == 'ok') {
-            this.utils.showAlert('Connection successful!', 2000)
+        let s = await this.ping(creds);
+        Log(TAG, s);
+
+        this.$testIcon.classList.remove('fa-spinner');
+        this.$testIcon.classList.remove('fa-spin');
+
+        if (s == 'ok') {
+            this.$testIcon.classList.remove('fa-times-circle');
+            this.$testIcon.classList.remove('has-text-danger');
+            this.$testIcon.classList.add('fa-check-circle');
+            this.$testIcon.classList.add('has-text-success');
+            return
         }
+
+        this.$testIcon.classList.remove('fa-check-circle');
+        this.$testIcon.classList.remove('has-text-success');
+        this.$testIcon.classList.add('fa-times-circle');
+        this.$testIcon.classList.add('has-text-danger');
     }
 
     async ping(creds) {
-        let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(creds))
+        let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(creds), false)
         return json.status
     }
 
