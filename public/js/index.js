@@ -1,5 +1,6 @@
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
+import { Monitor } from './modules/monitor.js'
 
 class Index {
     constructor() {
@@ -16,8 +17,13 @@ class Index {
         this.$getStarted = document.getElementById('get-started')
     }
 
-    getStarted() {
-        window.location = '/login';
+    async getStarted() {
+        if (await Monitor.isAgentInstalled()) {
+            window.location = '/login';
+            return;
+        }
+
+        window.location = '/install';
     }
 }
 

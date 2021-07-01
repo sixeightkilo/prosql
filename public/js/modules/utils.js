@@ -37,13 +37,15 @@ class Utils {
         return template.content
     }
 
-    static async fetch(url) {
+    static async fetch(url, handleError = true) {
         try {
             let response = await fetch(url, {
                 headers: {
-                    'X-Request-ID': this.uuid()
+                    'X-Request-ID': Utils.uuid()
                 }
             })
+
+            Log(TAG, response)
 
             let json = await response.json()
 
@@ -77,13 +79,18 @@ class Utils {
             }
 
             //something terrible happened
-            Log(TAG, `${url}: Unrecoverable error`)
-            alert("Unrecoverable error. Most likely prosql agent is dead or not installed:-(")
-            return {
+            let res = {
                 'status' : 'error',
                 'msg': e,
                 'data': null,
+            };
+
+            if (!handleError) {
+                return res
             }
+
+            Log(TAG, `${url}: Unrecoverable error`)
+            alert("Unrecoverable error. Most likely prosql agent is dead or not installed:-(")
         }
     }
 

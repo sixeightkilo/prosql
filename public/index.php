@@ -20,6 +20,10 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
         $res->getBody()->write($pug->renderFile(__DIR__ . "/templates/login.pug"));
         return $res;
 
+	case 'install':
+        $res->getBody()->write($pug->renderFile(__DIR__ . "/templates/install.pug"));
+        return $res;
+
 	case 'app':
         $res->getBody()->write($pug->renderFile(__DIR__ . "/templates/app.pug"));
         return $res;

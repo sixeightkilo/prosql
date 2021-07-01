@@ -5,32 +5,39 @@ html
         link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css")
         link(rel='stylesheet', href='/css/styles.css')
     body
-        include navbar.pug
-        include common.pug
-
-        div#login-container
+        div#login-container.content
             div#login-left-container
                 #login-fav-title Favorites
             div#login-right-container
-                div#login-form-container
-                    div#login-user-container
-                        label(for=user) Username
-                        input(type="text" id="user" value="server" placeholder="user")
-                    div#login-pass-container
-                        label(for=pass) Password
-                        input(type="password" id="pass" value="dev-server" placeholder="pass")
-                    div#login-host-container
-                        label(for=host) Host
-                        input(type="text" id="host" value="127.0.0.1" placeholder="host")
-                    div#login-port-container
-                        label(for=port) Port
-                        input(type="text" id="port" value="3310" placeholder="port")
-                    div#login-db-container
-                        label(for=db) Database
-                        input(type="text" id="db" value="prod3-generico" placeholder="db")
+                div#login-form-container.control
+                    div#login-user-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for=user) Username
+                        .field-body
+                            input(type="text" id="user" value="server" placeholder="user")
+                    div#login-pass-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for=pass) Password
+                        .field-body
+                            input(type="password" id="pass" value="dev-server" placeholder="pass")
+                    div#login-host-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for=host) Host
+                        .field-body
+                            input(type="text" id="host" value="127.0.0.1" placeholder="host")
+                    div#login-port-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for=port) Port
+                        .field-body
+                            input(type="text" id="port" value="3310" placeholder="port")
+                    div#login-db-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for=db) Database
+                        .field-body
+                            input(type="text" id="db" value="prod3-generico" placeholder="db")
 
                 div#login-btn-container
-                    button(id="test") Test connection
-                    button(id="login") Login 
+                    button.button(id="test") Test connection
+                    button.button(id="login") Login 
 
         script(type='module' src='/js/login.js')
