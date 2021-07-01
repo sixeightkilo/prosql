@@ -46,7 +46,7 @@ class QueryManager {
         let $e1 = document.getElementById('query-editor');
         let $e2 = document.getElementById('query-results');
         let $resizer = document.getElementById('query-container-resizer');
-        new GridResizerV($g1, $e1, $resizer, $e2, 'vertical');
+        new GridResizerV($g1, $e1, $resizer, $e2);
 
         this.$queryResults = document.getElementById('query-results')
         this.$table = this.$queryResults.querySelector('table')

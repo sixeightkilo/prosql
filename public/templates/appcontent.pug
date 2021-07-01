@@ -1,9 +1,11 @@
 #app-content
     #app-left-panel-container
         #app-left-panel
-            div#table-filter-container
-                i.icon-search
-                input(type="text" id="table-filter")
+            div.field
+                p.control.has-icons-left
+                    input.input.is-small(type="text" id="table-filter")
+                    span.icon.is-small.is-left
+                        i.fas.fa-search
             div Tables and Views
             div#tables
             div#table-info Table Info
@@ -28,8 +30,8 @@
 
     script(type='code' id='query-container-template')
         #query-sub-menu
-            i.icon-paint-format#format-query
-            i.icon-play3#run-query
+            i.fas.fa-paint-roller#format-query
+            i.fas.fa-play#run-query
         #query-container
             #query-editor(contenteditable="true")
             #query-container-resizer
@@ -39,13 +41,13 @@
     script(type='code' id='table-contents-template')
         #search-bar
             div Search
-            div
+            div.select.is-small
                 select#column-names
-            div
+            div.select.is-small
                 select#operators
             div
-                input#search-text(type="text")
+                input.input.is-small#search-text(type="text")
             div
-                button#search Filter
+                button.button.is-small#search Filter
         #table-contents
             revo-grid.grid-component

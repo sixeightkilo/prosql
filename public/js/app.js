@@ -95,7 +95,7 @@ class App {
         let $e1 = document.getElementById('app-left-panel-container');
         let $e2 = document.getElementById('app-right-panel');
         let $resizer = document.getElementById('app-content-resizer');
-        new GridResizerH($g1, $e1, $resizer, $e2, 'horizontal');
+        new GridResizerH($g1, $e1, $resizer, $e2);
 
         //debug
         //this.queryManager.enable()

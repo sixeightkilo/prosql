@@ -170,12 +170,12 @@ sup {
 /* app right panel */
 #app-right-panel {
 	display:grid;
-	grid-template-rows: 2em auto;
+	grid-template-rows: 2.5em auto;
 }
 
 #query-container {
 	display:grid;
-	grid-template-rows: 1fr 2px 1fr;
+	grid-template-rows: 200px 2px auto;
 }
 
 #query-container-resizer {

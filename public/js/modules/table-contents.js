@@ -98,7 +98,7 @@ class TableContents {
             return
         }
 
-        this.$root.style.gridTemplateRows = "2em auto"
+        this.$root.style.gridTemplateRows = "2.5em auto"
         this.$root.replaceChildren()
         let n = Utils.generateNode(this.$rootTemplate, {})
         this.$root.append(n)
