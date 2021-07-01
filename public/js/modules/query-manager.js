@@ -29,7 +29,6 @@ class QueryManager {
         this.$root = document.getElementById('app-right-panel')
         this.$rootTemplate = document.getElementById('query-container-template').innerHTML
         this.$footer = document.getElementById('footer-right-panel')
-        this.tableUtils = new TableUtils()
     }
 
     async enable() {
@@ -50,6 +49,7 @@ class QueryManager {
 
         this.$queryResults = document.getElementById('query-results')
         this.$table = this.$queryResults.querySelector('table')
+        this.tableUtils = new TableUtils(this.$queryResults);
 
         //this.adjustView()
 
@@ -117,7 +117,7 @@ class QueryManager {
 
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
 
-        this.tableUtils.showContents.apply(this, [stream, {}, false])
+        this.tableUtils.showContents(stream, {}, false)
     }
 
     extractCols(row) {

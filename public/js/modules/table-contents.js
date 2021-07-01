@@ -72,7 +72,7 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents.apply(this, [stream, fkMap])
+        this.tableUtils.showContents(stream, fkMap)
     }
 
     async search() {
@@ -87,7 +87,7 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents.apply(this, [stream, this.fkMap])
+        this.tableUtils.showContents(stream, this.fkMap)
     }
 
     async enable() {
@@ -108,8 +108,10 @@ class TableContents {
         this.$searchText = document.getElementById('search-text')
         this.$search = document.getElementById('search')
         this.$tableContents = document.getElementById('table-contents')
-        //this.$table = this.$tableContents.querySelector('table')
         this.contentWidth = this.$tableContents.getBoundingClientRect().width
+
+        this.$contents = document.getElementById('table-contents')
+        this.tableUtils = new TableUtils(this.$contents)
 
         this.$search.addEventListener('click', async () => {
             this.search()
@@ -197,7 +199,7 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents.apply(this, [stream, this.fkMap])
+        this.tableUtils.showContents(stream, this.fkMap)
     }
 
     extractColumns(arr) {
@@ -257,7 +259,6 @@ class TableContents {
         this.$root = document.getElementById('app-right-panel')
         this.$rootTemplate = document.getElementById('table-contents-template').innerHTML
         this.$footer = document.getElementById('footer-right-panel')
-        this.tableUtils = new TableUtils()
 
         this.stack = new Stack(async (e) => {
             await this.navigate(e)

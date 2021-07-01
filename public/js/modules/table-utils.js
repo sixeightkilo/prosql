@@ -1,18 +1,26 @@
 import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
 import { CellHandler } from './cell-handler.js'
 import { Log } from './logger.js'
+import { Utils } from './utils.js'
 
 const TAG = "table-utils"
 
 class TableUtils {
-    constructor() {
+    constructor($root) {
         defineCustomElements();
+        this.$root = $root;
     }
 
     async showContents(stream, fkMap, clear = true) {
-        let s = new Date()
+        let grid = this.$root.querySelector('revo-grid');
+        //clear existing grid if any
+        if (grid != null) {
+            grid.remove();
+        }
 
-        const grid = document.querySelector('revo-grid');
+        let n = Utils.generateNode('<revo-grid class=grid-component></revo-grid>', {});
+        this.$root.append(n);
+        grid = this.$root.querySelector('revo-grid');
 
         let i = 0;
         let columns = [];
@@ -51,10 +59,6 @@ class TableUtils {
         grid.resize = true;
 		grid.columns = columns;
 		grid.source = items;
-
-        let e = new Date()
-        this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
-        Log(TAG, 'done showContents')
     }
 }
 
