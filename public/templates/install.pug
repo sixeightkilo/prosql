@@ -4,17 +4,17 @@ html
         include head.pug
     body
         include navbar.pug
-		.columns
-	        .column	
-	        .column.is-one-third
+        .columns
+            .column	
+            .column.is-one-third
                 section
-					.card.has-background-light
-						header.card-header
-							p.card-header-title.has-text-black-bis
-								| Prosql-agent not detected
-							button.card-header-icon
-								span.icon
-									i.fas.fa-spinner.fa-spin
+                    .card.has-background-light
+                        header.card-header
+                            p.card-header-title.has-text-black-bis
+                                | Prosql-agent not detected
+                            button.card-header-icon
+                                span.icon
+                                    i.fas.fa-spinner.fa-spin
                 section.instructions
                     section.mt-5
                         .h1.is-size-2 Just one small step ...
@@ -41,5 +41,5 @@ html
                             .tab-content.linux Instructions for Linux
                             .tab-content.mac Instructions for Mac
                             .tab-content.other Instructions for Other
-			.column	
+            .column	
         script(type='module' src='/js/install.js')

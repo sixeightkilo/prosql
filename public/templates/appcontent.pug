@@ -19,14 +19,14 @@
             i.icon-table 
             span.table-name {table}
 
-	script(type='code' id='results-header-col-template')
-            th {heading}
+    script(type='code' id='results-header-col-template')
+        th {heading}
 
-	script(type='code' id='results-body-col-template')
-            td
-                div.td
-                    span {value}
-                    i.fk-ref.icon-new-tab("data-table"="{ref-table}" "data-column"="{ref-column}")
+    script(type='code' id='results-body-col-template')
+        td
+            div.td
+                span {value}
+                i.fk-ref.icon-new-tab(data-table="{ref-table}" data-column="{ref-column}")
 
     script(type='code' id='query-container-template')
         #query-sub-menu
