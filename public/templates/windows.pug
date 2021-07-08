@@ -1,0 +1,14 @@
+- var ver = "0.5"
+| Download the latest release for windows from 
+| #[a(href="https://github.com/kargirwar/prosql-agent/releases/tag/v#{ver}" target="_blank") github] #[br]
+| Extract contents of zip file. #[br]
+| Open cmd application #[strong as Admininstrator]. Navigate to the folder where you extracted
+| the zip file. #[br]
+| From cmd: #[br]
+| $cd prosql-agent-v0.5-windows\release\windows#[br]
+| $prosqlctl.exe install prosql-agent prosql-exe#[br] #[br]
+| Windows will open a popup giving a warning. Verify that the 
+| name of publisher is prosql.io. Then click "Allow access"#[br]#[br]
+| From cmd again:#[br]
+| $prosqlctl.exe set prosql-agent AppDirectory %CD%
+| $prosqlctl.exe start prosql-agent
