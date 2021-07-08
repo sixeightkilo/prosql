@@ -1,0 +1,46 @@
+doctype html
+html
+    head
+        include head.pug
+    body
+        include navbar.pug
+        div#login-container.content
+            div#login-left-container
+                #login-fav-title.is-size-5 Favorites
+            div#login-right-container
+                div#login-form-container.control
+                    div#login-user-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for="user") Username
+                        .field-body
+                            input(type="text" id="user" value="server" placeholder="user")
+                    div#login-pass-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for="pass") Password
+                        .field-body
+                            input(type="password" id="pass" value="dev-server" placeholder="pass")
+                    div#login-host-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for="host") Host
+                        .field-body
+                            input(type="text" id="host" value="127.0.0.1" placeholder="host")
+                    div#login-port-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for="port") Port
+                        .field-body
+                            input(type="text" id="port" value="3310" placeholder="port")
+                    div#login-db-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for="db") Database
+                        .field-body
+                            input(type="text" id="db" value="prod3-generico" placeholder="db")
+
+                div#login-btn-container
+                    button.button(id="test")
+                        span Test connection
+                        span.icon.is-small
+                            i.test-icon.fas
+
+                    button.button(id="login") Login 
+
+        script(type='module' src='/js/login.js')
