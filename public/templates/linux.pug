@@ -1,12 +1,20 @@
 - var ver = "0.5"
-| Download the latest release for linux from 
-| #[a(href="https://github.com/kargirwar/prosql-agent/releases/tag/v#{ver}" target="_blank") github].
+- var os = "linux"
 | Open a terminal. Then do:#[br]
-| $unzip prosql-agent-v#{ver}-linux.zip #[br]
-| $cd prosql-agent/release/linux #[br]
-| $prosqlctl -install #[br]
+pre
+    | $curl -L https://git.io/#{os}-#{ver} > prosql-agent.zip
+    | $unzip prosql-agent.zip
+    | $cd prosql-agent/release/#{os} 
+    | $sudo prosqlctl -install
+
 | You should see something like: #[br]
-| Copying agent to /usr/local/bin ... #[br]
-| Creating plist ... #[br]
-| Starting ... #[br]
-| Installed successfully!
+pre Copying agent to /usr/local/bin ... 
+    | Creating unit ... 
+    | Reloading serivces ... 
+    | Enabling prosql-agent... 
+    | Starting prosql-agent... 
+    | Installed successfully!
+| #[br]
+| To uninstall:
+pre
+    | $sudo prosqlctl -uninstall

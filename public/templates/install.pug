@@ -1,7 +1,10 @@
 doctype html
 html
     head
-        include head.pug
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+        link(rel="stylesheet" href="/css/all.min.css")
+        link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css")
+        link(rel="stylesheet" href="/css/install.css")
     body
         include navbar.pug
         .columns
@@ -21,9 +24,10 @@ html
                     section
                         p.has-text-justified
                             | Prosql needs a lightweight agent installed on your computer.
-                            | It's #[a(href="https://github.com/kargirwar/prosql-agent", target="_blank") open source]
+                            |  It's #[a(href="https://github.com/kargirwar/prosql-agent", target="_blank") open source ]
                             | and takes less than a minute to install! Find instructions below for your
-                            | operating system.
+                            | operating system. #[br] #[br]
+                            | Once installation is successfull, this page will automatically redirect.
                     
                     section.mt-5
                         .tabs.is-fullwidth
@@ -44,6 +48,6 @@ html
                             .tab-content.mac 
                                 include mac.pug
                             .tab-content.other 
-                                | Instructions for Other
+                                include other.pug
             .column	
         script(type='module' src='/js/install.js')
