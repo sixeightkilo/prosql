@@ -21,8 +21,8 @@ html
                     section
                         p.has-text-justified
                             | Prosql needs a lightweight agent installed on your computer.
-                            | Don't worry, it's fairly simple and straightforward to do that
-                            | and takes less than a minute! Find instructions below for your
+                            | It's #[a(href="https://github.com/kargirwar/prosql-agent", target="_blank") open source]
+                            | and takes less than a minute to install! Find instructions below for your
                             | operating system.
                     
                     section.mt-5
@@ -37,9 +37,13 @@ html
                                 li
                                     a.other Other
                         .container
-                            .tab-content.windows Instructions for Windows
-                            .tab-content.linux Instructions for Linux
-                            .tab-content.mac Instructions for Mac
-                            .tab-content.other Instructions for Other
+                            .tab-content.windows
+                                include windows.pug
+                            .tab-content.linux
+                                include linux.pug
+                            .tab-content.mac 
+                                include mac.pug
+                            .tab-content.other 
+                                | Instructions for Other
             .column	
         script(type='module' src='/js/install.js')
