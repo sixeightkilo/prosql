@@ -36,7 +36,6 @@
             #query-editor(contenteditable="true")
             #query-container-resizer
             #query-results
-                revo-grid.grid-component
 
     script(type='code' id='table-contents-template')
         #search-bar
@@ -50,4 +49,7 @@
             div
                 button.button.is-small#search Filter
         #table-contents
-            revo-grid.grid-component
+
+    script(type='code' id='table-loader-template')
+        div.table-loader
+            i.fas.fa-spinner.fa-spin
