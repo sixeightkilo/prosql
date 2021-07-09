@@ -1,0 +1,82 @@
+doctype html
+html
+    head
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+        link(rel="stylesheet" href="/css/all.min.css")
+        link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.3/css/bulma.min.css")
+    body
+        include navbar.pug
+        .columns
+            .column	
+            .column.is-three-fifths
+                section
+                    .content
+                        .h3.is-size-3 Do we really need another MySQL client?
+                        p.has-text-justified
+                            |Absolutely! I have been working with MySQL for some time now and have been 
+                            |utterly frustrated with the available clients. #[br]
+                            |#[a(href="") Mysql Workbench], the offcial client is atrocious. I dread using it.#[br]
+                            |#[a(href="") DBeaver] is better. But much too clunky for my taste and loaded 
+                            |with features which most users don't use on a day-to-day basis.#[br]
+                            |#[a(href="") Navicat] is much too expensive and yet it is not all that good.#[br] 
+                            |#[a(href="") PHPMyAdmin] is decent, but not everyone has PHP or wants to use a PHP based 
+                            |application. It is also not known to be very secure.#[br]
+                            |There are a few others, but more or less it's the same story.#[br] #[br]
+                            |That leaves #[a(href="") Sequel Pro] ..
+                            |I love it! It is so simple, elegant and intuitive. A no-nonsense application like 
+                            |every application should be! Alas! It too has some fatal flaws:#[br]
+                            ul
+                                li No support for MySQL 8.0
+                                li Much too unstable. Crashes all the time
+                                li Misses out on same basic features like query formatting
+                                li Lastly, it works only on Mac
+                            |It is safe to say prosql.io is an attempt to match or better Sequel Pro. In fact, the 
+                            |name prosql is also inspired by it ;-)
+
+                        .h3.is-size-3 But why a browser based app.. why not build a native app?
+                        p.has-text-justified
+                            |We are in 2021. Computers and Operating Systems were invented decades back. Sadly,
+                            |even today there is no painless way of developing cross platform applications.
+                            |Browsers are the best way to deliver applications to users across platforms.#[br]
+                            |Besides, browsers have a unique advantage: It is very easy to push bug fixes and
+                            |new features to users!
+
+                        .h3.is-size-3 Have you really explored all options ..say electron.js?
+                        p.has-text-justified
+                            |Don't get me started.. electron.js wraps entire browser and node runtime into every 
+                            |application. I shudder at the monstrosity. I don't want users to download 150MB
+                            |applications which will use up half their RAM. Too clunky, too bloated, too resource
+                            |intensive.#[br]
+                            |#[a(href="") Flutter] looks interesting..But it is taking forever to get into production #[br]
+                            |#[a(href="") QT] has been around, but does not have native look and feel and it was 
+                            |not very appetizing to work with QT.
+
+                        .h3.is-size-3 What about Java?
+                        p.has-text-justified
+                            |Sure! If you like Java language, the look and feel of Java applications and are OK
+                            |with users having to download JVM.. Not my cup of tea.
+
+                        .h3.is-size-3 OK, so how does prosql work?
+                        p.has-text-justified
+                            |Think of it like a web app with your computer as the backend. An agent installed on your
+                            |computer talks to the MySQL server and exposes REST APIs to the browser. 
+                            |The agent is built in Go and works perfectly on all the major platforms.
+                            |It is also very light on resources.
+
+                        .h3.is-size-3 What about performance? Can it match native clients?
+                        p.has-text-justified
+                            |I have done some benchmarks. The Go client's performance is comparable to official MySQL
+                            |C client. So that leaves the overhead of communication with the browsers. This is of the 
+                            |order of 10ms per request. Not at all significant. The biggest problem is how to display
+                            |thousands of rows in the browser. This is WIP. Eventually I hope to have a performace
+                            |comparable to native clients.
+
+                        .h3.is-size-3 Is it secure?
+                        p.has-text-justified
+                            |The application works if and only if the agent is installed on your computer
+                            |and it cannot be accessed remotely. Don't worry! Hackers will not be able to 
+                            |access your MySQL server!
+
+                        p.is-size-4
+                            |Enough said. Lets get #[a(href="/login") started!]
+            .column	

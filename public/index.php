@@ -21,6 +21,9 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
 	case '':
         return $renderer->render($res, __DIR__ . "/templates/index.pug", []);
 
+	case 'read-more':
+        return $renderer->render($res, __DIR__ . "/templates/read-more.pug", []);
+
 	case 'login':
         return $renderer->render($res, __DIR__ . "/templates/login.pug", []);
 
