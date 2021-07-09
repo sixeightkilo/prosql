@@ -131,7 +131,7 @@ class TableContents {
 
         this.$tableContents.addEventListener('click', async (e) => {
             let target = event.target;
-            if (target.className != 'icon-new-tab') {
+            if (!target.classList.contains('fk-icon')) {
                 return
             }
 
