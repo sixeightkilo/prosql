@@ -9,9 +9,9 @@ class CellHandler {
         this.fkMap = fkMap;
 
         this.grid.addEventListener('afteredit', async (e) => {
-            Log(TAG, e['detail']['val']);
-            Log(TAG, e['detail']['rowIndex']);
-            Log(TAG, e['detail']['prop']);
+            //Log(TAG, e['detail']['val']);
+            //Log(TAG, e['detail']['rowIndex']);
+            //Log(TAG, e['detail']['prop']);
             this.edited.add(e['detail']['rowIndex']);
             this.grid.clearFocus();
 
@@ -32,7 +32,7 @@ class CellHandler {
     }
 
     cellTemplate(createElement, props) {
-        Log(TAG, props.rowIndex);
+        //Log(TAG, props.rowIndex);
         let p = props.model[props.prop]
         let nullClass = '';
 

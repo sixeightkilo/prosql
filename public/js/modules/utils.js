@@ -16,7 +16,7 @@ class Utils {
         sessionStorage.setItem(key, val)
     }
 
-    static getFromSession(key, val) {
+    static getFromSession(key) {
         return sessionStorage.getItem(key)
     }
 

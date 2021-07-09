@@ -29,7 +29,20 @@ class Login {
         this.$host = document.getElementById('host')
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
-        this.utils = new Utils()
+        this.setCreds();
+    }
+
+    setCreds() {
+        let creds = Utils.getFromSession('creds');
+        if (!creds) {
+            return;
+        }
+
+        creds = JSON.parse(creds);
+        for (let k in creds) {
+            let $elem = document.getElementById(k);
+            $elem.value = creds[k];
+        }
     }
 
     async login() {
