@@ -11,6 +11,7 @@ class TableUtils {
     constructor($root) {
         defineCustomElements();
         this.$root = $root;
+        this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
     }
 
     async showContents(stream, fkMap, clear = true) {
@@ -19,6 +20,8 @@ class TableUtils {
         if (grid != null) {
             grid.remove();
         }
+
+        this.showLoader();
 
         let n = Utils.generateNode('<revo-grid class=grid-component></revo-grid>', {});
         this.$root.append(n);
@@ -66,6 +69,8 @@ class TableUtils {
             items.push(item);
         }
 
+        this.hideLoader();
+
         if (items.length == 0) {
             columns = [
                 {
@@ -78,6 +83,26 @@ class TableUtils {
         grid.resize = true;
 		grid.columns = columns;
 		grid.source = items;
+    }
+
+    showLoader() {
+        //todo:this is very hackish. Must be accomplished with CSS alone
+        let n = Utils.generateNode(this.$loaderTemplate, {});
+        document.querySelector('body').append(n);
+        let loader = document.querySelector('.table-loader');
+        let dims = this.$root.getBoundingClientRect()
+        loader.style.width = dims.width + 'px';
+        loader.style.height = dims.height + 'px';
+        loader.style.left = dims.left + 'px';
+        loader.style.top = dims.top + 'px';
+        let spinner = loader.querySelector('i');
+        spinner.style.left = (dims.width / 2) + 'px';
+        spinner.style.top = (dims.height / 4) + 'px';
+    }
+
+    hideLoader() {
+        let loader = document.querySelector('.table-loader');
+        loader.remove();
     }
 }
 

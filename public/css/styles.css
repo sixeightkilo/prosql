@@ -189,6 +189,16 @@ sup {
 	overflow:scroll;
 }
 
+.table-loader {
+	position:fixed;
+}
+
+.table-loader i {
+	display:block;
+	position:absolute;
+	font-size:2em;
+}
+
 #query-results thead th,
 #table-contents thead th {
 	position:sticky;
