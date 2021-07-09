@@ -55,7 +55,7 @@ class CellHandler {
             return createElement('div', {},
                 createElement('span', {}, v),
                 createElement('i', {
-                    'class': 'icon-new-tab',
+                    'class': 'fk-icon fas fa-arrow-circle-right',
                     'data-table': refTable,
                     'data-column': refColumn,
                 }));

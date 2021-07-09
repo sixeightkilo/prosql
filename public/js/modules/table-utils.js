@@ -66,6 +66,15 @@ class TableUtils {
             items.push(item);
         }
 
+        if (items.length == 0) {
+            columns = [
+                {
+                    'prop' : '0 Rows',
+                    'name' : '0 Rows',
+                }
+            ];
+        }
+
         grid.resize = true;
 		grid.columns = columns;
 		grid.source = items;
