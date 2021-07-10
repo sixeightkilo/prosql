@@ -9,15 +9,17 @@ html
         include navbar.pug
         .columns
             .column	
-            .column.is-one-third
-                section
-                    .card.has-background-light
-                        header.card-header
-                            p.card-header-title.has-text-black-bis
-                                | Prosql-agent not detected
-                            button.card-header-icon
-                                span.icon
-                                    i.fas.fa-spinner.fa-spin
+            .column.is-three-fifths
+                .columns.is-flex.is-justify-content-center
+                    .column.is-three-fifths
+                        section
+                            .card.has-background-light
+                                header.card-header
+                                    p.card-header-title.has-text-black-bis
+                                        | Prosql-agent not detected
+                                    button.card-header-icon
+                                        span.icon
+                                            i.fas.fa-spinner.fa-spin
                 section.instructions
                     section.mt-5
                         .h1.is-size-2 Just one small step ...
@@ -41,13 +43,13 @@ html
                                 li
                                     a.other Other
                         .container
-                            .tab-content.windows
+                            .tab-content.windows.has-text-justified
                                 include windows.pug
-                            .tab-content.linux
+                            .tab-content.linux.has-text-justified
                                 include linux.pug
-                            .tab-content.mac 
+                            .tab-content.mac.has-text-justified
                                 include mac.pug
-                            .tab-content.other 
+                            .tab-content.other.has-text-justified
                                 include other.pug
             .column	
         script(type='module' src='/js/install.js')
