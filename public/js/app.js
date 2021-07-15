@@ -68,8 +68,22 @@ class App {
                     this.tableContents.show(this.selectedTable)
                 }
                 break;
+
+            case 'full-screen-menu':
+                this.toggleFullScreen();
+                break;
         }
     }
+
+	toggleFullScreen() {
+		if (!document.fullscreenElement) {
+			document.documentElement.requestFullscreen();
+		} else {
+			if (document.exitFullscreen) {
+				document.exitFullscreen();
+			}
+		}
+	}
 
     async init() {
         this.queryManager = new QueryManager(this.sessionId)
