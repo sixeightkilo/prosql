@@ -28,58 +28,6 @@ sup {
 	font-size:x-small;
 }
 
-#login-container {
-	display:grid;
-	grid-template-columns: 2fr 8fr;
-	height:100%;
-}
-
-#login-left-container {
-	background-color:#eee;
-}
-
-#login-fav-title {
-	font-family:sans-serif;
-	text-align:center;
-	padding:0.5em;
-}
-
-#login-form-container {
-	margin:auto;
-	width: 30em;
-	display:grid;
-	padding:0.5em;
-	background-color:#eee;
-	margin-top:2em;
-	border-radius:5px;
-	row-gap:0.25em;
-}
-
-#login-form-container input {
-	border-radius:5px;
-	border:1px solid #ddd;
-	font-size:larger;
-}
-
-
-#login-user-container,
-#login-pass-container,
-#login-host-container,
-#login-port-container,
-#login-db-container,
-#login-btn-container {
-	display:grid;
-	grid-template-columns: 1fr 1fr;
-}
-
-#login-btn-container {
-	padding:0;
-	margin-top:1em;
-	margin-left:auto;
-	margin-right:auto;
-	width: 30em;
-	column-gap:0.5em;
-}
 /* main app */
 #appbar {
 	padding-left:1em;

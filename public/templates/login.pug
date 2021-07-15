@@ -2,18 +2,20 @@ doctype html
 html
     head
         include head.pug
+        link(rel="stylesheet" href="/css/login.css")
     body
         include navbar.pug
         div#login-container.content
             div#login-left-container
-                #login-fav-title.is-size-5 Favorites
+                #login-fav-title Favorites
             div#login-right-container
                 div#login-form-container.control
                     div#login-user-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="user") Username
                         .field-body
-                            input(type="text" id="user" value="" placeholder="user")
+                            .field
+                                input(type="text" id="user" value="" placeholder="user")
                     div#login-pass-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="pass") Password
