@@ -2,7 +2,6 @@ import { Err } from './modules/error.js'
 import { Log } from './modules/logger.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
-import { IndexDB } from './modules/index-db.js'
 
 const TAG = 'login'
 class Login {
@@ -23,33 +22,66 @@ class Login {
     async init() {
         this.$testConn = document.getElementById('test')
         this.$testIcon = document.querySelector('.test-icon')
+        this.$name = document.getElementById('name')
         this.$login = document.getElementById('login')
         this.$user = document.getElementById('user')
         this.$pass = document.getElementById('pass')
         this.$host = document.getElementById('host')
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
-        this.setCreds();
-    }
 
-    setCreds() {
-        let creds = Utils.getFromSession('creds');
-        if (!creds) {
+        document.addEventListener('click', async (e) => {
+            let target = event.target;
+            if (!target.classList.contains('conn')) {
+                return
+            }
+            Log(TAG, `${target.dataset.id}`);
+            let o = await Utils.get(parseInt(target.dataset.id));
+            Log(TAG, JSON.stringify(o));
+        });
+
+        let conns = await Utils.getAllConnections();
+        if (conns.length == 0) {
             return;
         }
 
-        creds = JSON.parse(creds);
-        for (let k in creds) {
+        this.showRecents(conns);
+        this.setCreds(conns[0]);
+    }
+
+    async showRecents(conns) {
+        let list = document.getElementById('conn-list');
+        let templ = document.getElementById('conn-template').innerHTML;
+        conns.forEach((c) => {
+
+            let item = "No name";
+            if (c.name) {
+                item = c.name
+            }
+            let n = Utils.generateNode(templ, {
+                id: c.id,
+                item: item
+            })
+            list.appendChild(n);
+        })
+    }
+
+    setCreds(conn) {
+        for (let k in conn) {
+            if (k == "id") {
+                continue;
+            }
             let $elem = document.getElementById(k);
-            $elem.value = creds[k];
+            $elem.value = conn[k];
         }
     }
 
     async login() {
         let creds = this.getCreds()
         if (await this.ping(creds) == 'ok') {
-            Utils.saveToSession(Constants.CREDS, JSON.stringify(creds))
-            window.location = '/app';
+            Utils.saveToSession(Constants.CREDS, JSON.stringify(creds));
+            await Utils.saveConn(creds);
+            //window.location = '/app';
         }
     }
 
@@ -95,6 +127,7 @@ class Login {
 
     getCreds() {
         return {
+            name: this.$name.value,
             user: this.$user.value,
             pass: this.$pass.value,
             host: this.$host.value,

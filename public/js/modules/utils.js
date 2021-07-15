@@ -1,5 +1,6 @@
 import { Log } from './logger.js'
 import { Err } from './error.js'
+import { IndexDB } from './index-db.js'
 
 const TAG = "utils"
 class Utils {
@@ -142,5 +143,36 @@ class Utils {
             height: rect.height,
 		};
 	}
+
+    static async saveConn(conn) {
+       let db = new IndexDB();
+       try {
+           await db.open();
+		   await db.save(conn);
+       } catch (e) {
+		   Log(TAG, e.message);
+       }
+    }
+
+    static async getAllConnections() {
+        let db = new IndexDB();
+        try {
+            await db.open();
+            return await db.getAll();
+        } catch (e) {
+            Log(TAG, e.message);
+        }
+    }
+
+    static async get(id) {
+        let db = new IndexDB();
+        try {
+            await db.open();
+            return await db.get(id);
+        } catch (e) {
+            Log(TAG, e.message);
+        }
+    }
+
 }
 export { Utils }

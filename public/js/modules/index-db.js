@@ -22,6 +22,7 @@ class IndexDB {
                 Log(TAG, "open.onupgradeneeded");
                 var store = e.currentTarget.result.createObjectStore(
                     Constants.CONNECTIONS, { keyPath: 'id', autoIncrement: true });
+                store.createIndex("connection-index", ["name", "user", "pass", "port", "db"], { unique: true });
             };
         })
     }
@@ -42,5 +43,52 @@ class IndexDB {
             let request = objectStore.add(conn);
 		})
 	}
+
+    async getAll() {
+        this.results = [];
+        return new Promise((resolve, reject) => {
+            let transaction = this.db.transaction(Constants.CONNECTIONS)
+            let objectStore = transaction.objectStore(Constants.CONNECTIONS)
+
+            objectStore.openCursor().onsuccess = (e) => {
+				var cursor = event.target.result;
+				if (cursor) {
+                    let o = {}
+                    for (let key in cursor.value) {
+                        o[key] = cursor.value[key] 
+                    }
+
+                    this.results.push(o);
+					cursor.continue();
+				} else {
+					Log(TAG, "No more entries!");
+				}
+			}
+
+            transaction.oncomplete = (e) => {
+                resolve(this.results);
+            };
+
+            transaction.onerror = (e) => {
+                reject(e.target.error);
+            };
+        })
+    }
+
+    async get(id) {
+        return new Promise((resolve, reject) => {
+            let transaction = this.db.transaction(Constants.CONNECTIONS)
+            let objectStore = transaction.objectStore(Constants.CONNECTIONS)
+            let request = objectStore.get(id);
+
+            request.onsuccess = (e) => {
+                resolve(request.result);
+            };
+
+            request.onerror = (e) => {
+                reject(e.target.error);
+            };
+        })
+    }
 }
 export { IndexDB }

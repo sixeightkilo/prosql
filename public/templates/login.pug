@@ -7,30 +7,38 @@ html
         include navbar.pug
         div#login-container.content
             div#login-left-container
-                #login-fav-title Favorites
+                #login-recents-title Recent Connections
+                    ul#conn-list
             div#login-right-container
                 div#login-form-container.control
+                    div#login-name-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for="name") Connection Name
+                        .field-body
+                            .field
+                                input(type="text" id="name" value="" placeholder="Name")
+
                     div#login-user-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="user") Username
                         .field-body
                             .field
-                                input(type="text" id="user" value="" placeholder="user")
+                                input(type="text" id="user" value="" placeholder="User")
                     div#login-pass-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="pass") Password
                         .field-body
-                            input(type="password" id="pass" value="" placeholder="pass")
+                            input(type="password" id="pass" value="" placeholder="Password")
                     div#login-host-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="host") Host
                         .field-body
-                            input(type="text" id="host" value="" placeholder="host")
+                            input(type="text" id="host" value="" placeholder="127.0.0.1")
                     div#login-port-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="port") Port
                         .field-body
-                            input(type="text" id="port" value="" placeholder="port")
+                            input(type="text" id="port" value="" placeholder="3306")
                     div#login-db-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="db") Database
@@ -46,3 +54,5 @@ html
                     button.button(id="login") Login 
 
         script(type='module' src='/js/login.js')
+        script(type='code' id='conn-template')
+            li.conn(data-id="{id}") {item}

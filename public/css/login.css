@@ -9,7 +9,7 @@
 	height:100%;
 }
 
-#login-fav-title {
+#login-recents-title {
 	font-family:sans-serif;
 	text-align:center;
 	padding:0.5em;
@@ -33,11 +33,16 @@
 }
 
 
+#login-name-container,
 #login-user-container,
 #login-pass-container,
 #login-host-container,
 #login-port-container,
-#login-db-container,
+#login-db-container {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+}
+
 #login-btn-container {
 	display:grid;
 	grid-template-columns: 1fr 1fr;
@@ -51,4 +56,18 @@
 	width: 30em;
 	column-gap:0.5em;
 }
-/
+
+.bookmark  {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bookmark i {
+	font-size:x-large;
+	cursor:pointer;
+}
+
+.conn {
+	cursor:pointer;
+}
