@@ -29,15 +29,21 @@ class Login {
         this.$host = document.getElementById('host')
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
+        this.$isDefault = document.getElementById('is-default')
 
+        //handle click on connection
         document.addEventListener('click', async (e) => {
             let target = event.target;
             if (!target.classList.contains('conn')) {
                 return
             }
+
             Log(TAG, `${target.dataset.id}`);
-            let o = await Utils.get(parseInt(target.dataset.id));
-            Log(TAG, JSON.stringify(o));
+            let connId = parseInt(target.dataset.id);
+            this.conn = await Utils.get(connId);
+            this.setConn(this.conn);
+            Log(TAG, JSON.stringify(this.conn));
+            this.testConn();
         });
 
         let conns = await Utils.getAllConnections();
@@ -46,14 +52,29 @@ class Login {
         }
 
         this.showRecents(conns);
-        this.setCreds(conns[0]);
+        this.setCurrent(conns);
+        this.setConn(this.conn);
+        this.testConn();
+    }
+
+    setCurrent(conns) {
+        //if there is a default set, use it otherwise
+        //arbitrarily choose the first connection as current
+        for (let i = 0; i < conns.length; i++) {
+            if (conns[i]['is-default'] == true) {
+                this.conn = conns[i];
+                return;
+            }
+        }
+
+        this.conn = conns[0];
     }
 
     async showRecents(conns) {
         let list = document.getElementById('conn-list');
         let templ = document.getElementById('conn-template').innerHTML;
-        conns.forEach((c) => {
 
+        conns.forEach((c) => {
             let item = "No name";
             if (c.name) {
                 item = c.name
@@ -66,31 +87,62 @@ class Login {
         })
     }
 
-    setCreds(conn) {
+    setConn(conn) {
         for (let k in conn) {
             if (k == "id") {
                 continue;
             }
+
+            if (k == 'is-default') {
+                if (conn[k] == true) {
+                    this.$isDefault.checked = true;
+                } else {
+                    this.$isDefault.checked = false;
+                }
+                continue;
+            }
+
             let $elem = document.getElementById(k);
             $elem.value = conn[k];
         }
     }
 
     async login() {
-        let creds = this.getCreds()
-        if (await this.ping(creds) == 'ok') {
-            Utils.saveToSession(Constants.CREDS, JSON.stringify(creds));
-            await Utils.saveConn(creds);
-            //window.location = '/app';
+        let conn = this.getConn()
+        if (await this.ping(conn) == 'ok') {
+            Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
+            let id = await Utils.saveConn(conn);
+            Log(TAG, `saved to ${id}`);
+
+            window.location = '/app';
         }
+    }
+
+    isNewConn(conn) {
+        //compare input fields with this.conn
+        if (!this.conn) {
+            return true;
+        }
+
+        for (let k in conn) {
+            if (k == 'is-default') {
+                //ignore is-default key
+                continue;
+            }
+            if (conn[k] != this.conn[k]) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     async testConn() {
         this.$testIcon.classList.add('fa-spinner');
         this.$testIcon.classList.add('fa-spin');
 
-        let creds = this.getCreds()
-        let s = await this.ping(creds);
+        let conn = this.getConn()
+        let s = await this.ping(conn);
         Log(TAG, s);
 
         this.$testIcon.classList.remove('fa-spinner');
@@ -110,8 +162,8 @@ class Login {
         this.$testIcon.classList.add('has-text-danger');
     }
 
-    async ping(creds) {
-        let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(creds), false)
+    async ping(conn) {
+        let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(conn), false)
         if (json.status == "error") {
             if (json.msg == Err.ERR_NO_AGENT) {
                 window.location = '/install';
@@ -125,14 +177,15 @@ class Login {
         return "ok";
     }
 
-    getCreds() {
+    getConn() {
         return {
             name: this.$name.value,
             user: this.$user.value,
             pass: this.$pass.value,
             host: this.$host.value,
             port: this.$port.value,
-            db: this.$db.value
+            db: this.$db.value,
+            'is-default': this.$isDefault.checked
         }
     }
 }

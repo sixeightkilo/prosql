@@ -134,24 +134,44 @@ class Utils {
         return '_' + Math.random().toString(36).substr(2, 9);
     };
 
-	static getOffset(el) {
-		const rect = el.getBoundingClientRect();
-		return {
-			left: rect.left + window.scrollX,
-			top: rect.top + window.scrollY,
+    static getOffset(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            left: rect.left + window.scrollX,
+            top: rect.top + window.scrollY,
             width: rect.width,
             height: rect.height,
-		};
-	}
+        };
+    }
 
     static async saveConn(conn) {
-       let db = new IndexDB();
-       try {
-           await db.open();
-		   await db.save(conn);
-       } catch (e) {
-		   Log(TAG, e.message);
-       }
+        let db = new IndexDB();
+        try {
+            await db.open();
+
+            //make sure there is only one connection with is-default = true
+            if (conn['is-default'] == true) {
+                let conns = await db.getAll();
+                conns.forEach(async (c) => {
+                    await db.put(c.id, false);
+                });
+            }
+
+            //search of this connection exists
+            let rec = await db.search(conn);
+            Log(TAG, JSON.stringify(rec));
+            if (rec) {
+                //if exists , update and return
+                await db.put(rec.id, conn['is-default']);
+                return rec.id;
+            }
+
+            //create new record
+            return await db.save(conn);
+
+        } catch (e) {
+            Log(TAG, e.message);
+        }
     }
 
     static async getAllConnections() {
@@ -173,6 +193,5 @@ class Utils {
             Log(TAG, e.message);
         }
     }
-
 }
 export { Utils }

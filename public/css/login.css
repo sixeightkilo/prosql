@@ -38,7 +38,8 @@
 #login-pass-container,
 #login-host-container,
 #login-port-container,
-#login-db-container {
+#login-db-container,
+#login-default-container {
 	display:grid;
 	grid-template-columns: 1fr 1fr;
 }

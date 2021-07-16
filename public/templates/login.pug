@@ -8,7 +8,7 @@ html
         div#login-container.content
             div#login-left-container
                 #login-recents-title Recent Connections
-                    ul#conn-list
+                    #conn-list
             div#login-right-container
                 div#login-form-container.control
                     div#login-name-container.field.is-horizontal
@@ -45,6 +45,13 @@ html
                         .field-body
                             input(type="text" id="db" value="" placeholder="DB")
 
+                    div#login-default-container.field.is-horizontal
+                        .field-label.is-normal
+                            label.label(for="default") Default
+                        .field-body
+                            input(type="checkbox" id="is-default")
+
+
                 div#login-btn-container
                     button.button(id="test")
                         span Test connection
@@ -55,4 +62,7 @@ html
 
         script(type='module' src='/js/login.js')
         script(type='code' id='conn-template')
-            li.conn(data-id="{id}") {item}
+            .conn-container.has-text-left
+                span
+                    i.fas.fa-server
+                span.conn(data-id="{id}") &nbsp;&nbsp;{item}
