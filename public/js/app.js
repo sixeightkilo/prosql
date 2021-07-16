@@ -21,6 +21,7 @@ class App {
         this.$databases = document.getElementById('databases')
 
         this.$databases.addEventListener('change', async () => {
+            Log(TAG, "Db changed");
             //update db in creds
             let db = this.$databases.value
             this.creds.db = db 
@@ -103,7 +104,14 @@ class App {
 
         Log(TAG, this.sessionId)
 
-        this.showDatabases()
+        this.showDatabases(this.creds.db)
+        if (this.creds.db) {
+            this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
+            this.tables.setSessionInfo(this.sessionId, this.creds.db)
+            this.queryManager.setSessionInfo(this.sessionId, this.creds.db)
+
+            this.tables.show(this.creds.db);
+        }
 
         let $g1 = document.getElementById('app-content');
         let $e1 = document.getElementById('app-left-panel-container');
@@ -115,9 +123,9 @@ class App {
         //this.queryManager.enable()
     }
 
-    async showDatabases() {
+    async showDatabases(db) {
         let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
-        Utils.setOptions(this.$databases, dbs, '')
+        Utils.setOptions(this.$databases, dbs, db);
     }
 }
 
