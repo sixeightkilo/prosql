@@ -87,10 +87,15 @@ class Login {
             if (c.name) {
                 item = c.name
             }
+
             let n = Utils.generateNode(templ, {
                 id: c.id,
                 item: item
             })
+
+            if (c['is-default'] == true) {
+                n.querySelector('.conn-container').classList.add('highlight');
+            }
             list.appendChild(n);
         })
     }
