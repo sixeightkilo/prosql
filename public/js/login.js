@@ -38,11 +38,20 @@ class Login {
                 return
             }
 
+            //remove highlight on all element first
+            let list = document.querySelectorAll('.highlight');
+            list.forEach((e) => {
+                e.classList.remove('highlight');
+            });
+
+            let parent = target.parentElement;
+            parent.classList.add('highlight');
+
             Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
-            this.conn = await Utils.get(connId);
-            this.setConn(this.conn);
-            Log(TAG, JSON.stringify(this.conn));
+            let conn = await Utils.get(connId);
+            this.setConn(conn);
+            Log(TAG, JSON.stringify(conn));
             this.testConn();
         });
 
@@ -52,22 +61,21 @@ class Login {
         }
 
         this.showRecents(conns);
-        this.setCurrent(conns);
-        this.setConn(this.conn);
+        let conn = this.getDefault(conns);
+        this.setConn(conn);
         this.testConn();
     }
 
-    setCurrent(conns) {
+    getDefault(conns) {
         //if there is a default set, use it otherwise
         //arbitrarily choose the first connection as current
         for (let i = 0; i < conns.length; i++) {
             if (conns[i]['is-default'] == true) {
-                this.conn = conns[i];
-                return;
+                return conns[i];
             }
         }
 
-        this.conn = conns[0];
+        return conns[0];
     }
 
     async showRecents(conns) {
@@ -116,25 +124,6 @@ class Login {
 
             window.location = '/app';
         }
-    }
-
-    isNewConn(conn) {
-        //compare input fields with this.conn
-        if (!this.conn) {
-            return true;
-        }
-
-        for (let k in conn) {
-            if (k == 'is-default') {
-                //ignore is-default key
-                continue;
-            }
-            if (conn[k] != this.conn[k]) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     async testConn() {

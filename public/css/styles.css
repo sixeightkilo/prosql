@@ -274,9 +274,6 @@ i#back {
 body, html {
 	overscroll-behavior-x: none;
 }
-.highlight {
-	background:#888;
-}
 
 .cell, .fk-icon {
 	margin-left:2px;

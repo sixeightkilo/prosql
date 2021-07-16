@@ -6,3 +6,8 @@ html, body {
 	font-family:sans-serif;
 	overflow:hidden;
 }
+
+.highlight {
+	background:#888;
+	color:#fff;
+}
