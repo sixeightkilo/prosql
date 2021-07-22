@@ -8,6 +8,7 @@ class DbUtils {
 
     static async fetch(sessionId, query) {
         PubSub.publish(Constants.QUERY_DISPATCHED, {query: query, tags: [Constants.SYSTEM]});
+        query = encodeURIComponent(query);
 
         let params = {
             'session-id': sessionId,

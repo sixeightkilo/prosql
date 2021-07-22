@@ -3,20 +3,28 @@ import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
+import { QueryDB } from './query-db.js'
 
 const TAG = "query-history"
 
 class QueryHistory {
     constructor() {
-        this.$root = document.getElementById('app-left-panel')
-        this.$rootTemplate = document.getElementById('query-search-template').innerHTML
-        this.$root.replaceChildren()
-        let n = Utils.generateNode(this.$rootTemplate, {})
-        this.$root.append(n)
+        PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
+            Log(TAG, JSON.stringify(query));
 
-        PubSub.subscribe(Constants.QUERY_DISPATCHED, (data) => {
-            Log(TAG, JSON.stringify(data));
+            if (!this.queryDb) {
+                this.queryDb = await this.init();
+            }
+
+            let id = await this.queryDb.save(query); 
+            Log(TAG, `Saved to ${id}`);
         });
+    }
+
+    async init() {
+        let db = new QueryDB("queries", 1);
+        await db.open();
+        return db;
     }
 }
 

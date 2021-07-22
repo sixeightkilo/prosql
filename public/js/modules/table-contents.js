@@ -48,7 +48,7 @@ class TableContents {
         this.table = table
         Log(TAG, `Displaying ${table}`)
         let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let contraints = DbUtils.fetch(this.sessionId, encodeURIComponent(`SELECT
+        let contraints = DbUtils.fetch(this.sessionId, `SELECT
                 TABLE_NAME,
                 COLUMN_NAME,
                 CONSTRAINT_NAME,
@@ -57,7 +57,7 @@ class TableContents {
                 FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
                 WHERE
                 TABLE_SCHEMA = '${this.db}\' and
-                TABLE_NAME = '${this.table}\'`))
+                TABLE_NAME = '${this.table}\'`)
 
         let values = await Promise.all([columns, contraints])
 
@@ -275,9 +275,9 @@ class TableContents {
         PubSub.subscribe('cell-edited', async (data) => {
             Log(TAG, JSON.stringify(data));
             let res = await DbUtils.execute(this.sessionId, 
-                encodeURIComponent(`update \`${this.table}\`
+                    `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
-                    where \`${data.key.name}\` = '${data.key.value}'`));
+                    where \`${data.key.name}\` = '${data.key.value}'`);
         });
     }
 

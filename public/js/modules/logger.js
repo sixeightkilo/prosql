@@ -1,6 +1,8 @@
 const TAGS = [
     'query-finder',
     'query-history',
+    'index-db',
+    'query-db',
 ]
 
 const ENABLED = new Set(TAGS)
