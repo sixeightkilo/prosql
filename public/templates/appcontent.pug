@@ -1,15 +1,6 @@
 #app-content
     #app-left-panel-container
         #app-left-panel
-            div.field
-                p.control.has-icons-left
-                    input.input.is-small(type="text" id="table-filter")
-                    span.icon.is-small.is-left
-                        i.fas.fa-search
-            div Tables and Views
-            div#tables
-            div#table-info Table Info
-
     #app-content-resizer
 
     #app-right-panel
@@ -53,3 +44,22 @@
     script(type='code' id='table-loader-template')
         div.table-loader
             i.fas.fa-spinner.fa-spin
+
+    script(type='code' id='table-filter-template')
+        div.field
+            p.control.has-icons-left
+                input.input.is-small(type="text" id="table-filter")
+                span.icon.is-small.is-left
+                    i.fas.fa-search
+        div Tables and Views
+        div#tables
+            div#table-info Table Info
+
+    script(type='code' id='query-search-template')
+        div.field
+            p.control.has-icons-left
+                input.input.is-small(type="text" id="query-filter")
+                span.icon.is-small.is-left
+                    i.fas.fa-search
+        div Search queries
+        div#queries

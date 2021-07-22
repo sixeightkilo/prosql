@@ -10,10 +10,10 @@ import { Stream } from './stream.js'
 import { GridResizerV } from './grid-resizer-v.js'
 import { PubSub } from './pubsub.js'
 
-const TAG = "query-manager"
+const TAG = "query-runner"
 const USE_WS = true
 
-class QueryManager {
+class QueryRunner {
     constructor(sessionId) {
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
@@ -164,4 +164,4 @@ class QueryManager {
     }
 }
 
-export { QueryManager }
+export { QueryRunner }

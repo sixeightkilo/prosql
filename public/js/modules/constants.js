@@ -43,5 +43,17 @@ class Constants {
     static get CREDS() {
         return 'creds'
     }
+
+    static get QUERY_DISPATCHED() {
+        return 'query-dispatched'
+    }
+
+    static get SYSTEM() {
+        return 'system'
+    }
+
+    static get USER() {
+        return 'user'
+    }
 }
 export { Constants }

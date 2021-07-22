@@ -5,7 +5,9 @@ import { DbUtils } from './modules/dbutils.js'
 import { Constants } from './modules/constants.js'
 import { TableContents } from './modules/table-contents.js'
 import { Tables } from './modules/tables.js'
-import { QueryManager } from './modules/query-manager.js'
+import { QueryRunner } from './modules/query-runner.js'
+import { QueryHistory } from './modules/query-history.js'
+import { QueryFinder } from './modules/query-finder.js'
 import { GridResizerH } from './modules/grid-resizer-h.js'
 import { PubSub } from './modules/pubsub.js'
 
@@ -33,7 +35,7 @@ class App {
             //update session id in all modules
             this.tableContents.setSessionInfo(this.sessionId, db)
             this.tables.setSessionInfo(this.sessionId, db)
-            this.queryManager.setSessionInfo(this.sessionId, db)
+            this.queryRunner.setSessionInfo(this.sessionId, db)
 
             this.tables.show(db)
         })
@@ -58,12 +60,18 @@ class App {
     async handleMenu(id) {
         switch (id) {
             case 'query-menu':
-                this.tableContents.disable()
-                this.queryManager.enable()
+                this.tableContents.disable();
+                this.finder = new QueryFinder();
+                this.queryRunner.enable();
                 break;
 
             case 'content-menu':
-                this.queryManager.disable()
+                this.queryRunner.disable()
+
+                //restore table view
+                this.tables = new Tables(this.sessionId)
+                this.tables.show(this.creds.db);
+
                 this.tableContents.enable()
                 if (this.selectedTable) {
                     this.tableContents.show(this.selectedTable)
@@ -87,7 +95,8 @@ class App {
 	}
 
     async init() {
-        this.queryManager = new QueryManager(this.sessionId)
+        this.history = new QueryHistory();
+        this.queryRunner = new QueryRunner(this.sessionId)
         this.tableContents = new TableContents(this.sessionId)
         this.tables = new Tables(this.sessionId)
 
@@ -108,7 +117,7 @@ class App {
         if (this.creds.db) {
             this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
             this.tables.setSessionInfo(this.sessionId, this.creds.db)
-            this.queryManager.setSessionInfo(this.sessionId, this.creds.db)
+            this.queryRunner.setSessionInfo(this.sessionId, this.creds.db)
 
             this.tables.show(this.creds.db);
         }
@@ -120,7 +129,7 @@ class App {
         new GridResizerH($g1, $e1, $resizer, $e2);
 
         //debug
-        //this.queryManager.enable()
+        //this.queryRunner.enable()
     }
 
     async showDatabases(db) {

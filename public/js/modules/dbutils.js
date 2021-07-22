@@ -1,11 +1,14 @@
 import { Log } from './logger.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
+import { PubSub } from './pubsub.js'
 
 const TAG = "dbutils"
 class DbUtils {
 
     static async fetch(sessionId, query) {
+        PubSub.publish(Constants.QUERY_DISPATCHED, {query: query, tags: [Constants.SYSTEM]});
+
         let params = {
             'session-id': sessionId,
             query: query
@@ -25,6 +28,8 @@ class DbUtils {
     }
 
     static async fetchAll(sessionId, query) {
+        PubSub.publish(Constants.QUERY_DISPATCHED, {query: query, tags: [Constants.SYSTEM]});
+
         let params = {
             'session-id': sessionId,
             query: query
