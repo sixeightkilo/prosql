@@ -278,7 +278,7 @@ class QueryDB extends BaseDB {
             let objectStore = transaction.objectStore(this.store);
             let queries = [];
 
-            objectStore.openCursor().onsuccess = (ev) => {
+            objectStore.openCursor(null, 'prev').onsuccess = (ev) => {
                 let cursor = ev.target.result;
                 if (cursor) {
                     if (ids.includes(cursor.value.id)) {

@@ -129,7 +129,9 @@ class App {
         new GridResizerH($g1, $e1, $resizer, $e2);
 
         //debug
-        //this.queryRunner.enable()
+        this.tableContents.disable();
+        this.finder = new QueryFinder();
+        this.queryRunner.enable()
     }
 
     async showDatabases(db) {

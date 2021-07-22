@@ -48,6 +48,10 @@ class Constants {
         return 'query-dispatched'
     }
 
+    static get QUERY_SAVED() {
+        return 'query-saved'
+    }
+
     static get SYSTEM() {
         return 'system'
     }

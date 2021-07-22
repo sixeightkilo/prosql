@@ -121,6 +121,11 @@ class QueryRunner {
             'req-id': Utils.uuid()
         }
 
+        PubSub.publish(Constants.QUERY_DISPATCHED, {
+            query: q,
+            tags: [Constants.USER]
+        });
+
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
 
         this.tableUtils.showContents(stream, {}, false)

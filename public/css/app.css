@@ -79,7 +79,31 @@ sup {
 }
 
 #app-left-panel div {
-	padding-left:1em;
+}
+
+#queries {
+	overflow:scroll;
+	background:#fff;
+}
+
+.tags {
+	position:relative;
+}
+
+.timestamp {
+	position:absolute;
+	right:0;
+	bottom:0.7em;
+	font-size:x-small;
+}
+
+.query {
+	padding:0.25em;
+}
+
+.query-footer {
+	display:grid;
+	grid-template-columns: 8fr 2fr;
 }
 
 #tables {

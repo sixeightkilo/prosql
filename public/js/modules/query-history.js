@@ -18,6 +18,7 @@ class QueryHistory {
 
             let id = await this.queryDb.save(query); 
             Log(TAG, `Saved to ${id}`);
+            PubSub.publish(Constants.QUERY_SAVED, {id: id});
         });
     }
 
