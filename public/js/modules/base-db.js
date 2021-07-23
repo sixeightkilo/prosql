@@ -50,7 +50,7 @@ class BaseDB {
         })
     }
 
-    async update(store, rec) {
+    async put(store, rec) {
         return new Promise((resolve, reject) => {
             let transaction = this.db.transaction([store], "readwrite")
             let objectStore = transaction.objectStore(store)

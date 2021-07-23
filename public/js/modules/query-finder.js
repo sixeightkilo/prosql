@@ -85,6 +85,7 @@ class QueryFinder {
         this.$queries.replaceChildren();
         queries.forEach((q) => {
             let n = Utils.generateNode(this.queryTemplate, {
+                id: q.id,
                 query: q.query,
                 timestamp: q.created_at.toLocaleString(),
             });
@@ -99,29 +100,44 @@ class QueryFinder {
 
     initTagEditor() {
         document.addEventListener('mouseover', (e) => {
-            if (e.target.classList.contains('card')) {
+            if (e.target.classList.contains('query')) {
                 //this is just hover actually
                 Log(TAG, "on query");
                 let $el = e.target;
                 let $tags = $el.querySelector('.tags');
 
                 if ($tags.querySelector('.new-tag')) {
-                    //new tag already present on this card
+                    //new tag already present on this query
                     //we have to handle this because mouseover may be triggered multiple times
                     return;
                 }
+
+                let id = parseInt($el.dataset.id);
 
                 let $tag = Utils.generateNode(`<span class="tag new-tag" contenteditable>click to add new</span>`, {});
                 $tags.append($tag);
 
                 //save new tag when user hits tab or enter
                 let $newTag = $tags.querySelector('.new-tag');
-                (($newTag) => {
-                    $newTag.addEventListener('keyup', (e) => {
+                ((id, $newTag) => {
+                    $newTag.addEventListener('keyup', async (e) => {
                         if (e.key == "Tab" || e.key == "Enter") {
-                            Log(TAG, "removing new tag class");
+                            let tag = $newTag.innerText.trim();
+                            if (tag == '') {
+                                $newTag.blur();
+                                return;
+                            }
+
+                            Log(TAG, `Setting tag ${tag} on id ${id}`);
                             $newTag.classList.remove('new-tag');
                             $newTag.blur();
+                            //get the record, update tags and save. Probably not very efficient
+                            let recs = await this.queryDb.findByIds([id]);
+                            let newRec = recs[0];
+                            newRec.tags.push(tag);
+                            Log(TAG, newRec);
+
+                            await this.queryDb.updateTags(newRec);
                         }
 
                         if (e.key == "Escape") {
@@ -134,7 +150,7 @@ class QueryFinder {
                         $newTag.innerHTML = '';
                     });
 
-                })($newTag);
+                })(id, $newTag);
 
                 //delete new tag if user leaves card without editing
                 (($el) => {

@@ -91,7 +91,7 @@ class QueryDB extends BaseDB {
                 //update tag
                 rec['queries'].push(id);
                 Log(TAG, JSON.stringify(rec));
-                super.update(this.searchIndex, {
+                super.put(this.searchIndex, {
                     id: rec.id,
                     term: t,
                     queries: rec['queries']
@@ -148,7 +148,7 @@ class QueryDB extends BaseDB {
                 //update tag
                 rec['queries'].push(id);
                 Log(TAG, JSON.stringify(rec));
-                super.update(this.tagIndex, {
+                super.put(this.tagIndex, {
                     id: rec.id,
                     tag: t,
                     queries: rec['queries']
@@ -290,6 +290,11 @@ class QueryDB extends BaseDB {
                 }
             };
         });
+    }
+
+    async updateTags(rec) {
+        await super.put(this.store, rec);
+        await this.updateTagIndex(rec.id, rec.tags);
     }
 
     searchByTerms(terms) {
