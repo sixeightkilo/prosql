@@ -78,6 +78,7 @@ class QueryFinder {
         });
 
         this.initTagInput();
+        this.initTagEditor();
     }
 
     async showQueries(queries) {
@@ -93,6 +94,59 @@ class QueryFinder {
                 n.querySelector('.tags').append(tag);
             });
             this.$queries.append(n);
+        });
+    }
+
+    initTagEditor() {
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.classList.contains('card')) {
+                //this is just hover actually
+                Log(TAG, "on query");
+                let $el = e.target;
+                let $tags = $el.querySelector('.tags');
+
+                if ($tags.querySelector('.new-tag')) {
+                    //new tag already present on this card
+                    //we have to handle this because mouseover may be triggered multiple times
+                    return;
+                }
+
+                let $tag = Utils.generateNode(`<span class="tag new-tag" contenteditable>click to add new</span>`, {});
+                $tags.append($tag);
+
+                //save new tag when user hits tab or enter
+                let $newTag = $tags.querySelector('.new-tag');
+                (($newTag) => {
+                    $newTag.addEventListener('keyup', (e) => {
+                        if (e.key == "Tab" || e.key == "Enter") {
+                            Log(TAG, "removing new tag class");
+                            $newTag.classList.remove('new-tag');
+                            $newTag.blur();
+                        }
+
+                        if (e.key == "Escape") {
+                            $newTag.innerHTML = 'click to add new';
+                            $newTag.blur();
+                        }
+                    });
+
+                    $newTag.addEventListener('click', (e) => {
+                        $newTag.innerHTML = '';
+                    });
+
+                })($newTag);
+
+                //delete new tag if user leaves card without editing
+                (($el) => {
+                    $el.addEventListener('mouseleave', () => {
+                        Log(TAG, "outside query");
+                        let $tag = $el.querySelector('.new-tag'); 
+                        if ($tag) {
+                            $tag.remove();
+                        }
+                    });
+                })($el);
+            }
         });
     }
 }
