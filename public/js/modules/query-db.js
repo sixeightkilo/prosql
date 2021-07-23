@@ -76,7 +76,7 @@ class QueryDB extends BaseDB {
                 continue;
             }
 
-			t = this.cleanup(t);
+            t = this.cleanup(t);
             try {
                 let rec = await this.findByTerm(t);
                 //add a new tag
@@ -331,6 +331,26 @@ class QueryDB extends BaseDB {
             };
         });
     } 
+
+    listTags(startingWith) {
+        return new Promise((resolve, reject) => {
+            let transaction = this.db.transaction(this.tagIndex);
+            let objectStore = transaction.objectStore(this.tagIndex);
+            let index = objectStore.index(TAG_INDEX);
+            let tags = [];
+
+            let key = IDBKeyRange.lowerBound(startingWith);
+            index.openCursor().onsuccess = (ev) => {
+                let cursor = ev.target.result;
+                if (cursor) {
+                    tags.push(cursor.value.tag);
+                    cursor.continue();
+                } else {
+                    resolve(tags);
+                }
+            };
+        });
+    }
 
     searchByCreatedAt(s, e) {
         return new Promise((resolve, reject) => {

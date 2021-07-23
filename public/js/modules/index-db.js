@@ -50,7 +50,7 @@ class IndexDB {
             let objectStore = transaction.objectStore(Constants.CONNECTIONS)
 
             objectStore.openCursor().onsuccess = (e) => {
-                var cursor = event.target.result;
+                var cursor = e.target.result;
                 if (cursor) {
                     let o = {}
                     for (let key in cursor.value) {

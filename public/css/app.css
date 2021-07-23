@@ -75,7 +75,7 @@ sup {
 	padding-top:0.25em;
 	background-color:#ddd;
 	display:grid;
-	grid-template-rows: 2em 2em 500px minmax(500px, auto);
+	grid-template-rows: 2em 3em 500px minmax(500px, auto);
 }
 
 #app-left-panel div {
@@ -326,4 +326,21 @@ body, html {
 }
 .spinner--steps {
 	animation: anim-rotate 1s infinite steps(8);
+}
+
+.tags-input-container {
+	position:relative;
+}
+
+#tags-dropdown {
+	position:absolute;
+	top:2em;
+	left:0;
+	z-index:1000;
+	display:none;
+	width:100%;
+}
+
+.tags-input {
+	--tag-bg: #f5f5f5;
 }
