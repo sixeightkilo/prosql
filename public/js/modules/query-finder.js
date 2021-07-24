@@ -4,41 +4,32 @@ import { Utils } from './utils.js'
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
 import { QueryDB } from './query-db.js'
-import { FileDownloader } from './file-downloader.js'
 
 const TAG = "query-finder"
 
 class QueryFinder {
     constructor() {
-        //create search panel
-        this.$root = document.getElementById('app-left-panel')
-        this.$root.style.gridTemplateRows = '2em 2em 3em 500px minmax(500px, auto)';
-
-        this.rootTemplate = document.getElementById('query-search-template').innerHTML
-        this.$root.replaceChildren()
-
-        let n = Utils.generateNode(this.rootTemplate, {})
-        this.$root.append(n)
-
         this.$queries = document.getElementById('queries');
         this.queryTemplate = document.getElementById('query-template').innerHTML;
         this.init();
+    }
 
-        //todo: this should be part of history
-        document.getElementById('download-history').addEventListener('click', () => {
-            let data = [
-                ['col1', 'col2', 'col3'],
-                ['1', '2', '3']
-            ];
-            
-            let csv = ''
-            data.forEach(function(d) {
-                    let row = d.join(",");
-                    csv += row + "\r\n";
-            });
+    async init() {
+        this.queryDb = new QueryDB("queries", 1);
+        await this.queryDb.open();
 
-            FileDownloader.download(csv, 'data.csv');
+        let queries = await this.queryDb.filter({start: 2, end: 0}, [], []);
+        this.showQueries(queries);
+        Log(TAG, JSON.stringify(queries));
+
+        PubSub.subscribe(Constants.QUERY_SAVED, async (query) => {
+            let queries = await this.queryDb.filter({start: 2, end: 0}, [], []);
+            this.showQueries(queries);
+            Log(TAG, JSON.stringify(queries));
         });
+
+        this.initTagInput();
+        this.initTagEditor();
     }
 
     //set up tag input
@@ -79,24 +70,6 @@ class QueryFinder {
             let queries = await this.queryDb.filter({start: 2, end: 0}, tags, []);
             this.showQueries(queries);
         });
-    }
-
-    async init() {
-        this.queryDb = new QueryDB("queries", 1);
-        await this.queryDb.open();
-
-        let queries = await this.queryDb.filter({start: 2, end: 0}, [], []);
-        this.showQueries(queries);
-        Log(TAG, JSON.stringify(queries));
-
-        PubSub.subscribe(Constants.QUERY_SAVED, async (query) => {
-            let queries = await this.queryDb.filter({start: 2, end: 0}, [], []);
-            this.showQueries(queries);
-            Log(TAG, JSON.stringify(queries));
-        });
-
-        this.initTagInput();
-        this.initTagEditor();
     }
 
     async showQueries(queries) {

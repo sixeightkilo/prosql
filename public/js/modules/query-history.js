@@ -4,6 +4,7 @@ import { Utils } from './utils.js'
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
 import { QueryDB } from './query-db.js'
+import { FileDownloader } from './file-downloader.js'
 
 const TAG = "query-history"
 
@@ -21,6 +22,20 @@ class QueryHistory {
             PubSub.publish(Constants.QUERY_SAVED, {id: id});
         });
 
+        document.getElementById('download-history').addEventListener('click', () => {
+            let data = [
+                ['col1', 'col2', 'col3'],
+                ['1', '2', '3']
+            ];
+            
+            let csv = ''
+            data.forEach(function(d) {
+                    let row = d.join(",");
+                    csv += row + "\r\n";
+            });
+
+            FileDownloader.download(csv, 'data.csv');
+        });
     }
 
     async init() {
