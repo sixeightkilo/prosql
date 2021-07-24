@@ -22,16 +22,12 @@ class QueryHistory {
             PubSub.publish(Constants.QUERY_SAVED, {id: id});
         });
 
-        document.getElementById('download-history').addEventListener('click', () => {
-            let data = [
-                ['col1', 'col2', 'col3'],
-                ['1', '2', '3']
-            ];
-            
+        document.getElementById('download-history').addEventListener('click', async () => {
+            let queries = await this.queryDb.filter({start: 10000, end: 0}, [], []);
             let csv = ''
-            data.forEach(function(d) {
-                    let row = d.join(",");
-                    csv += row + "\r\n";
+            queries.forEach(function(q) {
+                    let tags = q.tags.reduce((a, b) => `${a},${b}`);
+                    csv += `"${q.query}","${q.created_at}","${tags}"\r\n`; 
             });
 
             FileDownloader.download(csv, 'data.csv');
