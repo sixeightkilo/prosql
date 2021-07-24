@@ -5,9 +5,7 @@ import { DbUtils } from './modules/dbutils.js'
 import { Constants } from './modules/constants.js'
 import { TableContents } from './modules/table-contents.js'
 import { Tables } from './modules/tables.js'
-import { QueryRunner } from './modules/query-runner.js'
-import { QueryHistory } from './modules/query-history.js'
-import { QueryFinder } from './modules/query-finder.js'
+import { Queries } from './modules/queries.js'
 import { GridResizerH } from './modules/grid-resizer-h.js'
 import { PubSub } from './modules/pubsub.js'
 
@@ -35,7 +33,7 @@ class App {
             //update session id in all modules
             this.tableContents.setSessionInfo(this.sessionId, db)
             this.tables.setSessionInfo(this.sessionId, db)
-            this.queryRunner.setSessionInfo(this.sessionId, db)
+            this.queries.setSessionInfo(this.sessionId, db)
 
             this.tables.show(db)
         })
@@ -61,12 +59,11 @@ class App {
         switch (id) {
             case 'query-menu':
                 this.tableContents.disable();
-                this.finder = new QueryFinder();
-                this.queryRunner.enable();
+                this.queries.enable();
                 break;
 
             case 'content-menu':
-                this.queryRunner.disable()
+                this.queries.disable()
 
                 //restore table view
                 this.tables = new Tables(this.sessionId)
@@ -95,8 +92,7 @@ class App {
 	}
 
     async init() {
-        this.history = new QueryHistory();
-        this.queryRunner = new QueryRunner(this.sessionId)
+        this.queries = new Queries(this.sessionId);
         this.tableContents = new TableContents(this.sessionId)
         this.tables = new Tables(this.sessionId)
 
@@ -117,7 +113,7 @@ class App {
         if (this.creds.db) {
             this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
             this.tables.setSessionInfo(this.sessionId, this.creds.db)
-            this.queryRunner.setSessionInfo(this.sessionId, this.creds.db)
+            this.queries.setSessionInfo(this.sessionId, this.creds.db);
 
             this.tables.show(this.creds.db);
         }
@@ -130,8 +126,7 @@ class App {
 
         //debug
         this.tableContents.disable();
-        this.finder = new QueryFinder();
-        this.queryRunner.enable()
+        this.queries.enable()
     }
 
     async showDatabases(db) {

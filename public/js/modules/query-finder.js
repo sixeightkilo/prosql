@@ -1,4 +1,3 @@
-import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
 import { Log } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
@@ -10,14 +9,16 @@ const TAG = "query-finder"
 
 class QueryFinder {
     constructor() {
-        defineCustomElements();
         //create search panel
         this.$root = document.getElementById('app-left-panel')
+        this.$root.style.gridTemplateRows = '2em 2em 3em 500px minmax(500px, auto)';
+
         this.rootTemplate = document.getElementById('query-search-template').innerHTML
         this.$root.replaceChildren()
+
         let n = Utils.generateNode(this.rootTemplate, {})
         this.$root.append(n)
-        //this.$root.style.width = '30vw';
+
         this.$queries = document.getElementById('queries');
         this.queryTemplate = document.getElementById('query-template').innerHTML;
         this.init();

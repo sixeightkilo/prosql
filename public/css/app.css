@@ -332,10 +332,7 @@ body, html {
 	--tag-bg: #f5f5f5;
 }
 
-.bookmark {
-	display:none !important;
-}
-
-.query:hover .bookmark {
-	display:block !important;
+#query-history {
+	display:grid;
+	grid-template-columns: 8fr 1fr;
 }
