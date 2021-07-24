@@ -20,6 +20,7 @@ class QueryHistory {
             Log(TAG, `Saved to ${id}`);
             PubSub.publish(Constants.QUERY_SAVED, {id: id});
         });
+
     }
 
     async init() {

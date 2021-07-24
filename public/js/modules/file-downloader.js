@@ -11,7 +11,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 class FileDownloader {
 	static download(data, filename, mime, bom) {
 		var blobData = (typeof bom !== 'undefined') ? [bom, data] : [data]
-		var blob = new Blob(blobData, {type: mime || 'application/octet-stream'});
+		//var blob = new Blob(blobData, {type: mime || 'application/octet-stream'});
+		var blob = new Blob(blobData, {type: 'text/csv;charset=utf-8;'}); 
 		if (typeof window.navigator.msSaveBlob !== 'undefined') {
 			// IE workaround for "HTML7007: One or more blob URLs were
 			// revoked by closing the blob for which they were created.

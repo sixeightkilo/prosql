@@ -4,6 +4,7 @@ import { Utils } from './utils.js'
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
 import { QueryDB } from './query-db.js'
+import { FileDownloader } from './file-downloader.js'
 
 const TAG = "query-finder"
 
@@ -22,6 +23,22 @@ class QueryFinder {
         this.$queries = document.getElementById('queries');
         this.queryTemplate = document.getElementById('query-template').innerHTML;
         this.init();
+
+        //todo: this should be part of history
+        document.getElementById('download-history').addEventListener('click', () => {
+            let data = [
+                ['col1', 'col2', 'col3'],
+                ['1', '2', '3']
+            ];
+            
+            let csv = ''
+            data.forEach(function(d) {
+                    let row = d.join(",");
+                    csv += row + "\r\n";
+            });
+
+            FileDownloader.download(csv, 'data.csv');
+        });
     }
 
     //set up tag input
