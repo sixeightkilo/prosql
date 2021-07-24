@@ -334,9 +334,11 @@ body, html {
 
 #query-history {
 	display:grid;
-	grid-template-columns: 8fr 1fr;
+	grid-template-columns: 8fr 2fr;
 }
 
+#import-file,
 #download-history {
 	cursor:pointer;
+	margin-left:10px;
 }

@@ -4,7 +4,8 @@
             div#query-history
                 div Query History
                 div 
-                    i.fas.fa-download#download-history
+                    i.fas.fa-file-import#import-file(title="Import CSV File")
+                    i.fas.fa-download#download-history(title="Download Query History")
             div.field
                 p.control.has-icons-left
                     input.input.is-small(type="text" id="query-filter" placeholder="Search queries")
@@ -67,3 +68,8 @@
             div.timestamp {timestamp}
             div.tags
 
+    script(type="code" id="file-upload-template")
+        .modal
+            form(enctype='multipart/form-data', target='{fu-id}', method='POST')
+                input(name='{fu-id}', type='file')
+                input(type='hidden', name='fu-id', value='{fu-id}')

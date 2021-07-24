@@ -5,6 +5,7 @@ import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
 import { QueryDB } from './query-db.js'
 import { FileDownloader } from './file-downloader.js'
+import { FileUploader } from './file-uploader.js'
 
 const TAG = "query-history"
 
@@ -24,13 +25,18 @@ class QueryHistory {
 
         document.getElementById('download-history').addEventListener('click', async () => {
             let queries = await this.queryDb.filter({start: 10000, end: 0}, [], []);
-            let csv = ''
+            let csv = 'query,created_at,tags\r\n';
             queries.forEach(function(q) {
                     let tags = q.tags.reduce((a, b) => `${a},${b}`);
                     csv += `"${q.query}","${q.created_at}","${tags}"\r\n`; 
             });
 
             FileDownloader.download(csv, 'data.csv');
+        });
+
+        this.uploader = new FileUploader();
+        document.getElementById('import-file').addEventListener('click', async () => {
+            this.uploader.show();
         });
     }
 

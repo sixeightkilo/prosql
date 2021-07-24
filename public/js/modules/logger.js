@@ -4,6 +4,7 @@ const TAGS = [
     'index-db',
     'query-db',
     'connection-db',
+    'file-uploader'
 ]
 
 const ENABLED = new Set(TAGS)
