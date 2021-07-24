@@ -35,7 +35,7 @@ class QueryHistory {
     }
 
     async init() {
-        let db = new QueryDB("queries", 1);
+        let db = new QueryDB({version: 1});
         await db.open();
         return db;
     }

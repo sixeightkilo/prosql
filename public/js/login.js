@@ -2,12 +2,13 @@ import { Err } from './modules/error.js'
 import { Log } from './modules/logger.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
+import { ConnectionDB } from './modules/connection-db.js'
 
 const TAG = 'login'
 class Login {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
-            this.init()
+            await this.init()
 
             this.$testConn.addEventListener('click', async () => {
                 this.testConn()
@@ -20,6 +21,9 @@ class Login {
     }
 
     async init() {
+        this.connectionDb = new ConnectionDB({version: 1});
+        await this.connectionDb.open();
+
         this.$testConn = document.getElementById('test')
         this.$testIcon = document.querySelector('.test-icon')
         this.$name = document.getElementById('name')
@@ -49,13 +53,13 @@ class Login {
 
             Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
-            let conn = await Utils.get(connId);
+            let conn = await this.connectionDb.get(connId);
             this.setConn(conn);
             Log(TAG, JSON.stringify(conn));
             this.testConn();
         });
 
-        let conns = await Utils.getAllConnections();
+        let conns = await this.connectionDb.getAll();
         if (conns.length == 0) {
             return;
         }
@@ -124,10 +128,10 @@ class Login {
         let conn = this.getConn()
         if (await this.ping(conn) == 'ok') {
             Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
-            let id = await Utils.saveConn(conn);
+            let id = await this.connectionDb.save(conn);
             Log(TAG, `saved to ${id}`);
 
-            window.location = '/app';
+            window.location = '/app/query';
         }
     }
 

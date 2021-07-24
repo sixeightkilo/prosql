@@ -15,7 +15,7 @@ class QueryFinder {
     }
 
     async init() {
-        this.queryDb = new QueryDB("queries", 1);
+        this.queryDb = new QueryDB({version: 1});
         await this.queryDb.open();
 
         let queries = await this.queryDb.filter({start: 2, end: 0}, [], []);

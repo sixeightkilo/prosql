@@ -9,8 +9,9 @@ const TERM_INDEX = "term-index";
 const TAG_INDEX = "tag-index";
 
 class QueryDB extends BaseDB {
-    constructor(db, version) {
-        super(db, version);
+    constructor(options) {
+        options.dbName = "queries";
+        super(options);
         this.store = "queries";
         this.searchIndex = "search-index";
         this.tagIndex = "tag-index";

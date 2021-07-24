@@ -3,6 +3,7 @@ const TAGS = [
     'query-history',
     'index-db',
     'query-db',
+    'connection-db',
 ]
 
 const ENABLED = new Set(TAGS)
