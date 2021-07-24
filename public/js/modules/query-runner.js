@@ -19,9 +19,7 @@ class QueryRunner {
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
         PubSub.subscribe(Constants.STREAM_ERROR, (data) => {
-            if (this.isEnabled) {
-                alert(data.error);
-            }
+            alert(data.error);
         });
     }
 
@@ -35,12 +33,6 @@ class QueryRunner {
         this.$root = document.getElementById('app-right-panel')
         this.$rootTemplate = document.getElementById('query-container-template').innerHTML
         this.$footer = document.getElementById('footer-right-panel')
-    }
-
-    async enable() {
-        if (this.isEnabled) {
-            return
-        }
 
         this.$root.style.gridTemplateRows = "2em auto"
         this.$root.replaceChildren()
@@ -81,8 +73,6 @@ class QueryRunner {
         this.$runQuery.addEventListener('click', async (e) => {
             this.runQuery()
         })
-
-        this.isEnabled = true
     }
 
     async runQuery() {
@@ -145,13 +135,6 @@ class QueryRunner {
         let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}))
         //this.$queryEditor.value = json.query;
         this.jar.updateCode(json.query)
-    }
-
-    async disable() {
-        if (this.isEnabled) {
-            this.jar.destroy()
-            this.isEnabled = false
-        }
     }
 
     async adjustView() {

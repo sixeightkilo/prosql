@@ -16,22 +16,23 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
     $logger->pushHandler(new StreamHandler(__DIR__ . '/../logs/login.log', Logger::DEBUG));
 
     $renderer = new Renderer($logger);
+    $renderer->setTemplatePath(__DIR__ . "/templates");
 
 	switch ($params[0]) {
 	case '':
-        return $renderer->render($res, __DIR__ . "/templates/index.pug", []);
+        return $renderer->render($res, "index.pug", []);
 
 	case 'read-more':
-        return $renderer->render($res, __DIR__ . "/templates/read-more.pug", []);
+        return $renderer->render($res, "read-more.pug", []);
 
 	case 'login':
-        return $renderer->render($res, __DIR__ . "/templates/login.pug", []);
+        return $renderer->render($res, "login.pug", []);
 
 	case 'install':
-        return $renderer->render($res, __DIR__ . "/templates/install.pug", []);
+        return $renderer->render($res, "install.pug", []);
 
 	case 'app':
-        return $renderer->render($res, __DIR__ . "/templates/app.pug", []);
+        return $renderer->renderApp($res, $params[1], []);
 
 	case 'prettify':
         $query = $req->getQueryParams()['q'];

@@ -1,0 +1,69 @@
+#app-content
+    #app-left-panel-container
+        #app-left-panel
+            div#query-history
+                div Query History
+                div 
+                    i.fas.fa-download#download-history
+            div.field
+                p.control.has-icons-left
+                    input.input.is-small(type="text" id="query-filter" placeholder="Search queries")
+                    span.icon.is-small.is-left
+                        i.fas.fa-search
+
+            div.tags-input-container
+                input.input.tags-input(type="text")
+
+            div#queries
+
+    #app-content-resizer
+
+    #app-right-panel
+
+    script(type='code' id='results-header-col-template')
+        th {heading}
+
+    script(type='code' id='results-body-col-template')
+        td
+            div.td
+                span {value}
+                i.fk-ref.icon-new-tab(data-table="{ref-table}" data-column="{ref-column}")
+
+    script(type='code' id='query-container-template')
+        #query-sub-menu
+            i.fas.fa-paint-roller#format-query
+            i.fas.fa-play#run-query
+        #query-container
+            #query-editor(contenteditable="true")
+            #query-container-resizer
+            #query-results
+
+    script(type='code' id='table-loader-template')
+        div.table-loader
+            i.fas.fa-spinner.fa-spin
+
+    script(type='code' id='query-search-template')
+        div#query-history
+            div Query History
+            div 
+                i.fas.fa-download#download-history
+        div.field
+            p.control.has-icons-left
+                input.input.is-small(type="text" id="query-filter" placeholder="Search queries")
+                span.icon.is-small.is-left
+                    i.fas.fa-search
+
+        div.tags-input-container
+            input.input.tags-input(type="text")
+
+        div#queries
+
+    script(type="code" id="dropdown-item-template")
+        a.dropdown-item(href="#") {item}
+
+    script(type='code' id='query-template')
+        div.query.card(data-id="{id}")
+            span {query}
+            div.timestamp {timestamp}
+            div.tags
+

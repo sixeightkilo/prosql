@@ -1,0 +1,15 @@
+doctype html
+html
+    head
+        include head.pug
+        script(src="https://unpkg.com/@yaireo/tagify")
+        script(src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js")
+        link(href="https://unpkg.com/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css")
+        link(rel="stylesheet" href="/css/query.css")
+    body
+        include appbar.pug
+        include query-content.pug
+
+        script(type='module' src='/js/query.js')
+        script(type="code" id="option-template")
+            option(value="{value}") {value}
