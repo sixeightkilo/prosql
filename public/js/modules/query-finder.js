@@ -6,6 +6,7 @@ import { PubSub } from './pubsub.js'
 import { QueryDB } from './query-db.js'
 
 const TAG = "query-finder"
+const MAX_DAYS = 10000;
 
 class QueryFinder {
     constructor() {
@@ -15,15 +16,15 @@ class QueryFinder {
     }
 
     async init() {
-        this.queryDb = new QueryDB({version: 1});
+        this.queryDb = new QueryDB({version: Constants.QUERY_DB_VERSION});
         await this.queryDb.open();
 
-        let queries = await this.queryDb.filter({start: 2, end: 0}, [], []);
+        let queries = await this.queryDb.filter({start: MAX_DAYS, end: 0}, [], []);
         this.showQueries(queries);
         Log(TAG, JSON.stringify(queries));
 
         PubSub.subscribe(Constants.QUERY_SAVED, async (query) => {
-            let queries = await this.queryDb.filter({start: 2, end: 0}, [], []);
+            let queries = await this.queryDb.filter({start: MAX_DAYS, end: 0}, [], []);
             this.showQueries(queries);
             Log(TAG, JSON.stringify(queries));
         });
@@ -54,7 +55,7 @@ class QueryFinder {
             let tags = [];
 
             if (e.target.value == '') {
-                let queries = await this.queryDb.filter({start: 2, end: 0}, [], []);
+                let queries = await this.queryDb.filter({start: MAX_DAYS, end: 0}, [], []);
                 this.showQueries(queries);
                 return;
             }
@@ -67,7 +68,7 @@ class QueryFinder {
             }
             Log(TAG, tags);
 
-            let queries = await this.queryDb.filter({start: 2, end: 0}, tags, []);
+            let queries = await this.queryDb.filter({start: MAX_DAYS, end: 0}, tags, []);
             this.showQueries(queries);
         });
     }

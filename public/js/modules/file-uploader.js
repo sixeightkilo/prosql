@@ -1,9 +1,12 @@
 import { Log } from './logger.js'
+import { Constants } from './constants.js'
 import { Utils } from './utils.js'
+import { PubSub } from './pubsub.js'
 const TAG = "file-uploader";
 
 class FileUploader {
     constructor() {
+        //todo: get rid of the fu thing. not required
         this.mID = 'fu-' + Utils.uuid();
 
         let tmpl = document.getElementById('file-upload-template').innerHTML;
@@ -15,22 +18,27 @@ class FileUploader {
         document.querySelector('[type=file]').addEventListener("change", function(e) {
             Log(TAG, 'changed');
 	
-			var file = e.target.files[0];
-			Papa.parse(file, {
-				header: true,
-				dynamicTyping: true,
-				complete: function(results) {
-					console.log(results);
-					//printPapaObject(results);
-				}
-			});
-		});
-	}
+            if (e.target.files.length > 0) {
+                let reader = new FileReader();
+                reader.readAsText(e.target.files[0]);
 
-	show() {
-		Log(TAG, "Showing " + this.mID);
-		document.querySelector('[type=file]').click();
-	}
+                reader.addEventListener('load', function() {
+                    try {
+                        let result = JSON.parse(reader.result);
+                        PubSub.publish(Constants.FILE_UPLOADED, result);
+                    } catch (e) {
+                        alert(e);
+                        return;
+                    }
+                });
+            }
+        });
+    }
+
+    show() {
+        Log(TAG, "Showing " + this.mID);
+        document.querySelector('[type=file]').click();
+    }
 }
 
 export { FileUploader }

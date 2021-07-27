@@ -48,6 +48,10 @@ class Constants {
         return 'query-dispatched'
     }
 
+    static get FILE_UPLOADED() {
+        return 'file-uploaded'
+    }
+
     static get QUERY_SAVED() {
         return 'query-saved'
     }
@@ -58,6 +62,10 @@ class Constants {
 
     static get USER() {
         return 'user'
+    }
+
+    static get QUERY_DB_VERSION() {
+        return 2
     }
 }
 export { Constants }
