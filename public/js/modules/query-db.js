@@ -206,8 +206,8 @@ class QueryDB extends BaseDB {
         //remove table qualifiers like table_name.<...>
         str = str.replace(/^\S+\./, "");
 
-        let chars = ['`', '`', ' '];
-        var start = 0, 
+        let chars = ['`', '`', ' ', '"', '\''];
+        let start = 0, 
             end = str.length;
 
         while(start < end && chars.indexOf(str[start]) >= 0)
@@ -353,6 +353,26 @@ class QueryDB extends BaseDB {
                     cursor.continue();
                 } else {
                     resolve(tags);
+                }
+            };
+        });
+    }
+
+    listTerms(startingWith) {
+        return new Promise((resolve, reject) => {
+            let transaction = this.db.transaction(this.searchIndex);
+            let objectStore = transaction.objectStore(this.searchIndex);
+            let index = objectStore.index(TERM_INDEX);
+            let terms = [];
+
+            let key = IDBKeyRange.lowerBound(startingWith);
+            index.openCursor().onsuccess = (ev) => {
+                let cursor = ev.target.result;
+                if (cursor) {
+                    terms.push(cursor.value.term);
+                    cursor.continue();
+                } else {
+                    resolve(terms);
                 }
             };
         });

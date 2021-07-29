@@ -8,12 +8,15 @@
                     i.fas.fa-download#download-history(title="Download query history")
             div.field
                 p.control.has-icons-left
-                    input.input.is-small(type="text" id="query-filter" placeholder="Search queries")
+                    input.input#term-input(type="text")
                     span.icon.is-small.is-left
                         i.fas.fa-search
 
-            div.tags-input-container
-                input.input.tags-input(type="text")
+            div.field
+                p.control.has-icons-left
+                    input.input#tags-input(type="text")
+                    span.icon.is-small.is-left
+                        i.fas.fa-search
 
             div#queries
 

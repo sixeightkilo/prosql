@@ -75,7 +75,8 @@ sup {
 	padding-top:0.25em;
 	background-color:#ddd;
 	display:grid;
-	grid-template-rows: 2em 2em 3em 500px minmax(500px, auto);
+	grid-template-rows: 2em 3em 3em 500px minmax(500px, auto);
+	row-gap:1px;.
 }
 
 #app-left-panel div {
