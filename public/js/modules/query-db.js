@@ -36,6 +36,8 @@ class QueryDB extends BaseDB {
         return new Promise(async (resolve, reject) => {
             //remove all new lines
             rec.query = rec.query.replace(/\r?\n|\r/g, " ");
+            //remove extra white spaces
+            rec.query = rec.query.replace(/[ ]{2,}/g, " ");
             let terms = rec.query.split(' ');
 
             //get all unique terms
@@ -206,7 +208,8 @@ class QueryDB extends BaseDB {
         //remove table qualifiers like table_name.<...>
         str = str.replace(/^\S+\./, "");
 
-        let chars = ['`', '`', ' ', '"', '\''];
+        //remove punctuation marks
+        let chars = ['`', '`', ' ', '"', '\'', ',', ';', '+', '-', '=', '!=', '<', '>', '>=', '<='];
         let start = 0, 
             end = str.length;
 

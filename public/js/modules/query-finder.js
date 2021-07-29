@@ -180,7 +180,7 @@ class QueryFinder {
                     });
 
                     $newTag.addEventListener('click', (e) => {
-                        $newTag.innerHTML = '';
+                        $newTag.innerHTML = '<span>&nbsp</span>';
                     });
 
                 })(id, $newTag);

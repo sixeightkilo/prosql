@@ -13,7 +13,8 @@ const TAG = "query"
 class Query {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
-            this.init()
+            this.adjustView();
+            this.init();
         })
     }
 
@@ -23,37 +24,37 @@ class Query {
         this.$databases.addEventListener('change', async () => {
             Log(TAG, "Db changed");
             //update db in creds
-            let db = this.$databases.value
-            this.creds.db = db 
-            Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds))
+            let db = this.$databases.value;
+            this.creds.db = db;
+            Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds));
 
             //if db has changed we have to create new session
-            this.sessionId = await DbUtils.login(this.creds)
+            this.sessionId = await DbUtils.login(this.creds);
 
             //update session id in modules
-            this.queryRunner.setSessionInfo(this.sessionId, db)
+            this.queryRunner.setSessionInfo(this.sessionId, db);
         })
     }
 
     async init() {
-        this.queryRunner = new QueryRunner(this.sessionId)
+        this.queryRunner = new QueryRunner(this.sessionId);
         this.history = new QueryHistory();
         this.finder = new QueryFinder();
 
-        this.initHandlers()
+        this.initHandlers();
 
-        let creds = Utils.getFromSession(Constants.CREDS)
+        let creds = Utils.getFromSession(Constants.CREDS);
         if (!creds) {
             window.location = '/login';
-            return
+            return;
         }
 
-        this.creds = JSON.parse(creds)
-        this.sessionId = await DbUtils.login(this.creds)
+        this.creds = JSON.parse(creds);
+        this.sessionId = await DbUtils.login(this.creds);
 
-        Log(TAG, this.sessionId)
+        Log(TAG, this.sessionId);
 
-        this.showDatabases(this.creds.db)
+        this.showDatabases(this.creds.db);
 
         if (this.creds.db) {
             this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
@@ -67,8 +68,19 @@ class Query {
     }
 
     async showDatabases(db) {
-        let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
+        let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases');
         Utils.setOptions(this.$databases, dbs, db);
+    }
+
+    adjustView() {
+        let queries = document.querySelector('#queries');
+        let terms = document.querySelector('#term-container');
+        let tags = document.querySelector('#tags-container');
+        let appLeftPanel = document.querySelector('#app-left-panel');
+        Log(TAG, `q: ${queries.offsetHeight} term: ${terms.offsetHeight} tag: ${tags.offsetHeight} 
+                    alp: ${appLeftPanel.offsetHeight}`);
+        
+        queries.style.height = (appLeftPanel.offsetHeight - terms.offsetHeight - tags.offsetHeight) + 'px';
     }
 }
 

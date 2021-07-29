@@ -75,19 +75,13 @@ sup {
 	padding-top:0.25em;
 	background-color:#ddd;
 	display:grid;
-	grid-template-rows: 2em 3em 3em 500px minmax(500px, auto);
+	grid-template-rows: 2em 3em 3em 500px;
 	row-gap:1px;.
-}
-
-#app-left-panel div {
 }
 
 #queries {
 	overflow:scroll;
 	background:#fff;
-}
-
-.tags {
 }
 
 .timestamp {
