@@ -55,14 +55,13 @@ sup {
 	cursor:pointer;
 }
 
-#databases,
-#table-filter {
+#databases {
 	width: 15em;
 }
 
 #app-content {
 	display:grid;
-	grid-template-columns: 3fr 2px 8fr;
+	grid-template-columns: 2fr 2px 8fr;
 	height:100%;
 }
 
@@ -75,12 +74,18 @@ sup {
 	padding-top:0.25em;
 	background-color:#ddd;
 	display:grid;
-	grid-template-rows: 2em 3em 3em 500px;
+	grid-template-rows: 2em 3em 500px minmax(500px, auto);
+}
+
+#app-left-panel div {
 }
 
 #queries {
 	overflow:scroll;
 	background:#fff;
+}
+
+.tags {
 }
 
 .timestamp {
@@ -328,11 +333,9 @@ body, html {
 
 #query-history {
 	display:grid;
-	grid-template-columns: 8fr 2fr;
+	grid-template-columns: 8fr 1fr;
 }
 
-#import-file,
 #download-history {
 	cursor:pointer;
-	margin-left:10px;
 }

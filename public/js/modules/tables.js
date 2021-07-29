@@ -12,11 +12,6 @@ const USE_WS = false
 class Tables {
     constructor(sessionId) {
         this.$root = document.getElementById('app-left-panel')
-        this.$root.replaceChildren();
-        this.$rootTemplate = document.getElementById('table-filter-template').innerHTML
-        let n = Utils.generateNode(this.$rootTemplate, {})
-        this.$root.append(n)
-
         this.sessionId = sessionId
         this.$tables = document.getElementById('tables')
         this.$tableFilter = document.getElementById('table-filter')

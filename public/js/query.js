@@ -8,6 +8,8 @@ import { PubSub } from './modules/pubsub.js'
 import { QueryRunner } from './modules/query-runner.js'
 import { QueryFinder } from './modules/query-finder.js'
 import { QueryHistory } from './modules/query-history.js'
+import { MainMenu } from './modules/main-menu.js'
+
 
 const TAG = "query"
 class Query {
@@ -15,6 +17,7 @@ class Query {
         document.addEventListener('DOMContentLoaded', async () => {
             this.adjustView();
             this.init();
+            MainMenu.init();
         })
     }
 

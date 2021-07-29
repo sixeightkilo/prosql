@@ -131,7 +131,7 @@ class Login {
             let id = await this.connectionDb.save(conn);
             Log(TAG, `saved to ${id}`);
 
-            window.location = '/app/query';
+            window.location = '/app/content';
         }
     }
 

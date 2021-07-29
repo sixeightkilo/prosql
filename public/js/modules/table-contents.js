@@ -32,9 +32,7 @@ class TableContents {
         this.init()
 
         PubSub.subscribe(Constants.STREAM_ERROR, (data) => {
-            if (this.isEnabled) {
-                alert(data.error);
-            }
+            alert(data.error);
         });
     }
 
@@ -103,11 +101,6 @@ class TableContents {
             Log(TAG, 'skipping enable')
             return
         }
-
-        this.$root.style.gridTemplateRows = "2.5em auto"
-        this.$root.replaceChildren()
-        let n = Utils.generateNode(this.$rootTemplate, {})
-        this.$root.append(n)
 
         this.$columNames = document.getElementById('column-names')
         this.$operators = document.getElementById('operators')
@@ -263,8 +256,7 @@ class TableContents {
 
     async init() {
         this.$root = document.getElementById('app-right-panel')
-        this.$rootTemplate = document.getElementById('table-contents-template').innerHTML
-        this.$footer = document.getElementById('footer-right-panel')
+        //this.$footer = document.getElementById('footer-right-panel')
 
         this.stack = new Stack(async (e) => {
             await this.navigate(e)

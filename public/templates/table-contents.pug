@@ -1,0 +1,53 @@
+#app-content
+    #app-left-panel-container
+        #app-left-panel
+            div Tables and Views
+            div.field
+                p.control.has-icons-left
+                    input.input(type="text" id="table-filter" placeholder="Search tables")
+                    span.icon.is-small.is-left
+                        i.fas.fa-search
+            div#tables
+            div#table-info Table Info
+
+    #app-content-resizer
+
+    #app-right-panel
+        #search-bar
+            div Search
+            div.select.is-small
+                select#column-names
+            div.select.is-small
+                select#operators
+            div
+                input.input.is-small#search-text(type="text")
+            div
+                button.button.is-small#search Filter
+        #table-contents
+
+    script(type="code" id="table-template")
+        div
+            i.icon-table 
+            span.table-name {table}
+
+    script(type='code' id='results-header-col-template')
+        th {heading}
+
+    script(type='code' id='results-body-col-template')
+        td
+            div.td
+                span {value}
+                i.fk-ref.icon-new-tab(data-table="{ref-table}" data-column="{ref-column}")
+
+    script(type='code' id='table-loader-template')
+        div.table-loader
+            i.fas.fa-spinner.fa-spin
+
+    script(type="code" id="dropdown-item-template")
+        a.dropdown-item(href="#") {item}
+
+    script(type='code' id='query-template')
+        div.query.card(data-id="{id}")
+            span {query}
+            div.timestamp {timestamp}
+            div.tags
