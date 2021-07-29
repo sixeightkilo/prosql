@@ -15,20 +15,23 @@ class FileUploader {
         });
         
         document.querySelector('body').append(n);
-        document.querySelector('[type=file]').addEventListener("change", function(e) {
+        document.querySelector('[type=file]').addEventListener("change", (e) => {
             Log(TAG, 'changed');
 	
             if (e.target.files.length > 0) {
                 let reader = new FileReader();
                 reader.readAsText(e.target.files[0]);
 
-                reader.addEventListener('load', function() {
+                reader.addEventListener('load', () => {
                     try {
                         let result = JSON.parse(reader.result);
                         PubSub.publish(Constants.FILE_UPLOADED, result);
                     } catch (e) {
                         alert(e);
                         return;
+                    } finally {
+                        //self destruct
+                        document.querySelector(`#${this.mID}`).remove();
                     }
                 });
             }

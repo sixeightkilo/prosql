@@ -4,8 +4,8 @@
             div#query-history
                 div Query History
                 div 
-                    i.fas.fa-file-import#import-file(title="Import CSV File")
-                    i.fas.fa-download#download-history(title="Download Query History")
+                    i.fas.fa-file-import#import-file(title="Import query history")
+                    i.fas.fa-download#download-history(title="Download query history")
             div.field
                 p.control.has-icons-left
                     input.input.is-small(type="text" id="query-filter" placeholder="Search queries")
@@ -20,6 +20,11 @@
     #app-content-resizer
 
     #app-right-panel
+
+	.modal#upload-progress
+		.modal-background
+		.modal-content
+            .box
 
     script(type='code' id='results-header-col-template')
         th {heading}
@@ -69,7 +74,6 @@
             div.tags
 
     script(type="code" id="file-upload-template")
-        .modal
-            form(enctype='multipart/form-data', target='{fu-id}', method='POST')
-                input(name='{fu-id}', type='file')
-                input(type='hidden', name='fu-id', value='{fu-id}')
+        .modal(id='{fu-id}')
+            form(enctype='multipart/form-data' method='POST')
+                input(type='file')

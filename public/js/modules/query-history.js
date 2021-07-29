@@ -12,6 +12,8 @@ const MAX_DAYS = 10000;
 
 class QueryHistory {
     constructor() {
+        this.uploadProgress = document.getElementById('upload-progress');
+
         PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
             Log(TAG, JSON.stringify(query));
 
@@ -25,6 +27,7 @@ class QueryHistory {
         });
 
         PubSub.subscribe(Constants.FILE_UPLOADED, async (data) => {
+            this.uploadProgress.classList.add('is-active');
             for (let i = 0; i < data.length; i++) {
                 let d = data[i];
                 if (d.id) {
@@ -47,8 +50,10 @@ class QueryHistory {
                 delete(d.seconds);
                 d.created_at = createdAt;
                 let id = await this.queryDb.save(d);
+                this.uploadProgress.querySelector('.box').innerHTML = `Imported ${i + 1} of ${data.length}`;
                 Log(TAG, `Saved to ${id}`);
             }
+            this.uploadProgress.classList.remove('is-active');
         });
 
         document.getElementById('download-history').addEventListener('click', async () => {
@@ -75,9 +80,9 @@ class QueryHistory {
             FileDownloader.download(JSON.stringify(queries), 'data.json');
         });
 
-        this.uploader = new FileUploader();
         document.getElementById('import-file').addEventListener('click', async () => {
-            this.uploader.show();
+            let uploader = new FileUploader();
+            uploader.show();
         });
     }
 
