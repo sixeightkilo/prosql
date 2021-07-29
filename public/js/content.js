@@ -8,12 +8,14 @@ import { Tables } from './modules/tables.js'
 import { GridResizerH } from './modules/grid-resizer-h.js'
 import { PubSub } from './modules/pubsub.js'
 import { MainMenu } from './modules/main-menu.js'
+import { QueryHistory } from './modules/query-history.js'
 
 const TAG = "content"
 class Content {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.init()
+            this.history = new QueryHistory();
             MainMenu.init();
         })
     }

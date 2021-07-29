@@ -56,34 +56,39 @@ class QueryHistory {
             this.uploadProgress.classList.remove('is-active');
         });
 
-        document.getElementById('download-history').addEventListener('click', async () => {
-            let queries = await this.queryDb.filter({start: MAX_DAYS, end: 0}, [], []);
-            for (let i = 0; i < queries.length; i++) {
-                let q = queries[i];
-                let year = q.created_at.getFullYear();
-                let month = q.created_at.getMonth();
-                let date = q.created_at.getDate();
-                let hours = q.created_at.getHours();
-                let minutes = q.created_at.getMinutes();
-                let seconds = q.created_at.getSeconds();
+        let $download = document.getElementById('download-history');
 
-                queries[i]['year'] = year;
-                queries[i]['month'] = month;
-                queries[i]['date'] = date;
-                queries[i]['hours'] = hours;
-                queries[i]['minutes'] = minutes;
-                queries[i]['seconds'] = seconds;
+        if ($download) {
+            //download icon is not present on content page
+            $download.addEventListener('click', async () => {
+                let queries = await this.queryDb.filter({start: MAX_DAYS, end: 0}, [], []);
+                for (let i = 0; i < queries.length; i++) {
+                    let q = queries[i];
+                    let year = q.created_at.getFullYear();
+                    let month = q.created_at.getMonth();
+                    let date = q.created_at.getDate();
+                    let hours = q.created_at.getHours();
+                    let minutes = q.created_at.getMinutes();
+                    let seconds = q.created_at.getSeconds();
 
-                delete(queries[i].created_at);
-            }
+                    queries[i]['year'] = year;
+                    queries[i]['month'] = month;
+                    queries[i]['date'] = date;
+                    queries[i]['hours'] = hours;
+                    queries[i]['minutes'] = minutes;
+                    queries[i]['seconds'] = seconds;
 
-            FileDownloader.download(JSON.stringify(queries), 'data.json');
-        });
+                    delete(queries[i].created_at);
+                }
 
-        document.getElementById('import-file').addEventListener('click', async () => {
-            let uploader = new FileUploader();
-            uploader.show();
-        });
+                FileDownloader.download(JSON.stringify(queries), 'data.json');
+            });
+
+            document.getElementById('import-file').addEventListener('click', async () => {
+                let uploader = new FileUploader();
+                uploader.show();
+            });
+        }
     }
 
     async init() {
