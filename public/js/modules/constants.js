@@ -40,6 +40,10 @@ class Constants {
         return 1000
     }
 
+    static get BATCH_SIZE_WS() {
+        return 5000
+    }
+
     static get CREDS() {
         return 'creds'
     }

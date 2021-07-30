@@ -113,7 +113,8 @@ class QueryRunner {
         let params = {
             'session-id': this.sessionId,
             query: encodeURIComponent(q),
-            'req-id': Utils.uuid()
+            'req-id': Utils.uuid(),
+            'num-of-rows': Constants.BATCH_SIZE_WS
         }
 
         PubSub.publish(Constants.QUERY_DISPATCHED, {
