@@ -10,9 +10,9 @@ const TAGS = [
 const ENABLED = new Set(TAGS)
 
 export function Log(tag, str) {
-    if (!ENABLED.has(tag)) {
-        return
-    }
+    //if (!ENABLED.has(tag)) {
+        //return
+    //}
 
     let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/")
     let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /)
