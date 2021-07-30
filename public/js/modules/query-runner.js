@@ -112,7 +112,7 @@ class QueryRunner {
         let q = this.jar.toString()
         let params = {
             'session-id': this.sessionId,
-            query: q,
+            query: encodeURIComponent(q),
             'req-id': Utils.uuid()
         }
 
