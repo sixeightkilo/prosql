@@ -136,7 +136,7 @@ sup {
 /* app right panel */
 #app-right-panel {
 	display:grid;
-	grid-template-rows: 2.5em auto;
+	grid-template-rows: 2.0em auto;
 }
 
 #query-container {
@@ -222,8 +222,6 @@ i#back {
 	background:#ebebeb;
 	padding:0.25em;
 	padding-left:1em;
-	display:grid;
-	grid-template-columns: 1fr 2fr 2fr 8fr 1fr;
 }
 
 #query-editor {
@@ -335,4 +333,21 @@ body, html {
 #download-history {
 	cursor:pointer;
 	margin-left:10px;
+}
+
+#export-results,
+#run-query {
+	margin-left:20px;
+}
+
+/*
+.box {
+	position:relative;!important
+}
+*/
+
+.time {
+	position:absolute;
+	top:0.25em;
+	right:0.25em;
 }

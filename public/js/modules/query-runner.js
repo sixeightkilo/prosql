@@ -9,6 +9,8 @@ import { TableUtils } from './table-utils.js'
 import { Stream } from './stream.js'
 import { GridResizerV } from './grid-resizer-v.js'
 import { PubSub } from './pubsub.js'
+import { FileDownloader } from './file-downloader.js'
+import ProgressBar from './progress-bar.js'
 
 const TAG = "query-runner"
 const USE_WS = true
@@ -36,13 +38,7 @@ class QueryRunner {
 
     async init() {
         this.$root = document.getElementById('app-right-panel')
-        this.$rootTemplate = document.getElementById('query-container-template').innerHTML
         this.$footer = document.getElementById('footer-right-panel')
-
-        this.$root.style.gridTemplateRows = "2em auto"
-        this.$root.replaceChildren()
-        let n = Utils.generateNode(this.$rootTemplate, {})
-        this.$root.append(n)
 
         let $g1 = document.getElementById('query-container');
         let $e1 = document.getElementById('query-editor');
@@ -78,6 +74,73 @@ class QueryRunner {
         this.$runQuery.addEventListener('click', async (e) => {
             this.runQuery()
         })
+
+        this.$exportResults = document.getElementById('export-results')
+        this.$exportResults.addEventListener('click', async (e) => {
+            this.exportResults()
+        })
+    }
+
+    async exportResults() {
+        let q = this.jar.toString()
+        let params = {
+            'session-id': this.sessionId,
+            query: encodeURIComponent(q),
+            'req-id': Utils.uuid(),
+            'num-of-rows': -1
+        }
+
+        PubSub.publish(Constants.QUERY_DISPATCHED, {
+            query: q,
+            tags: [Constants.USER]
+        });
+
+        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
+        let i = 1;
+        PubSub.publish(Constants.START_PROGRESS, {});
+        let csv = '';
+
+        while (true) {
+            let row
+            try {
+                row = await stream.get();
+            } catch (e) {
+                PubSub.publish(Constants.STREAM_ERROR, {
+                    'error': e
+                });
+                break;
+            }
+
+            if (row.length == 1 && row[0] == "eos") {
+                break;
+            }
+
+            if (i == 1) {
+                //write header
+                for (let j = 0; j < row.length; j += 2) {
+                    csv += `"${row[j]}",`
+                }
+
+                csv += '\r\n';
+            }
+
+            //values
+            for (let j = 1; j < row.length; j += 2) {
+                csv += `"${row[j]}",`
+            }
+
+            csv += '\r\n';
+
+            if (i % 1000 == 0) {
+                PubSub.publish(Constants.UPDATE_PROGRESS, {
+                    message: `Processed ${i} rows`
+                });
+            }
+            i++;
+        }
+
+        FileDownloader.download(csv, 'data.csv', 'text/csv;charset=utf-8;');
+        PubSub.publish(Constants.STOP_PROGRESS, {});
     }
 
     async runQuery() {

@@ -23,11 +23,14 @@
     #app-content-resizer
 
     #app-right-panel
-
-	.modal#upload-progress
-		.modal-background
-		.modal-content
-            .box
+        #query-sub-menu
+                i.fas.fa-paint-roller#format-query(title="Format query")
+                i.fas.fa-play#run-query(title="Run query")
+                i.fas.fa-file-export#export-results(title="Export query results")
+        #query-container
+            #query-editor(contenteditable="true")
+            #query-container-resizer
+            #query-results
 
     script(type='code' id='results-header-col-template')
         th {heading}
@@ -37,16 +40,7 @@
             div.td
                 span {value}
                 i.fk-ref.icon-new-tab(data-table="{ref-table}" data-column="{ref-column}")
-
-    script(type='code' id='query-container-template')
-        #query-sub-menu
-            i.fas.fa-paint-roller#format-query
-            i.fas.fa-play#run-query
-        #query-container
-            #query-editor(contenteditable="true")
-            #query-container-resizer
-            #query-results
-
+        
     script(type='code' id='table-loader-template')
         div.table-loader
             i.fas.fa-spinner.fa-spin

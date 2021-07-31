@@ -71,5 +71,17 @@ class Constants {
     static get QUERY_DB_VERSION() {
         return 2
     }
+
+    static get START_PROGRESS() {
+        return "start-progress"
+    }
+
+    static get STOP_PROGRESS() {
+        return "stop-progress"
+    }
+
+    static get UPDATE_PROGRESS() {
+        return "update-progress"
+    }
 }
 export { Constants }
