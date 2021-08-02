@@ -87,7 +87,8 @@ class QueryRunner {
             'session-id': this.sessionId,
             query: encodeURIComponent(q),
             'req-id': Utils.uuid(),
-            'num-of-rows': -1
+            'num-of-rows': -1,
+            'export': true
         }
 
         PubSub.publish(Constants.QUERY_DISPATCHED, {
@@ -115,31 +116,11 @@ class QueryRunner {
                 break;
             }
 
-            if (i == 1) {
-                //write header
-                for (let j = 0; j < row.length; j += 2) {
-                    csv += `"${row[j]}",`
-                }
-
-                csv += '\r\n';
-            }
-
-            //values
-            for (let j = 1; j < row.length; j += 2) {
-                csv += `"${row[j]}",`
-            }
-
-            csv += '\r\n';
-
-            if (i % 1000 == 0) {
-                PubSub.publish(Constants.UPDATE_PROGRESS, {
-                    message: `Processed ${i} rows`
-                });
-            }
-            i++;
+            PubSub.publish(Constants.UPDATE_PROGRESS, {
+                message: `Processed ${row[1]} rows`
+            });
         }
 
-        FileDownloader.download(csv, 'data.csv', 'text/csv;charset=utf-8;');
         PubSub.publish(Constants.STOP_PROGRESS, {});
     }
 

@@ -77,7 +77,8 @@ class TableContents {
 
         let params = {
             'session-id': this.sessionId,
-            query: encodeURIComponent(query)
+            query: encodeURIComponent(query),
+            'num-of-rows': Constants.BATCH_SIZE_WS,
         }
 
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
@@ -92,7 +93,8 @@ class TableContents {
         Log(TAG, query)
         let params = {
             'session-id': this.sessionId,
-            query: encodeURIComponent(query)
+            query: encodeURIComponent(query),
+            'num-of-rows': Constants.BATCH_SIZE_WS,
         }
 
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
@@ -199,7 +201,8 @@ class TableContents {
 
         let params = {
             'session-id': this.sessionId,
-            query: encodeURIComponent(`select * from \`${this.table}\` limit ${Constants.BATCH_SIZE}`)
+            query: encodeURIComponent(`select * from \`${this.table}\` limit ${Constants.BATCH_SIZE}`),
+            'num-of-rows': Constants.BATCH_SIZE_WS,
         }
 
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
