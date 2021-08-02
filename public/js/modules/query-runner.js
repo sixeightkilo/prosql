@@ -20,13 +20,9 @@ class QueryRunner {
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
-        PubSub.subscribe(Constants.STREAM_ERROR, (data) => {
-            if (data.error == Err.ERR_NO_AGENT) {
-                window.location = '/install';
-                return;
-            }
-            Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(data)}`);
-            alert(data.error);
+        PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
+            Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
+            Err.handle(err);
         });
     }
 

@@ -22,5 +22,19 @@ class Err {
     static get ERR_UNRECOVERABLE() {
         return 'unrecoverable-error'
     }
+
+    static handle(err) {
+        if (err.error == Err.ERR_NO_AGENT) {
+            window.location = '/install';
+            return;
+        }
+
+        if (err.error == Err.ERR_INVALID_SESSION_ID) {
+            window.location = '/login';
+            return;
+        }
+
+        alert(err);
+    }
 }
 export { Err }
