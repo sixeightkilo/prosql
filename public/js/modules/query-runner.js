@@ -17,6 +17,7 @@ const USE_WS = true
 
 class QueryRunner {
     constructor(sessionId) {
+
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
@@ -58,7 +59,7 @@ class QueryRunner {
         this.jar = CodeJar(editor, highlight)
         editor.style.resize = 'none';
         //debug
-        this.jar.updateCode("select * from `bills-1` limit 1000")
+        this.jar.updateCode("select * from `bills-1` limit 10000")
 
         this.$formatQuery = document.getElementById('format-query')
 
@@ -94,8 +95,19 @@ class QueryRunner {
 
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
         let i = 1;
-        PubSub.publish(Constants.START_PROGRESS, {});
+
+        let cookie = 'cookie';
+        ProgressBar.setOptions({
+            buttons: true,
+            cancel: () => {
+                Log(TAG, `Cancel called with ${cookie}`)
+            }
+        });
+
+
         let csv = '';
+        let fileName = '';
+        let n = 0;
 
         while (true) {
             let row
@@ -112,8 +124,35 @@ class QueryRunner {
                 break;
             }
 
+            if (row[0] == "file-name") {
+                fileName = row[1];
+
+                PubSub.publish(Constants.START_PROGRESS, {
+                    title: `Exporting to ${fileName}`
+                });
+                continue;
+            }
+
+            if (row[0] == "current-row") {
+                n += row[1];
+
+                PubSub.publish(Constants.UPDATE_PROGRESS, {
+                    message: `Processed ${row[1]} rows`
+                });
+            }
+        }
+
+        if (n > 0) {
             PubSub.publish(Constants.UPDATE_PROGRESS, {
-                message: `Processed ${row[1]} rows`
+                message: `Export complete`
+            });
+        } else {
+            PubSub.publish(Constants.START_PROGRESS, {
+                title: `No data`
+            });
+
+            PubSub.publish(Constants.UPDATE_PROGRESS, {
+                message: `Processed 0 rows`
             });
         }
 

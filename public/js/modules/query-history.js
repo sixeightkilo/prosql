@@ -70,10 +70,11 @@ class QueryHistory {
             delete(queries[i].created_at);
         }
 
-        FileDownloader.download(JSON.stringify(queries), 'data.json', 'text/csv;charset=utf-8;');
+        FileDownloader.download(JSON.stringify(queries), 'data.json', 'application/json');
     }
 
     async handleUpload(data) {
+        ProgressBar.setOptions({});//no buttons
         PubSub.publish(Constants.START_PROGRESS, {});
 
         for (let i = 0; i < data.length; i++) {

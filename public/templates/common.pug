@@ -1,5 +1,17 @@
-.modal#progress-bar
+.modal#progress-bar-with-buttons
+    .modal-background
+    .modal-card
+        header.modal-card-head
+            p.modal-card-title.is-size-6
+        section.modal-card-body
+            .content.message
+        footer.modal-card-foot
+            button.button.is-success.ok(disabled) OK
+            button.button.cancel Cancel
+        .time 1 sec
+
+.modal#progress-bar-no-buttons
     .modal-background
     .modal-content
-        .box
+        .box.message
         .time 1 sec
