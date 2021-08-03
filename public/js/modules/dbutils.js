@@ -92,5 +92,16 @@ class DbUtils {
         let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
         return json.data
     }
+
+    static async cancel(sessionId, cursorId) {
+        let params = {
+            'session-id': sessionId,
+            'cursor-id': cursorId,
+        }
+
+        let json = await Utils.fetch(Constants.URL + '/cancel?' + new URLSearchParams(params), false)
+        Log(TAG, JSON.stringify(json))
+        return json.data
+    }
 }
 export { DbUtils }

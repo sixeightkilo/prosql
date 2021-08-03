@@ -96,14 +96,14 @@ class QueryRunner {
         let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
         let i = 1;
 
-        let cookie = 'cookie';
+        let cursorId = null;
         ProgressBar.setOptions({
             buttons: true,
             cancel: () => {
-                Log(TAG, `Cancel called with ${cookie}`)
+                DbUtils.cancel(this.sessionId, cursorId)
+                Log(TAG, `Cancelled ${cursorId}`);
             }
         });
-
 
         let csv = '';
         let fileName = '';
@@ -124,8 +124,9 @@ class QueryRunner {
                 break;
             }
 
-            if (row[0] == "file-name") {
-                fileName = row[1];
+            if (row[0] == "header") {
+                cursorId = row[1];
+                fileName = row[2];
 
                 PubSub.publish(Constants.START_PROGRESS, {
                     title: `Exporting to ${fileName}`

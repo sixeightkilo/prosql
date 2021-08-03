@@ -34,7 +34,7 @@ class Err {
             return;
         }
 
-        alert(err);
+        alert(err.error);
     }
 }
 export { Err }
