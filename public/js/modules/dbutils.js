@@ -106,9 +106,22 @@ class DbUtils {
         return json.data
     }
 
+    static async fetchCursorId(sessionId, query) {
+        query = encodeURIComponent(query);
+        let params = {
+            'session-id': sessionId,
+            query: query
+        }
+
+        let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params), false)
+        return json.data['cursor-id']
+    }
+
     async exportResults(q) {
+        let cursorId = await DbUtils.fetchCursorId(this.sessionId, q)
         let params = {
             'session-id': this.sessionId,
+            'cursor-id': cursorId,
             query: encodeURIComponent(q),
             'req-id': Utils.uuid(),
             'num-of-rows': -1,
@@ -120,10 +133,9 @@ class DbUtils {
             tags: [Constants.USER]
         });
 
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
         let i = 1;
 
-        let cursorId = null;
         ProgressBar.setOptions({
             buttons: true,
             cancel: () => {
@@ -152,7 +164,6 @@ class DbUtils {
             }
 
             if (row[0] == "header") {
-                cursorId = row[1];
                 fileName = row[2];
 
                 PubSub.publish(Constants.START_PROGRESS, {

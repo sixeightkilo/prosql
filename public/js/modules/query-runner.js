@@ -69,6 +69,7 @@ class QueryRunner {
 
         this.$runQuery = document.getElementById('run-query')
         this.$runQuery.addEventListener('click', async (e) => {
+            this.cursorId = null
             this.runQuery()
         })
 
@@ -77,6 +78,11 @@ class QueryRunner {
             let q = this.jar.toString()
             let dbUtils = new DbUtils();
             dbUtils.exportResults.apply(this, [q])
+        })
+
+        this.$next = document.getElementById('next')
+        this.$next.addEventListener('click', async (e) => {
+            this.runQuery()
         })
     }
 
@@ -87,7 +93,7 @@ class QueryRunner {
         }
 
         if (USE_WS) {
-            this.runQuery_ws()
+            this.runQuery_ws();
             return
         }
 
@@ -110,9 +116,13 @@ class QueryRunner {
         let s = new Date()
 
         let q = this.jar.toString()
+        if (!this.cursorId) {
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
+        }
+
         let params = {
             'session-id': this.sessionId,
-            query: encodeURIComponent(q),
+            'cursor-id': this.cursorId,
             'req-id': Utils.uuid(),
             'num-of-rows': Constants.BATCH_SIZE_WS
         }
@@ -122,7 +132,7 @@ class QueryRunner {
             tags: [Constants.USER]
         });
 
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
 
         this.tableUtils.showContents(stream, {}, false)
     }
