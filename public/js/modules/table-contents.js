@@ -31,7 +31,7 @@ class TableContents {
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
 
-        PubSub.subscribe(Constants.STREAM_ERROR, (data) => {
+        PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
             Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
             Err.handle(err);
         });
@@ -268,7 +268,7 @@ class TableContents {
 
         this.enable()
 
-        PubSub.subscribe('cell-edited', async (data) => {
+        PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
             Log(TAG, JSON.stringify(data));
             let res = await DbUtils.execute(this.sessionId, 
                     `update \`${this.table}\`

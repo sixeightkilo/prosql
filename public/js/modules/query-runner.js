@@ -74,90 +74,10 @@ class QueryRunner {
 
         this.$exportResults = document.getElementById('export-results')
         this.$exportResults.addEventListener('click', async (e) => {
-            this.exportResults()
+            let q = this.jar.toString()
+            let dbUtils = new DbUtils();
+            dbUtils.exportResults.apply(this, [q])
         })
-    }
-
-    async exportResults() {
-        let q = this.jar.toString()
-        let params = {
-            'session-id': this.sessionId,
-            query: encodeURIComponent(q),
-            'req-id': Utils.uuid(),
-            'num-of-rows': -1,
-            'export': true
-        }
-
-        PubSub.publish(Constants.QUERY_DISPATCHED, {
-            query: q,
-            tags: [Constants.USER]
-        });
-
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        let i = 1;
-
-        let cursorId = null;
-        ProgressBar.setOptions({
-            buttons: true,
-            cancel: () => {
-                DbUtils.cancel(this.sessionId, cursorId)
-                Log(TAG, `Cancelled ${cursorId}`);
-            }
-        });
-
-        let csv = '';
-        let fileName = '';
-        let n = 0;
-
-        while (true) {
-            let row
-            try {
-                row = await stream.get();
-            } catch (e) {
-                PubSub.publish(Constants.STREAM_ERROR, {
-                    'error': e
-                });
-                break;
-            }
-
-            if (row.length == 1 && row[0] == "eos") {
-                break;
-            }
-
-            if (row[0] == "header") {
-                cursorId = row[1];
-                fileName = row[2];
-
-                PubSub.publish(Constants.START_PROGRESS, {
-                    title: `Exporting to ${fileName}`
-                });
-                continue;
-            }
-
-            if (row[0] == "current-row") {
-                n += row[1];
-
-                PubSub.publish(Constants.UPDATE_PROGRESS, {
-                    message: `Processed ${row[1]} rows`
-                });
-            }
-        }
-
-        if (n > 0) {
-            PubSub.publish(Constants.UPDATE_PROGRESS, {
-                message: `Export complete`
-            });
-        } else {
-            PubSub.publish(Constants.START_PROGRESS, {
-                title: `No data`
-            });
-
-            PubSub.publish(Constants.UPDATE_PROGRESS, {
-                message: `Processed 0 rows`
-            });
-        }
-
-        PubSub.publish(Constants.STOP_PROGRESS, {});
     }
 
     async runQuery() {

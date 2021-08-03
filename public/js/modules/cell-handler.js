@@ -1,5 +1,6 @@
 import { Log } from './logger.js'
 import { PubSub } from './pubsub.js'
+import { Constants } from './constants.js'
 
 const TAG = 'cell-handler';
 class CellHandler {
@@ -18,7 +19,7 @@ class CellHandler {
             //find out the primary key for this row
             let data = await this.grid.getSource();
             let k = this.fkMap['primary-key'];
-            PubSub.publish('cell-edited', {
+            PubSub.publish(Constants.CELL_EDITED, {
                 key: {
                     'name': k,
                     'value': data[e['detail']['rowIndex']][k],

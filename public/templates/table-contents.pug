@@ -1,7 +1,10 @@
 #app-content
     #app-left-panel-container
         #app-left-panel
-            div Tables and Views
+            div#tables-list
+                div Tables and Views
+                div 
+                    i.fas.fa-file-export#export-table(title="Export selected table contents")
             div.field
                 p.control.has-icons-left
                     input.input(type="text" id="table-filter" placeholder="Search tables")

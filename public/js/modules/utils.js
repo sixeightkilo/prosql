@@ -95,6 +95,7 @@ class Utils {
             if (msg) {
                 //normal error. Display to user
                 alert(e.msg)
+                return res
             }
         }
     }

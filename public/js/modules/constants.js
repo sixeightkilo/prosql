@@ -8,6 +8,10 @@ class Constants {
         return 'tables.table-selected'
     }
 
+    static get CELL_EDITED() {
+        return 'tables.cell-edited'
+    }
+
     static get TABLE_CHANGED() {
         return 'table-contents.table-changed'
     }
