@@ -119,10 +119,10 @@ class DbUtils {
 
     async exportResults(q) {
         let cursorId = await DbUtils.fetchCursorId(this.sessionId, q)
+        Log(TAG, `cursorId: ${cursorId}`);
         let params = {
             'session-id': this.sessionId,
             'cursor-id': cursorId,
-            query: encodeURIComponent(q),
             'req-id': Utils.uuid(),
             'num-of-rows': -1,
             'export': true

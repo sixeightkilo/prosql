@@ -70,31 +70,16 @@ class TableContents {
 
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
-
-        let params = {
-            'session-id': this.sessionId,
-            query: encodeURIComponent(query),
-            'num-of-rows': Constants.BATCH_SIZE_WS,
-        }
-
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents(stream, fkMap)
+        this.showContents(query, fkMap);
     }
 
     async search() {
         let query = `select * from \`${this.table}\` 
                          where \`${this.$columNames.value}\`
                          ${this.$operators.value}
-                         '${this.$searchText.value}'`
-        Log(TAG, query)
-        let params = {
-            'session-id': this.sessionId,
-            query: encodeURIComponent(query),
-            'num-of-rows': Constants.BATCH_SIZE_WS,
-        }
-
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents(stream, this.fkMap)
+                         '${this.$searchText.value}'`;
+        Log(TAG, query);
+        this.showContents(query, this.fkMap);
     }
 
     async enable() {
@@ -195,14 +180,21 @@ class TableContents {
         this.fkMap = this.createFKMap(values[1])
         this.columns = this.extractColumns(values[0])
 
+        let query = `select * from \`${this.table}\``
+        this.showContents(query, this.fkMap)
+    }
+
+    async showContents(query, fkMap) {
+        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
         let params = {
             'session-id': this.sessionId,
-            query: encodeURIComponent(`select * from \`${this.table}\` limit ${Constants.BATCH_SIZE}`),
-            'num-of-rows': Constants.BATCH_SIZE_WS,
+            'cursor-id': this.cursorId,
+            'req-id': Utils.uuid(),
+            'num-of-rows': Constants.BATCH_SIZE_WS
         }
 
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents(stream, this.fkMap)
+        let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
+        this.tableUtils.showContents(stream, fkMap)
     }
 
     extractColumns(arr) {
@@ -271,7 +263,7 @@ class TableContents {
         PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
             Log(TAG, JSON.stringify(data));
             let res = await DbUtils.execute(this.sessionId, 
-                    `update \`${this.table}\`
+                `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
                     where \`${data.key.name}\` = '${data.key.value}'`);
         });
