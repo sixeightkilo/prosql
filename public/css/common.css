@@ -1,0 +1,19 @@
+html, body {
+	padding:0;
+	margin:0;
+	height: 100vh;
+	width: 100vw;
+	font-family:sans-serif;
+	overflow:hidden;
+}
+
+.time {
+	position:absolute;
+	top:0.25em;
+	right:0.25em;
+}
+
+.highlight {
+	background:#888;
+	color:#fff;
+}

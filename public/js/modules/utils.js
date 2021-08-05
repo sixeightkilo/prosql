@@ -95,6 +95,7 @@ class Utils {
             if (msg) {
                 //normal error. Display to user
                 alert(e.msg)
+                return res
             }
         }
     }
@@ -133,14 +134,14 @@ class Utils {
         return '_' + Math.random().toString(36).substr(2, 9);
     };
 
-	static getOffset(el) {
-		const rect = el.getBoundingClientRect();
-		return {
-			left: rect.left + window.scrollX,
-			top: rect.top + window.scrollY,
+    static getOffset(el) {
+        const rect = el.getBoundingClientRect();
+        return {
+            left: rect.left + window.scrollX,
+            top: rect.top + window.scrollY,
             width: rect.width,
             height: rect.height,
-		};
-	}
+        };
+    }
 }
 export { Utils }

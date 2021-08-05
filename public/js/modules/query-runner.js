@@ -9,19 +9,21 @@ import { TableUtils } from './table-utils.js'
 import { Stream } from './stream.js'
 import { GridResizerV } from './grid-resizer-v.js'
 import { PubSub } from './pubsub.js'
+import { FileDownloader } from './file-downloader.js'
+import ProgressBar from './progress-bar.js'
 
-const TAG = "query-manager"
+const TAG = "query-runner"
 const USE_WS = true
 
-class QueryManager {
+class QueryRunner {
     constructor(sessionId) {
+
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
-        PubSub.subscribe(Constants.STREAM_ERROR, (data) => {
-            if (this.isEnabled) {
-                alert(data.error);
-            }
+        PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
+            Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
+            Err.handle(err);
         });
     }
 
@@ -33,19 +35,7 @@ class QueryManager {
 
     async init() {
         this.$root = document.getElementById('app-right-panel')
-        this.$rootTemplate = document.getElementById('query-container-template').innerHTML
         this.$footer = document.getElementById('footer-right-panel')
-    }
-
-    async enable() {
-        if (this.isEnabled) {
-            return
-        }
-
-        this.$root.style.gridTemplateRows = "2em auto"
-        this.$root.replaceChildren()
-        let n = Utils.generateNode(this.$rootTemplate, {})
-        this.$root.append(n)
 
         let $g1 = document.getElementById('query-container');
         let $e1 = document.getElementById('query-editor');
@@ -69,7 +59,7 @@ class QueryManager {
         this.jar = CodeJar(editor, highlight)
         editor.style.resize = 'none';
         //debug
-        this.jar.updateCode("select * from `bills-1` limit 1000")
+        this.jar.updateCode("select * from `bills-1` limit 10000")
 
         this.$formatQuery = document.getElementById('format-query')
 
@@ -79,10 +69,21 @@ class QueryManager {
 
         this.$runQuery = document.getElementById('run-query')
         this.$runQuery.addEventListener('click', async (e) => {
+            this.cursorId = null
             this.runQuery()
         })
 
-        this.isEnabled = true
+        this.$exportResults = document.getElementById('export-results')
+        this.$exportResults.addEventListener('click', async (e) => {
+            let q = this.jar.toString()
+            let dbUtils = new DbUtils();
+            dbUtils.exportResults.apply(this, [q])
+        })
+
+        this.$next = document.getElementById('next')
+        this.$next.addEventListener('click', async (e) => {
+            this.runQuery()
+        })
     }
 
     async runQuery() {
@@ -92,7 +93,7 @@ class QueryManager {
         }
 
         if (USE_WS) {
-            this.runQuery_ws()
+            this.runQuery_ws();
             return
         }
 
@@ -115,13 +116,23 @@ class QueryManager {
         let s = new Date()
 
         let q = this.jar.toString()
-        let params = {
-            'session-id': this.sessionId,
-            query: q,
-            'req-id': Utils.uuid()
+        if (!this.cursorId) {
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
         }
 
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
+        let params = {
+            'session-id': this.sessionId,
+            'cursor-id': this.cursorId,
+            'req-id': Utils.uuid(),
+            'num-of-rows': Constants.BATCH_SIZE_WS
+        }
+
+        PubSub.publish(Constants.QUERY_DISPATCHED, {
+            query: q,
+            tags: [Constants.USER]
+        });
+
+        let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
 
         this.tableUtils.showContents(stream, {}, false)
     }
@@ -142,13 +153,6 @@ class QueryManager {
         this.jar.updateCode(json.query)
     }
 
-    async disable() {
-        if (this.isEnabled) {
-            this.jar.destroy()
-            this.isEnabled = false
-        }
-    }
-
     async adjustView() {
         //fix height of query editor and results div
         let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
@@ -164,4 +168,4 @@ class QueryManager {
     }
 }
 
-export { QueryManager }
+export { QueryRunner }

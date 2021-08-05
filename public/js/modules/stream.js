@@ -13,8 +13,8 @@ class Stream {
         this.ws = new WebSocket(url);
 
         this.ws.onerror = (evt) => {
-            Log(TAG, "onerror:" + evt.data);
-            this.rej(evt.data);
+            Log(TAG, "onerror:" + evt);
+            this.rej(Err.ERR_NO_AGENT);
         }
 
         this.ws.onclose = (evt) => {

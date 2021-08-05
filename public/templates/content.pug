@@ -1,0 +1,17 @@
+doctype html
+html
+    head
+        include head.pug
+        script(src="https://unpkg.com/@yaireo/tagify")
+        script(src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js")
+        link(href="https://unpkg.com/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css")
+        link(rel="stylesheet" href="/css/common.css")
+        link(rel="stylesheet" href="/css/content.css")
+    body
+        include common.pug
+        include appbar.pug
+        include table-contents.pug
+
+        script(type='module' src='/js/content.js')
+        script(type="code" id="option-template")
+            option(value="{value}") {value}

@@ -11,12 +11,25 @@ const USE_WS = false
 
 class Tables {
     constructor(sessionId) {
+        this.$root = document.getElementById('app-left-panel')
         this.sessionId = sessionId
         this.$tables = document.getElementById('tables')
         this.$tableFilter = document.getElementById('table-filter')
+        this.$exportTable = document.getElementById('export-table')
         this.$tableFilter.addEventListener('keyup', () => {
-            this.filter()
-        })
+            this.filter();
+        });
+
+        this.$exportTable.addEventListener('click', () => {
+            if (!this.table) {
+                alert('No table selected');
+                return
+            }
+
+            let q = `select * from \`${this.table}\``;
+            let dbUtils = new DbUtils();
+            dbUtils.exportResults.apply(this, [q]);
+        });
 
         this.$tables.addEventListener('click', async (e) => {
             let target = e.target;
@@ -32,6 +45,8 @@ class Tables {
 
             let parent = target.parentElement;
             parent.classList.add('highlight');
+
+            this.table = target.innerHTML
 
             PubSub.publish(Constants.TABLE_SELECTED, {table: target.innerHTML});
         })

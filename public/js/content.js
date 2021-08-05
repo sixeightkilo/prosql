@@ -5,15 +5,18 @@ import { DbUtils } from './modules/dbutils.js'
 import { Constants } from './modules/constants.js'
 import { TableContents } from './modules/table-contents.js'
 import { Tables } from './modules/tables.js'
-import { Queries } from './modules/queries.js'
 import { GridResizerH } from './modules/grid-resizer-h.js'
 import { PubSub } from './modules/pubsub.js'
+import { MainMenu } from './modules/main-menu.js'
+import { QueryHistory } from './modules/query-history.js'
 
-const TAG = "app"
-class App {
+const TAG = "content"
+class Content {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.init()
+            this.history = new QueryHistory();
+            MainMenu.init();
         })
     }
 
@@ -33,7 +36,6 @@ class App {
             //update session id in all modules
             this.tableContents.setSessionInfo(this.sessionId, db)
             this.tables.setSessionInfo(this.sessionId, db)
-            this.queries.setSessionInfo(this.sessionId, db)
 
             this.tables.show(db)
         })
@@ -44,55 +46,9 @@ class App {
             this.tableContents.show(data.table);
             this.selectedTable = data.table;
         });
-
-        let elementsArray = document.querySelectorAll('[id$="-menu"]');
-
-        elementsArray.forEach((elem) => {
-            elem.addEventListener("click", (e) => {
-                Log(TAG, `${e.currentTarget.id} clicked `)
-                this.handleMenu(e.currentTarget.id)
-            });
-        });
     }
-
-    async handleMenu(id) {
-        switch (id) {
-            case 'query-menu':
-                this.tableContents.disable();
-                this.queries.enable();
-                break;
-
-            case 'content-menu':
-                this.queries.disable()
-
-                //restore table view
-                this.tables = new Tables(this.sessionId)
-                this.tables.show(this.creds.db);
-
-                this.tableContents.enable()
-                if (this.selectedTable) {
-                    this.tableContents.show(this.selectedTable)
-                }
-                break;
-
-            case 'full-screen-menu':
-                this.toggleFullScreen();
-                break;
-        }
-    }
-
-	toggleFullScreen() {
-		if (!document.fullscreenElement) {
-			document.documentElement.requestFullscreen();
-		} else {
-			if (document.exitFullscreen) {
-				document.exitFullscreen();
-			}
-		}
-	}
 
     async init() {
-        this.queries = new Queries(this.sessionId);
         this.tableContents = new TableContents(this.sessionId)
         this.tables = new Tables(this.sessionId)
 
@@ -113,8 +69,6 @@ class App {
         if (this.creds.db) {
             this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
             this.tables.setSessionInfo(this.sessionId, this.creds.db)
-            this.queries.setSessionInfo(this.sessionId, this.creds.db);
-
             this.tables.show(this.creds.db);
         }
 
@@ -123,10 +77,6 @@ class App {
         let $e2 = document.getElementById('app-right-panel');
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
-
-        //debug
-        this.tableContents.disable();
-        this.queries.enable()
     }
 
     async showDatabases(db) {
@@ -135,4 +85,4 @@ class App {
     }
 }
 
-new App()
+new Content()

@@ -31,10 +31,9 @@ class TableContents {
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
 
-        PubSub.subscribe(Constants.STREAM_ERROR, (data) => {
-            if (this.isEnabled) {
-                alert(data.error);
-            }
+        PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
+            Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
+            Err.handle(err);
         });
     }
 
@@ -48,7 +47,7 @@ class TableContents {
         this.table = table
         Log(TAG, `Displaying ${table}`)
         let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let contraints = DbUtils.fetch(this.sessionId, encodeURIComponent(`SELECT
+        let contraints = DbUtils.fetch(this.sessionId, `SELECT
                 TABLE_NAME,
                 COLUMN_NAME,
                 CONSTRAINT_NAME,
@@ -57,7 +56,7 @@ class TableContents {
                 FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
                 WHERE
                 TABLE_SCHEMA = '${this.db}\' and
-                TABLE_NAME = '${this.table}\'`))
+                TABLE_NAME = '${this.table}\'`)
 
         let values = await Promise.all([columns, contraints])
 
@@ -71,29 +70,16 @@ class TableContents {
 
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
-
-        let params = {
-            'session-id': this.sessionId,
-            query: query
-        }
-
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents(stream, fkMap)
+        this.showContents(query, fkMap);
     }
 
     async search() {
         let query = `select * from \`${this.table}\` 
                          where \`${this.$columNames.value}\`
                          ${this.$operators.value}
-                         '${this.$searchText.value}'`
-        Log(TAG, query)
-        let params = {
-            'session-id': this.sessionId,
-            query: query
-        }
-
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents(stream, this.fkMap)
+                         '${this.$searchText.value}'`;
+        Log(TAG, query);
+        this.showContents(query, this.fkMap);
     }
 
     async enable() {
@@ -103,11 +89,6 @@ class TableContents {
             Log(TAG, 'skipping enable')
             return
         }
-
-        this.$root.style.gridTemplateRows = "2.5em auto"
-        this.$root.replaceChildren()
-        let n = Utils.generateNode(this.$rootTemplate, {})
-        this.$root.append(n)
 
         this.$columNames = document.getElementById('column-names')
         this.$operators = document.getElementById('operators')
@@ -199,13 +180,21 @@ class TableContents {
         this.fkMap = this.createFKMap(values[1])
         this.columns = this.extractColumns(values[0])
 
+        let query = `select * from \`${this.table}\``
+        this.showContents(query, this.fkMap)
+    }
+
+    async showContents(query, fkMap) {
+        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
         let params = {
             'session-id': this.sessionId,
-            query: `select * from \`${this.table}\` limit ${Constants.BATCH_SIZE}`
+            'cursor-id': this.cursorId,
+            'req-id': Utils.uuid(),
+            'num-of-rows': Constants.BATCH_SIZE_WS
         }
 
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents(stream, this.fkMap)
+        let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
+        this.tableUtils.showContents(stream, fkMap)
     }
 
     extractColumns(arr) {
@@ -263,8 +252,7 @@ class TableContents {
 
     async init() {
         this.$root = document.getElementById('app-right-panel')
-        this.$rootTemplate = document.getElementById('table-contents-template').innerHTML
-        this.$footer = document.getElementById('footer-right-panel')
+        //this.$footer = document.getElementById('footer-right-panel')
 
         this.stack = new Stack(async (e) => {
             await this.navigate(e)
@@ -272,12 +260,12 @@ class TableContents {
 
         this.enable()
 
-        PubSub.subscribe('cell-edited', async (data) => {
+        PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
             Log(TAG, JSON.stringify(data));
             let res = await DbUtils.execute(this.sessionId, 
-                encodeURIComponent(`update \`${this.table}\`
+                `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
-                    where \`${data.key.name}\` = '${data.key.value}'`));
+                    where \`${data.key.name}\` = '${data.key.value}'`);
         });
     }
 

@@ -8,6 +8,10 @@ class Constants {
         return 'tables.table-selected'
     }
 
+    static get CELL_EDITED() {
+        return 'tables.cell-edited'
+    }
+
     static get TABLE_CHANGED() {
         return 'table-contents.table-changed'
     }
@@ -40,8 +44,48 @@ class Constants {
         return 1000
     }
 
+    static get BATCH_SIZE_WS() {
+        return 1000
+    }
+
     static get CREDS() {
         return 'creds'
+    }
+
+    static get QUERY_DISPATCHED() {
+        return 'query-dispatched'
+    }
+
+    static get FILE_UPLOADED() {
+        return 'file-uploaded'
+    }
+
+    static get QUERY_SAVED() {
+        return 'query-saved'
+    }
+
+    static get SYSTEM() {
+        return 'system'
+    }
+
+    static get USER() {
+        return 'user'
+    }
+
+    static get QUERY_DB_VERSION() {
+        return 2
+    }
+
+    static get START_PROGRESS() {
+        return "start-progress"
+    }
+
+    static get STOP_PROGRESS() {
+        return "stop-progress"
+    }
+
+    static get UPDATE_PROGRESS() {
+        return "update-progress"
     }
 }
 export { Constants }
