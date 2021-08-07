@@ -15,6 +15,7 @@ class Content {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.init()
+            this.adjustView()
             this.history = new QueryHistory();
             MainMenu.init();
         })
@@ -82,6 +83,18 @@ class Content {
     async showDatabases(db) {
         let dbs = await DbUtils.fetchAll(this.sessionId, 'show databases')
         Utils.setOptions(this.$databases, dbs, db);
+    }
+
+    adjustView() {
+        let rp = document.getElementById('app-right-panel');
+        let rpDims = rp.getBoundingClientRect();
+        let sbDims = document.getElementById('search-bar').getBoundingClientRect();
+
+        let h = rpDims.height - sbDims.height
+        //todo: Hack. Not sure why this is needed
+        h -= 400;
+        Log(TAG, `h: ${h}`);
+        rp.style.gridTemplateRows = `40px ${h}px`;
     }
 }
 

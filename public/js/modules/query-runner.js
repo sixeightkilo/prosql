@@ -55,7 +55,7 @@ class QueryRunner {
         this.editor = ace.edit("query-editor");
         this.editor.setTheme("ace/theme/github");
         this.editor.session.setMode("ace/mode/mysql");
-        this.editor.setValue("select * from `bills-1`");
+        this.editor.setValue("select * from `bills-1` limit 20");
 
         this.$formatQuery = document.getElementById('format-query')
 

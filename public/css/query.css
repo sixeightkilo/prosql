@@ -132,7 +132,7 @@ sup {
 
 #query-container {
 	display:grid;
-	grid-template-rows: 200px 2px auto;
+	grid-template-rows: 200px 2px 100px;
 }
 
 #query-container-resizer {

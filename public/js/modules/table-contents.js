@@ -131,7 +131,7 @@ class TableContents {
             this.show(this.table)
         }
 
-        this.adjustView()
+        //this.adjustView()
         this.isEnabled = true
     }
 
