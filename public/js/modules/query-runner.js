@@ -12,6 +12,7 @@ import { PubSub } from './pubsub.js'
 import { FileDownloader } from './file-downloader.js'
 import { Ace } from './ace.js'
 import ProgressBar from './progress-bar.js'
+import HotKeys from 'https://unpkg.com/hotkeys-js@3.8.7/dist/hotkeys.esm.js'
 
 const TAG = "query-runner"
 const USE_WS = true
@@ -50,22 +51,10 @@ class QueryRunner {
 
         //this.adjustView()
 
-        //let editor = document.querySelector('#query-editor')
-        //const highlight = (editor) => {
-            //const code = editor.textContent
-            //// Do something with code and set html.
-            //editor.innerHTML = code
-        //}
-//
-        //this.jar = CodeJar(editor, highlight)
-        //editor.style.resize = 'none';
-        ////debug
-        //this.jar.updateCode("select * from `bills-1` limit 10000")
-
-		let ace = await Ace.init();
-		this.editor = ace.edit("query-editor");
-		this.editor.setTheme("ace/theme/github");
-		this.editor.session.setMode("ace/mode/mysql");
+        let ace = await Ace.init();
+        this.editor = ace.edit("query-editor");
+        this.editor.setTheme("ace/theme/github");
+        this.editor.session.setMode("ace/mode/mysql");
         this.editor.setValue("select * from `bills-1`");
 
         this.$formatQuery = document.getElementById('format-query')
@@ -91,6 +80,17 @@ class QueryRunner {
         this.$next.addEventListener('click', async (e) => {
             this.runQuery()
         })
+
+        HotKeys('ctrl+p+[', () => {
+            Log(TAG, "Run query");
+            this.cursorId = null;
+            this.runQuery();
+        });
+
+        HotKeys('ctrl+p+o', () => {
+            this.formatQuery();
+            return false;
+        });
     }
 
     async runQuery() {
@@ -153,10 +153,12 @@ class QueryRunner {
     }
 
     async formatQuery() {
-        let q = this.editor.getValue()
-        Log(TAG, q)
-        let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}))
-        this.editor.setValue(json.query)
+        let q = this.editor.getValue();
+        Log(TAG, q);
+        let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}));
+        this.editor.setValue(json.query);
+        this.editor.clearSelection();
+        this.editor.focus();
     }
 
     async adjustView() {
