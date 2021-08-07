@@ -10,6 +10,7 @@ import { Stream } from './stream.js'
 import { GridResizerV } from './grid-resizer-v.js'
 import { PubSub } from './pubsub.js'
 import { FileDownloader } from './file-downloader.js'
+import { Ace } from './ace.js'
 import ProgressBar from './progress-bar.js'
 
 const TAG = "query-runner"
@@ -49,17 +50,23 @@ class QueryRunner {
 
         //this.adjustView()
 
-        let editor = document.querySelector('#query-editor')
-        const highlight = (editor) => {
-            const code = editor.textContent
-            // Do something with code and set html.
-            editor.innerHTML = code
-        }
+        //let editor = document.querySelector('#query-editor')
+        //const highlight = (editor) => {
+            //const code = editor.textContent
+            //// Do something with code and set html.
+            //editor.innerHTML = code
+        //}
+//
+        //this.jar = CodeJar(editor, highlight)
+        //editor.style.resize = 'none';
+        ////debug
+        //this.jar.updateCode("select * from `bills-1` limit 10000")
 
-        this.jar = CodeJar(editor, highlight)
-        editor.style.resize = 'none';
-        //debug
-        this.jar.updateCode("select * from `bills-1` limit 10000")
+		let ace = await Ace.init();
+		this.editor = ace.edit("query-editor");
+		this.editor.setTheme("ace/theme/github");
+		this.editor.session.setMode("ace/mode/mysql");
+        this.editor.setValue("select * from `bills-1`");
 
         this.$formatQuery = document.getElementById('format-query')
 
@@ -75,7 +82,7 @@ class QueryRunner {
 
         this.$exportResults = document.getElementById('export-results')
         this.$exportResults.addEventListener('click', async (e) => {
-            let q = this.jar.toString()
+            let q = this.editor.getValue()
             let dbUtils = new DbUtils();
             dbUtils.exportResults.apply(this, [q])
         })
@@ -115,7 +122,7 @@ class QueryRunner {
     async runQuery_ws() {
         let s = new Date()
 
-        let q = this.jar.toString()
+        let q = this.editor.getValue()
         if (!this.cursorId) {
             this.cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
         }
@@ -146,11 +153,10 @@ class QueryRunner {
     }
 
     async formatQuery() {
-        let q = this.jar.toString()
+        let q = this.editor.getValue()
         Log(TAG, q)
         let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}))
-        //this.$queryEditor.value = json.query;
-        this.jar.updateCode(json.query)
+        this.editor.setValue(json.query)
     }
 
     async adjustView() {
