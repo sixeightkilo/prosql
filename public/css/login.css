@@ -72,3 +72,17 @@
 .conn {
 	cursor:pointer;
 }
+
+.conn-container {
+	display:grid;
+	grid-template-columns:1fr 9fr 1fr;
+}
+
+.del-conn {
+	visibility:hidden;
+	cursor:pointer;
+}
+
+.conn-container:hover .del-conn {
+	visibility:visible;
+}

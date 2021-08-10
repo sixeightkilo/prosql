@@ -62,7 +62,9 @@ html
 
         script(type='module' src='/js/login.js')
         script(type='code' id='conn-template')
-            .conn-container.has-text-left
-                span
+            .conn-container
+                div
                     i.fas.fa-server
-                span.conn(data-id="{id}") &nbsp;&nbsp;{item}
+                div.conn.has-text-left(data-id="{id}") &nbsp;&nbsp;{item}
+                div
+                    i.fas.fa-trash.del-conn(data-id="{id}")

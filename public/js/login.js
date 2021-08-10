@@ -59,6 +59,31 @@ class Login {
             this.testConn();
         });
 
+        document.addEventListener('click', async (e) => {
+            let target = event.target;
+            if (!target.classList.contains('del-conn')) {
+                return
+            }
+
+            Log(TAG, `${target.dataset.id}`);
+            let connId = parseInt(target.dataset.id);
+            await this.connectionDb.del(connId);
+            this.initConns();
+        });
+
+        let conns = await this.connectionDb.getAll();
+        if (conns.length == 0) {
+            return;
+        }
+
+        this.showRecents(conns);
+        let conn = this.getDefault(conns);
+        this.setConn(conn);
+        this.testConn();
+    }
+
+    async initConns() {
+        document.querySelector('#conn-list').replaceChildren();
         let conns = await this.connectionDb.getAll();
         if (conns.length == 0) {
             return;
