@@ -1,21 +1,28 @@
-import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
-import { CellHandler } from './cell-handler.js'
+//import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
+//import { CellHandler } from './cell-handler.js'
 import { Log } from './logger.js'
 import { Constants } from './constants.js'
 import { Utils } from './utils.js'
 import { PubSub } from './pubsub.js'
+import { AgGrid } from './ag-grid.js'
+import { CellRenderer } from './cell-renderer.js'
 
 const TAG = "table-utils"
 
 class TableUtils {
     constructor($root) {
-        defineCustomElements();
+        //defineCustomElements();
         this.$root = $root;
         this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
+        this.init();
+    }
+
+    async init() {
+		await AgGrid.init();
     }
 
     async showContents(stream, fkMap, clear = true) {
-        let grid = this.$root.querySelector('revo-grid');
+        let grid = this.$root.querySelector('#grid');
         //clear existing grid if any
         if (grid != null) {
             grid.remove();
@@ -23,15 +30,13 @@ class TableUtils {
 
         this.showLoader();
 
-        let n = Utils.generateNode('<revo-grid class=grid-component></revo-grid>', {});
+        let n = Utils.generateNode('<div id="grid" class="ag-theme-alpine"></div>', {});
         this.$root.append(n);
-        grid = this.$root.querySelector('revo-grid');
+        grid = this.$root.querySelector('#grid');
 
         let i = 0;
-        let columns = [];
-        let items = [];
-
-        let cellHandler = new CellHandler(grid, fkMap);
+        let api;
+        let cellRenderer = new CellRenderer(fkMap);
 
         while (true) {
             let row
@@ -49,16 +54,23 @@ class TableUtils {
             }
 
             if (i == 0) {
+                let cols = [];
                 for (let j = 0; j < row.length; j += 2) {
-                    columns.push({
-                        prop: row[j],
-                        name: row[j],
-                        cellTemplate: (createElement, props) => {
-                            return cellHandler.cellTemplate(createElement, props);
+                    cols.push({
+                        field: row[j],
+                        resizable: true,
+                        cellRenderer: (params) => {
+                            return cellRenderer.render(params)
                         }
-                    });
+                    })
                 }
-                i++;
+
+                let gridOptions = {
+                    columnDefs: cols,
+                };
+
+                new agGrid.Grid(grid, gridOptions);
+                api = gridOptions.api;
             }
 
             let item = {};
@@ -66,23 +78,19 @@ class TableUtils {
                 item[row[j]] = row[j + 1];
             }
 
-            items.push(item);
+            api.applyTransactionAsync({ add: [item] });
+            i++
         }
 
         this.hideLoader();
 
-        if (items.length == 0) {
-            columns = [
-                {
-                    'prop' : '0 Rows',
-                    'name' : '0 Rows',
-                }
-            ];
-        }
+        if (i == 0) {
+            let gridOptions = {};
 
-        grid.resize = true;
-		grid.columns = columns;
-		grid.source = items;
+            new agGrid.Grid(grid, gridOptions);
+            api = gridOptions.api;
+            api.showNoRowsOverlay();
+        }
     }
 
     showLoader() {

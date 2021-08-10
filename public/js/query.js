@@ -81,8 +81,7 @@ class Query {
         let edDims = document.getElementById('query-editor').getBoundingClientRect();
 
         let h = rpDims.height - sbDims.height - edDims.height;
-        //todo: Hack. Not sure why this is needed
-        h -= 100;
+        h -= 50;
         Log(TAG, `h: ${h}`);
         let queryContainer = document.querySelector('#query-container');
         queryContainer.style.gridTemplateRows = `200px 2px ${h}px`;

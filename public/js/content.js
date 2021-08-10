@@ -85,7 +85,7 @@ class Content {
 
         let h = rpDims.height - sbDims.height
         //todo: Hack. Not sure why this is needed
-        h -= 400;
+        h -= 300;
         Log(TAG, `h: ${h}`);
         rp.style.gridTemplateRows = `40px ${h}px`;
     }

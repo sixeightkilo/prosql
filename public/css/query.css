@@ -304,3 +304,7 @@ body, html {
 #next {
 	margin-left:20px;
 }
+
+#grid {
+	height:100%;
+}
