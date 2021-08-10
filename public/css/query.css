@@ -20,33 +20,6 @@ sup {
 }
 
 /* main app */
-#appbar {
-	padding-left:1em;
-	padding-top:1em;
-	padding-bottom:1em;
-	background-color:#eee;
-	display:grid;
-	grid-template-columns: 2fr 8fr;
-	border-bottom:1px solid #aaa;
-}
-
-#appbar-right-panel {
-	display:grid;
-	grid-template-columns: 1fr 1fr 1fr 6fr 2fr;
-	column-gap:0.25em;
-	text-align:center;
-	font-size:smaller;
-}
-
-#structure-menu {
-	opacity:0.2;
-}
-
-[id$="-menu"] {
-	cursor:pointer;
-}
-
-#databases,
 #table-filter {
 	width: 15em;
 }

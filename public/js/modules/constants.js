@@ -16,6 +16,10 @@ class Constants {
         return 'table-contents.table-changed'
     }
 
+    static get DB_CHANGED() {
+        return 'appbar.db-changed'
+    }
+
     static get SESSION_ID() {
         return 'session-id'
     }

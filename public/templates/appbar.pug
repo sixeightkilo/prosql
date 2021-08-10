@@ -1,7 +1,11 @@
 #appbar
     #appbar-left-panel
-        .select.is-small
-            select#databases
+        div
+            a(href='/login')
+                i.fas.fa-home
+        div
+            .select.is-small
+                select#databases
     #appbar-right-panel
         div#structure-menu
             div
@@ -18,12 +22,9 @@
                 i.fas.fa-question
             div Query
 
-        //div#full-screen-menu
-            //div
-                //i.fas.fa-expand
-            //div Full Screen
-
         div#dummy
+        div#conn
+            span.tag.is-medium.is-info#conn-name
         div#nav
             i.fas.fa-arrow-circle-left.stack-disable#back
             i.fas.fa-arrow-circle-right.stack-disable#fwd

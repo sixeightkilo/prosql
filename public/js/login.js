@@ -151,6 +151,11 @@ class Login {
 
     async login() {
         let conn = this.getConn()
+        if (!conn.name) {
+            alert('Please choose a connection name');
+            return;
+        }
+
         if (await this.ping(conn) == 'ok') {
             Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
             let id = await this.connectionDb.save(conn);
