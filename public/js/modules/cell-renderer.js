@@ -1,0 +1,42 @@
+import { Log } from './logger.js'
+import { Utils } from './utils.js'
+const TAG = 'cell-renderer';
+
+class CellRenderer {
+	constructor(fkMap) {
+        this.fkMap = fkMap;
+        this.fkCellTemplate = document.getElementById('fk-cell-template').innerHTML;
+        this.cellTemplate = document.getElementById('cell-template').innerHTML;
+    }
+
+    render(params) {
+        Log(TAG, `${params.colDef.field} ${params.value}`);
+        let c = params.colDef.field;
+        let v = params.value;
+
+        let refTable = ''
+        let refColumn = ''
+
+        if (this.fkMap[c] && v != "NULL") {
+            refTable = this.fkMap[c]['ref-table']
+            refColumn = this.fkMap[c]['ref-column']
+        }
+
+        let cls = (v == "NULL") ? "null" : "";
+
+        if (refTable) {
+            return Utils.generateNode(this.fkCellTemplate, {
+                'value': params.value,
+                'table': refTable,
+                'column': refColumn,
+            });
+        }
+
+        return Utils.generateNode(this.cellTemplate, {
+                'value': params.value,
+                'cls': cls
+        })
+    }
+}
+
+export { CellRenderer }
