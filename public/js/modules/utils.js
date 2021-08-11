@@ -61,8 +61,6 @@ class Utils {
                 'data': null,
             };
 
-            let msg;
-
             if (e instanceof TypeError) {
                 if (!handleError) {
                     res.msg = Err.ERR_NO_AGENT;
@@ -73,28 +71,27 @@ class Utils {
                 return;
             }
 
-            msg = e.msg;
-            if (msg == Err.ERR_INVALID_SESSION_ID) {
+            res.msg = e.msg;
+            if (res.msg == Err.ERR_INVALID_SESSION_ID) {
                 //user must login
                 window.location = '/login';
                 return;
             }
 
-            res.msg = msg;
             //let client handle this
             if (!handleError) {
                 return res
             }
 
-            if (msg == Err.ERR_INVALID_CURSOR_ID) {
+            if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
                 //let caller handle this too
                 return res
             }
 
             //common error handling
-            if (msg) {
+            if (res.msg) {
                 //normal error. Display to user
-                alert(e.msg)
+                alert(res.msg)
                 return res
             }
         }

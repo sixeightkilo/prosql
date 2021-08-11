@@ -111,6 +111,7 @@ class TableContents {
         })
 
         this.$tableContents.addEventListener('click', async (e) => {
+            Log(TAG, "clicked");
             let target = event.target;
             if (!target.classList.contains('fk-icon')) {
                 return
@@ -194,7 +195,7 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents(stream, fkMap)
+        this.tableUtils.showContents(stream, fkMap, true)
     }
 
     extractColumns(arr) {
@@ -266,6 +267,11 @@ class TableContents {
                 `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
                     where \`${data.key.name}\` = '${data.key.value}'`);
+            Log(TAG, JSON.stringify(res));
+            if (res.status == "error") {
+                this.tableUtils.undo();
+                alert(res.msg);
+            }
         });
     }
 

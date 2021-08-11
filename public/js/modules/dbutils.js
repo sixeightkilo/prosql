@@ -91,8 +91,7 @@ class DbUtils {
             query: query
         }
 
-        let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params))
-        return json.data
+        return await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params), false)
     }
 
     static async cancel(sessionId, cursorId) {

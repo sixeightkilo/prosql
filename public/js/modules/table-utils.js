@@ -21,7 +21,7 @@ class TableUtils {
 		await AgGrid.init();
     }
 
-    async showContents(stream, fkMap, clear = true) {
+    async showContents(stream, fkMap, editable = false) {
         let grid = this.$root.querySelector('#grid');
         //clear existing grid if any
         if (grid != null) {
@@ -35,7 +35,6 @@ class TableUtils {
         grid = this.$root.querySelector('#grid');
 
         let i = 0;
-        let api;
         let cellRenderer = new CellRenderer(fkMap);
 
         while (true) {
@@ -59,6 +58,10 @@ class TableUtils {
                     cols.push({
                         field: row[j],
                         resizable: true,
+                        editable: editable,
+                        onCellValueChanged: (params) => {
+                            TableUtils.handleCellValueChanged(fkMap, params);
+                        },
                         cellRenderer: (params) => {
                             return cellRenderer.render(params)
                         }
@@ -67,10 +70,11 @@ class TableUtils {
 
                 let gridOptions = {
                     columnDefs: cols,
+                    undoRedoCellEditing: true,
                 };
 
                 new agGrid.Grid(grid, gridOptions);
-                api = gridOptions.api;
+                this.api = gridOptions.api;
             }
 
             let item = {};
@@ -78,7 +82,7 @@ class TableUtils {
                 item[row[j]] = row[j + 1];
             }
 
-            api.applyTransactionAsync({ add: [item] });
+            this.api.applyTransactionAsync({ add: [item] });
             i++
         }
 
@@ -88,9 +92,27 @@ class TableUtils {
             let gridOptions = {};
 
             new agGrid.Grid(grid, gridOptions);
-            api = gridOptions.api;
-            api.showNoRowsOverlay();
+            this.api = gridOptions.api;
+            this.api.showNoRowsOverlay();
         }
+    }
+
+    undo() {
+        this.api.undoCellEditing();
+    }
+
+    static handleCellValueChanged(fkMap, params) {
+        let k = fkMap['primary-key'];
+        PubSub.publish(Constants.CELL_EDITED, {
+            key: {
+                'name': k,
+                'value': params.data[k]
+            },
+            col: {
+                'name': params.colDef.field,
+                'value': params.newValue
+            },
+        });
     }
 
     showLoader() {
