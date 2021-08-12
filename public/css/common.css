@@ -7,6 +7,10 @@ html, body {
 	overflow:hidden;
 }
 
+body, html {
+	overscroll-behavior-x: none;
+}
+
 .time {
 	position:absolute;
 	top:0.25em;
@@ -56,3 +60,4 @@ html, body {
 .table-loader {
 	position:fixed;
 }
+

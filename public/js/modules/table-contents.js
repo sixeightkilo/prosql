@@ -78,12 +78,13 @@ class TableContents {
     }
 
     async search() {
-        let query = `select * from \`${this.table}\` 
+        this.query = `select * from \`${this.table}\` 
                          where \`${this.$columNames.value}\`
                          ${this.$operators.value}
                          '${this.$searchText.value}'`;
-        Log(TAG, query);
-        this.showContents(query, this.fkMap);
+        Log(TAG, this.query);
+        this.cursorId = null;
+        this.showContents(this.query, this.fkMap);
     }
 
     async enable() {
@@ -185,12 +186,16 @@ class TableContents {
         this.fkMap = this.createFKMap(values[1])
         this.columns = this.extractColumns(values[0])
 
-        let query = `select * from \`${this.table}\``
-        this.showContents(query, this.fkMap)
+        this.query = `select * from \`${this.table}\``;
+        this.cursorId = null;
+        this.showContents(this.query, this.fkMap)
     }
 
     async showContents(query, fkMap) {
-        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
+        if (!this.cursorId) {
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
+        }
+
         let params = {
             'session-id': this.sessionId,
             'cursor-id': this.cursorId,
@@ -277,6 +282,17 @@ class TableContents {
                 alert(res.msg);
             }
         });
+
+        this.$next = document.getElementById('next')
+        this.$next.addEventListener('click', async (e) => {
+            this.showContents(this.query, this.fkMap);
+        })
+
+        this.$exportFiltered = document.getElementById('export-filtered-results')
+        this.$exportFiltered.addEventListener('click', async (e) => {
+            let dbUtils = new DbUtils();
+            dbUtils.exportResults.apply(this, [this.query])
+        })
     }
 
     async navigate(e) {

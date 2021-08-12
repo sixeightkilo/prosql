@@ -74,7 +74,7 @@
 	width:100%;
 	padding:0.25em;
 	display:grid;
-	grid-template-columns: 1fr 2fr 2fr 8fr 1fr;
+	grid-template-columns: 0.5fr 2fr 2fr 4fr 0.5fr 1fr;
 	column-gap:0.25em;
 	background-color:#e8e8e8
 }
@@ -173,4 +173,10 @@ i#back {
 
 #grid {
 	height:100%;
+}
+
+#export-filtered-results,
+#next {
+	margin-left:20px;
+	cursor:pointer;
 }
