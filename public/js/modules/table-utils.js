@@ -9,7 +9,6 @@ const TAG = "table-utils"
 
 class TableUtils {
     constructor($root) {
-        //defineCustomElements();
         this.$root = $root;
         this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
         this.init();
@@ -79,16 +78,8 @@ class TableUtils {
                 let gridOptions = {
                     columnDefs: cols,
                     undoRedoCellEditing: true,
-                    //components: {
-                        //customLoadingOverlay: CustomLoadingOverlay,
-                    //},
-//
-                    //loadingOverlayComponent: 'customLoadingOverlay',
-                    //loadingOverlayComponentParams: {
-                        //loadingMessage: 'One moment please...',
-                    //},
                 };
-//
+
                 new agGrid.Grid(grid, gridOptions);
                 this.api = gridOptions.api;
                 this.api.hideOverlay();

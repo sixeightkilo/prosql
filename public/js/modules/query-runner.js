@@ -15,7 +15,6 @@ import ProgressBar from './progress-bar.js'
 import HotKeys from 'https://unpkg.com/hotkeys-js@3.8.7/dist/hotkeys.esm.js'
 
 const TAG = "query-runner"
-const USE_WS = true
 
 class QueryRunner {
     constructor(sessionId) {
@@ -103,27 +102,10 @@ class QueryRunner {
             return
         }
 
-        if (USE_WS) {
-            this.runQuery_ws();
-            return
-        }
-
-        this.runQuery_ajax()
+        this.runQuery();
     }
 
-    async runQuery_ajax() {
-        let s = new Date()
-
-        let q = this.jar.toString()
-        let rows = await DbUtils.fetch(this.sessionId, encodeURIComponent(q))
-        TableContents.showCols(this.extractCols(rows))
-        TableContents.showResults(rows, {})
-
-        let e = new Date()
-        this.$footer.innerHTML = e.getTime() - s.getTime() + ' ms'
-    }
-
-    async runQuery_ws() {
+    async runQuery() {
         let s = new Date()
 
         let q = this.editor.getValue()

@@ -7,7 +7,6 @@ import { Stream } from './stream.js'
 import { PubSub } from './pubsub.js'
 
 const TAG = "tables"
-const USE_WS = false
 
 class Tables {
     constructor(sessionId) {
@@ -95,36 +94,24 @@ class Tables {
     }
 
     async show(db) {
-        if (USE_WS) {
-            return this.show_ws(db)
-        }
+        Log(TAG, "show")
+        let q = `show tables from \`${db}\``
+        let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
 
-        this.show_ajax(db)
-    }
-
-    async show_ajax(db) {
-        let tables = await DbUtils.fetchAll(this.sessionId, `show tables from \`${db}\``)
-        this.tables = []
-
-        //save the table list in a more convenient form
-        tables.forEach((t) => {
-            this.tables.push(t[1])
-        })
-        this.render(this.tables)
-    }
-
-    async show_ws(db) {
-        Log(TAG, "show_ws")
         let params = {
             'session-id': this.sessionId,
-            query: `show tables from \`${db}\``
+            'cursor-id': cursorId,
+            'req-id': Utils.uuid(),
+            'num-of-rows': -1 //get all table names
         }
 
-        let stream = new Stream(Constants.WS_URL + '/query_ws?' + new URLSearchParams(params))
+        let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
 
         this.$tables.replaceChildren()
         let $t = document.getElementById('table-template')
         let t = $t.innerHTML
+
+        this.tables = []
 
         while (true) {
             let row = await stream.get();
@@ -133,8 +120,9 @@ class Tables {
                 break;
             }
 
-            let h = Utils.generateNode(t, {table: row[1]})
-            this.$tables.append(h)
+            let h = Utils.generateNode(t, {table: row[1]});
+            this.$tables.append(h);
+            this.tables.push(row[1]);
         }
     }
 

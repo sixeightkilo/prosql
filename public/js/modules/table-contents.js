@@ -51,7 +51,7 @@ class TableContents {
         this.table = table
         Log(TAG, `Displaying ${table}`)
         let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let contraints = DbUtils.fetch(this.sessionId, `SELECT
+        let contraints = DbUtils.fetchAll(this.sessionId, `SELECT
                 TABLE_NAME,
                 COLUMN_NAME,
                 CONSTRAINT_NAME,
@@ -74,6 +74,7 @@ class TableContents {
 
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
+        this.cursorId = null;
         this.showContents(query, fkMap);
     }
 
@@ -88,13 +89,6 @@ class TableContents {
     }
 
     async enable() {
-        Log(TAG, 'enable')
-
-        if (this.isEnabled) {
-            Log(TAG, 'skipping enable')
-            return
-        }
-
         this.$columNames = document.getElementById('column-names')
         this.$operators = document.getElementById('operators')
         this.$searchText = document.getElementById('search-text')
@@ -136,36 +130,17 @@ class TableContents {
         if (this.table) {
             this.show(this.table)
         }
-
-        //this.adjustView()
-        this.isEnabled = true
-    }
-
-    async disable() {
-        Log(TAG, 'disable')
-        this.isEnabled = false
     }
 
     async show(table) {
-        if (!this.isEnabled) {
-            //ignore if tables contents are not being displayed
-            return
-        }
-
         this.table = table
         Log(TAG, `Displaying ${table}`)
 
         this.stack.reset()
         this.stack.push(table)
 
-        return this.show_ws()
-    }
-
-    async show_ws() {
-        Log(TAG, "show_ws")
-
         let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let contraints = DbUtils.fetch(this.sessionId, `SELECT
+        let contraints = DbUtils.fetchAll(this.sessionId, `SELECT
                 TABLE_NAME,
                 COLUMN_NAME,
                 CONSTRAINT_NAME,

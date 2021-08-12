@@ -1,38 +1,15 @@
 import { Log } from './logger.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
-import { PubSub } from './pubsub.js'
 import { Stream } from './stream.js'
+import { PubSub } from './pubsub.js'
 import ProgressBar from './progress-bar.js'
 
 const TAG = "dbutils"
 class DbUtils {
 
-    static async fetch(sessionId, query) {
-        PubSub.publish(Constants.QUERY_DISPATCHED, {query: query, tags: [Constants.SYSTEM]});
-        query = encodeURIComponent(query);
-
-        let params = {
-            'session-id': sessionId,
-            query: query
-        }
-
-        let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params))
-        let cursorId = json.data['cursor-id']
-
-        params = {
-            'session-id': sessionId,
-            'cursor-id': cursorId,
-            'num-of-rows': Constants.BATCH_SIZE
-        }
-
-        json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params))
-        return json.data
-    }
-
+    //todo: use WS in fetchall and get rid of fetch route from agent
     static async fetchAll(sessionId, query) {
-        PubSub.publish(Constants.QUERY_DISPATCHED, {query: query, tags: [Constants.SYSTEM]});
-
         let params = {
             'session-id': sessionId,
             query: query
@@ -126,11 +103,6 @@ class DbUtils {
             'num-of-rows': -1,
             'export': true
         }
-
-        PubSub.publish(Constants.QUERY_DISPATCHED, {
-            query: q,
-            tags: [Constants.USER]
-        });
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
         let i = 1;
