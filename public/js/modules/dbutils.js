@@ -1,3 +1,4 @@
+import { Err } from './error.js'
 import { Log } from './logger.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
@@ -68,7 +69,12 @@ class DbUtils {
             query: query
         }
 
-        return await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params), false)
+        let res = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params), false)
+        if (res.status == "ok") {
+            return Err.ERR_NONE
+        }
+
+        return res.msg
     }
 
     static async cancel(sessionId, cursorId) {
@@ -83,10 +89,10 @@ class DbUtils {
     }
 
     static async fetchCursorId(sessionId, query) {
-        query = encodeURIComponent(query);
+        let q = encodeURIComponent(query);
         let params = {
             'session-id': sessionId,
-            query: query
+            query: q
         }
 
         let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params), false)
@@ -118,6 +124,7 @@ class DbUtils {
         let csv = '';
         let fileName = '';
         let n = 0;
+        let err = Err.ERR_NONE;
 
         while (true) {
             let row
@@ -127,6 +134,7 @@ class DbUtils {
                 PubSub.publish(Constants.STREAM_ERROR, {
                     'error': e
                 });
+                err = e
                 break;
             }
 
@@ -167,6 +175,7 @@ class DbUtils {
         }
 
         PubSub.publish(Constants.STOP_PROGRESS, {});
+        return err
     }
 }
 

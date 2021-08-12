@@ -75,7 +75,14 @@ class TableContents {
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
         this.cursorId = null;
-        this.showContents(query, fkMap);
+        let err = await this.showContents(query, fkMap);
+
+        if (err == Err.ERR_NONE) {
+            PubSub.publish(Constants.QUERY_DISPATCHED, {
+                query: query,
+                tags: [Constants.USER]
+            })
+        }
     }
 
     async search() {
@@ -85,7 +92,13 @@ class TableContents {
                          '${this.$searchText.value}'`;
         Log(TAG, this.query);
         this.cursorId = null;
-        this.showContents(this.query, this.fkMap);
+        let err = await this.showContents(this.query, this.fkMap);
+        if (err == Err.ERR_NONE) {
+            PubSub.publish(Constants.QUERY_DISPATCHED, {
+                query: this.query,
+                tags: [Constants.USER]
+            })
+        }
     }
 
     async enable() {
@@ -179,7 +192,7 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
-        this.tableUtils.showContents(stream, fkMap, true)
+        return this.tableUtils.showContents(stream, fkMap, true)
     }
 
     extractColumns(arr) {
@@ -247,15 +260,21 @@ class TableContents {
 
         PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
             Log(TAG, JSON.stringify(data));
-            let res = await DbUtils.execute(this.sessionId, 
-                `update \`${this.table}\`
+            let query = `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
-                    where \`${data.key.name}\` = '${data.key.value}'`);
-            Log(TAG, JSON.stringify(res));
-            if (res.status == "error") {
-                this.tableUtils.undo();
-                alert(res.msg);
+                    where \`${data.key.name}\` = '${data.key.value}'`;
+            let err = await DbUtils.execute(this.sessionId, query);
+
+            if (err == Err.ERR_NONE) {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    query: query,
+                    tags: [Constants.USER]
+                });
+                return;
             }
+
+            this.tableUtils.undo();
+            alert(err);
         });
 
         this.$next = document.getElementById('next')

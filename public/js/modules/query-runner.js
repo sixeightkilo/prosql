@@ -76,12 +76,19 @@ class QueryRunner {
         this.$exportResults.addEventListener('click', async (e) => {
             let q = this.editor.getValue()
             let dbUtils = new DbUtils();
-            dbUtils.exportResults.apply(this, [q])
+            let err = await dbUtils.exportResults.apply(this, [q])
+
+            if (err == Err.ERR_NONE) {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    query: q,
+                    tags: [Constants.USER]
+                })
+            }
         })
 
         this.$next = document.getElementById('next')
         this.$next.addEventListener('click', async (e) => {
-            this.runQuery()
+            this.runQuery(false)
         })
 
         HotKeys('ctrl+p+[', () => {
@@ -96,16 +103,12 @@ class QueryRunner {
         });
     }
 
-    async runQuery() {
+    async runQuery(save = true) {
         if (!this.db) {
             alert('No database selected')
             return
         }
 
-        this.runQuery();
-    }
-
-    async runQuery() {
         let s = new Date()
 
         let q = this.editor.getValue()
@@ -120,14 +123,16 @@ class QueryRunner {
             'num-of-rows': Constants.BATCH_SIZE_WS
         }
 
-        PubSub.publish(Constants.QUERY_DISPATCHED, {
-            query: q,
-            tags: [Constants.USER]
-        });
-
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
 
-        this.tableUtils.showContents(stream, {}, false)
+        let err = await this.tableUtils.showContents(stream, {}, false)
+
+        if (err == Err.ERR_NONE && save) {
+            PubSub.publish(Constants.QUERY_DISPATCHED, {
+                query: q,
+                tags: [Constants.USER]
+            })
+        }
     }
 
     extractCols(row) {

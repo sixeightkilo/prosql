@@ -1,3 +1,4 @@
+import { Err } from './error.js'
 import { Log } from './logger.js'
 import { Constants } from './constants.js'
 import { Utils } from './utils.js'
@@ -43,6 +44,7 @@ class TableUtils {
 
         let i = 0;
         let cellRenderer = new CellRenderer(fkMap);
+        let err = Err.ERR_NONE
 
         while (true) {
             let row
@@ -52,6 +54,7 @@ class TableUtils {
                 PubSub.publish(Constants.STREAM_ERROR, {
                     'error': e
                 });
+                err = e
                 break;
             }
 
@@ -103,6 +106,8 @@ class TableUtils {
             this.api = gridOptions.api;
             this.api.showNoRowsOverlay();
         }
+
+        return err
     }
 
     undo() {

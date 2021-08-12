@@ -1,4 +1,8 @@
 class Err {
+    static get ERR_NONE () {
+        return 'none'
+    }
+
     static get ERR_NO_AGENT () {
         return 'no-agent'
     }
