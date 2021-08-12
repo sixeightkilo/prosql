@@ -60,16 +60,6 @@
 	overflow:scroll;
 }
 
-.table-loader {
-	position:fixed;
-}
-
-.table-loader i {
-	display:block;
-	position:absolute;
-	font-size:2em;
-}
-
 #table-contents thead th {
 	position:sticky;
 	background-color:#fff;

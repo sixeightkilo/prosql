@@ -4,6 +4,10 @@ class Constants {
         return 'stream.stream-error'
     }
 
+    static get QUERY_CANCELLED() {
+        return 'table-utils.query-cancelled'
+    }
+
     static get TABLE_SELECTED() {
         return 'tables.table-selected'
     }

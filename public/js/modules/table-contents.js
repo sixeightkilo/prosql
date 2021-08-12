@@ -35,6 +35,10 @@ class TableContents {
             Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
             Err.handle(err);
         });
+
+        PubSub.subscribe(Constants.QUERY_CANCELLED, () => {
+            DbUtils.cancel(this.sessionId, this.cursorId);
+        });
     }
 
     setSessionInfo(sessionId, db) {

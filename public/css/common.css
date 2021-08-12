@@ -53,4 +53,6 @@ html, body {
 	width: 15em;
 }
 
-
+.table-loader {
+	position:fixed;
+}

@@ -1,5 +1,3 @@
-//import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
-//import { CellHandler } from './cell-handler.js'
 import { Log } from './logger.js'
 import { Constants } from './constants.js'
 import { Utils } from './utils.js'
@@ -15,6 +13,16 @@ class TableUtils {
         this.$root = $root;
         this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
         this.init();
+
+        document.addEventListener('click', (e) => {
+            let p = e.target.parentElement;
+            if (p.id != 'cancel-query') {
+                return;
+            }
+
+            Log(TAG, "Cancel clicked");
+            PubSub.publish(Constants.QUERY_CANCELLED, {});
+        })
     }
 
     async init() {
@@ -71,10 +79,19 @@ class TableUtils {
                 let gridOptions = {
                     columnDefs: cols,
                     undoRedoCellEditing: true,
+                    //components: {
+                        //customLoadingOverlay: CustomLoadingOverlay,
+                    //},
+//
+                    //loadingOverlayComponent: 'customLoadingOverlay',
+                    //loadingOverlayComponentParams: {
+                        //loadingMessage: 'One moment please...',
+                    //},
                 };
-
+//
                 new agGrid.Grid(grid, gridOptions);
                 this.api = gridOptions.api;
+                this.api.hideOverlay();
             }
 
             let item = {};
@@ -125,7 +142,7 @@ class TableUtils {
         loader.style.height = dims.height + 'px';
         loader.style.left = dims.left + 'px';
         loader.style.top = dims.top + 'px';
-        let spinner = loader.querySelector('i');
+        let spinner = loader.querySelector('button');
         spinner.style.left = (dims.width / 2) + 'px';
         spinner.style.top = (dims.height / 4) + 'px';
     }
