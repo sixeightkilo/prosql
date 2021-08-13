@@ -17,9 +17,10 @@
         .time 1 sec
 
 script(type="code" id="fk-cell-template")
-    div
-        span {value}
-        i.fas.fa-arrow-circle-right.fk-icon(data-table="{table}" data-column="{column}")
+    div.fk-cell
+        div.value {value}
+        div.icon
+            i.fas.fa-arrow-circle-right.fk-icon(data-table="{table}" data-column="{column}" data-value="{value}")
 
 script(type="code" id="cell-template")
     span(class="{cls}") {value}

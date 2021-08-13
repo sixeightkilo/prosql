@@ -61,3 +61,19 @@ body, html {
 	position:fixed;
 }
 
+.fk-cell .value {
+	float:left;
+	width:80%;
+	text-align:right;
+}
+
+.fk-cell .icon {
+	position:relative;
+	float:left;
+	width:20%;
+}
+
+.fk-icon {
+	position:absolute;
+	top:40%;
+}

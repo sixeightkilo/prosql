@@ -129,7 +129,7 @@ class TableContents {
                 return
             }
 
-            let value = target.previousSibling.textContent
+            let value = target.dataset.value;
 
             Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
             PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
