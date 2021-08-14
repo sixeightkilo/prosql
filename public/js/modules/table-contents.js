@@ -90,9 +90,10 @@ class TableContents {
                          where \`${this.$columNames.value}\`
                          ${this.$operators.value}
                          '${this.$searchText.value}'`;
+        let query = `${this.query} limit ${this.getLimit(0)}`;
         Log(TAG, this.query);
         this.cursorId = null;
-        let err = await this.showContents(this.query, this.fkMap);
+        let err = await this.showContents(query, this.fkMap);
         if (err == Err.ERR_NONE) {
             PubSub.publish(Constants.QUERY_DISPATCHED, {
                 query: this.query,
@@ -145,8 +146,15 @@ class TableContents {
         }
     }
 
+    resetPager() {
+        this.page = 0;
+        this.$prev.classList.add('pager-disable');
+    }
+
     async show(table) {
         this.table = table
+        this.resetPager();
+
         Log(TAG, `Displaying ${table}`)
 
         this.stack.reset()
@@ -175,8 +183,13 @@ class TableContents {
         this.columns = this.extractColumns(values[0])
 
         this.query = `select * from \`${this.table}\``;
+        let query = `${this.query} limit ${this.getLimit(0)}`;
         this.cursorId = null;
-        this.showContents(this.query, this.fkMap)
+        this.showContents(query, this.fkMap)
+    }
+
+    getLimit(delta) {
+        return `${(this.page + delta) * Constants.BATCH_SIZE_WS}, ${Constants.BATCH_SIZE_WS}`;
     }
 
     async showContents(query, fkMap) {
@@ -277,15 +290,65 @@ class TableContents {
             alert(err);
         });
 
-        this.$next = document.getElementById('next')
-        this.$next.addEventListener('click', async (e) => {
-            this.showContents(this.query, this.fkMap);
-        })
-
+        this.initPager();
+        
         this.$exportFiltered = document.getElementById('export-filtered-results')
         this.$exportFiltered.addEventListener('click', async (e) => {
             let dbUtils = new DbUtils();
             dbUtils.exportResults.apply(this, [this.query])
+        })
+    }
+
+    initPager() {
+        this.$next = document.getElementById('next')
+        this.$prev = document.getElementById('prev')
+
+        this.$next.addEventListener('click', async (e) => {
+            if (!this.table) {
+                return;
+            }
+
+            if (this.inFlight) {
+                return;
+            }
+
+            this.inFlight = true;
+
+            let query = `${this.query} limit ${this.getLimit(1)}`;
+            this.cursorId = null;
+            let err = await this.showContents(query, this.fkMap);
+            if (err == Err.ERR_NONE) {
+                this.$prev.classList.remove('pager-disable');
+                this.page++;
+            }
+
+            this.inFlight = false;
+        })
+
+        this.$prev.addEventListener('click', async (e) => {
+            if (this.inFlight) {
+                return;
+            }
+
+            this.inFlight = true;
+
+            if (this.page == 0) {
+                this.inFlight = false;
+                return;
+            }
+
+            let query = `${this.query} limit ${this.getLimit(-1)}`;
+            this.cursorId = null;
+
+            let err = await this.showContents(query, this.fkMap);
+            if (err == Err.ERR_NONE) {
+                this.page--;
+                if (this.page == 0) {
+                    this.$prev.classList.add('pager-disable');
+                }
+            }
+
+            this.inFlight = false;
         })
     }
 

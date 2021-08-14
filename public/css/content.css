@@ -103,10 +103,12 @@ i#back {
 	margin-right:0.25em;
 }
 
+.pager-disable,
 .stack-disable {
 	opacity:0.2;
 }
 
+.pager-enable,
 .stack-enable {
 	opacity:1.0;
 }
@@ -176,7 +178,8 @@ i#back {
 }
 
 #export-filtered-results,
+#prev,
 #next {
-	margin-left:20px;
+	margin-left:10px;
 	cursor:pointer;
 }

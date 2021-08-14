@@ -42,7 +42,6 @@ class Content {
 
         PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
             this.tableContents.show(data.table);
-            this.selectedTable = data.table;
         });
     }
 

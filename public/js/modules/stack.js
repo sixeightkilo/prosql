@@ -8,15 +8,7 @@ class Stack {
         this.stack = []
         this.curr = 0
 
-        this.$fwd = document.getElementById('fwd')
         this.$back = document.getElementById('back')
-
-        this.$fwd.addEventListener('click', async () => {
-            if (this.stack.length == 0) {
-                return
-            }
-        })
-
         this.$back.addEventListener('click', async () => {
             Log(TAG, `${this.stack.length}: ${this.curr}`)
 
@@ -40,7 +32,6 @@ class Stack {
     reset() {
         this.stack = []
         this.curr = 0
-        this.$fwd.classList.add('stack-disable')
         this.$back.classList.add('stack-disable')
     }
 
