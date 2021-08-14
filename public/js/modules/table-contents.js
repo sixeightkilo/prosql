@@ -39,6 +39,16 @@ class TableContents {
         PubSub.subscribe(Constants.QUERY_CANCELLED, () => {
             DbUtils.cancel(this.sessionId, this.cursorId);
         });
+
+        PubSub.subscribe(Constants.SORT_REQUESTED, (data) => {
+            Log(TAG, JSON.stringify(data));
+            this.sortColumn = data.column;
+            this.sortOrder = data.order;
+            let query = this.query + ` ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(0)}`;
+            this.cursorId = null;
+            //this.showContents(query, this.fkMap);
+            this.updateContents(query);
+        });
     }
 
     setSessionInfo(sessionId, db) {
@@ -192,6 +202,13 @@ class TableContents {
         return `${(this.page + delta) * Constants.BATCH_SIZE_WS}, ${Constants.BATCH_SIZE_WS}`;
     }
 
+    getOrder(col, order) {
+        if (!order) {
+            return '';
+        }
+        return ` order by \`${col}\` ${order}`;
+    }
+
     async showContents(query, fkMap) {
         if (!this.cursorId) {
             this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
@@ -205,7 +222,23 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
-        return this.tableUtils.showContents(stream, fkMap, true)
+        return this.tableUtils.showContents(stream, fkMap, true, true)
+    }
+
+    async updateContents(query) {
+        if (!this.cursorId) {
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
+        }
+
+        let params = {
+            'session-id': this.sessionId,
+            'cursor-id': this.cursorId,
+            'req-id': Utils.uuid(),
+            'num-of-rows': Constants.BATCH_SIZE_WS
+        }
+
+        let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
+        return this.tableUtils.update(stream);
     }
 
     extractColumns(arr) {
@@ -314,9 +347,9 @@ class TableContents {
 
             this.inFlight = true;
 
-            let query = `${this.query} limit ${this.getLimit(1)}`;
+            let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(1)}`;
             this.cursorId = null;
-            let err = await this.showContents(query, this.fkMap);
+            let err = await this.updateContents(query);
             if (err == Err.ERR_NONE) {
                 this.$prev.classList.remove('pager-disable');
                 this.page++;
@@ -337,10 +370,10 @@ class TableContents {
                 return;
             }
 
-            let query = `${this.query} limit ${this.getLimit(-1)}`;
+            let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(-1)}`;
             this.cursorId = null;
 
-            let err = await this.showContents(query, this.fkMap);
+            let err = await this.updateContents(query);
             if (err == Err.ERR_NONE) {
                 this.page--;
                 if (this.page == 0) {

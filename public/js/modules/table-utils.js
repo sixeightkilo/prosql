@@ -5,6 +5,7 @@ import { Utils } from './utils.js'
 import { PubSub } from './pubsub.js'
 import { AgGrid } from './ag-grid.js'
 import { CellRenderer } from './cell-renderer.js'
+import { CellHeader } from './cell-header.js'
 
 const TAG = "table-utils"
 
@@ -29,18 +30,19 @@ class TableUtils {
 		await AgGrid.init();
     }
 
-    async showContents(stream, fkMap, editable = false) {
+    async showContents(stream, fkMap, editable = false, sortable = false) {
+        this.fkMap = fkMap;
         let grid = this.$root.querySelector('#grid');
         //clear existing grid if any
         if (grid != null) {
             grid.remove();
         }
 
-        this.showLoader();
-
         let n = Utils.generateNode('<div id="grid" class="ag-theme-alpine"></div>', {});
         this.$root.append(n);
         grid = this.$root.querySelector('#grid');
+
+        this.showLoader();
 
         let i = 0;
         let cellRenderer = new CellRenderer(fkMap);
@@ -69,6 +71,7 @@ class TableUtils {
                         field: row[j],
                         resizable: true,
                         editable: editable,
+                        sortable: true,
                         onCellValueChanged: (params) => {
                             TableUtils.handleCellValueChanged(fkMap, params);
                         },
@@ -82,6 +85,12 @@ class TableUtils {
                     columnDefs: cols,
                     undoRedoCellEditing: true,
                 };
+
+                if (sortable) {
+                    gridOptions.components = {
+                        agColumnHeader: CellHeader,
+                    };
+                }
 
                 new agGrid.Grid(grid, gridOptions);
                 this.api = gridOptions.api;
@@ -106,6 +115,56 @@ class TableUtils {
             this.api = gridOptions.api;
             this.api.showNoRowsOverlay();
         }
+
+        this.numOfRows = i
+
+        return err
+    }
+
+    async update(stream) {
+        //remove existing rows
+        let rows = [];
+        for (let i = 0; i < this.numOfRows; i++) {
+            let n = this.api.rowModel.rowsToDisplay[i].data
+            rows.push(n);
+        }
+
+        this.api.applyTransactionAsync({ remove: rows });
+
+        //start adding new rows
+        this.showLoader();
+
+        let err = Err.ERR_NONE;
+        let i = 0;
+
+        while (true) {
+            let row;
+            try {
+                row = await stream.get();
+            } catch (e) {
+                PubSub.publish(Constants.STREAM_ERROR, {
+                    'error': e
+                });
+                err = e;
+                break;
+            }
+
+            if (row.length == 1 && row[0] == "eos") {
+                break;
+            }
+
+            let item = {};
+            for (let j = 0; j < row.length; j += 2) {
+                item[row[j]] = row[j + 1];
+            }
+
+            this.api.applyTransactionAsync({ add: [item] });
+            i++;
+        }
+
+        this.numOfRows = i;
+
+        this.hideLoader();
 
         return err
     }

@@ -4,6 +4,10 @@ class Constants {
         return 'stream.stream-error'
     }
 
+    static get SORT_REQUESTED() {
+        return "table-utils.sort-requested"
+    }
+
     static get QUERY_CANCELLED() {
         return 'table-utils.query-cancelled'
     }
