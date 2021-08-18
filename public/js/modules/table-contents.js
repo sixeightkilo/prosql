@@ -8,6 +8,7 @@ import { Stack } from './stack.js'
 import { Stream } from './stream.js'
 import { TableUtils } from './table-utils.js'
 import { PubSub } from './pubsub.js'
+import { Hotkeys } from './hotkeys.js'
 
 const OPERATORS = [
     ['operator', '='],
@@ -48,6 +49,21 @@ class TableContents {
             this.cursorId = null;
             //this.showContents(query, this.fkMap);
             this.updateContents(query);
+        });
+
+        //handle all keyboard shortcuts
+        [
+            Constants.CMD_RUN_QUERY,
+            Constants.CMD_NEXT_ROWS,
+            Constants.CMD_PREV_ROWS,
+            Constants.CMD_EXPORT,
+            Constants.CMD_FORMAT_QUERY,
+        ].forEach((c) => {
+            ((c) => {
+                PubSub.subscribe(c, () => {
+                    this.handleCmd(c);
+                });
+            })(c)
         });
     }
 
@@ -295,6 +311,8 @@ class TableContents {
     }
 
     async init() {
+        Hotkeys.init();
+
         this.$root = document.getElementById('app-right-panel')
         //this.$footer = document.getElementById('footer-right-panel')
 
@@ -327,9 +345,77 @@ class TableContents {
         
         this.$exportFiltered = document.getElementById('export-filtered-results')
         this.$exportFiltered.addEventListener('click', async (e) => {
-            let dbUtils = new DbUtils();
-            dbUtils.exportResults.apply(this, [this.query])
+            this.handleCmd(Constants.CMD_EXPORT);
         })
+    }
+
+    async handleCmd(cmd) {
+        switch (cmd) {
+        case Constants.CMD_EXPORT:
+            this.handleExport();
+            break;
+
+        case Constants.CMD_NEXT_ROWS:
+            this.handleNextRows();
+            break;
+
+        case Constants.CMD_PREV_ROWS:
+            this.handlePrevNows();
+            break;
+        }
+    }
+
+    async handleExport() {
+        let dbUtils = new DbUtils();
+        dbUtils.exportResults.apply(this, [this.query])
+    }
+
+    async handleNextRows() {
+        if (!this.table) {
+            return;
+        }
+
+        if (this.inFlight) {
+            return;
+        }
+
+        this.inFlight = true;
+
+        let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(1)}`;
+        this.cursorId = null;
+        let err = await this.updateContents(query);
+        if (err == Err.ERR_NONE) {
+            this.$prev.classList.remove('pager-disable');
+            this.page++;
+        }
+
+        this.inFlight = false;
+    }
+
+    async handlePrevNows() {
+        if (this.inFlight) {
+            return;
+        }
+
+        this.inFlight = true;
+
+        if (this.page == 0) {
+            this.inFlight = false;
+            return;
+        }
+
+        let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(-1)}`;
+        this.cursorId = null;
+
+        let err = await this.updateContents(query);
+        if (err == Err.ERR_NONE) {
+            this.page--;
+            if (this.page == 0) {
+                this.$prev.classList.add('pager-disable');
+            }
+        }
+
+        this.inFlight = false;
     }
 
     initPager() {
@@ -337,51 +423,11 @@ class TableContents {
         this.$prev = document.getElementById('prev')
 
         this.$next.addEventListener('click', async (e) => {
-            if (!this.table) {
-                return;
-            }
-
-            if (this.inFlight) {
-                return;
-            }
-
-            this.inFlight = true;
-
-            let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(1)}`;
-            this.cursorId = null;
-            let err = await this.updateContents(query);
-            if (err == Err.ERR_NONE) {
-                this.$prev.classList.remove('pager-disable');
-                this.page++;
-            }
-
-            this.inFlight = false;
+            this.handleCmd(Constants.CMD_NEXT_ROWS);
         })
 
         this.$prev.addEventListener('click', async (e) => {
-            if (this.inFlight) {
-                return;
-            }
-
-            this.inFlight = true;
-
-            if (this.page == 0) {
-                this.inFlight = false;
-                return;
-            }
-
-            let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(-1)}`;
-            this.cursorId = null;
-
-            let err = await this.updateContents(query);
-            if (err == Err.ERR_NONE) {
-                this.page--;
-                if (this.page == 0) {
-                    this.$prev.classList.add('pager-disable');
-                }
-            }
-
-            this.inFlight = false;
+            this.handleCmd(Constants.CMD_PREV_ROWS);
         })
     }
 

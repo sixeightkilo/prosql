@@ -1,4 +1,74 @@
 class Constants {
+    //hotkeys
+    static get SHIFT_R() {
+        return 'Alt+Shift+R'
+    }
+
+    static get SHIFT_F() {
+        return 'Alt+Shift+F'
+    }
+
+    static get SHIFT_E() {
+        return 'Alt+Shift+E'
+    }
+
+    static get SHIFT_N() {
+        return 'Alt+Shift+N'
+    }
+
+    static get SHIFT_P() {
+        return 'Alt+Shift+P'
+    }
+
+    static get SHIFT_L() {
+        return 'Alt+Shift+L'
+    }
+
+    static get SHIFT_S() {
+        return 'Alt+Shift+S'
+    }
+
+    static get SHIFT_BACK() {
+        return 'Alt+Shift+,'
+    }
+
+    //commands triggered by user
+    static get CMD_RUN_QUERY() {
+        return 'cmd.run-query'
+    }
+
+    static get CMD_FORMAT_QUERY() {
+        return 'cmd.format-query'
+    }
+
+    static get CMD_EXPORT() {
+        return 'cmd.export'
+    }
+
+    static get CMD_NEXT_ROWS() {
+        return 'cmd.next-rows'
+    }
+
+    static get CMD_PREV_ROWS() {
+        return 'cmd.prev-rows'
+    }
+
+    static get CMD_FORMAT_QUERY() {
+        return 'cmd.format-query'
+    }
+
+    static get CMD_EXPORT_TABLE() {
+        return 'cmd.export-table'
+    }
+
+    static get CMD_SEARCH_TABLES() {
+        return 'cmd.search-tables'
+    }
+
+    static get CMD_BACK() {
+        return 'cmd.back'
+    }
+
     //events
     static get STREAM_ERROR() {
         return 'stream.stream-error'
@@ -26,6 +96,18 @@ class Constants {
 
     static get DB_CHANGED() {
         return 'appbar.db-changed'
+    }
+
+    static get QUERY_DISPATCHED() {
+        return 'query-dispatched'
+    }
+
+    static get FILE_UPLOADED() {
+        return 'file-uploaded'
+    }
+
+    static get QUERY_SAVED() {
+        return 'query-saved'
     }
 
     static get SESSION_ID() {
@@ -62,18 +144,6 @@ class Constants {
 
     static get CREDS() {
         return 'creds'
-    }
-
-    static get QUERY_DISPATCHED() {
-        return 'query-dispatched'
-    }
-
-    static get FILE_UPLOADED() {
-        return 'file-uploaded'
-    }
-
-    static get QUERY_SAVED() {
-        return 'query-saved'
     }
 
     static get SYSTEM() {

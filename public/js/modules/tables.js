@@ -5,6 +5,7 @@ import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 import { Stream } from './stream.js'
 import { PubSub } from './pubsub.js'
+import { Hotkeys } from './hotkeys.js'
 
 const TAG = "tables"
 
@@ -20,14 +21,7 @@ class Tables {
         });
 
         this.$exportTable.addEventListener('click', () => {
-            if (!this.table) {
-                alert('No table selected');
-                return
-            }
-
-            let q = `select * from \`${this.table}\``;
-            let dbUtils = new DbUtils();
-            dbUtils.exportResults.apply(this, [q]);
+            this.handleCmd(Constants.CMD_EXPORT_TABLE);
         });
 
         this.$tables.addEventListener('click', async (e) => {
@@ -69,7 +63,41 @@ class Tables {
             }
         });
 
-        Log(TAG, `sessionId: ${sessionId}`)
+        Log(TAG, `sessionId: ${sessionId}`);
+        //handle all keyboard shortcuts
+        [
+            Constants.CMD_EXPORT_TABLE,
+            Constants.CMD_SEARCH_TABLES
+        ].forEach((c) => {
+            ((c) => {
+                PubSub.subscribe(c, () => {
+                    this.handleCmd(c);
+                });
+            })(c)
+        });
+    }
+
+    async handleCmd(cmd) {
+        switch (cmd) {
+        case Constants.CMD_EXPORT_TABLE:
+            this.handleExportTable();
+            break;
+
+        case Constants.CMD_SEARCH_TABLES:
+            this.$tableFilter.focus();
+            break;
+        }
+    }
+
+    async handleExportTable() {
+        if (!this.table) {
+            alert('No table selected');
+            return
+        }
+
+        let q = `select * from \`${this.table}\``;
+        let dbUtils = new DbUtils();
+        dbUtils.exportResults.apply(this, [q]);
     }
 
     setSessionInfo(sessionId, db) {

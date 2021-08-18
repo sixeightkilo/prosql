@@ -4,10 +4,10 @@
             div#tables-list
                 div Tables and Views
                 div 
-                    i.fas.fa-file-export#export-table(title="Export selected table contents")
+                    i.fas.fa-file-export#export-table(title="Export selected table contents(Alt+Shift+L)")
             div.field
                 p.control.has-icons-left
-                    input.input(type="text" id="table-filter" placeholder="Search tables")
+                    input.input(type="text" id="table-filter" placeholder="Search tables(Alt+Shift+S)")
                     span.icon.is-small.is-left
                         i.fas.fa-search
             div#tables
@@ -27,9 +27,9 @@
             div
                 button.button.is-small#search Filter
             div
-                i.fas.fa-file-export#export-filtered-results(title="Export filtered results")
-                i.fas.fa-backward.pager-disable#prev(title="Previous rows")
-                i.fas.fa-forward#next(title="Next rows")
+                i.fas.fa-file-export#export-filtered-results(title="Export filtered results(Alt+Shift+E)")
+                i.fas.fa-backward.pager-disable#prev(title="Previous rows(Alt+Shift+P)")
+                i.fas.fa-forward#next(title="Next rows(Alt+Shift+N)")
         #table-contents
 
     script(type="code" id="table-template")

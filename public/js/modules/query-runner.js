@@ -4,15 +4,14 @@ import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 import { TableContents } from './table-contents.js'
-import { CodeJar } from 'https://medv.io/codejar/codejar.js'
 import { TableUtils } from './table-utils.js'
 import { Stream } from './stream.js'
 import { GridResizerV } from './grid-resizer-v.js'
 import { PubSub } from './pubsub.js'
 import { FileDownloader } from './file-downloader.js'
 import { Ace } from './ace.js'
+import { Hotkeys } from './hotkeys.js'
 import ProgressBar from './progress-bar.js'
-import HotKeys from 'https://unpkg.com/hotkeys-js@3.8.7/dist/hotkeys.esm.js'
 
 const TAG = "query-runner"
 
@@ -22,6 +21,7 @@ class QueryRunner {
         this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
         this.init()
+
         PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
             Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
             Err.handle(err);
@@ -29,6 +29,21 @@ class QueryRunner {
 
         PubSub.subscribe(Constants.QUERY_CANCELLED, () => {
             DbUtils.cancel(this.sessionId, this.cursorId);
+        });
+
+        //handle all keyboard shortcuts
+        [
+            Constants.CMD_RUN_QUERY,
+            Constants.CMD_NEXT_ROWS,
+            Constants.CMD_PREV_ROWS,
+            Constants.CMD_EXPORT,
+            Constants.CMD_FORMAT_QUERY,
+        ].forEach((c) => {
+            ((c) => {
+                PubSub.subscribe(c, () => {
+                    this.handleCmd(c);
+                });
+            })(c)
         });
     }
 
@@ -54,53 +69,64 @@ class QueryRunner {
 
         //this.adjustView()
 
-        let ace = await Ace.init();
-        this.editor = ace.edit("query-editor");
-        this.editor.setTheme("ace/theme/github");
-        this.editor.session.setMode("ace/mode/mysql");
-        this.editor.setValue("select * from `bills-1` limit 20");
+        Hotkeys.init();
+        this.editor = await Ace.init('query-editor');
+        this.editor.setValue("select * from `bills-1`");
 
         this.$formatQuery = document.getElementById('format-query')
 
         this.$formatQuery.addEventListener('click', async (e) => {
-            this.formatQuery()
+            this.handleCmd(Constants.CMD_FORMAT_QUERY);
         })
 
         this.$runQuery = document.getElementById('run-query')
         this.$runQuery.addEventListener('click', async (e) => {
-            this.cursorId = null
-            this.runQuery()
+            this.handleCmd(Constants.CMD_RUN_QUERY);
         })
 
         this.$exportResults = document.getElementById('export-results')
         this.$exportResults.addEventListener('click', async (e) => {
-            let q = this.editor.getValue()
-            let dbUtils = new DbUtils();
-            let err = await dbUtils.exportResults.apply(this, [q])
-
-            if (err == Err.ERR_NONE) {
-                PubSub.publish(Constants.QUERY_DISPATCHED, {
-                    query: q,
-                    tags: [Constants.USER]
-                })
-            }
+            this.handleCmd(Constants.CMD_EXPORT);
         })
 
         this.$next = document.getElementById('next')
         this.$next.addEventListener('click', async (e) => {
-            this.runQuery(false)
+            this.handleCmd(Constants.CMD_NEXT_ROWS);
         })
+    }
 
-        HotKeys('ctrl+p+[', () => {
-            Log(TAG, "Run query");
+    async handleCmd(cmd) {
+        switch (cmd) {
+        case Constants.CMD_RUN_QUERY:
             this.cursorId = null;
             this.runQuery();
-        });
+            break;
 
-        HotKeys('ctrl+p+o', () => {
+        case Constants.CMD_NEXT_ROWS:
+            this.runQuery(false);
+            break;
+
+        case Constants.CMD_EXPORT:
+            this.handleExport();
+            break;
+
+        case Constants.CMD_FORMAT_QUERY:
             this.formatQuery();
-            return false;
-        });
+            break;
+        }
+    }
+
+    async handleExport() {
+        let q = this.editor.getValue()
+        let dbUtils = new DbUtils();
+        let err = await dbUtils.exportResults.apply(this, [q])
+
+        if (err == Err.ERR_NONE) {
+            PubSub.publish(Constants.QUERY_DISPATCHED, {
+                query: q,
+                tags: [Constants.USER]
+            })
+        }
     }
 
     async runQuery(save = true) {

@@ -1,4 +1,6 @@
 import { Log } from './logger.js'
+import { Constants } from './constants.js'
+import { PubSub } from './pubsub.js'
 
 const TAG = "stack"
 
@@ -10,23 +12,45 @@ class Stack {
 
         this.$back = document.getElementById('back')
         this.$back.addEventListener('click', async () => {
-            Log(TAG, `${this.stack.length}: ${this.curr}`)
+            this.handleCmd(Constants.CMD_BACK);
+        });
 
-            if (this.stack.length == 0) {
-                return
-            }
+        [
+            Constants.CMD_BACK,
+        ].forEach((c) => {
+            ((c) => {
+                PubSub.subscribe(c, () => {
+                    this.handleCmd(c);
+                });
+            })(c)
+        });
+    }
 
-            if (this.curr == 0) {
-                return
-            }
+    async handleBack() {
+        Log(TAG, `${this.stack.length}: ${this.curr}`)
 
-            this.curr--
-            await cb(this.stack[this.curr])
-            Log(TAG, "Done back")
-            if (this.curr == 0) {
-                this.$back.classList.add('stack-disable')
-            }
-        })
+        if (this.stack.length == 0) {
+            return
+        }
+
+        if (this.curr == 0) {
+            return
+        }
+
+        this.curr--
+        await this.cb(this.stack[this.curr])
+        Log(TAG, "Done back")
+        if (this.curr == 0) {
+            this.$back.classList.add('stack-disable')
+        }
+    }
+
+    async handleCmd(cmd) {
+        switch (cmd) {
+            case Constants.CMD_BACK:
+                this.handleBack();
+                break;
+        }
     }
 
     reset() {
