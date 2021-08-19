@@ -108,3 +108,11 @@ body, html {
 .sort-active {
 	color: cornflowerblue;
 }
+
+#alert {
+	display:none;
+	position:fixed;
+	bottom:20%;
+	text-align:center;
+	z-index:1000;
+}

@@ -334,6 +334,7 @@ class TableContents {
                     query: query,
                     tags: [Constants.USER]
                 });
+                Utils.showAlert('Updated', 2000);
                 return;
             }
 

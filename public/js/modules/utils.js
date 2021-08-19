@@ -3,15 +3,6 @@ import { Err } from './error.js'
 
 const TAG = "utils"
 class Utils {
-    constructor() {
-        //new Utils() must be called after DOMContentLoaded
-        this.init()
-    }
-
-    init() {
-        this.$alert = document.getElementById('alert')
-    }
-
     static saveToSession(key, val) {
         sessionStorage.setItem(key, val)
     }
@@ -111,11 +102,17 @@ class Utils {
         $ctx.value = def
     }
 
-    showAlert(msg, t) {
-        this.$alert.innerHTML = msg;
-        this.$alert.style.visibility = 'visible';
+    static showAlert(msg, t) {
+        let $alrt = document.getElementById('alert');
+        let $msg = $alrt.querySelector('.msg');
+        $msg.innerHTML = msg;
+        $alrt.style.display = 'block';
+
+        let bodyDims = document.querySelector('body').getBoundingClientRect()
+        $alrt.style.left = (bodyDims.width / 2) + 'px';
+
         setTimeout(() => {
-            this.$alert.style.visibility = 'hidden';
+            $alrt.style.display = 'none';
         }, t)
     }
 
