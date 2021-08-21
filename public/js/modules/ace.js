@@ -6,36 +6,76 @@ const TAG = 'ace';
 const MAX_COL = 100000;
 
 class Ace {
-    init(elemId) {
+    constructor(elemId) {
+        this.elemId = elemId
+    }
+
+    init() {
         return new Promise((resolve, reject) => {
             let script = document.createElement('script');
             script.src = '/ace-builds/src-min/ace.js'
             document.head.appendChild(script);
 
             script.onload = () => {
-                this.editor = ace.edit(elemId)
+                this.editor = ace.edit(this.elemId)
                 this.range = ace.require('ace/range').Range
 
                 this.editor.setTheme("ace/theme/github");
                 this.editor.session.setMode("ace/mode/mysql");
                 this.editor.setHighlightActiveLine(false);
+
                 this.editor.textInput.getElement().addEventListener('keyup', () => {
                     this.onKeyup();
                 })
 
-                //this.editor.on('change', (e) => {
-                    //this.onChange(e);
-                //});
-
                 this.setKeyBindings();
 
-                resolve(this.editor)
+                resolve()
             };
         });
     }
 
-    onKeyup(e) {
+    setValue(v) {
+        if (!this.selRange) {
+            this.editor.setValue(v);
+            return;
+        }
+        this.editor.session.replace(this.selRange, v + ";");
+    }
 
+    clearSelection() {
+        this.editor.clearSelection();
+    }
+
+    focus() {
+        this.editor.focus();
+    }
+
+    getValue() {
+        if (!this.selRange) {
+            return this.editor.getValue();
+        }
+
+        let v = this.editor.session.getTextRange(this.selRange);
+        return this.cleanup(v);
+    }
+
+    cleanup(str) {
+        //remove spaces and ;
+        let chars = [' ', ';'];
+        let start = 0, 
+            end = str.length;
+
+        while(start < end && chars.indexOf(str[start]) >= 0)
+            ++start;
+
+        while(end > start && chars.indexOf(str[end - 1]) >= 0)
+            --end;
+
+        return (start > 0 || end < str.length) ? str.substring(start, end) : str;
+    }
+
+    onKeyup(e) {
         if (this.marker) {
             this.editor.session.removeMarker(this.marker);
         }
@@ -43,6 +83,11 @@ class Ace {
         let cursor = this.editor.selection.getCursor();
         Log(TAG, JSON.stringify(cursor));
 
+        this.updateSelRange(cursor);
+        this.marker = this.editor.session.addMarker(this.selRange, "ace_active-line", "text");
+    }
+
+    updateSelRange(cursor) {
         this.editor.$search.setOptions({
             needle: ';',
             backwards: true,
@@ -59,6 +104,7 @@ class Ace {
 
         Log(TAG, JSON.stringify(ranges));
         if (ranges.length == 0) {
+            this.selRange = null;
             return;
         }
 
@@ -105,11 +151,17 @@ class Ace {
             }
         }
 
-        Log(TAG, `sr ${startRow} sc ${startColumn} er ${endRow} ec ${endColumn}`);
-        this.marker = this.editor.session.addMarker(
-            new this.range(startRow, startColumn, endRow, endColumn), "ace_active-line", "text");
+        //if there are no characters starting from startRange, shift to next row
+        let check = this.editor.session.getTextRange(new this.range(startRow, startColumn, startRow, MAX_COL));
+        check = this.cleanup(check);
+        if (!check) {
+            startRow++;
+            startColumn = 0;
+        }
 
-        Log(TAG, this.editor.session.getTextRange(new this.range(startRow, startColumn, endRow, endColumn)));
+        Log(TAG, `sr ${startRow} sc ${startColumn} er ${endRow} ec ${endColumn}`);
+        this.selRange = new this.range(startRow, startColumn, endRow, endColumn);
+
     }
 
     setKeyBindings() {

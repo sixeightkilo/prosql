@@ -70,8 +70,9 @@ class QueryRunner {
         //this.adjustView()
 
         Hotkeys.init();
-        let ace = new Ace;
-        this.editor = await ace.init('query-editor');
+        this.editor = new Ace('query-editor');
+        await this.editor.init();
+
         this.editor.setValue("select * from `bills-1`");
 
         this.$formatQuery = document.getElementById('format-query')
