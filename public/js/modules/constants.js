@@ -8,6 +8,10 @@ class Constants {
         return 'Alt+Shift+F'
     }
 
+    static get SHIFT_O() {
+        return 'Alt+Shift+O'
+    }
+
     static get SHIFT_E() {
         return 'Alt+Shift+E'
     }
@@ -35,6 +39,10 @@ class Constants {
     //commands triggered by user
     static get CMD_RUN_QUERY() {
         return 'cmd.run-query'
+    }
+
+    static get CMD_RUN_ALL() {
+        return 'cmd.run-all'
     }
 
     static get CMD_FORMAT_QUERY() {

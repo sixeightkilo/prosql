@@ -86,6 +86,11 @@ class QueryRunner {
             this.handleCmd(Constants.CMD_RUN_QUERY);
         })
 
+        this.$runAll = document.getElementById('run-all')
+        this.$runAll.addEventListener('click', async (e) => {
+            this.handleCmd(Constants.CMD_RUN_ALL);
+        })
+
         this.$exportResults = document.getElementById('export-results')
         this.$exportResults.addEventListener('click', async (e) => {
             this.handleCmd(Constants.CMD_EXPORT);
@@ -102,6 +107,10 @@ class QueryRunner {
         case Constants.CMD_RUN_QUERY:
             this.cursorId = null;
             this.runQuery();
+            break;
+
+        case Constants.CMD_RUN_ALL:
+            this.runAll();
             break;
 
         case Constants.CMD_NEXT_ROWS:
@@ -139,7 +148,27 @@ class QueryRunner {
 
         let s = new Date()
 
-        let q = this.editor.getValue()
+        let q
+        if (this.currQuery) {
+            q = this.currQuery
+        } else {
+            q = this.editor.getValue()
+        }
+
+        q = q.trim();
+
+        if (!/^select/i.test(q)) {
+            let err = await DbUtils.execute(this.sessionId, q);
+            if (err == Err.ERR_NONE && save) {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    query: q,
+                    tags: [Constants.USER]
+                })
+            }
+
+            return err;
+        }
+
         if (!this.cursorId) {
             this.cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
         }
@@ -161,6 +190,25 @@ class QueryRunner {
                 tags: [Constants.USER]
             })
         }
+
+        return err;
+    }
+
+    async runAll() {
+        let json = await Utils.fetch('/split?' + new URLSearchParams({q: this.editor.getAll()}));
+        Log(TAG, JSON.stringify(json));
+        for (let i = 0; i < json.data.length; i++) {
+            this.currQuery = json.data[i];
+            this.cursorId = null;
+            let err = await this.runQuery();
+
+            if (err != Err.ERR_NONE) {
+                Log(TAG, `runall breaking: ${err}`);
+                break;
+            }
+        }
+
+        this.currQuery = null;
     }
 
     extractCols(row) {
@@ -175,7 +223,7 @@ class QueryRunner {
         let q = this.editor.getValue();
         Log(TAG, q);
         let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}));
-        this.editor.setValue(json.query);
+        this.editor.setValue(json.data);
         this.editor.clearSelection();
         this.editor.focus();
     }

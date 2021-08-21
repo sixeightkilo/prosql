@@ -60,6 +60,10 @@ class Ace {
         return this.cleanup(v);
     }
 
+    getAll() {
+        return this.editor.getValue();
+    }
+
     cleanup(str) {
         //remove spaces and ;
         let chars = [' ', ';'];
@@ -84,7 +88,9 @@ class Ace {
         Log(TAG, JSON.stringify(cursor));
 
         this.updateSelRange(cursor);
-        this.marker = this.editor.session.addMarker(this.selRange, "ace_active-line", "text");
+        if (this.selRange) {
+            this.marker = this.editor.session.addMarker(this.selRange, "ace_active-line", "text");
+        }
     }
 
     updateSelRange(cursor) {

@@ -38,7 +38,14 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
         $query = $req->getQueryParams()['q'];
         $query = SqlFormatter::format($query, false);
 
-        $res->getBody()->write(json_encode(['status' => 'ok', 'query' => $query]));
+        $res->getBody()->write(json_encode(['status' => 'ok', 'data' => $query]));
+
+        return $res;
+
+    case 'split':
+        $query = $req->getQueryParams()['q'];
+        $queries = SqlFormatter::splitQuery($query, false);
+        $res->getBody()->write(json_encode(['status' => 'ok', 'data' => $queries]));
 
         return $res;
     }
