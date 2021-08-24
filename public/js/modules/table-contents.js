@@ -327,19 +327,21 @@ class TableContents {
             let query = `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
                     where \`${data.key.name}\` = '${data.key.value}'`;
-            let err = await DbUtils.execute(this.sessionId, query);
+            let res = await DbUtils.execute(this.sessionId, query);
 
-            if (err == Err.ERR_NONE) {
+            if (res.status == "ok") {
                 PubSub.publish(Constants.QUERY_DISPATCHED, {
                     query: query,
                     tags: [Constants.USER]
                 });
-                Utils.showAlert('Updated', 2000);
+
+                let rows = res.data[0][1];
+                Utils.showAlert(`Updated ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
                 return;
             }
 
             this.tableUtils.undo();
-            alert(err);
+            alert(res.msg);
         });
 
         this.initPager();

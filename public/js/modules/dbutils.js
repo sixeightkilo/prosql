@@ -69,12 +69,15 @@ class DbUtils {
             query: query
         }
 
-        let res = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params), false)
-        if (res.status == "ok") {
-            return Err.ERR_NONE
+        let cursorId = await DbUtils.fetchCursorId(sessionId, query, true)
+
+        params = {
+            'session-id': sessionId,
+            'cursor-id': cursorId,
+            'num-of-rows': -1,//not used
         }
 
-        return res.msg
+        return await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params), false)
     }
 
     static async cancel(sessionId, cursorId) {
@@ -88,11 +91,16 @@ class DbUtils {
         return json.data
     }
 
-    static async fetchCursorId(sessionId, query) {
+    static async fetchCursorId(sessionId, query, execute = false) {
         let q = encodeURIComponent(query);
         let params = {
             'session-id': sessionId,
             query: q
+        }
+
+        if (execute) {
+            let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params), false)
+            return json.data['cursor-id']
         }
 
         let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params), false)
