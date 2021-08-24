@@ -31,6 +31,10 @@ class QueryRunner {
             DbUtils.cancel(this.sessionId, this.cursorId);
         });
 
+        PubSub.subscribe(Constants.GRID_H_RESIZED, () => {
+            this.editor.resize();
+        });
+
         //handle all keyboard shortcuts
         [
             Constants.CMD_RUN_QUERY,
@@ -164,6 +168,8 @@ class QueryRunner {
                     query: q,
                     tags: [Constants.USER]
                 })
+            } else {
+                alert(err);
             }
 
             return err;

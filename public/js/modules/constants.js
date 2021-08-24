@@ -106,6 +106,10 @@ class Constants {
         return 'appbar.db-changed'
     }
 
+    static get GRID_H_RESIZED() {
+        return "gridh.resized"
+    }
+
     static get QUERY_DISPATCHED() {
         return 'query-dispatched'
     }
@@ -177,5 +181,6 @@ class Constants {
     static get UPDATE_PROGRESS() {
         return "update-progress"
     }
+
 }
 export { Constants }

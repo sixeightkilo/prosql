@@ -1,4 +1,6 @@
 import { Log } from './logger.js'
+import { PubSub } from './pubsub.js'
+import { Constants } from './constants.js'
 
 const TAG = "grid-resizer"
 class GridResizerH {
@@ -35,6 +37,7 @@ class GridResizerH {
             this.isDragging = false;
             Log(TAG, `mouseup: ${e.clientX}`);
             e.preventDefault();
+            PubSub.publish(Constants.GRID_H_RESIZED, {});
         })
     }
 }

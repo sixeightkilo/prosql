@@ -35,6 +35,10 @@ class Ace {
         });
     }
 
+    resize() {
+        this.editor.resize();
+    }
+
     setValue(v) {
         if (!this.selRange) {
             this.editor.setValue(v);
@@ -163,11 +167,15 @@ class Ace {
         if (!check) {
             startRow++;
             startColumn = 0;
+        } else {
+            //shift to the first non white space character, unless its the start of the line
+            if (startColumn > 0) {
+                startColumn++;
+            }
         }
 
         Log(TAG, `sr ${startRow} sc ${startColumn} er ${endRow} ec ${endColumn}`);
         this.selRange = new this.range(startRow, startColumn, endRow, endColumn);
-
     }
 
     setKeyBindings() {
