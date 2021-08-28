@@ -77,7 +77,7 @@ class DbUtils {
             'num-of-rows': -1,//not used
         }
 
-        return await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params), false)
+        return await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params));
     }
 
     static async cancel(sessionId, cursorId) {
@@ -86,9 +86,7 @@ class DbUtils {
             'cursor-id': cursorId,
         }
 
-        let json = await Utils.fetch(Constants.URL + '/cancel?' + new URLSearchParams(params), false)
-        Log(TAG, JSON.stringify(json))
-        return json.data
+        await Utils.fetch(Constants.URL + '/cancel?' + new URLSearchParams(params));
     }
 
     static async fetchCursorId(sessionId, query, execute = false) {
@@ -99,11 +97,11 @@ class DbUtils {
         }
 
         if (execute) {
-            let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params), false)
+            let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params));
             return json.data['cursor-id']
         }
 
-        let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params), false)
+        let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params));
         return json.data['cursor-id']
     }
 

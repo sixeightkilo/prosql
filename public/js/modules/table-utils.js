@@ -118,7 +118,17 @@ class TableUtils {
 
         this.numOfRows = i
 
-        return err
+        if (err == Err.ERR_NONE) {
+            return {
+                'status': "ok",
+                'rows-affected': this.numOfRows
+            }
+        }
+
+        return {
+            'status': "error",
+            'msg': err
+        }
     }
 
     async update(stream) {
@@ -166,7 +176,17 @@ class TableUtils {
 
         this.hideLoader();
 
-        return err
+        if (err == Err.ERR_NONE) {
+            return {
+                'status': "ok",
+                'rows-affected': this.numOfRows
+            }
+        }
+
+        return {
+            'status': "error",
+            'msg': err
+        }
     }
 
     undo() {

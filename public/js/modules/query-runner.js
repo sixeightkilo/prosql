@@ -162,17 +162,22 @@ class QueryRunner {
         q = q.trim();
 
         if (!/^select/i.test(q)) {
-            let err = await DbUtils.execute(this.sessionId, q);
-            if (err == Err.ERR_NONE && save) {
+            let res = await DbUtils.execute(this.sessionId, q);
+            if (res.status == "error") {
+                return res;
+            }
+
+            if (save) {
                 PubSub.publish(Constants.QUERY_DISPATCHED, {
                     query: q,
                     tags: [Constants.USER]
                 })
-            } else {
-                alert(err);
             }
 
-            return err;
+            return {
+                'status': 'ok',
+                'rows-affected': res.data[0][1]
+            }
         }
 
         if (!this.cursorId) {
@@ -188,16 +193,16 @@ class QueryRunner {
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
 
-        let err = await this.tableUtils.showContents(stream, {}, false)
+        let res = await this.tableUtils.showContents(stream, {}, false)
 
-        if (err == Err.ERR_NONE && save) {
+        if (res.status == "ok" && save) {
             PubSub.publish(Constants.QUERY_DISPATCHED, {
                 query: q,
                 tags: [Constants.USER]
             })
         }
 
-        return err;
+        return res;
     }
 
     async runAll() {
@@ -206,12 +211,14 @@ class QueryRunner {
         for (let i = 0; i < json.data.length; i++) {
             this.currQuery = json.data[i];
             this.cursorId = null;
-            let err = await this.runQuery();
+            let res = await this.runQuery();
 
-            if (err != Err.ERR_NONE) {
-                Log(TAG, `runall breaking: ${err}`);
+            if (res.status == "error") {
+                Log(TAG, `runall breaking: ${res.msg}`);
                 break;
             }
+
+            Log(TAG, `${res['rows-affected']}`);
         }
 
         this.currQuery = null;
