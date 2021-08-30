@@ -327,7 +327,8 @@ class TableContents {
             let query = `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
                     where \`${data.key.name}\` = '${data.key.value}'`;
-            let res = await DbUtils.execute(this.sessionId, query);
+            let dbUtils = new DbUtils();
+            let res = await dbUtils.execute.apply(this, [query]);
 
             if (res.status == "ok") {
                 PubSub.publish(Constants.QUERY_DISPATCHED, {

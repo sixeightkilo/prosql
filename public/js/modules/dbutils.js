@@ -63,17 +63,12 @@ class DbUtils {
         return json.data['session-id']
     }
 
-    static async execute(sessionId, query) {
+    async execute(query) {
+        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query, true)
+
         let params = {
-            'session-id': sessionId,
-            query: query
-        }
-
-        let cursorId = await DbUtils.fetchCursorId(sessionId, query, true)
-
-        params = {
-            'session-id': sessionId,
-            'cursor-id': cursorId,
+            'session-id': this.sessionId,
+            'cursor-id': this.cursorId,
             'num-of-rows': -1,//not used
         }
 

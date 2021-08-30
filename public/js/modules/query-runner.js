@@ -107,10 +107,12 @@ class QueryRunner {
     }
 
     async handleCmd(cmd) {
+        let q;
         switch (cmd) {
         case Constants.CMD_RUN_QUERY:
             this.cursorId = null;
-            this.runQuery();
+            q = this.editor.getValue();
+            this.runQuery(q);
             break;
 
         case Constants.CMD_RUN_ALL:
@@ -118,7 +120,8 @@ class QueryRunner {
             break;
 
         case Constants.CMD_NEXT_ROWS:
-            this.runQuery(false);
+            q = this.editor.getValue();
+            this.runQuery(q, false);
             break;
 
         case Constants.CMD_EXPORT:
@@ -144,26 +147,25 @@ class QueryRunner {
         }
     }
 
-    async runQuery(save = true) {
+    async runQuery(q, save = true) {
         if (!this.db) {
             alert('No database selected')
-            return
+            return {
+                'status': 'error',
+                'msg': 'No database selected'
+            }
         }
 
         let s = new Date()
 
-        let q
-        if (this.currQuery) {
-            q = this.currQuery
-        } else {
-            q = this.editor.getValue()
-        }
-
         q = q.trim();
 
         if (!/^select/i.test(q)) {
-            let res = await DbUtils.execute(this.sessionId, q);
+            this.tableUtils.showLoader();
+            let dbUtils = new DbUtils();
+            let res = await dbUtils.execute.apply(this, [q]);
             if (res.status == "error") {
+                this.tableUtils.hideLoader();
                 return res;
             }
 
@@ -174,6 +176,7 @@ class QueryRunner {
                 })
             }
 
+            this.tableUtils.hideLoader();
             return {
                 'status': 'ok',
                 'rows-affected': res.data[0][1]
@@ -209,9 +212,9 @@ class QueryRunner {
         let json = await Utils.fetch('/split?' + new URLSearchParams({q: this.editor.getAll()}));
         Log(TAG, JSON.stringify(json));
         for (let i = 0; i < json.data.length; i++) {
-            this.currQuery = json.data[i];
+            let q = json.data[i];
             this.cursorId = null;
-            let res = await this.runQuery();
+            let res = await this.runQuery(q);
 
             if (res.status == "error") {
                 Log(TAG, `runall breaking: ${res.msg}`);
@@ -220,8 +223,6 @@ class QueryRunner {
 
             Log(TAG, `${res['rows-affected']}`);
         }
-
-        this.currQuery = null;
     }
 
     extractCols(row) {
