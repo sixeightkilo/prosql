@@ -6,10 +6,12 @@ import { PubSub } from './pubsub.js'
 const TAG = "progress-bar"
 class ProgressBar {
     constructor(options = {}) {
-        this.progressBar = document.getElementById('progress-bar-no-buttons');
-        this.message = this.progressBar.querySelector('.message');
-        this.time = this.progressBar.querySelector('.time');
-        this.hasButtons = false;
+		document.addEventListener("DOMContentLoaded", () => {
+			this.progressBar = document.getElementById('progress-bar-no-buttons');
+			this.message = this.progressBar.querySelector('.message');
+			this.time = this.progressBar.querySelector('.time');
+			this.hasButtons = false;
+		});
 
         PubSub.subscribe(Constants.START_PROGRESS, (data) => {
             this.time.innerHTML = '';

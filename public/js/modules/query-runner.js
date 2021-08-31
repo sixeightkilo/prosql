@@ -3,7 +3,6 @@ import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
-import { TableContents } from './table-contents.js'
 import { TableUtils } from './table-utils.js'
 import { Stream } from './stream.js'
 import { GridResizerV } from './grid-resizer-v.js'
@@ -11,7 +10,6 @@ import { PubSub } from './pubsub.js'
 import { FileDownloader } from './file-downloader.js'
 import { Ace } from './ace.js'
 import { Hotkeys } from './hotkeys.js'
-import ProgressBar from './progress-bar.js'
 
 const TAG = "query-runner"
 

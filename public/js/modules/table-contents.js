@@ -9,6 +9,7 @@ import { Stream } from './stream.js'
 import { TableUtils } from './table-utils.js'
 import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
+import RowAdder from './row-adder.js'
 
 const OPERATORS = [
     '=',
@@ -47,7 +48,6 @@ class TableContents {
             this.sortOrder = data.order;
             let query = this.query + ` ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(0)}`;
             this.cursorId = null;
-            //this.showContents(query, this.fkMap);
             this.updateContents(query);
         });
 
@@ -102,13 +102,15 @@ class TableContents {
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
         this.cursorId = null;
-        let err = await this.showContents(query, fkMap);
+        let res = await this.showContents(query, fkMap);
 
-        if (err == Err.ERR_NONE) {
+        if (res.status == "ok") {
             PubSub.publish(Constants.QUERY_DISPATCHED, {
                 query: query,
                 tags: [Constants.USER]
             })
+
+            RowAdder.init(table, columns);
         }
     }
 
@@ -235,6 +237,7 @@ class TableContents {
         let query = `${this.query} limit ${this.getLimit(0)}`;
         this.cursorId = null;
         this.showContents(query, this.fkMap)
+        RowAdder.init(this.table, this.columns);
     }
 
     getLimit(delta) {
