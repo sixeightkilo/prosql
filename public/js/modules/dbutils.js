@@ -176,7 +176,18 @@ class DbUtils {
         }
 
         PubSub.publish(Constants.STOP_PROGRESS, {});
-        return err
+
+        if (err == Err.ERR_NONE) {
+            return {
+                'status': "ok",
+                'rows-affected': n
+            }
+        }
+
+        return {
+            'status': "error",
+            'msg': err
+        }
     }
 }
 

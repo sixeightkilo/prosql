@@ -119,8 +119,9 @@ class TableContents {
         let query = `${this.query} limit ${this.getLimit(0)}`;
         Log(TAG, this.query);
         this.cursorId = null;
-        let err = await this.showContents(query, this.fkMap);
-        if (err == Err.ERR_NONE) {
+        let res = await this.showContents(query, this.fkMap);
+
+        if (res.status == "ok") {
             PubSub.publish(Constants.QUERY_DISPATCHED, {
                 query: this.query,
                 tags: [Constants.USER]
@@ -371,7 +372,14 @@ class TableContents {
 
     async handleExport() {
         let dbUtils = new DbUtils();
-        dbUtils.exportResults.apply(this, [this.query])
+        let res = await dbUtils.exportResults.apply(this, [this.query])
+
+        if (res.status == "ok") {
+            PubSub.publish(Constants.QUERY_DISPATCHED, {
+                query: this.query,
+                tags: [Constants.USER]
+            });
+        }
     }
 
     async handleNextRows() {
