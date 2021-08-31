@@ -53,6 +53,10 @@ class Constants {
         return 'cmd.export'
     }
 
+    static get CMD_CLEAR_FILTER() {
+        return 'cmd.clear-filter'
+    }
+
     static get CMD_NEXT_ROWS() {
         return 'cmd.next-rows'
     }

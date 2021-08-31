@@ -11,17 +11,17 @@ import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
 
 const OPERATORS = [
-    ['operator', '='],
-    ['operator', '<>'],
-    ['operator', '>'],
-    ['operator', '<'],
-    ['operator', '>='],
-    ['operator', '<='],
-    ['operator', 'IN'],
-    ['operator', 'LIKE'],
-    ['operator', 'BETWEEN'],
-    ['operator', 'IS NULL'],
-    ['operator', 'IS NOT NULL'],
+    '=',
+    '<>',
+    '>',
+    '<',
+    '>=',
+    '<=',
+    'IN',
+    'LIKE',
+    'BETWEEN',
+    'IS NULL',
+    'IS NOT NULL',
 ]
 
 const TAG = "table-contents"
@@ -145,6 +145,12 @@ class TableContents {
         })
 
         this.$searchText.addEventListener('keyup', async (e) => {
+            if (this.$searchText.value) {
+                this.$clearFilter.style.display = 'block';
+            } else {
+                this.$clearFilter.style.display = 'none';
+            }
+
             if (e.key == "Enter") {
                 this.search()
             }
@@ -200,14 +206,13 @@ class TableContents {
                 TABLE_NAME = '${this.table}\'`)
 
         let values = await Promise.all([columns, contraints])
-
-        //update the column name selector
-        Utils.setOptions(this.$columNames, values[0], '')
-        Utils.setOptions(this.$operators, OPERATORS, '')
-        this.$searchText.value = '';
-
         this.fkMap = this.createFKMap(values[1])
         this.columns = this.extractColumns(values[0])
+
+        //update the column name selector
+        Utils.setOptions(this.$columNames, this.columns, '')
+        Utils.setOptions(this.$operators, OPERATORS, '')
+        this.$searchText.value = '';
 
         this.query = `select * from \`${this.table}\``;
         let query = `${this.query} limit ${this.getLimit(0)}`;
@@ -352,6 +357,11 @@ class TableContents {
         this.$exportFiltered.addEventListener('click', async (e) => {
             this.handleCmd(Constants.CMD_EXPORT);
         })
+
+        this.$clearFilter = document.getElementById('clear-filter')
+        this.$clearFilter.addEventListener('click', async (e) => {
+            this.handleCmd(Constants.CMD_CLEAR_FILTER);
+        })
     }
 
     async handleCmd(cmd) {
@@ -367,6 +377,24 @@ class TableContents {
         case Constants.CMD_PREV_ROWS:
             this.handlePrevNows();
             break;
+
+        case Constants.CMD_CLEAR_FILTER:
+            this.handleClearFilter();
+            break;
+        }
+    }
+
+    handleClearFilter() {
+        Utils.setOptions(this.$columNames, this.columns, '')
+        Utils.setOptions(this.$operators, OPERATORS, '')
+
+        this.$searchText.value = '';
+        this.$searchText.focus();
+
+        this.$clearFilter.style.display = 'none';
+
+        if (this.table) {
+            this.show(this.table)
         }
     }
 

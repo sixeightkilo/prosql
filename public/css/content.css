@@ -183,3 +183,15 @@ i#back {
 	margin-left:10px;
 	cursor:pointer;
 }
+
+#search-text-container {
+	position:relative;
+}
+
+#clear-filter {
+	position:absolute;
+	right:5px;
+	top:5px;
+	cursor:pointer;
+	display:none;
+}

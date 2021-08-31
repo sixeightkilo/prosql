@@ -95,7 +95,7 @@ class Utils {
         let ot = $ot.innerHTML
 
         values.forEach((v) => {
-            let h = Utils.generateNode(ot, {value: v[1]})
+            let h = Utils.generateNode(ot, {value: v});
             $ctx.append(h)
         })
 
