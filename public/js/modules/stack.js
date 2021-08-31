@@ -82,6 +82,21 @@ class Stack {
 
             return
         }
+
+        if (args.length == 4) {
+            this.stack.push({
+                'type': 'search',
+                'table': args[0],
+                'column': args[1],
+                'operator': args[2],
+                'value': args[3]
+            })
+
+            this.curr++
+            this.$back.classList.remove('stack-disable')
+
+            return
+        }
     }
 }
 

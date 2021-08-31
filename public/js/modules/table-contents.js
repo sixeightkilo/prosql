@@ -89,9 +89,10 @@ class TableContents {
                 TABLE_NAME = '${this.table}\'`)
 
         let values = await Promise.all([columns, contraints])
+        columns = this.extractColumns(values[0])
 
         //update the column name selector
-        Utils.setOptions(this.$columNames, values[0], '')
+        Utils.setOptions(this.$columNames, columns, '')
         Utils.setOptions(this.$operators, OPERATORS, '')
         this.$searchText.value = '';
 
@@ -119,6 +120,7 @@ class TableContents {
         let query = `${this.query} limit ${this.getLimit(0)}`;
         Log(TAG, this.query);
         this.cursorId = null;
+        this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
         let res = await this.showContents(query, this.fkMap);
 
         if (res.status == "ok") {
@@ -482,6 +484,14 @@ class TableContents {
 
             case 'fk-ref':
                 await this.showFkRef(e.table, e.column, e.value)
+                break
+
+            case 'search':
+                this.table = e.table;
+                this.$columNames.value = e.column;
+                this.$operators.value = e.operator;
+                this.$searchText.value = e.value;
+                await this.search()
                 break
         }
         Log(TAG, "Done navigate")
