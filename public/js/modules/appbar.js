@@ -20,7 +20,8 @@ class AppBar {
     }
 
     static async showDatabases($databases, sessionId, db) {
-        let dbs = await DbUtils.fetchAll(sessionId, 'show databases')
+        let dbs = await DbUtils.fetchAll(sessionId, 'show databases');
+        dbs = Utils.extractColumns(dbs);
         Utils.setOptions($databases, dbs, db);
     }
 }

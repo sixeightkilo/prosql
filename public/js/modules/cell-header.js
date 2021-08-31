@@ -45,7 +45,7 @@ class CellHeader {
         }
     }
 
-    onSortChanged() {
+    onSortChanged(order) {
         const deactivate = toDeactivateItems => {
             toDeactivateItems.forEach(toDeactivate => {
                 toDeactivate.className = toDeactivate.className.split(' ')[0]
@@ -56,10 +56,10 @@ class CellHeader {
             toActivate.className = toActivate.className + " sort-active";
         }
 
-        if (this.params.column.isSortAscending()) {
+        if (order == 'asc') {
             deactivate([this.$sortUp, this.$sortRemove]);
             activate(this.$sortDown)
-        } else if (this.params.column.isSortDescending()) {
+        } else if (order == 'desc') {
             deactivate([this.$sortDown, this.$sortRemove]);
             activate(this.$sortUp)
         } else {
@@ -78,7 +78,8 @@ class CellHeader {
             order: order
         });
 
-        this.params.setSort(order, event.shiftKey);
+        //this.params.setSort(order, event.shiftKey);
+        this.onSortChanged(order);
     }
 
     destroy() {

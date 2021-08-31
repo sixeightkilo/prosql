@@ -137,5 +137,14 @@ class Utils {
             height: rect.height,
         };
     }
+
+   static extractColumns(arr) {
+        let cols = []
+        arr.forEach((e) => {
+            cols.push(e[1])
+        })
+
+        return cols
+    }
 }
 export { Utils }

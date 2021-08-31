@@ -17,9 +17,9 @@ const OPERATORS = [
     '<',
     '>=',
     '<=',
-    'IN',
+    //'IN',
     'LIKE',
-    'BETWEEN',
+    //'BETWEEN',
     'IS NULL',
     'IS NOT NULL',
 ]
@@ -89,7 +89,7 @@ class TableContents {
                 TABLE_NAME = '${this.table}\'`)
 
         let values = await Promise.all([columns, contraints])
-        columns = this.extractColumns(values[0])
+        columns = Utils.extractColumns(values[0])
 
         //update the column name selector
         Utils.setOptions(this.$columNames, columns, '')
@@ -113,10 +113,17 @@ class TableContents {
     }
 
     async search() {
-        this.query = `select * from \`${this.table}\` 
-                         where \`${this.$columNames.value}\`
-                         ${this.$operators.value}
-                         '${this.$searchText.value}'`;
+        //disable input field for is null and is not null
+        if (this.$operators.value == "IS NULL" || this.$operators.value == "IS NOT NULL") {
+            this.query = `select * from \`${this.table}\` 
+                             where \`${this.$columNames.value}\`
+                             ${this.$operators.value}`;
+        } else {
+            this.query = `select * from \`${this.table}\` 
+                             where \`${this.$columNames.value}\`
+                             ${this.$operators.value}
+                             '${this.$searchText.value}'`;
+        }
         let query = `${this.query} limit ${this.getLimit(0)}`;
         Log(TAG, this.query);
         this.cursorId = null;
@@ -176,6 +183,14 @@ class TableContents {
         //update operators
         Utils.setOptions(this.$operators, OPERATORS, '')
 
+        this.$operators.addEventListener('change', () => {
+            if (this.$operators.value == "IS NULL" || this.$operators.value == "IS NOT NULL") {
+                this.$searchText.disabled = true;
+                return;
+            }
+            this.$searchText.disabled = false;
+        });
+
         if (this.table) {
             this.show(this.table)
         }
@@ -209,7 +224,7 @@ class TableContents {
 
         let values = await Promise.all([columns, contraints])
         this.fkMap = this.createFKMap(values[1])
-        this.columns = this.extractColumns(values[0])
+        this.columns = Utils.extractColumns(values[0])
 
         //update the column name selector
         Utils.setOptions(this.$columNames, this.columns, '')
@@ -263,15 +278,6 @@ class TableContents {
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
         return this.tableUtils.update(stream);
-    }
-
-    extractColumns(arr) {
-        let cols = []
-        arr.forEach((e) => {
-            cols.push(e[1])
-        })
-
-        return cols
     }
 
     createFKMap(constraints) {
@@ -425,8 +431,8 @@ class TableContents {
 
         let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(1)}`;
         this.cursorId = null;
-        let err = await this.updateContents(query);
-        if (err == Err.ERR_NONE) {
+        let res = await this.updateContents(query);
+        if (res.status == "ok") {
             this.$prev.classList.remove('pager-disable');
             this.page++;
         }
@@ -449,8 +455,8 @@ class TableContents {
         let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(-1)}`;
         this.cursorId = null;
 
-        let err = await this.updateContents(query);
-        if (err == Err.ERR_NONE) {
+        let res = await this.updateContents(query);
+        if (res.status == "ok") {
             this.page--;
             if (this.page == 0) {
                 this.$prev.classList.add('pager-disable');
@@ -495,14 +501,6 @@ class TableContents {
                 break
         }
         Log(TAG, "Done navigate")
-    }
-
-    async adjustView() {
-        //fix height of table-contents div
-        let rpDims = document.getElementById('app-right-panel').getBoundingClientRect()
-        let sbDims = document.getElementById('search-bar').getBoundingClientRect()
-        Log(TAG, `rph: ${rpDims.height} sbh ${sbDims.height}`)
-        this.$tableContents.style.height = (rpDims.height - sbDims.height) + 'px'
     }
 }
 
