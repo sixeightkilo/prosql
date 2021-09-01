@@ -1,11 +1,10 @@
-import { defineCustomElements } from '/node_modules/@revolist/revogrid/dist/esm/loader.js'
 import { Log } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
+import { Stream } from './stream.js'
 import { DbUtils } from './dbutils.js'
 import { Constants } from './constants.js'
 import { Stack } from './stack.js'
-import { Stream } from './stream.js'
 import { TableUtils } from './table-utils.js'
 import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
@@ -29,10 +28,47 @@ const TAG = "table-contents"
 
 class TableContents {
     constructor(sessionId) {
-        this.sessionId = sessionId
         Log(TAG, `sessionId: ${sessionId}`)
-        this.init()
 
+        this.sessionId = sessionId
+        this.init()
+    }
+
+    //public method
+    setSessionInfo(sessionId, db) {
+        this.sessionId = sessionId
+        this.db = db
+        Log(TAG, `sessionId: ${sessionId} db: ${db}`)
+    }
+
+    async init() {
+        Hotkeys.init();
+
+        this.initDom();
+
+        this.stack = new Stack(async (e) => {
+            await this.navigate(e)
+        })
+
+        this.tableUtils = new TableUtils(this.$contents)
+
+        this.initSubscribers();
+        this.initHandlers()
+        this.initPager();
+    }
+
+    initDom() {
+        this.$columNames = document.getElementById('column-names')
+        this.$operators = document.getElementById('operators')
+        this.$searchText = document.getElementById('search-text')
+        this.$search = document.getElementById('search')
+        this.$tableContents = document.getElementById('table-contents')
+        this.$contents = document.getElementById('table-contents')
+        this.$exportFiltered = document.getElementById('export-filtered-results')
+        this.$clearFilter = document.getElementById('clear-filter')
+    }
+
+    initSubscribers() {
         PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
             Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
             Err.handle(err);
@@ -43,12 +79,7 @@ class TableContents {
         });
 
         PubSub.subscribe(Constants.SORT_REQUESTED, (data) => {
-            Log(TAG, JSON.stringify(data));
-            this.sortColumn = data.column;
-            this.sortOrder = data.order;
-            let query = this.query + ` ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(0)}`;
-            this.cursorId = null;
-            this.updateContents(query);
+            this.handleSort(data);
         });
 
         //handle all keyboard shortcuts
@@ -65,92 +96,13 @@ class TableContents {
                 });
             })(c)
         });
+
+        PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
+            await this.handleCellEdit(data);
+        });
     }
 
-    setSessionInfo(sessionId, db) {
-        this.sessionId = sessionId
-        this.db = db
-        Log(TAG, `sessionId: ${sessionId} db: ${db}`)
-    }
-
-    async showFkRef(table, col, val) {
-        this.table = table
-        Log(TAG, `Displaying ${table}`)
-        let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
-        let contraints = DbUtils.fetchAll(this.sessionId, `SELECT
-                TABLE_NAME,
-                COLUMN_NAME,
-                CONSTRAINT_NAME,
-                REFERENCED_TABLE_NAME,
-                REFERENCED_COLUMN_NAME
-                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-                WHERE
-                TABLE_SCHEMA = '${this.db}\' and
-                TABLE_NAME = '${this.table}\'`)
-
-        let values = await Promise.all([columns, contraints])
-        columns = Utils.extractColumns(values[0])
-
-        //update the column name selector
-        Utils.setOptions(this.$columNames, columns, '')
-        Utils.setOptions(this.$operators, OPERATORS, '')
-        this.$searchText.value = '';
-
-        let fkMap = this.createFKMap(values[1])
-        Log(TAG, JSON.stringify(fkMap))
-
-        let query = `select * from \`${table}\` 
-                         where \`${col}\` = '${val}'`
-        this.cursorId = null;
-        let res = await this.showContents(query, fkMap);
-
-        if (res.status == "ok") {
-            PubSub.publish(Constants.QUERY_DISPATCHED, {
-                query: query,
-                tags: [Constants.USER]
-            })
-
-            RowAdder.init(table, columns);
-        }
-    }
-
-    async search() {
-        //disable input field for is null and is not null
-        if (this.$operators.value == "IS NULL" || this.$operators.value == "IS NOT NULL") {
-            this.query = `select * from \`${this.table}\` 
-                             where \`${this.$columNames.value}\`
-                             ${this.$operators.value}`;
-        } else {
-            this.query = `select * from \`${this.table}\` 
-                             where \`${this.$columNames.value}\`
-                             ${this.$operators.value}
-                             '${this.$searchText.value}'`;
-        }
-        let query = `${this.query} limit ${this.getLimit(0)}`;
-        Log(TAG, this.query);
-        this.cursorId = null;
-        this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
-        let res = await this.showContents(query, this.fkMap);
-
-        if (res.status == "ok") {
-            PubSub.publish(Constants.QUERY_DISPATCHED, {
-                query: this.query,
-                tags: [Constants.USER]
-            })
-        }
-    }
-
-    async enable() {
-        this.$columNames = document.getElementById('column-names')
-        this.$operators = document.getElementById('operators')
-        this.$searchText = document.getElementById('search-text')
-        this.$search = document.getElementById('search')
-        this.$tableContents = document.getElementById('table-contents')
-        this.contentWidth = this.$tableContents.getBoundingClientRect().width
-
-        this.$contents = document.getElementById('table-contents')
-        this.tableUtils = new TableUtils(this.$contents)
-
+    async initHandlers() {
         this.$search.addEventListener('click', async () => {
             this.search()
         })
@@ -182,9 +134,6 @@ class TableContents {
             this.stack.push(target.dataset.table, target.dataset.column, value)
         })
 
-        //update operators
-        Utils.setOptions(this.$operators, OPERATORS, '')
-
         this.$operators.addEventListener('change', () => {
             if (this.$operators.value == "IS NULL" || this.$operators.value == "IS NOT NULL") {
                 this.$searchText.disabled = true;
@@ -193,8 +142,94 @@ class TableContents {
             this.$searchText.disabled = false;
         });
 
-        if (this.table) {
-            this.show(this.table)
+        this.$exportFiltered.addEventListener('click', async (e) => {
+            this.handleCmd(Constants.CMD_EXPORT);
+        })
+
+        this.$clearFilter.addEventListener('click', async (e) => {
+            this.handleCmd(Constants.CMD_CLEAR_FILTER);
+        })
+    }
+
+    async handleSort(data) {
+        Log(TAG, JSON.stringify(data));
+        this.sortColumn = data.column;
+        this.sortOrder = data.order;
+        let query = this.query + 
+            ` ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, 0)}`;
+        this.cursorId = null;
+        this.updateContents(query);
+    }
+
+    async handleCellEdit(data) {
+        Log(TAG, JSON.stringify(data));
+        let query = `update \`${this.table}\`
+                    set \`${data.col.name}\` = '${data.col.value}' 
+                    where \`${data.key.name}\` = '${data.key.value}'`;
+        let dbUtils = new DbUtils();
+        let res = await dbUtils.execute.apply(this, [query]);
+
+        if (res.status == "ok") {
+            PubSub.publish(Constants.QUERY_DISPATCHED, {
+                query: query,
+                tags: [Constants.USER]
+            });
+
+            let rows = res.data[0][1];
+            Utils.showAlert(`Updated ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
+            return;
+        }
+
+        this.tableUtils.undo();
+        alert(res.msg);
+    }
+
+    async showFkRef(table, col, val) {
+        this.table = table
+
+        await this.initTable(this.table);
+
+        let query = `select * from \`${table}\` 
+                         where \`${col}\` = '${val}'`
+
+        this.cursorId = null;
+        let res = await this.showContents(query, this.fkMap);
+
+        if (res.status == "ok") {
+            PubSub.publish(Constants.QUERY_DISPATCHED, {
+                query: query,
+                tags: [Constants.USER]
+            })
+
+            RowAdder.init(this.table, this.columns);
+        }
+    }
+
+    async search() {
+        //disable input field for is null and is not null
+        if (this.$operators.value == "IS NULL" || this.$operators.value == "IS NOT NULL") {
+            this.query = `select * from \`${this.table}\` 
+                             where \`${this.$columNames.value}\`
+                             ${this.$operators.value}`;
+        } else {
+            this.query = `select * from \`${this.table}\` 
+                             where \`${this.$columNames.value}\`
+                             ${this.$operators.value}
+                             '${this.$searchText.value}'`;
+        }
+
+        let query = `${this.query} limit ${DbUtils.getLimit(this.page, 0)}`;
+        Log(TAG, this.query);
+        this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
+
+        this.cursorId = null;
+        let res = await this.showContents(query, this.fkMap);
+
+        if (res.status == "ok") {
+            PubSub.publish(Constants.QUERY_DISPATCHED, {
+                query: this.query,
+                tags: [Constants.USER]
+            })
         }
     }
 
@@ -210,9 +245,23 @@ class TableContents {
         Log(TAG, `Displaying ${table}`)
 
         this.stack.reset()
-        this.stack.push(table)
+        this.stack.push(this.table)
 
-        let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${this.table}\``)
+        await this.initTable(this.table);
+
+        //the base query currently in operation
+        this.query = `select * from \`${this.table}\``;
+        //query qualified as required
+        let query = `${this.query} limit ${DbUtils.getLimit(this.page, 0)}`;
+
+        this.cursorId = null;
+        this.showContents(query, this.fkMap)
+
+        RowAdder.init(this.table, this.columns);
+    }
+
+    async initTable(table) {
+        let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${table}\``)
         let contraints = DbUtils.fetchAll(this.sessionId, `SELECT
                 TABLE_NAME,
                 COLUMN_NAME,
@@ -222,33 +271,16 @@ class TableContents {
                 FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
                 WHERE
                 TABLE_SCHEMA = '${this.db}\' and
-                TABLE_NAME = '${this.table}\'`)
+                TABLE_NAME = '${table}\'`)
 
         let values = await Promise.all([columns, contraints])
-        this.fkMap = this.createFKMap(values[1])
+        this.fkMap = DbUtils.createFKMap(values[1])
         this.columns = Utils.extractColumns(values[0])
 
         //update the column name selector
         Utils.setOptions(this.$columNames, this.columns, '')
         Utils.setOptions(this.$operators, OPERATORS, '')
         this.$searchText.value = '';
-
-        this.query = `select * from \`${this.table}\``;
-        let query = `${this.query} limit ${this.getLimit(0)}`;
-        this.cursorId = null;
-        this.showContents(query, this.fkMap)
-        RowAdder.init(this.table, this.columns);
-    }
-
-    getLimit(delta) {
-        return `${(this.page + delta) * Constants.BATCH_SIZE_WS}, ${Constants.BATCH_SIZE_WS}`;
-    }
-
-    getOrder(col, order) {
-        if (!order) {
-            return '';
-        }
-        return ` order by \`${col}\` ${order}`;
     }
 
     async showContents(query, fkMap) {
@@ -281,98 +313,6 @@ class TableContents {
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
         return this.tableUtils.update(stream);
-    }
-
-    createFKMap(constraints) {
-        let fkMap = {}
-        let colIndex, refTblIndex, refColIndex, constraintNameIndex
-
-        //first get indexes of columns of interest
-        let i = 0
-        constraints[0].forEach((c) => {
-            switch (c) {
-                case 'CONSTRAINT_NAME':
-                    constraintNameIndex = (i + 1)
-                    break
-
-                case 'COLUMN_NAME':
-                    colIndex = (i + 1)
-                    break
-
-                case 'REFERENCED_TABLE_NAME':
-                    refTblIndex = (i + 1)
-                    break;
-
-                case 'REFERENCED_COLUMN_NAME':
-                    refColIndex = (i + 1)
-                    break;
-            }
-            i++
-        })
-
-        //Now get values of columns for each row
-        constraints.forEach((row) => {
-            if (row[refTblIndex] != "NULL") {
-                fkMap[row[colIndex]] = {
-                    'ref-table': row[refTblIndex],
-                    'ref-column': row[refColIndex],
-                }
-            }
-
-            if (row[constraintNameIndex] == 'PRIMARY') {
-                fkMap['primary-key'] = row[colIndex]
-            }
-        })
-
-        return fkMap
-    }
-
-    async init() {
-        Hotkeys.init();
-
-        this.$root = document.getElementById('app-right-panel')
-        //this.$footer = document.getElementById('footer-right-panel')
-
-        this.stack = new Stack(async (e) => {
-            await this.navigate(e)
-        })
-
-        this.enable()
-
-        PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
-            Log(TAG, JSON.stringify(data));
-            let query = `update \`${this.table}\`
-                    set \`${data.col.name}\` = '${data.col.value}' 
-                    where \`${data.key.name}\` = '${data.key.value}'`;
-            let dbUtils = new DbUtils();
-            let res = await dbUtils.execute.apply(this, [query]);
-
-            if (res.status == "ok") {
-                PubSub.publish(Constants.QUERY_DISPATCHED, {
-                    query: query,
-                    tags: [Constants.USER]
-                });
-
-                let rows = res.data[0][1];
-                Utils.showAlert(`Updated ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
-                return;
-            }
-
-            this.tableUtils.undo();
-            alert(res.msg);
-        });
-
-        this.initPager();
-        
-        this.$exportFiltered = document.getElementById('export-filtered-results')
-        this.$exportFiltered.addEventListener('click', async (e) => {
-            this.handleCmd(Constants.CMD_EXPORT);
-        })
-
-        this.$clearFilter = document.getElementById('clear-filter')
-        this.$clearFilter.addEventListener('click', async (e) => {
-            this.handleCmd(Constants.CMD_CLEAR_FILTER);
-        })
     }
 
     async handleCmd(cmd) {
@@ -410,6 +350,10 @@ class TableContents {
     }
 
     async handleExport() {
+        if (!this.query) {
+            return;
+        }
+
         let dbUtils = new DbUtils();
         let res = await dbUtils.exportResults.apply(this, [this.query])
 
@@ -432,7 +376,7 @@ class TableContents {
 
         this.inFlight = true;
 
-        let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(1)}`;
+        let query = `${this.query} ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, 1)}`;
         this.cursorId = null;
         let res = await this.updateContents(query);
         if (res.status == "ok") {
@@ -455,7 +399,7 @@ class TableContents {
             return;
         }
 
-        let query = `${this.query} ${this.getOrder(this.sortColumn, this.sortOrder)} limit ${this.getLimit(-1)}`;
+        let query = `${this.query} ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, -1)}`;
         this.cursorId = null;
 
         let res = await this.updateContents(query);
@@ -497,9 +441,12 @@ class TableContents {
 
             case 'search':
                 this.table = e.table;
+                await this.initTable(this.table);
+
                 this.$columNames.value = e.column;
                 this.$operators.value = e.operator;
                 this.$searchText.value = e.value;
+
                 await this.search()
                 break
         }

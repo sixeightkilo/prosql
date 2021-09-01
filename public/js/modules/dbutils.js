@@ -189,6 +189,61 @@ class DbUtils {
             'msg': err
         }
     }
+
+    static createFKMap(constraints) {
+        let fkMap = {}
+        let colIndex, refTblIndex, refColIndex, constraintNameIndex
+
+        //first get indexes of columns of interest
+        let i = 0
+        constraints[0].forEach((c) => {
+            switch (c) {
+                case 'CONSTRAINT_NAME':
+                    constraintNameIndex = (i + 1)
+                    break
+
+                case 'COLUMN_NAME':
+                    colIndex = (i + 1)
+                    break
+
+                case 'REFERENCED_TABLE_NAME':
+                    refTblIndex = (i + 1)
+                    break;
+
+                case 'REFERENCED_COLUMN_NAME':
+                    refColIndex = (i + 1)
+                    break;
+            }
+            i++
+        })
+
+        //Now get values of columns for each row
+        constraints.forEach((row) => {
+            if (row[refTblIndex] != "NULL") {
+                fkMap[row[colIndex]] = {
+                    'ref-table': row[refTblIndex],
+                    'ref-column': row[refColIndex],
+                }
+            }
+
+            if (row[constraintNameIndex] == 'PRIMARY') {
+                fkMap['primary-key'] = row[colIndex]
+            }
+        })
+
+        return fkMap
+    }
+
+    static getLimit(page, delta) {
+        return `${(page + delta) * Constants.BATCH_SIZE_WS}, ${Constants.BATCH_SIZE_WS}`;
+    }
+
+    static getOrder(col, order) {
+        if (!order) {
+            return '';
+        }
+        return ` order by \`${col}\` ${order}`;
+    }
 }
 
 export { DbUtils }
