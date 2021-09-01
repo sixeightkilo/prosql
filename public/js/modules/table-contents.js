@@ -9,6 +9,7 @@ import { TableUtils } from './table-utils.js'
 import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
 import RowAdder from './row-adder.js'
+import Pager from './pager.js'
 
 const OPERATORS = [
     '=',
@@ -54,7 +55,6 @@ class TableContents {
 
         this.initSubscribers();
         this.initHandlers()
-        this.initPager();
     }
 
     initDom() {
@@ -85,8 +85,6 @@ class TableContents {
         //handle all keyboard shortcuts
         [
             Constants.CMD_RUN_QUERY,
-            Constants.CMD_NEXT_ROWS,
-            Constants.CMD_PREV_ROWS,
             Constants.CMD_EXPORT,
             Constants.CMD_FORMAT_QUERY,
         ].forEach((c) => {
@@ -153,12 +151,12 @@ class TableContents {
 
     async handleSort(data) {
         Log(TAG, JSON.stringify(data));
-        this.sortColumn = data.column;
-        this.sortOrder = data.order;
-        let query = this.query + 
-            ` ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, 0)}`;
-        this.cursorId = null;
-        this.updateContents(query);
+
+        const f = async (query) => {
+            return await this.updateContents(query);
+        }
+
+        Pager.init(this.query, f, data.column, data.order);
     }
 
     async handleCellEdit(data) {
@@ -192,17 +190,21 @@ class TableContents {
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
 
-        this.cursorId = null;
-        let res = await this.showContents(query, this.fkMap);
+        const f = async (query) => {
+            let res = await this.showContents(query, this.fkMap);
 
-        if (res.status == "ok") {
-            PubSub.publish(Constants.QUERY_DISPATCHED, {
-                query: query,
-                tags: [Constants.USER]
-            })
+            if (res.status == "ok") {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    query: query,
+                    tags: [Constants.USER]
+                })
 
-            RowAdder.init(this.table, this.columns);
+                RowAdder.init(this.table, this.columns);
+            }
+            return res
         }
+
+        Pager.init(query, f);
     }
 
     async search() {
@@ -218,29 +220,27 @@ class TableContents {
                              '${this.$searchText.value}'`;
         }
 
-        let query = `${this.query} limit ${DbUtils.getLimit(this.page, 0)}`;
         Log(TAG, this.query);
         this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
 
-        this.cursorId = null;
-        let res = await this.showContents(query, this.fkMap);
+        const f = async (query) => {
+            let res = await this.showContents(query, this.fkMap);
 
-        if (res.status == "ok") {
-            PubSub.publish(Constants.QUERY_DISPATCHED, {
-                query: this.query,
-                tags: [Constants.USER]
-            })
+            if (res.status == "ok") {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    query: this.query,
+                    tags: [Constants.USER]
+                })
+            }
+
+            return res;
         }
-    }
 
-    resetPager() {
-        this.page = 0;
-        this.$prev.classList.add('pager-disable');
+        Pager.init(this.query, f);
     }
 
     async show(table) {
         this.table = table
-        this.resetPager();
 
         Log(TAG, `Displaying ${table}`)
 
@@ -251,13 +251,14 @@ class TableContents {
 
         //the base query currently in operation
         this.query = `select * from \`${this.table}\``;
-        //query qualified as required
-        let query = `${this.query} limit ${DbUtils.getLimit(this.page, 0)}`;
 
-        this.cursorId = null;
-        this.showContents(query, this.fkMap)
+        const f = async (query) => {
+            let res = this.showContents(query, this.fkMap);
+            RowAdder.init(this.table, this.columns);
+            return res;
+        }
 
-        RowAdder.init(this.table, this.columns);
+        Pager.init(this.query, f);
     }
 
     async initTable(table) {
@@ -284,9 +285,7 @@ class TableContents {
     }
 
     async showContents(query, fkMap) {
-        if (!this.cursorId) {
-            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
-        }
+        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
 
         let params = {
             'session-id': this.sessionId,
@@ -300,10 +299,7 @@ class TableContents {
     }
 
     async updateContents(query) {
-        if (!this.cursorId) {
-            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
-        }
-
+        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
         let params = {
             'session-id': this.sessionId,
             'cursor-id': this.cursorId,
@@ -363,67 +359,6 @@ class TableContents {
                 tags: [Constants.USER]
             });
         }
-    }
-
-    async handleNextRows() {
-        if (!this.table) {
-            return;
-        }
-
-        if (this.inFlight) {
-            return;
-        }
-
-        this.inFlight = true;
-
-        let query = `${this.query} ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, 1)}`;
-        this.cursorId = null;
-        let res = await this.updateContents(query);
-        if (res.status == "ok") {
-            this.$prev.classList.remove('pager-disable');
-            this.page++;
-        }
-
-        this.inFlight = false;
-    }
-
-    async handlePrevNows() {
-        if (this.inFlight) {
-            return;
-        }
-
-        this.inFlight = true;
-
-        if (this.page == 0) {
-            this.inFlight = false;
-            return;
-        }
-
-        let query = `${this.query} ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, -1)}`;
-        this.cursorId = null;
-
-        let res = await this.updateContents(query);
-        if (res.status == "ok") {
-            this.page--;
-            if (this.page == 0) {
-                this.$prev.classList.add('pager-disable');
-            }
-        }
-
-        this.inFlight = false;
-    }
-
-    initPager() {
-        this.$next = document.getElementById('next')
-        this.$prev = document.getElementById('prev')
-
-        this.$next.addEventListener('click', async (e) => {
-            this.handleCmd(Constants.CMD_NEXT_ROWS);
-        })
-
-        this.$prev.addEventListener('click', async (e) => {
-            this.handleCmd(Constants.CMD_PREV_ROWS);
-        })
     }
 
     async navigate(e) {
