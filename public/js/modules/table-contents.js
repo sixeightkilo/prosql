@@ -8,7 +8,7 @@ import { Stack } from './stack.js'
 import { TableUtils } from './table-utils.js'
 import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
-import RowAdder from './row-adder.js'
+import { RowAdder } from './row-adder.js'
 import Pager from './pager.js'
 
 const OPERATORS = [
@@ -39,11 +39,14 @@ class TableContents {
     setSessionInfo(sessionId, db) {
         this.sessionId = sessionId
         this.db = db
+        this.rowAdder.setSessionId(this.sessionId);
+
         Log(TAG, `sessionId: ${sessionId} db: ${db}`)
     }
 
     async init() {
         Hotkeys.init();
+        this.rowAdder = new RowAdder(this.sessionId);
 
         this.initDom();
 
@@ -186,6 +189,7 @@ class TableContents {
         this.table = table
 
         await this.initTable(this.table);
+        this.rowAdder.init(this.table, this.columns);
 
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
@@ -199,7 +203,6 @@ class TableContents {
                     tags: [Constants.USER]
                 })
 
-                RowAdder.init(this.table, this.columns);
             }
             return res
         }
@@ -248,13 +251,13 @@ class TableContents {
         this.stack.push(this.table)
 
         await this.initTable(this.table);
+        this.rowAdder.init(this.table, this.columns);
 
         //the base query currently in operation
         this.query = `select * from \`${this.table}\``;
 
         const f = async (query) => {
             let res = this.showContents(query, this.fkMap);
-            RowAdder.init(this.table, this.columns);
             return res;
         }
 
@@ -315,14 +318,6 @@ class TableContents {
         switch (cmd) {
         case Constants.CMD_EXPORT:
             this.handleExport();
-            break;
-
-        case Constants.CMD_NEXT_ROWS:
-            this.handleNextRows();
-            break;
-
-        case Constants.CMD_PREV_ROWS:
-            this.handlePrevNows();
             break;
 
         case Constants.CMD_CLEAR_FILTER:
