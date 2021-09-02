@@ -33,8 +33,8 @@ class CellRenderer {
         }
 
         return Utils.generateNode(this.cellTemplate, {
-                'value': params.value,
-                'cls': cls
+            'value': params.value,
+            'cls': cls
         })
     }
 }

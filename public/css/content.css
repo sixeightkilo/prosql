@@ -74,11 +74,12 @@
 	width:100%;
 	padding:0.25em;
 	display:grid;
-	grid-template-columns: 0.25fr 0.5fr 2fr 2fr 3.0fr 0.5fr 1fr;
+	grid-template-columns: 0.5fr 0.5fr 2fr 2fr 3.0fr 0.5fr 1fr;
 	column-gap:0.25em;
 	background-color:#e8e8e8
 }
 
+#select-cols,
 #add-row {
 	cursor:pointer;
 	margin-left:5px;
@@ -199,4 +200,9 @@ i#back {
 	top:5px;
 	cursor:pointer;
 	display:none;
+}
+
+#column-selector-dialog .checkall,
+#column-selector-dialog .checkbox {
+	margin-top:10px;
 }

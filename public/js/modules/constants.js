@@ -77,11 +77,16 @@ class Constants {
         return 'cmd.search-tables'
     }
 
+
     static get CMD_BACK() {
         return 'cmd.back'
     }
 
     //events
+    static get COLUMNS_SELECTED() {
+        return 'cmd.columns-selected'
+    }
+
     static get STREAM_ERROR() {
         return 'stream.stream-error'
     }
@@ -148,6 +153,10 @@ class Constants {
 
     static get CONNECTIONS() {
         return 'connections'
+    }
+
+    static get COLUMN_SELECTIONS() {
+        return 'column-selections'
     }
 
     static get BATCH_SIZE() {

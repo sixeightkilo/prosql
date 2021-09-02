@@ -1,0 +1,26 @@
+.modal#column-selector-dialog
+    .modal-background
+    .modal-card
+        header.modal-card-head
+            p.modal-card-title.is-size-6
+        section.modal-card-body
+            .field.is-horizontal
+                .field-label.is-normal
+                    label.label All
+                .field-body
+                    .field
+                        .control
+                            input.checkall(type='checkbox' checked)
+        section.modal-card-body
+        footer.modal-card-foot
+            button.button.is-success.ok OK
+            button.button.cancel Cancel
+
+    script(type="code" id="col-select-template")
+        .field.is-horizontal
+            .field-label.is-normal
+                label.label {col}
+            .field-body
+                .field
+                    .control
+                        input.checkbox(data-col="{col}" type='checkbox' checked)

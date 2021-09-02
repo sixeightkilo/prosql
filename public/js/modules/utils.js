@@ -4,11 +4,20 @@ import { Err } from './error.js'
 const TAG = "utils"
 class Utils {
     static saveToSession(key, val) {
-        sessionStorage.setItem(key, val)
+        window.sessionStorage.setItem(key, val)
     }
 
     static getFromSession(key) {
-        return sessionStorage.getItem(key)
+        return window.sessionStorage.getItem(key)
+    }
+
+
+    static saveToLocalStorage(key, value) {
+        window.localStorage.setItem(key, value);
+    }
+
+    static getFromLocalStorage(key) {
+        return window.localStorage.getItem(key) ?? null;
     }
 
     //https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro

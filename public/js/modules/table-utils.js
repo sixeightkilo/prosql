@@ -30,7 +30,7 @@ class TableUtils {
 		await AgGrid.init();
     }
 
-    async showContents(stream, fkMap, editable = false, sortable = false) {
+    async showContents(stream, fkMap, selection = {}, editable = false, sortable = false) {
         this.fkMap = fkMap;
         let grid = this.$root.querySelector('#grid');
         //clear existing grid if any
@@ -67,8 +67,11 @@ class TableUtils {
             if (i == 0) {
                 let cols = [];
                 for (let j = 0; j < row.length; j += 2) {
+
+                    let show = selection[row[j]] ?? true;
                     cols.push({
                         field: row[j],
+                        hide: !show,
                         resizable: true,
                         editable: editable,
                         sortable: true,
@@ -93,6 +96,7 @@ class TableUtils {
                 }
 
                 new agGrid.Grid(grid, gridOptions);
+                this.gridOptions = gridOptions;
                 this.api = gridOptions.api;
                 this.api.hideOverlay();
             }
@@ -191,6 +195,12 @@ class TableUtils {
 
     undo() {
         this.api.undoCellEditing();
+    }
+
+    selectColumns(selection) {
+        for (let col in selection) {
+            this.gridOptions.columnApi.setColumnVisible(col, selection[col]);
+        }
     }
 
     static handleCellValueChanged(fkMap, params) {

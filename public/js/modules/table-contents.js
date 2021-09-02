@@ -9,6 +9,7 @@ import { TableUtils } from './table-utils.js'
 import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
 import { RowAdder } from './row-adder.js'
+import { ColumnSelector } from './column-selector.js'
 import Pager from './pager.js'
 
 const OPERATORS = [
@@ -47,6 +48,7 @@ class TableContents {
     async init() {
         Hotkeys.init();
         this.rowAdder = new RowAdder(this.sessionId);
+        this.colSelector = new ColumnSelector();
 
         this.initDom();
 
@@ -83,6 +85,10 @@ class TableContents {
 
         PubSub.subscribe(Constants.SORT_REQUESTED, (data) => {
             this.handleSort(data);
+        });
+
+        PubSub.subscribe(Constants.COLUMNS_SELECTED, (data) => {
+            this.handleSelectColumns(data);
         });
 
         //handle all keyboard shortcuts
@@ -190,6 +196,7 @@ class TableContents {
 
         await this.initTable(this.table);
         this.rowAdder.init(this.table, this.columns);
+        this.colSelector.init(this.table, this.columns);
 
         let query = `select * from \`${table}\` 
                          where \`${col}\` = '${val}'`
@@ -252,6 +259,7 @@ class TableContents {
 
         await this.initTable(this.table);
         this.rowAdder.init(this.table, this.columns);
+        this.colSelector.init(this.table, this.columns);
 
         //the base query currently in operation
         this.query = `select * from \`${this.table}\``;
@@ -287,7 +295,7 @@ class TableContents {
         this.$searchText.value = '';
     }
 
-    async showContents(query, fkMap) {
+    async showContents(query, fkMap, sel = true) {
         this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
 
         let params = {
@@ -298,7 +306,10 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
-        return this.tableUtils.showContents(stream, fkMap, true, true)
+        let selection = this.colSelector.getSelection(this.table);
+        let res =  await this.tableUtils.showContents(stream, fkMap, selection, true, true)
+
+        return res;
     }
 
     async updateContents(query) {
@@ -324,6 +335,10 @@ class TableContents {
             this.handleClearFilter();
             break;
         }
+    }
+
+    handleSelectColumns(data) {
+        this.tableUtils.selectColumns(data.cols);
     }
 
     handleClearFilter() {
