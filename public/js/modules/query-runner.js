@@ -33,6 +33,10 @@ class QueryRunner {
             this.editor.resize();
         });
 
+        PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
+            this.tableUtils.undo();
+        });
+
         //handle all keyboard shortcuts
         [
             Constants.CMD_RUN_QUERY,
@@ -158,7 +162,7 @@ class QueryRunner {
 
         q = q.trim();
 
-        if (!/^select/i.test(q)) {
+        if (!/^select|show/i.test(q)) {
             this.tableUtils.showLoader();
             let dbUtils = new DbUtils();
             let res = await dbUtils.execute.apply(this, [q]);
@@ -194,7 +198,7 @@ class QueryRunner {
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
 
-        let res = await this.tableUtils.showContents(stream, {}, false)
+        let res = await this.tableUtils.showContents(stream, {}, {}, true);
 
         if (res.status == "ok" && save) {
             PubSub.publish(Constants.QUERY_DISPATCHED, {
@@ -221,14 +225,6 @@ class QueryRunner {
 
             Log(TAG, `${res['rows-affected']}`);
         }
-    }
-
-    extractCols(row) {
-        let cols = []
-        for (let j = 0; j < row.length; j += 2) {
-            cols.push(row[j])
-        }
-        return cols
     }
 
     async formatQuery() {
