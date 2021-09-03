@@ -254,11 +254,25 @@ class Ace {
         this.editor.commands.addCommand({
             name: Constants.CMD_FORMAT_QUERY,
             bindKey: {
-                win: Constants.SHIFT_F,
-                mac: Constants.SHIFT_F,
+                win: Constants.SHIFT_T,
+                mac: Constants.SHIFT_T
             },
             exec: (editor) => {
+                Log(TAG, "format");
                 PubSub.publish(Constants.CMD_FORMAT_QUERY, {});
+            },
+            readOnly: true // false if this command should not apply in readOnly mode
+        });
+
+        this.editor.commands.addCommand({
+            name: Constants.CMD_RUN_ALL,
+            bindKey: {
+                win: Constants.SHIFT_A,
+                mac: Constants.SHIFT_A
+            },
+            exec: (editor) => {
+                Log(TAG, "runall");
+                PubSub.publish(Constants.CMD_RUN_ALL, {});
             },
             readOnly: true // false if this command should not apply in readOnly mode
         });

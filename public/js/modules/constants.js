@@ -1,11 +1,15 @@
 class Constants {
     //hotkeys
+    static get SHIFT_A() {
+        return 'Alt+Shift+A'
+    }
+
     static get SHIFT_R() {
         return 'Alt+Shift+R'
     }
 
-    static get SHIFT_F() {
-        return 'Alt+Shift+F'
+    static get SHIFT_T() {
+        return 'Alt+Shift+T'
     }
 
     static get SHIFT_O() {

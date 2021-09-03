@@ -9,7 +9,6 @@ import { GridResizerV } from './grid-resizer-v.js'
 import { PubSub } from './pubsub.js'
 import { FileDownloader } from './file-downloader.js'
 import { Ace } from './ace.js'
-import { Hotkeys } from './hotkeys.js'
 
 const TAG = "query-runner"
 
@@ -40,6 +39,7 @@ class QueryRunner {
         //handle all keyboard shortcuts
         [
             Constants.CMD_RUN_QUERY,
+            Constants.CMD_RUN_ALL,
             Constants.CMD_NEXT_ROWS,
             Constants.CMD_PREV_ROWS,
             Constants.CMD_EXPORT,
@@ -75,7 +75,6 @@ class QueryRunner {
 
         //this.adjustView()
 
-        Hotkeys.init();
         this.editor = new Ace('query-editor');
         await this.editor.init();
 
