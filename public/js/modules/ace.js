@@ -28,6 +28,18 @@ class Ace {
                     this.onKeyup();
                 })
 
+                this.editor.on('dblclick', (e) => {
+                    Log(TAG, 'dblclick');
+                    this.onKeyup();
+                });
+
+                this.editor.on('mousedown', (e) => {
+                    Log(TAG, 'mousedown');
+                    setTimeout(() => {
+                        this.onKeyup();
+                    }, 5);
+                });
+
                 this.setKeyBindings();
 
                 resolve()
@@ -45,6 +57,18 @@ class Ace {
             return;
         }
         this.editor.session.replace(this.selRange, v + ";");
+
+        this.editor.$search.setOptions({
+            needle: ';',
+            backwards: true,
+            preventScroll: true,
+        });
+
+        let cursor = this.editor.selection.getCursor();
+        this.editor.moveCursorTo(cursor.row, cursor.column - 1);
+
+        //and highlight it
+        this.onKeyup()
     }
 
     clearSelection() {
