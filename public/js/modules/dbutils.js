@@ -122,6 +122,11 @@ class DbUtils {
             }
         });
 
+        PubSub.publish(Constants.INIT_PROGRESS, {
+            title: `Running query`,
+            message: `Please wait`
+        });
+
         let csv = '';
         let fileName = '';
         let n = 0;
@@ -149,6 +154,12 @@ class DbUtils {
                 PubSub.publish(Constants.START_PROGRESS, {
                     title: `Exporting to ${fileName}`
                 });
+
+                //If we are here query was OK, save to DB
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    query: q,
+                    tags: [Constants.USER]
+                })
                 continue;
             }
 

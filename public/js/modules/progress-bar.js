@@ -13,7 +13,7 @@ class ProgressBar {
 			this.hasButtons = false;
 		});
 
-        PubSub.subscribe(Constants.START_PROGRESS, (data) => {
+        PubSub.subscribe(Constants.INIT_PROGRESS, (data) => {
             this.time.innerHTML = '';
             this.message.innerHTML = '';
             this.elapsed = 0;
@@ -22,12 +22,24 @@ class ProgressBar {
                 this.title.innerHTML = data.title
             }
 
+            this.message.innerHTML = data.message;
+
             this.timer = setInterval(() => {
                 this.elapsed++;
                 this.time.innerHTML = this.elapsed + ' s';
             }, 1000);
 
             this.progressBar.classList.add('is-active');
+        });
+
+        PubSub.subscribe(Constants.START_PROGRESS, (data) => {
+            this.time.innerHTML = '';
+            this.message.innerHTML = '';
+            this.elapsed = 0;
+
+            if (this.hasButtons) {
+                this.title.innerHTML = data.title
+            }
         });
 
         PubSub.subscribe(Constants.STOP_PROGRESS, () => {

@@ -187,6 +187,10 @@ class Constants {
         return 2
     }
 
+    static get INIT_PROGRESS() {
+        return "init-progress"
+    }
+
     static get START_PROGRESS() {
         return "start-progress"
     }
