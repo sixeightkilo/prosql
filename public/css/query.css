@@ -60,16 +60,6 @@
 	background:#dedede;
 }
 
-#query-results thead th {
-	position:sticky;
-	background-color:#fff;
-	top: 0;
-}
-
-#query-results thead th {
-	border-bottom:1px solid #e1e1e1;
-}
-
 #search-bar {
 	width:100%;
 	padding:0.25em;
@@ -126,10 +116,6 @@ i#back {
 	line-height: 20px;
 	padding: 10px;
 	tab-size: 4;
-}
-
-#query-results {
-	overflow:scroll;
 }
 
 #footer {
