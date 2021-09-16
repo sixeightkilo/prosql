@@ -86,3 +86,7 @@
 .conn-container:hover .del-conn {
 	visibility:visible;
 }
+
+#is-default {
+	margin-top:8px;
+}

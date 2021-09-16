@@ -4,7 +4,7 @@
         header.modal-card-head
             p.modal-card-title.is-size-6
         section.modal-card-body
-            .field.is-horizontal
+            .all-selector-container.field.is-horizontal
                 .field-label.is-normal
                     label.label All
                 .field-body
@@ -17,10 +17,9 @@
             button.button.cancel Cancel
 
     script(type="code" id="col-select-template")
-        .field.is-horizontal
+        .selector-container.field.is-horizontal
             .field-label.is-normal
                 label.label {col}
             .field-body
                 .field
-                    .control
-                        input.checkbox(data-col="{col}" type='checkbox' checked)
+                    input.checkbox(data-col="{col}" type='checkbox' checked)
