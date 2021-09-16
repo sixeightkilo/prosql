@@ -78,15 +78,13 @@ class Content {
     }
 
     adjustView() {
-        let rp = document.getElementById('app-right-panel');
-        let rpDims = rp.getBoundingClientRect();
-        let sbDims = document.getElementById('search-bar').getBoundingClientRect();
+        let bodyDims = document.querySelector('body').getBoundingClientRect();
+        let appbarDims = document.querySelector('#appbar').getBoundingClientRect();
+        let appLeftPanel = document.querySelector('#app-left-panel');
+        appLeftPanel.style.height = (bodyDims.height - appbarDims.height) + 'px';
 
-        let h = rpDims.height - sbDims.height
-        //todo: Hack. Not sure why this is needed
-        h -= 300;
-        Log(TAG, `h: ${h}`);
-        rp.style.gridTemplateRows = `40px ${h}px`;
+        let appRightPanel = document.getElementById('app-right-panel');
+        appRightPanel.style.height = (bodyDims.height - appbarDims.height) + 'px';
     }
 }
 

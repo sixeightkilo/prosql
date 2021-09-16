@@ -11,12 +11,35 @@
 
 #app-left-panel {
 	padding-top:0.25em;
-	display:grid;
-	grid-template-rows: 2em 3em 500px minmax(500px, auto);
+	display:flex;
+	flex-direction:column;
+}
+
+#tables-title {
+	flex:1 2em;
+	flex-basis:2em;
+	max-height:2em;
+	min-height:2em;
+}
+
+#tables-search-container {
+	flex:1 3em;
+	flex-basis:3em;
+	max-height:3em;
+	min-height:3em;
+}
+
+#tables-title {
+	display:flex;
+	flex-direction:row;
+}
+
+#tables-title div:first-child {
+	flex:3
 }
 
 #tables {
-	overflow:scroll;
+	overflow-y:scroll;
 }
 
 #tables div {
@@ -50,8 +73,8 @@
 
 /* app right panel */
 #app-right-panel {
-	display:grid;
-	grid-template-rows: 2.5em auto;
+	display:flex;
+	flex-direction:column;
 }
 
 #table-contents {
@@ -71,6 +94,10 @@
 }
 
 #search-bar {
+	flex:1 2em;
+	flex-basis:2em;
+	max-height:2em;
+	min-height:2em;
 	width:100%;
 	padding:0.25em;
 	display:grid;

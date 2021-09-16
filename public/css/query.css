@@ -11,13 +11,19 @@
 
 #app-left-panel {
 	padding-top:0.25em;
-	background-color:#ddd;
-	display:grid;
-	grid-template-rows: 2em 3em 3em 500px;
+	display:flex;
+	flex-direction:column;
+}
+
+#query-history, 
+#term-container,
+#tags-container,
+{
+	flex: 1
 }
 
 #queries {
-	overflow:scroll;
+	overflow-y:scroll;
 	background:#fff;
 }
 

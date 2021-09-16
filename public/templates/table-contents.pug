@@ -1,17 +1,16 @@
 #app-content
     #app-left-panel-container
         #app-left-panel
-            div#tables-list
+            div#tables-title
                 div Tables and Views
                 div 
                     i.fas.fa-file-export#export-table(title="Export selected table contents(Alt+Shift+L)")
-            div.field
+            div#tables-search-container.field
                 p.control.has-icons-left
                     input.input(type="text" id="table-filter" placeholder="Search tables(Alt+Shift+S)")
                     span.icon.is-small.is-left
                         i.fas.fa-search
             div#tables
-            div#table-info
 
     #app-content-resizer
 

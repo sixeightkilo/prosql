@@ -66,15 +66,11 @@ class Query {
     }
 
     adjustView() {
-        let queries = document.querySelector('#queries');
-        let terms = document.querySelector('#term-container');
-        let tags = document.querySelector('#tags-container');
+        let bodyDims = document.querySelector('body').getBoundingClientRect();
+        let appbarDims = document.querySelector('#appbar').getBoundingClientRect();
         let appLeftPanel = document.querySelector('#app-left-panel');
-        Log(TAG, `q: ${queries.offsetHeight} term: ${terms.offsetHeight} tag: ${tags.offsetHeight} 
-                    alp: ${appLeftPanel.offsetHeight}`);
+        appLeftPanel.style.height = (bodyDims.height - appbarDims.height) + 'px';
         
-        queries.style.height = (appLeftPanel.offsetHeight - terms.offsetHeight - tags.offsetHeight) + 'px';
-
         //right panel
         let rpDims = document.getElementById('app-right-panel').getBoundingClientRect();
         let sbDims = document.getElementById('query-sub-menu').getBoundingClientRect();
