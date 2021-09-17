@@ -16,9 +16,9 @@ html
                             |Absolutely! I have been working with MySQL for some time now and have been 
                             |utterly frustrated with the available clients. #[br]
                             |#[a(href="https://www.mysql.com/products/workbench/" target="_blank") Mysql Workbench], the offcial client is atrocious. I dread using it.#[br]
-                            |#[a(href="https://dbeaver.io/" target="_blank") DBeaver] is better. But much too clunky for my taste and loaded 
+                            |#[a(href="https://dbeaver.io/" target="_blank") DBeaver] is better. But much too cluttered for my taste and loaded 
                             |with features which most users don't use on a day-to-day basis.#[br]
-                            |#[a(href="https://www.navicat.com/en/" target="_blank") Navicat] is much too expensive and yet it is not all that good.#[br] 
+                            |#[a(href="https://www.navicat.com/en/" target="_blank") Navicat] is too expensive and yet it is not all that good.#[br] 
                             |#[a(href="https://www.phpmyadmin.net/" target="_blank") PHPMyAdmin] is decent, but not everyone has PHP or wants to use a PHP based 
                             |application. It is also not known to be very secure.#[br]
                             |There are a few others, but more or less it's the same story.#[br] #[br]
@@ -27,7 +27,7 @@ html
                             |every application should be! Alas! It too has some fatal flaws:#[br]
                             ul
                                 li No support for MySQL 8.0
-                                li Much too unstable. Crashes all the time
+                                li Unstable. Crashes all the time
                                 li Misses out on same basic features like query formatting
                                 li Lastly, it works only on Mac
                             |It is safe to say prosql.io is an attempt to match or better Sequel Pro. In fact, the 
@@ -65,11 +65,9 @@ html
 
                         .h3.is-size-3 What about performance? Can it match native clients?
                         p.has-text-justified
-                            |I have done some benchmarks. The Go client's performance is comparable to official MySQL
+                            |Yes! I have done some benchmarks. The Go client's performance is comparable to official MySQL
                             |C client. So that leaves the overhead of communication with the browsers. This is of the 
-                            |order of 10ms per request. Not at all significant. The biggest problem is how to display
-                            |thousands of rows in the browser. This is WIP. Eventually I hope to have a performace
-                            |comparable to native clients.
+                            |order of a few milliseconds per request. Not at all significant.
 
                         .h3.is-size-3 Is it secure?
                         p.has-text-justified
