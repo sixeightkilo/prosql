@@ -1,18 +1,25 @@
-- var ver = "0.5"
+- var ver = "0.4"
 - var os = "mac"
-| Open a terminal. Then do:#[br]
+| Open a terminal. Then do (sudo #[i not] required) :#[br]
 pre
-    | $curl -L https://git.io/#{os}-#{ver} > prosql-agent.zip
-    | $unzip prosql-agent.zip
-    | $cd prosql-agent/release/#{os} 
-    | $prosqlctl -install
+    | $curl -L https://git.io/ctl-#{ver}-#{os} > prosqlctl.zip
+    | $unzip prosqlctl.zip
+    | $cd prosqlctl 
+    | $./prosqlctl -install
 | You should see something like: #[br]
 pre
-    | Copying agent to /usr/local/bin ... 
-    | Creating plist ... 
-    | Starting ... 
-    | Installed successfully!
+    |Downloading release 0.6 .. Done.
+    |Extracting files ..Done.
+    |Copying agent to /usr/local/bin ...
+    |Creating plist ...
+    |Starting ...
+    |Cleaning up ..Done.
+    |Installed successfully!
 | #[br]
 | To uninstall:
 pre
-    | $prosqlctl -uninstall
+    | $./prosqlctl -uninstall
+| #[br]
+| To see all options:
+pre
+    | $./prosqlctl -help

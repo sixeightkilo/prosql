@@ -1,25 +1,37 @@
-- var ver = "0.5"
+- var ver = "0.4"
+- var os = "windows"
 | Download the latest release for windows from 
-| #[a(href="https://git.io/windows-0.5" target="_blank") github.] #[br]
+| #[a(href="https://git.io/ctl-#{ver}-#{os}" target="_blank") github.] #[br]
 | Extract contents of the zip file. #[br]
-| Type "cmd" in the search bar. "Command Prompt" should be listed. Right click
+| Type "cmd" in the windows search bar. "Command Prompt" should be listed. Right click
 | on "Command Prompt" and select #[span(class="button is-small is-warning") Run as Administrator].#[br]
 | Navigate to the folder where you extracted
 | the zip file. #[br]
 | Usually you will have to type something similar:#[br]
 pre 
-    | $cd C:\Users\Your Name\Downloads\prosql-agent-v0.5-windows
+    | $cd C:\Users\Your Name\Downloads\prosqlctl-v#{ver}-#{os}
 | Next steps:#[br]
 pre 
-    | $cd prosql-agent\release\windows
-    | $prosqlctl.exe install prosql-agent prosql-agent.exe
-    | $prosqlctl.exe set prosql-agent AppDirectory %CD%
-    | $prosqlctl.exe start prosql-agent
+    | $cd prosqlctl
+    | $prosqlctl.exe -install
 | #[br]
 | If all goes well you should see:
-pre prosql-agent: START: The operation completed successfully
+pre
+    |Downloading release 0.6 .. Done.
+    |Extracting files.. Done.
+    |Creating C:\Program Files\ProsqlAgent
+    |Copying agent to C:\Program Files\ProsqlAgent
+    |Installing agent.. Done.
+    |Setting app directory.. Done.
+    |Setting home directory.. Done.
+    |Starting agent.. Done.
+    |Cleaning up.. Done.
+    |Installed successfully!
 | #[br]
 | To uninstall:
 pre
-    | $prosqlctl.exe stop prosql-agent
-    | $prosqlctl.exe remove prosql-agent
+    | $prosqlctl.exe -uninstall
+| #[br]
+| To see all options:
+pre
+    | $./prosqlctl -help
