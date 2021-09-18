@@ -17,6 +17,19 @@ require(__DIR__ . "/../src/dependencies.php");
 //app
 AppFactory::setContainer($container);
 $app = AppFactory::create();
+$app->post('/api/set-version', function($req, $res, $args) {
+    $logger = $this->get('logger');
+    $sm = $this->get('session-manager');
+    $version = $req->getParsedBody()['version'];
+    $deviceId = $req->getParsedBody()['device-id'];
+    $logger->debug("post: $version");
+    $sm->setVersion($version);
+    $sm->setDeviceId($deviceId);
+    $sm->write();
+
+    $res->getBody()->write(json_encode(['status' => 'ok', 'data' => null]));
+    return $res;
+});
 
 $app->get('[/{params:.*}]', function($req, $res, $args) {
 	$params = explode('/', $req->getAttribute('params'));
@@ -60,7 +73,6 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
 })->add(function(Request $request, RequestHandler $handler) {
     //no changes exepcted in session when rendering pages so write close it
     $sm = $this->get('session-manager');
-    $sm->setVersion('0.6');
     $sm->write();
 
     $response = $handler->handle($request);

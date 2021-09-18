@@ -26,6 +26,11 @@ class Renderer {
 
         //we render different files for different agent versions
         $agentVersion = $sm->getVersion();
+        if (!$agentVersion) {
+            //we agent version is not known, just use current agent version
+            $agentVersion = $config['version'];
+        }
+
         $root = "build-{$agentVersion}";
 
         if ($config['env'] == 'dev') {

@@ -1,9 +1,10 @@
 <?php
 namespace Prosql;
 use Prosql\Interfaces\SessionManagerInterface;
+use \Monolog\Logger;
 
 class SessionManager implements SessionManagerInterface {
-    private $mLogger;
+    private ?Logger $logger;
     public function __construct(\Monolog\Logger $logger) {
         $this->logger = $logger;
         $this->logger->debug('constructor');
@@ -15,7 +16,15 @@ class SessionManager implements SessionManagerInterface {
     }
 
     public function getVersion(): string {
-        return $_SESSION['version'];
+        return $_SESSION['version'] ?? '';
+    }
+
+    public function setDeviceId(string $id) {
+        $_SESSION['device-id'] = $id;
+    }
+
+    public function getDeviceId(): string {
+        return $_SESSION['device-id'] ?? '';
     }
 
     public function restartSession(array $sessionParams) {

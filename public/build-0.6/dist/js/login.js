@@ -788,7 +788,29 @@
                 let id = await this.connectionDb.save(conn);
                 Log(TAG, `saved to ${id}`);
 
-                window.location = '/app/content';
+                //set agent version for the rest of web app
+                let response = await Utils.fetch(Constants.URL + '/about', false);
+                //todo: what happens if this is not OK?
+                if (response.status == "ok") {
+                    let formData = new FormData();
+                    formData.append('device-id', response.data['device-id']);
+                    formData.append('version', response.data['version']);
+
+                    let res = await fetch("/api/set-version", {
+                        body: formData,
+                        method: "post"
+                    });
+
+                    res = await res.json();
+
+                    Log(TAG, JSON.stringify(res));
+
+                    //todo: what happens if this is not OK?
+                    if (res.status == "ok") {
+                        window.location = '/app/content';
+                    }
+                    return;
+                }
             }
         }
 
