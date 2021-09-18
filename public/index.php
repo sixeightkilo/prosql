@@ -1,22 +1,30 @@
 <?php
+use DI\Container;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Slim\Factory\AppFactory;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Prosql\Renderer;
+use Prosql\SessionManager;
+
 require __DIR__ . '/../vendor/autoload.php';
 
+//create dependency container
+require(__DIR__ . "/../src/dependencies.php");
+
+//app
+AppFactory::setContainer($container);
 $app = AppFactory::create();
 
 $app->get('[/{params:.*}]', function($req, $res, $args) {
 	$params = explode('/', $req->getAttribute('params'));
 
-    $logger = new Logger('login');
-    $logger->pushHandler(new StreamHandler(__DIR__ . '/../logs/login.log', Logger::DEBUG));
+    $sm = $this->get('session-manager');
+    $logger = $this->get('logger');
 
-    $renderer = new Renderer($logger);
-    $renderer->setTemplatePath(__DIR__ . "/templates");
+    $renderer = new Renderer($logger, $sm, $this->get('config'));
 
 	switch ($params[0]) {
 	case '':
@@ -49,6 +57,14 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
 
         return $res;
     }
+})->add(function(Request $request, RequestHandler $handler) {
+    //no changes exepcted in session when rendering pages so write close it
+    $sm = $this->get('session-manager');
+    $sm->setVersion('0.6');
+    $sm->write();
+
+    $response = $handler->handle($request);
+    return $response;
 });
 
 $app->run();

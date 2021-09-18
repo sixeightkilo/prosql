@@ -78,8 +78,6 @@ class QueryRunner {
         this.editor = new Ace('query-editor');
         await this.editor.init();
 
-        this.editor.setValue("select * from `bills-1`");
-
         this.$formatQuery = document.getElementById('format-query')
 
         this.$formatQuery.addEventListener('click', async (e) => {

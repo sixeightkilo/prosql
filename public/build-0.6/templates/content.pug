@@ -1,0 +1,15 @@
+doctype html
+html
+    head
+        include head.pug
+        link(rel="stylesheet" href="/#{root}/css/content.css?ver=#{version}")
+    body
+        include common.pug
+        include appbar.pug
+        include table-contents.pug
+        include row-adder.pug
+        include column-selector.pug
+
+        script(type='module' src='/#{root}/dist/js/content.js?ver=#{version}')
+        script(type="code" id="option-template")
+            option(value="{value}") {value}

@@ -2,7 +2,7 @@ doctype html
 html
     head
         include head.pug
-        link(rel="stylesheet" href="/css/login.css")
+        link(rel="stylesheet" href="/#{root}/css/login.css?ver=#{version}")
     body
         include navbar.pug
         div#login-container.content
@@ -51,7 +51,6 @@ html
                         .field-body
                             input(type="checkbox" id="is-default")
 
-
                 div#login-btn-container
                     button.button(id="test")
                         span Test connection
@@ -60,7 +59,7 @@ html
 
                     button.button(id="login") Login 
 
-        script(type='module' src='/js/login.js')
+        script(type='module' src='/#{root}/dist/js/login.js?ver=#{version}')
         script(type='code' id='conn-template')
             .conn-container
                 div

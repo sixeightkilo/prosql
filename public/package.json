@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "chokidar": "^3.5.2",
+    "gulp": "^4.0.2",
+    "gulp-run": "^1.7.1",
+    "gulp-watch": "^4.0.1"
+  }
+}

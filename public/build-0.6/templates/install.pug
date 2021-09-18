@@ -2,7 +2,7 @@ doctype html
 html
     head
         include head.pug
-        link(rel="stylesheet" href="/css/install.css")
+        link(rel="stylesheet" href="/#{root}/css/install.css?ver=#{version}")
     body
         include navbar.pug
         .columns
@@ -51,4 +51,4 @@ html
                             .tab-content.other.has-text-justified
                                 include other.pug
             .column	
-        script(type='module' src='/js/install.js')
+            script(type='module' src='/#{root}/dist/js/install.js?ver=#{version}')

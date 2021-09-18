@@ -2,7 +2,7 @@ doctype html
 html
     head
         include head.pug
-        link(rel="stylesheet" href="/css/index.css")
+            link(rel="stylesheet" href="/#{root}/css/index.css?ver=#{version}")
     body
         section.section
             h1.is-size-1 Prosql
@@ -16,5 +16,5 @@ html
         section.section
             button#get-started.button Get Started!
 
-        script(type='module' src='/js/index.js')
+        script(type='module' src='/#{root}/dist/js/index.js?ver=#{version}')
 

@@ -152,7 +152,7 @@ class Login {
     async login() {
         let conn = this.getConn()
         if (!conn.name) {
-            alert('Please choose a connection name');
+            alert('Please choose a connection name!');
             return;
         }
 
