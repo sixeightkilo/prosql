@@ -1,6 +1,6 @@
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
-import HotKeys from 'https://unpkg.com/hotkeys-js@3.8.7/dist/hotkeys.esm.js'
+import HotKeys from './hotkeys.esm.js'
 
 class Hotkeys {
     static init() {
