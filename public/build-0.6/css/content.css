@@ -20,6 +20,7 @@
 	flex-basis:2em;
 	max-height:2em;
 	min-height:2em;
+	padding:0.25em;
 }
 
 #tables-search-container {

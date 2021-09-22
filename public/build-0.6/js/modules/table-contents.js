@@ -160,12 +160,14 @@ class TableContents {
 
     async handleSort(data) {
         Log(TAG, JSON.stringify(data));
+        this.sortColumn = data.column;
+        this.sortOrder = data.order;
 
         const f = async (query) => {
             return await this.updateContents(query);
         }
 
-        Pager.init(this.query, f, data.column, data.order);
+        Pager.init(this.query, f, this.sortColumn, this.sortOrder);
     }
 
     async handleCellEdit(data) {
@@ -249,6 +251,11 @@ class TableContents {
         Pager.init(this.query, f);
     }
 
+    reset() {
+        this.sortColumn = null;
+        this.sortOrder = null;
+    }
+
     async show(table) {
         this.table = table
 
@@ -269,7 +276,8 @@ class TableContents {
             return res;
         }
 
-        Pager.init(this.query, f);
+        Log(TAG, `${this.sortColumn}:${this.sortOrder}`);
+        Pager.init(this.query, f, this.sortColumn, this.sortOrder);
     }
 
     async initTable(table) {

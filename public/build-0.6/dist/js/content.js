@@ -2369,12 +2369,14 @@
 
         async handleSort(data) {
             Log(TAG$9, JSON.stringify(data));
+            this.sortColumn = data.column;
+            this.sortOrder = data.order;
 
             const f = async (query) => {
                 return await this.updateContents(query);
             };
 
-            pager.init(this.query, f, data.column, data.order);
+            pager.init(this.query, f, this.sortColumn, this.sortOrder);
         }
 
         async handleCellEdit(data) {
@@ -2458,6 +2460,11 @@
             pager.init(this.query, f);
         }
 
+        reset() {
+            this.sortColumn = null;
+            this.sortOrder = null;
+        }
+
         async show(table) {
             this.table = table;
 
@@ -2478,7 +2485,8 @@
                 return res;
             };
 
-            pager.init(this.query, f);
+            Log(TAG$9, `${this.sortColumn}:${this.sortOrder}`);
+            pager.init(this.query, f, this.sortColumn, this.sortOrder);
         }
 
         async initTable(table) {
@@ -3602,6 +3610,7 @@
             this.$tables = document.getElementById('tables');
 
             PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
+                this.tableContents.reset();
                 this.tableContents.show(data.table);
             });
         }

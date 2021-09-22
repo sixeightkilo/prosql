@@ -41,6 +41,7 @@ class Content {
         this.$tables = document.getElementById('tables')
 
         PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
+            this.tableContents.reset();
             this.tableContents.show(data.table);
         });
     }
