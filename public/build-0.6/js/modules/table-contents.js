@@ -10,6 +10,7 @@ import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
 import { RowAdder } from './row-adder.js'
 import { ColumnSelector } from './column-selector.js'
+import { TableInfo } from './table-info.js'
 import Pager from './pager.js'
 
 const OPERATORS = [
@@ -41,6 +42,7 @@ class TableContents {
         this.sessionId = sessionId
         this.db = db
         this.rowAdder.setSessionId(this.sessionId);
+        this.tableInfo.setSessionId(this.sessionId);
 
         Log(TAG, `sessionId: ${sessionId} db: ${db}`)
     }
@@ -48,6 +50,7 @@ class TableContents {
     async init() {
         Hotkeys.init();
         this.rowAdder = new RowAdder(this.sessionId);
+        this.tableInfo = new TableInfo(this.sessionId);
         this.colSelector = new ColumnSelector();
 
         this.initDom();

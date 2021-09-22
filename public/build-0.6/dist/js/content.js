@@ -67,7 +67,7 @@
         }
     }
 
-    const TAG$h = "utils";
+    const TAG$i = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -111,7 +111,7 @@
                     }
                 });
 
-                Log(TAG$h, response);
+                Log(TAG$i, response);
 
                 let json = await response.json();
 
@@ -121,7 +121,7 @@
 
                 return json
             } catch (e) {
-                Log(TAG$h, e);
+                Log(TAG$i, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -192,7 +192,7 @@
         }
 
         static showNoData() {
-            Log(TAG$h, "No data");
+            Log(TAG$i, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -430,7 +430,7 @@
 
     }
 
-    const TAG$g = "stream";
+    const TAG$h = "stream";
 
     class Stream {
         constructor(url) {
@@ -440,12 +440,12 @@
             this.ws = new WebSocket(url);
 
             this.ws.onerror = (evt) => {
-                Log(TAG$g, "onerror:" + evt);
+                Log(TAG$h, "onerror:" + evt);
                 this.rej(Err.ERR_NO_AGENT);
             };
 
             this.ws.onclose = (evt) => {
-                Log(TAG$g, "onclose");
+                Log(TAG$h, "onclose");
                 this.ws = null;
             };
         }
@@ -586,7 +586,7 @@
 
     let progressBar = new ProgressBar();
 
-    const TAG$f = "dbutils";
+    const TAG$g = "dbutils";
     class DbUtils {
 
         //todo: use WS in fetchall and get rid of fetch route from agent
@@ -598,7 +598,7 @@
 
             let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params));
             if (json.status == 'error') {
-                Log(TAG$f, JSON.stringify(json));
+                Log(TAG$g, JSON.stringify(json));
                 return []
             }
 
@@ -616,11 +616,11 @@
             do {
                 json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params));
                 if (json.status == "error") {
-                    Log(TAG$f, JSON.stringify(json));
+                    Log(TAG$g, JSON.stringify(json));
                     return []
                 }
 
-                Log(TAG$f, JSON.stringify(json));
+                Log(TAG$g, JSON.stringify(json));
                 if (!json.data) {
                     //if batch size == num of rows in query result, then we might get json.data = null
                     //but we should still return results fetched till this point
@@ -636,7 +636,7 @@
         static async login(creds) {
             let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds));
             if (json.status == 'error') {
-                Log(TAG$f, JSON.stringify(json));
+                Log(TAG$g, JSON.stringify(json));
                 return ""
             }
 
@@ -682,7 +682,7 @@
 
         async exportResults(q) {
             let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
-            Log(TAG$f, `cursorId: ${cursorId}`);
+            Log(TAG$g, `cursorId: ${cursorId}`);
             let params = {
                 'session-id': this.sessionId,
                 'cursor-id': cursorId,
@@ -697,7 +697,7 @@
                 buttons: true,
                 cancel: () => {
                     DbUtils.cancel(this.sessionId, cursorId);
-                    Log(TAG$f, `Cancelled ${cursorId}`);
+                    Log(TAG$g, `Cancelled ${cursorId}`);
                 }
             });
 
@@ -834,7 +834,7 @@
         }
     }
 
-    const TAG$e = "stack";
+    const TAG$f = "stack";
 
     class Stack {
         constructor(cb) {
@@ -859,7 +859,7 @@
         }
 
         async handleBack() {
-            Log(TAG$e, `${this.stack.length}: ${this.curr}`);
+            Log(TAG$f, `${this.stack.length}: ${this.curr}`);
 
             if (this.stack.length == 0) {
                 return
@@ -871,7 +871,7 @@
 
             this.curr--;
             await this.cb(this.stack[this.curr]);
-            Log(TAG$e, "Done back");
+            Log(TAG$f, "Done back");
             if (this.curr == 0) {
                 this.$back.classList.add('stack-disable');
             }
@@ -892,7 +892,7 @@
         }
 
         push(...args) {
-            Log(TAG$e, JSON.stringify(args));
+            Log(TAG$f, JSON.stringify(args));
             if (args.length == 1) {
                 this.stack.push({
                     'type': 'table',
@@ -958,7 +958,7 @@
     	}
     }
 
-    const TAG$d = 'cell-renderer';
+    const TAG$e = 'cell-renderer';
 
     class CellRenderer {
     	constructor(fkMap) {
@@ -968,7 +968,7 @@
         }
 
         render(params) {
-            Log(TAG$d, `${params.colDef.field} ${params.value}`);
+            Log(TAG$e, `${params.colDef.field} ${params.value}`);
             let c = params.colDef.field;
             let v = params.value;
 
@@ -1082,7 +1082,7 @@
         } 
     }
 
-    const TAG$c = "table-utils";
+    const TAG$d = "table-utils";
 
     class TableUtils {
         constructor($root) {
@@ -1096,7 +1096,7 @@
                     return;
                 }
 
-                Log(TAG$c, "Cancel clicked");
+                Log(TAG$d, "Cancel clicked");
                 PubSub.publish(Constants.QUERY_CANCELLED, {});
             });
         }
@@ -1920,7 +1920,7 @@
         }
     }
 
-    const TAG$b = "row-adder";
+    const TAG$c = "row-adder";
 
     class RowAdder {
         constructor(sessionId) {
@@ -1941,7 +1941,7 @@
 
                 this.$title.innerHTML = `Add new row to ${this.table}`;
                 this.$body.replaceChildren();
-                Log(TAG$b, this.columns);
+                Log(TAG$c, this.columns);
                 this.$dialog.classList.add('is-active');
                 this.columns.forEach((c) => {
                     let n = Utils.generateNode(this.templ, {
@@ -1964,13 +1964,13 @@
                     }
                 });
 
-                Log(TAG$b, `cols: ${cols}`);
-                Log(TAG$b, `vals: ${vals}`);
+                Log(TAG$c, `cols: ${cols}`);
+                Log(TAG$c, `vals: ${vals}`);
                 cols = cols.map(e => `\`${e}\``).join(",");
                 vals = vals.map(e => `'${e}'`).join(",");
 
                 let query = `insert into \`${this.table}\` (${cols}) values (${vals})`;
-                Log(TAG$b, query);
+                Log(TAG$c, query);
 
                 let dbUtils = new DbUtils();
                 let res = await dbUtils.execute.apply(this, [query]);
@@ -2005,7 +2005,7 @@
         }
     }
 
-    const TAG$a = "col-selector";
+    const TAG$b = "col-selector";
 
     class ColumnSelector {
         constructor() {
@@ -2033,7 +2033,7 @@
 
                 this.$title.innerHTML = `Select columns from ${this.table} to display`;
                 this.$body.replaceChildren();
-                Log(TAG$a, this.columns);
+                Log(TAG$b, this.columns);
 
                 let selection = this.selections[this.table] ?? {};
 
@@ -2078,7 +2078,7 @@
                     }
                 });
 
-                Log(TAG$a, JSON.stringify(selections));
+                Log(TAG$b, JSON.stringify(selections));
                 PubSub.publish(Constants.COLUMNS_SELECTED, {
                     cols: selection
                 });
@@ -2101,6 +2101,53 @@
 
         getSelection(table) {
             return this.selections[table] ?? {};
+        }
+    }
+
+    const TAG$a = "table-info";
+
+    class TableInfo {
+        constructor(sessionId) {
+            this.sessionId = sessionId;
+
+            this.$info = document.getElementById('table-info');
+            this.$dialog = document.getElementById('table-info-dialog');
+            this.$cancel = this.$dialog.querySelector('.cancel');
+            this.$ok = this.$dialog.querySelector('.ok');
+            this.templ = this.$dialog.querySelector('#col-input-template').innerHTML;
+            this.$body = this.$dialog.querySelector('.modal-card-body');
+            this.$title = this.$dialog.querySelector('.modal-card-title');
+
+            this.$info.addEventListener('click', () => {
+                if (this.table == null) {
+                    return;
+                }
+
+                this.$title.innerHTML = `${this.table}`;
+                this.$body.replaceChildren();
+                Log(TAG$a, this.columns);
+                this.$dialog.classList.add('is-active');
+            });
+
+            this.$ok.addEventListener('click', async () => {
+                this.$dialog.classList.remove('is-active');
+            });
+
+            this.$cancel.addEventListener('click', () => {
+                this.$dialog.classList.remove('is-active');
+            });
+
+            PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
+                this.table = data.table;
+            });
+
+            PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
+                this.table = data.table;
+            });
+        }
+
+        setSessionId(sessionId) {
+            this.sessionId = sessionId;
         }
     }
 
@@ -2250,6 +2297,7 @@
             this.sessionId = sessionId;
             this.db = db;
             this.rowAdder.setSessionId(this.sessionId);
+            this.tableInfo.setSessionId(this.sessionId);
 
             Log(TAG$9, `sessionId: ${sessionId} db: ${db}`);
         }
@@ -2257,6 +2305,7 @@
         async init() {
             Hotkeys.init();
             this.rowAdder = new RowAdder(this.sessionId);
+            this.tableInfo = new TableInfo(this.sessionId);
             this.colSelector = new ColumnSelector();
 
             this.initDom();
