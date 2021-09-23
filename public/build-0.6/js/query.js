@@ -38,7 +38,10 @@ class Query {
     async init() {
         this.queryRunner = new QueryRunner(this.sessionId);
         this.history = new QueryHistory();
+        await this.history.init();
+
         this.finder = new QueryFinder();
+        await this.finder.init();
 
         this.initHandlers();
 

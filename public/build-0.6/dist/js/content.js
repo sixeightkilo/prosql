@@ -5,7 +5,6 @@
         'grid-resizer',
         'query-db',
         'query-finder',
-        'query-history',
     ];
 
     function Log(tag, str) {
@@ -2922,21 +2921,20 @@
         async open() {
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
+                    req.onsuccess = (e) => {
+                        Log(TAG$4, "open.onsuccess");
+                        this.db = req.result;
+                        resolve(0);
+                    };
 
-                req.onsuccess = (e) => {
-                    Log(TAG$4, "open.onsuccess");
-                    this.db = req.result;
-                    resolve(0);
-                };
+                    req.onerror = (e) => {
+                        Log(TAG$4, "open.onerror");
+                        reject(e.target.errorCode);
+                    };
 
-                req.onerror = (e) => {
-                    Log(TAG$4, "open.onerror");
-                    reject(e.target.errorCode);
-                };
-
-                req.onupgradeneeded = (evt) => {
-                    this.onUpgrade(evt);
-                };
+                    req.onupgradeneeded = (evt) => {
+                        this.onUpgrade(evt);
+                    };
             })
         }
 
@@ -3536,7 +3534,7 @@
                 Log(TAG$1, JSON.stringify(query));
 
                 if (!this.queryDb) {
-                    this.queryDb = await this.init();
+                    await this.init();
                 }
 
                 let id = await this.queryDb.save(query); 
@@ -3563,9 +3561,8 @@
         }
 
         async init() {
-            let db = new QueryDB({version: Constants.QUERY_DB_VERSION});
-            await db.open();
-            return db;
+            this.queryDb = new QueryDB({version: Constants.QUERY_DB_VERSION});
+            await this.queryDb.open();
         }
 
         async handleDownload() {
@@ -3594,6 +3591,7 @@
 
         async handleUpload(data) {
             progressBar.setOptions({});//no buttons
+            PubSub.publish(Constants.INIT_PROGRESS, {});
             PubSub.publish(Constants.START_PROGRESS, {});
 
             for (let i = 0; i < data.length; i++) {

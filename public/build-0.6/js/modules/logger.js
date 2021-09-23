@@ -11,7 +11,6 @@ const DISABLED = [
     'grid-resizer',
     'query-db',
     'query-finder',
-    'query-history',
 ]
 
 export function Log(tag, str) {

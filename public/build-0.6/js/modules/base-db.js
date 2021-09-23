@@ -11,21 +11,20 @@ class BaseDB {
     async open() {
         return new Promise((resolve, reject) => {
             let req = indexedDB.open(this.dbName, this.version);
+                req.onsuccess = (e) => {
+                    Log(TAG, "open.onsuccess");
+                    this.db = req.result
+                    resolve(0)
+                };
 
-            req.onsuccess = (e) => {
-                Log(TAG, "open.onsuccess");
-                this.db = req.result
-                resolve(0)
-            };
+                req.onerror = (e) => {
+                    Log(TAG, "open.onerror");
+                    reject(e.target.errorCode);
+                };
 
-            req.onerror = (e) => {
-                Log(TAG, "open.onerror");
-                reject(e.target.errorCode);
-            };
-
-            req.onupgradeneeded = (evt) => {
-                this.onUpgrade(evt);
-            };
+                req.onupgradeneeded = (evt) => {
+                    this.onUpgrade(evt);
+                };
         })
     }
 

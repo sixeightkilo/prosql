@@ -13,7 +13,6 @@ class QueryFinder {
     constructor() {
         this.$queries = document.getElementById('queries');
         this.queryTemplate = document.getElementById('query-template').innerHTML;
-        this.init();
     }
 
     async init() {
