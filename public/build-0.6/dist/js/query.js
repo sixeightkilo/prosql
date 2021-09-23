@@ -1865,21 +1865,20 @@
         async open() {
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
+                    req.onsuccess = (e) => {
+                        Log(TAG$7, "open.onsuccess");
+                        this.db = req.result;
+                        resolve(0);
+                    };
 
-                req.onsuccess = (e) => {
-                    Log(TAG$7, "open.onsuccess");
-                    this.db = req.result;
-                    resolve(0);
-                };
+                    req.onerror = (e) => {
+                        Log(TAG$7, "open.onerror");
+                        reject(e.target.errorCode);
+                    };
 
-                req.onerror = (e) => {
-                    Log(TAG$7, "open.onerror");
-                    reject(e.target.errorCode);
-                };
-
-                req.onupgradeneeded = (evt) => {
-                    this.onUpgrade(evt);
-                };
+                    req.onupgradeneeded = (evt) => {
+                        this.onUpgrade(evt);
+                    };
             })
         }
 
@@ -2388,7 +2387,6 @@
         constructor() {
             this.$queries = document.getElementById('queries');
             this.queryTemplate = document.getElementById('query-template').innerHTML;
-            this.init();
         }
 
         async init() {
@@ -2627,7 +2625,7 @@
                 Log(TAG$3, JSON.stringify(query));
 
                 if (!this.queryDb) {
-                    this.queryDb = await this.init();
+                    await this.init();
                 }
 
                 let id = await this.queryDb.save(query); 
@@ -2654,9 +2652,8 @@
         }
 
         async init() {
-            let db = new QueryDB({version: Constants.QUERY_DB_VERSION});
-            await db.open();
-            return db;
+            this.queryDb = new QueryDB({version: Constants.QUERY_DB_VERSION});
+            await this.queryDb.open();
         }
 
         async handleDownload() {
@@ -2795,7 +2792,10 @@
         async init() {
             this.queryRunner = new QueryRunner(this.sessionId);
             this.history = new QueryHistory();
+            await this.history.init();
+
             this.finder = new QueryFinder();
+            await this.finder.init();
 
             this.initHandlers();
 

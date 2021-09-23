@@ -17,7 +17,7 @@ class QueryHistory {
             Log(TAG, JSON.stringify(query));
 
             if (!this.queryDb) {
-                this.queryDb = await this.init();
+                await this.init();
             }
 
             let id = await this.queryDb.save(query); 
@@ -44,9 +44,8 @@ class QueryHistory {
     }
 
     async init() {
-        let db = new QueryDB({version: Constants.QUERY_DB_VERSION});
-        await db.open();
-        return db;
+        this.queryDb = new QueryDB({version: Constants.QUERY_DB_VERSION});
+        await this.queryDb.open();
     }
 
     async handleDownload() {
