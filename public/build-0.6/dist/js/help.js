@@ -66,7 +66,7 @@
         }
     }
 
-    const TAG$2 = "utils";
+    const TAG$1 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -110,7 +110,7 @@
                     }
                 });
 
-                Log(TAG$2, response);
+                Log(TAG$1, response);
 
                 let json = await response.json();
 
@@ -120,7 +120,7 @@
 
                 return json
             } catch (e) {
-                Log(TAG$2, e);
+                Log(TAG$1, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -191,7 +191,7 @@
         }
 
         static showNoData() {
-            Log(TAG$2, "No data");
+            Log(TAG$1, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -429,23 +429,12 @@
 
     }
 
-    class Monitor {
-        static async isAgentInstalled() {
-            let response = await Utils.fetch(Constants.URL + '/about', false);
-            if (response.status == "ok") {
-                return true;
-            }
-
-            return false;
-        }
-    }
-
-    const TAG$1 = "tabs";
+    const TAG = "tabs";
 
     class Tabs {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
-                Log(TAG$1, 'DOMContentLoaded');
+                Log(TAG, 'DOMContentLoaded');
                 this.$tabs = document.querySelector('.tabs');
                 this.$contents = document.querySelectorAll('.tab-content');
                 this.init();
@@ -472,7 +461,7 @@
 
                     //and the content
                     let target = e.target;
-                    Log(TAG$1, target.className);
+                    Log(TAG, target.className);
                     this.$contents.forEach(($c) => {
                         if ($c.classList.contains(`${target.className}`)) {
                             $c.style.display = "block";
@@ -485,50 +474,24 @@
 
     new Tabs();
 
-    const TAG = "install";
-    const MONITOR_INTERVAL = 5000;
-    const REDIRECT_DELAY = 2000;
-
-    class Install {
+    class Help {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
-                Log(TAG, 'DOMContentLoaded');
-                this.$card = document.querySelector('.card');
-                this.$cardText = this.$card.querySelector('.card-header-title');
-                this.$cardIcon = this.$card.querySelector('i');
-                this.$instructions = document.querySelector('.instructions');
-            });
+                let $ver = document.querySelector('.agent-version');
+                let $contact = document.querySelector('.contact');
+                $contact.classList.remove('is-hidden');
 
-            let timerId = setInterval(async () => {
-                if (await Monitor.isAgentInstalled()) {
-                    this.updateCard();
-                    this.updateInstructions();
-                    clearInterval(timerId);
-                    setTimeout(() => {
-                        window.location = '/login';
-                    }, REDIRECT_DELAY);
+                let response = await Utils.fetch(Constants.URL + '/about', false);
+                if (response.status == "ok") {
+                    $ver.innerHTML = response.data.version;
+                    return;
                 }
-            }, MONITOR_INTERVAL);
-        }
 
-        updateInstructions() {
-            this.$instructions.classList.add('has-text-grey-lighter');
-        }
-
-        updateCard() {
-            this.$card.classList.remove('has-background-light');
-            this.$cardText.classList.remove('has-text-black-bis');
-            this.$cardIcon.classList.remove('fa-spinner');
-            this.$cardIcon.classList.remove('fa-spin');
-
-            this.$card.classList.add('has-background-success');
-            this.$cardText.classList.add('has-text-white-bis');
-            this.$cardText.innerHTML = 'Prosql-agent working fine!';
-            this.$cardIcon.classList.add('fa-check-circle');
-            this.$cardIcon.classList.add('has-text-white-bis');
+                $ver.innerHTML = 'Not detected';
+            });
         }
     }
 
-    new Install();
+    new Help();
 
 }());

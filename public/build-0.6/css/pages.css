@@ -1,0 +1,11 @@
+html, body {
+	overflow:auto;
+}
+
+.tab-content {
+	display:none;
+}
+
+.tab-content.windows {
+	display:block;
+}

@@ -22,6 +22,11 @@ class MainMenu {
 		case 'content-menu':
 			window.location = '/app/content';
 			break;
+
+
+		case 'help-menu':
+			window.location = '/app/help';
+			break;
 		}
 	}
 }
