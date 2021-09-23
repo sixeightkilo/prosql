@@ -102,7 +102,7 @@
 	width:100%;
 	padding:0.25em;
 	display:grid;
-	grid-template-columns: 0.65fr 0.5fr 2fr 2fr 3.0fr 0.5fr 1fr;
+	grid-template-columns: 0.8fr 0.5fr 2fr 2fr 3.0fr 0.5fr 1fr;
 	column-gap:0.25em;
 	background-color:#e8e8e8
 }

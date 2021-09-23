@@ -71,28 +71,6 @@
 	background:#dedede;
 }
 
-#search-bar {
-	width:100%;
-	padding:0.25em;
-	display:grid;
-	grid-template-columns: 1fr 2fr 2fr 8fr 1fr;
-	column-gap:0.25em;
-	background-color:#e8e8e8
-}
-
-#column-names,
-#operators,
-#search-text {
-	width:100%;
-	box-sizing:border-box;
-}
-
-.fk-ref {
-	display:none;
-	cursor:pointer;
-	float:right;
-}
-
 i#fwd,
 i#back {
 	margin-right:0.25em;
