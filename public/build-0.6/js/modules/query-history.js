@@ -74,6 +74,7 @@ class QueryHistory {
 
     async handleUpload(data) {
         ProgressBar.setOptions({});//no buttons
+        PubSub.publish(Constants.INIT_PROGRESS, {});
         PubSub.publish(Constants.START_PROGRESS, {});
 
         for (let i = 0; i < data.length; i++) {

@@ -5,7 +5,6 @@
         'grid-resizer',
         'query-db',
         'query-finder',
-        'query-history',
     ];
 
     function Log(tag, str) {
