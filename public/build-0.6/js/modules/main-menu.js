@@ -16,11 +16,11 @@ class MainMenu {
 	static handleMenu(id) {
 		switch (id) {
 		case 'query-menu':
-			window.location = '/app/query';
+			window.location = '/app/queries';
 			break;
 
 		case 'content-menu':
-			window.location = '/app/content';
+			window.location = '/app/tables';
 			break;
 
 
