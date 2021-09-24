@@ -805,7 +805,7 @@
 
                     //todo: what happens if this is not OK?
                     if (res.status == "ok") {
-                        window.location = '/app/content';
+                        window.location = '/app/tables';
                     }
                     return;
                 }
