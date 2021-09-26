@@ -30,7 +30,6 @@ class Install {
         }, MONITOR_INTERVAL);
 
         let tabs = new Tabs();
-        tabs.init();
     }
 
     updateInstructions() {

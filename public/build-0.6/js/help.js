@@ -19,7 +19,6 @@ class Help {
         })
 
         let tabs = new Tabs();
-        tabs.init();
     }
 }
 
