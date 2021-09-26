@@ -2380,7 +2380,7 @@
 
     const TAG$5 = "query-finder";
     const MAX_DAYS$1 = 10000;
-    const VIEW_DAYS = 2;
+    const VIEW_DAYS = 10;
 
     class QueryFinder {
         constructor() {

@@ -17,6 +17,9 @@ class Help {
 
             $ver.innerHTML = 'Not detected';
         })
+
+        let tabs = new Tabs();
+        tabs.init();
     }
 }
 

@@ -28,6 +28,9 @@ class Install {
                 }, REDIRECT_DELAY);
             }
         }, MONITOR_INTERVAL);
+
+        let tabs = new Tabs();
+        tabs.init();
     }
 
     updateInstructions() {

@@ -43,4 +43,4 @@ class Tabs {
     }
 }
 
-new Tabs()
+export { Tabs }

@@ -483,8 +483,6 @@
         }
     }
 
-    new Tabs();
-
     const TAG = "install";
     const MONITOR_INTERVAL = 5000;
     const REDIRECT_DELAY = 2000;
@@ -509,6 +507,9 @@
                     }, REDIRECT_DELAY);
                 }
             }, MONITOR_INTERVAL);
+
+            let tabs = new Tabs();
+            tabs.init();
         }
 
         updateInstructions() {

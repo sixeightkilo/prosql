@@ -7,7 +7,7 @@ import { QueryDB } from './query-db.js'
 
 const TAG = "query-finder"
 const MAX_DAYS = 10000;
-const VIEW_DAYS = 2;
+const VIEW_DAYS = 10;
 
 class QueryFinder {
     constructor() {

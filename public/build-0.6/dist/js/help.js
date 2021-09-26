@@ -472,8 +472,6 @@
         }
     }
 
-    new Tabs();
-
     class Help {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
@@ -489,6 +487,9 @@
 
                 $ver.innerHTML = 'Not detected';
             });
+
+            let tabs = new Tabs();
+            tabs.init();
         }
     }
 
