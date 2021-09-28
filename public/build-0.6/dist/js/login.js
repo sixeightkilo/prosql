@@ -774,10 +774,36 @@
             }
         }
 
+        validate(conn) {
+            if (!conn.name) {
+                throw 'Please choose a connection name!';
+            }
+
+            if (!conn.user) {
+                throw 'User name not provided!';
+            }
+
+            if (!conn.pass) {
+                throw 'Password not provided!';
+            }
+
+            if (!conn.host) {
+                throw 'Hostname/IP not provided!';
+            }
+
+            if (!conn.port) {
+                throw 'Port not provided!';
+            }
+        }
+
         async login() {
             let conn = this.getConn();
-            if (!conn.name) {
-                alert('Please choose a connection name!');
+
+            try {
+                this.validate(conn);
+            } catch (e) {
+                alert(e);
+                this.showError();
                 return;
             }
 
@@ -817,20 +843,38 @@
             this.$testIcon.classList.add('fa-spin');
 
             let conn = this.getConn();
+
+            try {
+                this.validate(conn);
+            } catch (e) {
+                alert(e);
+                this.showError();
+                return;
+            }
+
             let s = await this.ping(conn);
             Log(TAG, s);
 
-            this.$testIcon.classList.remove('fa-spinner');
-            this.$testIcon.classList.remove('fa-spin');
-
             if (s == 'ok') {
-                this.$testIcon.classList.remove('fa-times-circle');
-                this.$testIcon.classList.remove('has-text-danger');
-                this.$testIcon.classList.add('fa-check-circle');
-                this.$testIcon.classList.add('has-text-success');
+                this.showSuccess();
                 return
             }
 
+            this.showError();
+        }
+
+        showSuccess() {
+            this.$testIcon.classList.remove('fa-spinner');
+            this.$testIcon.classList.remove('fa-spin');
+            this.$testIcon.classList.remove('fa-times-circle');
+            this.$testIcon.classList.remove('has-text-danger');
+            this.$testIcon.classList.add('fa-check-circle');
+            this.$testIcon.classList.add('has-text-success');
+        }
+
+        showError() {
+            this.$testIcon.classList.remove('fa-spinner');
+            this.$testIcon.classList.remove('fa-spin');
             this.$testIcon.classList.remove('fa-check-circle');
             this.$testIcon.classList.remove('has-text-success');
             this.$testIcon.classList.add('fa-times-circle');
