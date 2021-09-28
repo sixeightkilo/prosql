@@ -35,13 +35,6 @@ export default [
         },
     },
     {
-        'input': 'build-0.6/js/modules/tabs.js',
-        'output': {
-            'file': 'build-0.6/dist/js/tabs.js',
-            'format': 'iife'
-        },
-    },
-    {
         'input': 'build-0.6/js/help.js',
         'output': {
             'file': 'build-0.6/dist/js/help.js',

@@ -2767,6 +2767,7 @@
             let dbs = await DbUtils.fetchAll(sessionId, 'show databases');
             dbs = Utils.extractColumns(dbs);
             Utils.setOptions($databases, dbs, db);
+            PubSub.publish(Constants.DB_CHANGED, {db: db});
         }
     }
 
