@@ -31,7 +31,9 @@ class Renderer {
             $agentVersion = $config['version'];
         }
 
-        $root = "build-{$agentVersion}";
+        //strip off minor versio
+        $parts = explode(".", $agentVersion);
+        $root = "build-{$parts[0]}.{$parts[1]}";
 
         if ($config['env'] == 'dev') {
             $appVersion = rand(1, 10000);//clears cache during dev

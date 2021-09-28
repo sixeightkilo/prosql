@@ -645,10 +645,8 @@
             });
         }
 
-        async init() {
-            this.connectionDb = new ConnectionDB({version: 1});
-            await this.connectionDb.open();
-
+        initDom() {
+            this.$addNew = document.getElementById('add-new');
             this.$testConn = document.getElementById('test');
             this.$testIcon = document.querySelector('.test-icon');
             this.$name = document.getElementById('name');
@@ -659,7 +657,28 @@
             this.$port = document.getElementById('port');
             this.$db = document.getElementById('db');
             this.$isDefault = document.getElementById('is-default');
+        }
 
+        async init() {
+            this.initDom();
+
+            this.connectionDb = new ConnectionDB({version: 1});
+            await this.connectionDb.open();
+
+            this.initHandlers();
+            
+            let conns = await this.connectionDb.getAll();
+            if (conns.length == 0) {
+                return;
+            }
+
+            this.showRecents(conns);
+            let conn = this.getDefault(conns);
+            this.setConn(conn);
+            this.testConn();
+        }
+
+        initHandlers() {
             //handle click on connection
             document.addEventListener('click', async (e) => {
                 let target = event.target;
@@ -696,15 +715,14 @@
                 this.initConns();
             });
 
-            let conns = await this.connectionDb.getAll();
-            if (conns.length == 0) {
-                return;
-            }
-
-            this.showRecents(conns);
-            let conn = this.getDefault(conns);
-            this.setConn(conn);
-            this.testConn();
+            this.$addNew.addEventListener('click', () => {
+                this.$name.value = '';
+                this.$user.value = '';
+                this.$pass.value = '';
+                this.$host.value = '';
+                this.$port.value = '';
+                this.$db.value = '';
+            });
         }
 
         async initConns() {

@@ -24,6 +24,14 @@
 	margin-top:2em;
 	border-radius:5px;
 	row-gap:0.25em;
+	position:relative;
+}
+
+#add-new {
+	position:absolute;
+	left: 5px;
+	top: 5px;
+	cursor:pointer;
 }
 
 #login-form-container input {

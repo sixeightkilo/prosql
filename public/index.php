@@ -20,11 +20,15 @@ $app = AppFactory::create();
 $app->post('/api/set-version', function($req, $res, $args) {
     $logger = $this->get('logger');
     $sm = $this->get('session-manager');
+
     $version = $req->getParsedBody()['version'];
     $deviceId = $req->getParsedBody()['device-id'];
-    $logger->debug("post: $version");
+    $os = $req->getParsedBody()['os'] ?? "unknown";
+
     $sm->setVersion($version);
     $sm->setDeviceId($deviceId);
+    $sm->setOs($os);
+
     $sm->write();
 
     $res->getBody()->write(json_encode(['status' => 'ok', 'data' => null]));

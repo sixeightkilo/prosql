@@ -27,16 +27,18 @@ class SessionManager implements SessionManagerInterface {
         return $_SESSION['device-id'] ?? '';
     }
 
-    public function restartSession(array $sessionParams) {
-        $this->kill();
-        session_start();
+    public function setOs(string $os) {
+        $_SESSION['os'] = $os;
+    }
 
-        $this->setVersion('');
-        $this->write();
+    public function getOs(): string {
+        return $_SESSION['os'] ?? '';
     }
 
     public function reset() {
         $this->setVersion('');
+        $this->setDeviceId('');
+        $this->setOs('');
     }
 
     public function kill() {
