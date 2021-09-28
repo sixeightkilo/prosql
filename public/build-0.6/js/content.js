@@ -15,10 +15,8 @@ const TAG = "content"
 class Content {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
-            this.init()
             this.adjustView()
-            this.history = new QueryHistory();
-            MainMenu.init();
+            this.init()
         })
     }
 
@@ -47,10 +45,8 @@ class Content {
     }
 
     async init() {
-        this.tableContents = new TableContents(this.sessionId)
-        this.tables = new Tables(this.sessionId)
-
-        this.initHandlers()
+        MainMenu.init();
+        this.history = new QueryHistory();
 
         let creds = Utils.getFromSession(Constants.CREDS)
         if (!creds) {
@@ -58,10 +54,16 @@ class Content {
             return
         }
 
+        Log(TAG, JSON.stringify(creds));
+
         this.creds = JSON.parse(creds)
         this.sessionId = await DbUtils.login(this.creds)
-
         Log(TAG, this.sessionId)
+
+        this.tableContents = new TableContents(this.sessionId)
+        this.tables = new Tables(this.sessionId)
+
+        this.initHandlers()
 
         AppBar.init(this.creds.name, this.sessionId, this.creds.db);
 

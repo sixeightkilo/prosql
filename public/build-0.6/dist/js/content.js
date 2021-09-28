@@ -2898,6 +2898,10 @@
     		case 'help-menu':
     			window.location = '/app/help';
     			break;
+
+    		case 'about-menu':
+    			window.location = '/app/about';
+    			break;
     		}
     	}
     }
@@ -2921,7 +2925,7 @@
             let dbs = await DbUtils.fetchAll(sessionId, 'show databases');
             dbs = Utils.extractColumns(dbs);
             Utils.setOptions($databases, dbs, db);
-            PubSub.publish(Constants.DB_CHANGED, {db: db});
+            //PubSub.publish(Constants.DB_CHANGED, {db: db});
         }
     }
 
@@ -3645,10 +3649,8 @@
     class Content {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
-                this.init();
                 this.adjustView();
-                this.history = new QueryHistory();
-                MainMenu.init();
+                this.init();
             });
         }
 
@@ -3677,10 +3679,8 @@
         }
 
         async init() {
-            this.tableContents = new TableContents(this.sessionId);
-            this.tables = new Tables(this.sessionId);
-
-            this.initHandlers();
+            MainMenu.init();
+            this.history = new QueryHistory();
 
             let creds = Utils.getFromSession(Constants.CREDS);
             if (!creds) {
@@ -3688,10 +3688,16 @@
                 return
             }
 
+            Log(TAG, JSON.stringify(creds));
+
             this.creds = JSON.parse(creds);
             this.sessionId = await DbUtils.login(this.creds);
-
             Log(TAG, this.sessionId);
+
+            this.tableContents = new TableContents(this.sessionId);
+            this.tables = new Tables(this.sessionId);
+
+            this.initHandlers();
 
             AppBar.init(this.creds.name, this.sessionId, this.creds.db);
 

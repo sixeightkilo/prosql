@@ -57,7 +57,7 @@ class Renderer {
     }
 
     public function renderApp(Response $res, string $path, array $data): Response {
-        if (!in_array($path, ['tables', 'queries', 'help'])) {
+        if (!in_array($path, ['tables', 'queries', 'help', 'about'])) {
             return $res->withStatus(404);
         }
 

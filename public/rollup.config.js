@@ -35,6 +35,13 @@ export default [
         },
     },
     {
+        'input': 'build-0.6/js/about.js',
+        'output': {
+            'file': 'build-0.6/dist/js/about.js',
+            'format': 'iife'
+        },
+    },
+    {
         'input': 'build-0.6/js/help.js',
         'output': {
             'file': 'build-0.6/dist/js/help.js',

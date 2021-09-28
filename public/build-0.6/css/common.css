@@ -39,7 +39,7 @@ body, html {
 
 #appbar-right-panel {
 	display:grid;
-	grid-template-columns: 1fr 1fr 1fr 5fr 3fr 2fr;
+	grid-template-columns: 1fr 1fr 1fr 1fr 5fr 3fr 2fr;
 	column-gap:0.25em;
 	text-align:center;
 	font-size:smaller;

@@ -17,7 +17,6 @@ class Query {
         document.addEventListener('DOMContentLoaded', async () => {
             this.adjustView();
             this.init();
-            MainMenu.init();
         })
     }
 
@@ -36,14 +35,7 @@ class Query {
     }
 
     async init() {
-        this.queryRunner = new QueryRunner(this.sessionId);
-        this.history = new QueryHistory();
-        await this.history.init();
-
-        this.finder = new QueryFinder();
-        await this.finder.init();
-
-        this.initHandlers();
+        MainMenu.init();
 
         let creds = Utils.getFromSession(Constants.CREDS);
         if (!creds) {
@@ -53,8 +45,17 @@ class Query {
 
         this.creds = JSON.parse(creds);
         this.sessionId = await DbUtils.login(this.creds);
-
         Log(TAG, this.sessionId);
+
+        this.queryRunner = new QueryRunner(this.sessionId);
+        this.history = new QueryHistory();
+        await this.history.init();
+
+        this.finder = new QueryFinder();
+        await this.finder.init();
+
+        this.initHandlers();
+
         AppBar.init(this.creds.name, this.sessionId, this.creds.db);
 
         if (this.creds.db) {
@@ -73,7 +74,7 @@ class Query {
         let appbarDims = document.querySelector('#appbar').getBoundingClientRect();
         let appLeftPanel = document.querySelector('#app-left-panel');
         appLeftPanel.style.height = (bodyDims.height - appbarDims.height) + 'px';
-        
+
         //right panel
         let rpDims = document.getElementById('app-right-panel').getBoundingClientRect();
         let sbDims = document.getElementById('query-sub-menu').getBoundingClientRect();
