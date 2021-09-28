@@ -1,9 +1,9 @@
-- var ver = "0.6"
+- var ver = "0.6.2"
 | You can build and run yourself!
 pre
     | $curl -L https://git.io/source-#{ver} > prosql-agent.zip
     | $unzip prosql-agent.zip
     | $cd prosql-agent-#{ver} 
-    | $go build -ldflags="-X 'main.VERSION=#{ver}'"
+    | $go build -ldflags="-X 'main.VERSION=0.6.2' -X 'main.OS=other'"
 |#[br]
 |You will have to figure out how to daemonize prosql-agent on your system.
