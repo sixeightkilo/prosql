@@ -837,6 +837,7 @@
                     let formData = new FormData();
                     formData.append('device-id', response.data['device-id']);
                     formData.append('version', response.data['version']);
+                    formData.append('os', response.data['os']);
 
                     let res = await fetch("/api/set-version", {
                         body: formData,
