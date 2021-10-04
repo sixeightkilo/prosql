@@ -38,6 +38,7 @@ class Stack {
         }
 
         this.curr--
+        this.stack.pop();
         await this.cb(this.stack[this.curr])
         Log(TAG, "Done back")
         if (this.curr == 0) {
@@ -66,6 +67,7 @@ class Stack {
                 'type': 'table',
                 'table': args[0]
             })
+            Log(TAG, "table:" + JSON.stringify(this.stack));
             return
         }
 
@@ -79,6 +81,7 @@ class Stack {
 
             this.curr++
             this.$back.classList.remove('stack-disable')
+            Log(TAG, "fk-ref:" + JSON.stringify(this.stack));
 
             return
         }
@@ -94,6 +97,7 @@ class Stack {
 
             this.curr++
             this.$back.classList.remove('stack-disable')
+            Log(TAG, "search:" + JSON.stringify(this.stack));
 
             return
         }

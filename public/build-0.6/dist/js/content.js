@@ -869,6 +869,7 @@
             }
 
             this.curr--;
+            this.stack.pop();
             await this.cb(this.stack[this.curr]);
             Log(TAG$f, "Done back");
             if (this.curr == 0) {
@@ -897,6 +898,7 @@
                     'type': 'table',
                     'table': args[0]
                 });
+                Log(TAG$f, "table:" + JSON.stringify(this.stack));
                 return
             }
 
@@ -910,6 +912,7 @@
 
                 this.curr++;
                 this.$back.classList.remove('stack-disable');
+                Log(TAG$f, "fk-ref:" + JSON.stringify(this.stack));
 
                 return
             }
@@ -925,6 +928,7 @@
 
                 this.curr++;
                 this.$back.classList.remove('stack-disable');
+                Log(TAG$f, "search:" + JSON.stringify(this.stack));
 
                 return
             }
@@ -2377,6 +2381,7 @@
         async initHandlers() {
             this.$search.addEventListener('click', async () => {
                 this.search();
+                this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value);
             });
 
             this.$searchText.addEventListener('keyup', async (e) => {
@@ -2388,6 +2393,7 @@
 
                 if (e.key == "Enter") {
                     this.search();
+                    this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value);
                 }
             });
 
@@ -2498,7 +2504,6 @@
             }
 
             Log(TAG$9, this.query);
-            this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value);
 
             const f = async (query) => {
                 let res = await this.showContents(query, this.fkMap);

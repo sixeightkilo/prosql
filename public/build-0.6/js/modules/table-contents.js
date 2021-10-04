@@ -115,6 +115,7 @@ class TableContents {
     async initHandlers() {
         this.$search.addEventListener('click', async () => {
             this.search()
+            this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
         })
 
         this.$searchText.addEventListener('keyup', async (e) => {
@@ -126,6 +127,7 @@ class TableContents {
 
             if (e.key == "Enter") {
                 this.search()
+                this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
             }
         })
 
@@ -236,7 +238,6 @@ class TableContents {
         }
 
         Log(TAG, this.query);
-        this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
 
         const f = async (query) => {
             let res = await this.showContents(query, this.fkMap);
