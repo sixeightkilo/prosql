@@ -12,7 +12,7 @@ class CellRenderer {
     render(params) {
         Log(TAG, `${params.colDef.field} ${params.value}`);
         let c = params.colDef.field;
-        let v = params.value;
+        let v = params.data[c];
 
         let refTable = ''
         let refColumn = ''
@@ -26,14 +26,14 @@ class CellRenderer {
 
         if (refTable) {
             return Utils.generateNode(this.fkCellTemplate, {
-                'value': params.value,
+                'value': v,
                 'table': refTable,
                 'column': refColumn,
             });
         }
 
         return Utils.generateNode(this.cellTemplate, {
-            'value': params.value,
+            'value': v,
             'cls': cls
         })
     }

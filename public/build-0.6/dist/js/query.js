@@ -911,7 +911,7 @@
         render(params) {
             Log(TAG$c, `${params.colDef.field} ${params.value}`);
             let c = params.colDef.field;
-            let v = params.value;
+            let v = params.getValue();
 
             let refTable = '';
             let refColumn = '';
