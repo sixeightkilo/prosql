@@ -971,9 +971,10 @@
         }
 
         render(params) {
-            Log(TAG$e, `${params.colDef.field} ${params.value}`);
+            Log(TAG$e, `${params.colDef.field}`);
+            let id = params.colDef.colId;
             let c = params.colDef.field;
-            let v = params.data[c];
+            let v = params.data[`${c}-${id}`];
 
             let refTable = '';
             let refColumn = '';
@@ -1144,11 +1145,15 @@
 
                 if (i == 0) {
                     let cols = [];
+                    //using colId makes it possible to display multiple columns with 
+                    //same name
+                    let k = 0;
                     for (let j = 0; j < row.length; j += 2) {
 
                         let show = selection[row[j]] ?? true;
                         cols.push({
                             field: row[j],
+                            colId: k++,
                             hide: !show,
                             resizable: true,
                             editable: editable,
@@ -1180,8 +1185,10 @@
                 }
 
                 let item = {};
+                let k = 0;
                 for (let j = 0; j < row.length; j += 2) {
-                    item[row[j]] = row[j + 1];
+                    item[`${row[j]}-${k}`] = row[j + 1];
+                    k++;
                 }
 
                 this.api.applyTransactionAsync({ add: [item] });

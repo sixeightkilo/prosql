@@ -66,11 +66,15 @@ class TableUtils {
 
             if (i == 0) {
                 let cols = [];
+                //using colId makes it possible to display multiple columns with 
+                //same name
+                let k = 0;
                 for (let j = 0; j < row.length; j += 2) {
 
                     let show = selection[row[j]] ?? true;
                     cols.push({
                         field: row[j],
+                        colId: k++,
                         hide: !show,
                         resizable: true,
                         editable: editable,
@@ -102,8 +106,12 @@ class TableUtils {
             }
 
             let item = {};
+            let k = 0;
             for (let j = 0; j < row.length; j += 2) {
-                item[row[j]] = row[j + 1];
+                //We append an index to each column name. This makes is possible to 
+                //display columns with same name. Refer cell renderer
+                item[`${row[j]}-${k}`] = row[j + 1];
+                k++;
             }
 
             this.api.applyTransactionAsync({ add: [item] });

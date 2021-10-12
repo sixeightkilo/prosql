@@ -10,9 +10,10 @@ class CellRenderer {
     }
 
     render(params) {
-        Log(TAG, `${params.colDef.field} ${params.value}`);
+        Log(TAG, `${params.colDef.field}`);
+        let id = params.colDef.colId;
         let c = params.colDef.field;
-        let v = params.data[c];
+        let v = params.data[`${c}-${id}`];
 
         let refTable = ''
         let refColumn = ''
