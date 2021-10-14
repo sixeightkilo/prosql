@@ -35,17 +35,24 @@ class ColumnSelector {
 
             let selection = this.selections[this.table] ?? {};
 
+            let allChecked = true;
+
             for (let i = 0; i < this.columns.length; i++) {
                 let c = this.columns[i];
                 let n = Utils.generateNode(this.templ, {
                     col: c
                 });
 
-                let checked = selection[c] ?? true;
+                let checked = selection[i] ?? true;
+                if (!checked) {
+                    allChecked = false
+                }
                 n.querySelector('.checkbox').checked = checked;
 
                 this.$body.append(n);
             }
+
+            this.$checkAll.checked = allChecked;
 
             this.$dialog.classList.add('is-active');
         });
@@ -68,13 +75,15 @@ class ColumnSelector {
         this.$ok.addEventListener('click', async () => {
             let selection = {};
             let $inputs = this.$body.querySelectorAll('input');
+            //column ids are in sequence
+            let id = 0
             $inputs.forEach((e) => {
                 if (e.checked) {
-                    selection[e.dataset.col] = true;
+                    selection[id] = true;
                 } else {
-                    let o = {};
-                    selection[e.dataset.col] = false;
+                    selection[id] = false;
                 }
+                id++;
             });
 
             Log(TAG, JSON.stringify(selections));

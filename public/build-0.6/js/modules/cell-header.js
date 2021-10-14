@@ -74,7 +74,7 @@ class CellHeader {
 
     onSortRequested(order, event) {
         PubSub.publish(Constants.SORT_REQUESTED, {
-            column: this.params.column.colId,
+            column: this.params.column.colDef.field,
             order: order
         });
 

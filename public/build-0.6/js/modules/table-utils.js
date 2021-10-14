@@ -6,6 +6,7 @@ import { PubSub } from './pubsub.js'
 import { AgGrid } from './ag-grid.js'
 import { CellRenderer } from './cell-renderer.js'
 import { CellHeader } from './cell-header.js'
+import { CellEditor } from './cell-editor.js'
 
 const TAG = "table-utils"
 
@@ -71,7 +72,10 @@ class TableUtils {
                 let k = 0;
                 for (let j = 0; j < row.length; j += 2) {
 
-                    let show = selection[row[j]] ?? true;
+                    let show = selection[k] ?? true;
+                    if (row[j] == fkMap['primary-key']) {
+                        fkMap['primary-key-id'] = k;
+                    }
                     cols.push({
                         field: row[j],
                         colId: k++,
@@ -84,13 +88,20 @@ class TableUtils {
                         },
                         cellRenderer: (params) => {
                             return cellRenderer.render(params)
+                        },
+                        cellEditor: CellEditor,
+                        valueSetter: params => {
+                            let id = params.colDef.colId;
+                            let c = params.colDef.field;
+                            params.data[`${c}-${id}`] = params.newValue;
+                            return true;
                         }
                     })
                 }
 
-                let gridOptions = {
-                    columnDefs: cols,
-                    undoRedoCellEditing: true,
+				let gridOptions = {
+					columnDefs: cols,
+					undoRedoCellEditing: true,
                 };
 
                 if (sortable) {
@@ -176,8 +187,10 @@ class TableUtils {
             }
 
             let item = {};
+            let k = 0;
             for (let j = 0; j < row.length; j += 2) {
-                item[row[j]] = row[j + 1];
+                item[`${row[j]}-${k}`] = row[j + 1];
+                k++;
             }
 
             this.api.applyTransactionAsync({ add: [item] });
@@ -212,16 +225,28 @@ class TableUtils {
     }
 
     static handleCellValueChanged(fkMap, params) {
-        let k = fkMap['primary-key'];
+        let key = fkMap['primary-key'];
+
+        let keyId = fkMap['primary-key-id'];
+        let keyValue = params.data[`${key}-${keyId}`];
+
+        let colId = params.colDef.colId;
+        let colField = params.colDef.field;
+        let colValue = params.data[`${colField}-${colId}`];
+
         PubSub.publish(Constants.CELL_EDITED, {
             key: {
-                'name': k,
-                'value': params.data[k]
+                'name': key,
+                'value': keyValue,
             },
             col: {
-                'name': params.colDef.field,
-                'value': params.newValue
+                'name': colField,
+                'value': colValue
             },
+            cell: {
+                rowIndex: params.node.rowIndex,
+                colId: params.colDef.colId
+            }
         });
     }
 

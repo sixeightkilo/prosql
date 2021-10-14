@@ -66,7 +66,7 @@
         }
     }
 
-    const TAG$g = "utils";
+    const TAG$h = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -110,7 +110,7 @@
                     }
                 });
 
-                Log(TAG$g, response);
+                Log(TAG$h, response);
 
                 let json = await response.json();
 
@@ -120,7 +120,7 @@
 
                 return json
             } catch (e) {
-                Log(TAG$g, e);
+                Log(TAG$h, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -191,7 +191,7 @@
         }
 
         static showNoData() {
-            Log(TAG$g, "No data");
+            Log(TAG$h, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -429,7 +429,7 @@
 
     }
 
-    const TAG$f = "stream";
+    const TAG$g = "stream";
 
     class Stream {
         constructor(url) {
@@ -439,12 +439,12 @@
             this.ws = new WebSocket(url);
 
             this.ws.onerror = (evt) => {
-                Log(TAG$f, "onerror:" + evt);
+                Log(TAG$g, "onerror:" + evt);
                 this.rej(Err.ERR_NO_AGENT);
             };
 
             this.ws.onclose = (evt) => {
-                Log(TAG$f, "onclose");
+                Log(TAG$g, "onclose");
                 this.ws = null;
             };
         }
@@ -585,7 +585,7 @@
 
     let progressBar = new ProgressBar();
 
-    const TAG$e = "dbutils";
+    const TAG$f = "dbutils";
     class DbUtils {
 
         //todo: use WS in fetchall and get rid of fetch route from agent
@@ -597,7 +597,7 @@
 
             let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params));
             if (json.status == 'error') {
-                Log(TAG$e, JSON.stringify(json));
+                Log(TAG$f, JSON.stringify(json));
                 return []
             }
 
@@ -615,11 +615,11 @@
             do {
                 json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params));
                 if (json.status == "error") {
-                    Log(TAG$e, JSON.stringify(json));
+                    Log(TAG$f, JSON.stringify(json));
                     return []
                 }
 
-                Log(TAG$e, JSON.stringify(json));
+                Log(TAG$f, JSON.stringify(json));
                 if (!json.data) {
                     //if batch size == num of rows in query result, then we might get json.data = null
                     //but we should still return results fetched till this point
@@ -635,7 +635,7 @@
         static async login(creds) {
             let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds));
             if (json.status == 'error') {
-                Log(TAG$e, JSON.stringify(json));
+                Log(TAG$f, JSON.stringify(json));
                 return ""
             }
 
@@ -681,7 +681,7 @@
 
         async exportResults(q) {
             let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
-            Log(TAG$e, `cursorId: ${cursorId}`);
+            Log(TAG$f, `cursorId: ${cursorId}`);
             let params = {
                 'session-id': this.sessionId,
                 'cursor-id': cursorId,
@@ -696,7 +696,7 @@
                 buttons: true,
                 cancel: () => {
                     DbUtils.cancel(this.sessionId, cursorId);
-                    Log(TAG$e, `Cancelled ${cursorId}`);
+                    Log(TAG$f, `Cancelled ${cursorId}`);
                 }
             });
 
@@ -833,19 +833,19 @@
         }
     }
 
-    const TAG$d = "grid-resizer";
+    const TAG$e = "grid-resizer";
     class GridResizerH {
         //resize two elements contained in grid horizontal direction
         constructor($grid, $e1, $resizer, $e2) {
             this.d1 = $e1.getBoundingClientRect().width;
             this.d2 = $e2.getBoundingClientRect().width;
 
-            Log(TAG$d, `${this.d1} ${this.d2}`);
+            Log(TAG$e, `${this.d1} ${this.d2}`);
 
             $resizer.addEventListener('mousedown', (e) => {
                 this.isDragging = true;
                 this.startx = e.clientX;
-                Log(TAG$d, `mousedown: ${e.clientX}`);
+                Log(TAG$e, `mousedown: ${e.clientX}`);
                 e.preventDefault();
             });
 
@@ -853,11 +853,11 @@
                 if (!this.isDragging) {
                     return;
                 }
-                Log(TAG$d, `mousemove: ${e.clientX}`);
+                Log(TAG$e, `mousemove: ${e.clientX}`);
                 let delta = e.clientX - this.startx;
                 this.d1 += delta;
                 this.d2 += -1 * delta;
-                Log(TAG$d, `${delta} ${this.d1} ${this.d2}`);
+                Log(TAG$e, `${delta} ${this.d1} ${this.d2}`);
 
                 $grid.style.gridTemplateColumns = `${this.d1}px 2px ${this.d2}px`;
                 this.startx = e.clientX;
@@ -866,7 +866,7 @@
 
             document.addEventListener('mouseup', (e) => {
                 this.isDragging = false;
-                Log(TAG$d, `mouseup: ${e.clientX}`);
+                Log(TAG$e, `mouseup: ${e.clientX}`);
                 e.preventDefault();
                 PubSub.publish(Constants.GRID_H_RESIZED, {});
             });
@@ -899,7 +899,7 @@
     	}
     }
 
-    const TAG$c = 'cell-renderer';
+    const TAG$d = 'cell-renderer';
 
     class CellRenderer {
     	constructor(fkMap) {
@@ -909,7 +909,7 @@
         }
 
         render(params) {
-            Log(TAG$c, `${params.colDef.field}`);
+            Log(TAG$d, `${params.colDef.field}`);
             let id = params.colDef.colId;
             let c = params.colDef.field;
             let v = params.data[`${c}-${id}`];
@@ -1008,7 +1008,7 @@
 
         onSortRequested(order, event) {
             PubSub.publish(Constants.SORT_REQUESTED, {
-                column: this.params.column.colId,
+                column: this.params.column.colDef.field,
                 order: order
             });
 
@@ -1022,6 +1022,57 @@
             this.$sortRemove.removeEventListener('click', this.onSortRequestedListener);
             this.params.column.removeEventListener('sortChanged', this.onSortChangedListener);
         } 
+    }
+
+    const TAG$c = 'cell-editor';
+
+    class CellEditor {
+       init(params) {
+            let id = params.colDef.colId;
+            let c = params.colDef.field;
+            this.value = params.data[`${c}-${id}`];
+
+           this.input = document.createElement('input');
+           this.input.classList.add('input');
+           this.input.id = 'input';
+           this.input.value = this.value;
+
+           this.input.addEventListener('input', (event) => {
+               this.value = event.target.value;
+               Log(TAG$c, "listener:" + this.value);
+           });
+       }
+
+       /* Component Editor Lifecycle methods */
+       // gets called once when grid ready to insert the element
+       getGui() {
+           return this.input;
+       }
+
+       // the final value to send to the grid, on completion of editing
+       getValue() {
+           // this simple editor doubles any value entered into the input
+           Log(TAG$c, "getvalue:" + this.value);
+           return this.input.value;
+       }
+
+       // Gets called once before editing starts, to give editor a chance to
+       // cancel the editing before it even starts.
+       isCancelBeforeStart() {
+           return false;
+       }
+
+       // Gets called once when editing is finished (eg if Enter is pressed).
+       // If you return true, then the result of the edit will be ignored.
+       isCancelAfterEnd() {
+           // our editor will reject any value greater than 1000
+           return false;
+       }
+
+       // after this component has been created and inserted into the grid
+       afterGuiAttached() {
+           this.input.focus();
+       }
     }
 
     const TAG$b = "table-utils";
@@ -1089,6 +1140,9 @@
                     for (let j = 0; j < row.length; j += 2) {
 
                         let show = selection[row[j]] ?? true;
+                        if (row[j] == fkMap['primary-key']) {
+                            fkMap['primary-key-id'] = k;
+                        }
                         cols.push({
                             field: row[j],
                             colId: k++,
@@ -1101,13 +1155,20 @@
                             },
                             cellRenderer: (params) => {
                                 return cellRenderer.render(params)
+                            },
+                            cellEditor: CellEditor,
+                            valueSetter: params => {
+                                let id = params.colDef.colId;
+                                let c = params.colDef.field;
+                                params.data[`${c}-${id}`] = params.newValue;
+                                return true;
                             }
                         });
                     }
 
-                    let gridOptions = {
-                        columnDefs: cols,
-                        undoRedoCellEditing: true,
+    				let gridOptions = {
+    					columnDefs: cols,
+    					undoRedoCellEditing: true,
                     };
 
                     if (sortable) {
@@ -1125,6 +1186,8 @@
                 let item = {};
                 let k = 0;
                 for (let j = 0; j < row.length; j += 2) {
+                    //We append an index to each column name. This makes is possible to 
+                    //display columns with same name. Refer cell renderer
                     item[`${row[j]}-${k}`] = row[j + 1];
                     k++;
                 }
@@ -1191,8 +1254,10 @@
                 }
 
                 let item = {};
+                let k = 0;
                 for (let j = 0; j < row.length; j += 2) {
-                    item[row[j]] = row[j + 1];
+                    item[`${row[j]}-${k}`] = row[j + 1];
+                    k++;
                 }
 
                 this.api.applyTransactionAsync({ add: [item] });
@@ -1227,16 +1292,28 @@
         }
 
         static handleCellValueChanged(fkMap, params) {
-            let k = fkMap['primary-key'];
+            let key = fkMap['primary-key'];
+
+            let keyId = fkMap['primary-key-id'];
+            let keyValue = params.data[`${key}-${keyId}`];
+
+            let colId = params.colDef.colId;
+            let colField = params.colDef.field;
+            let colValue = params.data[`${colField}-${colId}`];
+
             PubSub.publish(Constants.CELL_EDITED, {
                 key: {
-                    'name': k,
-                    'value': params.data[k]
+                    'name': key,
+                    'value': keyValue,
                 },
                 col: {
-                    'name': params.colDef.field,
-                    'value': params.newValue
+                    'name': colField,
+                    'value': colValue
                 },
+                cell: {
+                    rowIndex: params.node.rowIndex,
+                    colId: params.colDef.colId
+                }
             });
         }
 
