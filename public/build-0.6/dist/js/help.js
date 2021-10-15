@@ -4,7 +4,7 @@
     const DISABLED = [
         'grid-resizer',
         'query-db',
-        'query-finder',
+        //'query-finder',
     ];
 
     function Log(tag, str) {

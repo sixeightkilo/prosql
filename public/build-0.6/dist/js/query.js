@@ -4,7 +4,7 @@
     const DISABLED = [
         'grid-resizer',
         'query-db',
-        'query-finder',
+        //'query-finder',
     ];
 
     function Log(tag, str) {
@@ -85,18 +85,21 @@
             return window.localStorage.getItem(key) ?? null;
         }
 
-        //https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
-        static generateNode(templ, data) {
-            let re = new RegExp(/{(.*?)}/g);
+    	static processTemplate(templ, data) {
+    		var re = new RegExp(/{(.*?)}/g);
+    		templ = templ.replace(re, function(match, p1) {
+    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
+    				return data[p1];
+    			} else {
+    				return match;
+    			}
+    		});
+    		return templ;
+    	}
 
-            templ = templ.replace(re, function(match, p1) {
-                if (data[p1] || data[p1] == 0 || data[p1] == '') {
-                    return data[p1];
-                } else {
-                    return match;
-                }
-            });
-
+    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
+    	static generateNode(templ, data) {
+            templ = Utils.processTemplate(templ, data);	
             let template = document.createElement('template');
             template.innerHTML = templ.trim();
             return template.content
@@ -220,6 +223,13 @@
 
             return cols
         }
+
+        static truncate(s, max) {
+    		if (s.length > max) {
+    			return s.substring(0, max) + '...';
+    		}
+    		return s;
+    	}
     }
 
     class Constants {
@@ -2470,6 +2480,8 @@
         constructor() {
             this.$queries = document.getElementById('queries');
             this.queryTemplate = document.getElementById('query-template').innerHTML;
+            this.tootipTemplate = document.getElementById('tooltip-template').innerHTML;
+            this.tippies = {};
         }
 
         async init() {
@@ -2489,6 +2501,56 @@
             this.initTermInput();
             this.initTagInput();
             this.initTagEditor();
+            this.initTooltip();
+        }
+
+        initTooltip() {
+            //show tootip on clicking the query
+            this.$queries.addEventListener('click', async (e) => {
+                if (!e.target.classList.contains('query-text')) {
+                    return;
+                }
+                Log(TAG$5, e.target.classList);
+                let id = parseInt(e.target.dataset.id);
+
+                //todo: why just get does not work ??
+                let recs = await this.queryDb.findByIds([id]);
+                let q = recs[0];
+                let t = tippy(document.querySelector(`.query[data-id="${id}"]`), {
+                    onHidden(instance) {
+                        Log(TAG$5, "destroying");
+                        instance.destroy();
+                    }
+                });
+
+                let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+
+                t.setProps({
+                    content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
+                    placement: 'right',
+                    delay: 0,
+                    allowHTML: true,
+                    theme: 'prosql',
+                    interactive: true,
+                });
+
+                t.show();
+            });
+
+            //copy to clipboard 
+            this.$queries.addEventListener('click', async (e) => {
+                if (!e.target.classList.contains('copy-query')) {
+                    return;
+                }
+
+                let id = parseInt(e.target.dataset.id);
+                Log(TAG$5, `Copying ${id}`);
+                let recs = await this.queryDb.findByIds([id]);
+                let q = recs[0];
+                let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+                await navigator.clipboard.writeText(json.data);
+                Utils.showAlert('Copied', 2000);
+            });
         }
 
         //set up term input
@@ -2572,11 +2634,12 @@
         }
 
         async showQueries(queries) {
+            this.tippies = {};
             this.$queries.replaceChildren();
             queries.forEach((q) => {
                 let n = Utils.generateNode(this.queryTemplate, {
                     id: q.id,
-                    query: q.query,
+                    query: Utils.truncate(q.query, 50),
                     timestamp: q.created_at.toLocaleString(),
                 });
 
@@ -2585,16 +2648,34 @@
                     n.querySelector('.tags').append(tag);
                 });
                 this.$queries.append(n);
+
+                //add tooltip
+                //let selector = `.query[data-id="${q.id}"]`;
+                //let t = tippy(document.querySelector(selector));
+                //t.setProps({
+                    //content: Utils.processTemplate(this.tootipTemplate, {query: q.query}),
+                    //placement: 'right',
+                    //delay: 0,
+                    //allowHTML: true,
+                    //theme: 'prosql',
+                    //interactive: true,
+                    //trigger: 'click'
+                //});
+                //t.hide();
+
+                //this.tippies[q.id] = t;
             });
         }
 
         initTagEditor() {
             document.addEventListener('mouseover', (e) => {
-                if (e.target.classList.contains('query')) {
+                Log(TAG$5, "mouseover:" + e.classList);
+
+                if (e.target.classList.contains('tags')) {
                     //this is just hover actually
                     Log(TAG$5, "on query");
                     let $el = e.target;
-                    let $tags = $el.querySelector('.tags');
+                    let $tags = $el;
 
                     if ($tags.querySelector('.new-tag')) {
                         //new tag already present on this query
@@ -2823,7 +2904,6 @@
     		case 'content-menu':
     			window.location = '/app/tables';
     			break;
-
 
     		case 'help-menu':
     			window.location = '/app/help';

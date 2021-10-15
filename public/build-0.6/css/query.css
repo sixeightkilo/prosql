@@ -34,7 +34,7 @@
 }
 
 #queries {
-	overflow-y:scroll;
+	overflow:auto;
 	background:#fff;
 }
 

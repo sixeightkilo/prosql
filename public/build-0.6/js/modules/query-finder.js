@@ -13,6 +13,8 @@ class QueryFinder {
     constructor() {
         this.$queries = document.getElementById('queries');
         this.queryTemplate = document.getElementById('query-template').innerHTML;
+        this.tootipTemplate = document.getElementById('tooltip-template').innerHTML;
+        this.tippies = {};
     }
 
     async init() {
@@ -32,6 +34,56 @@ class QueryFinder {
         this.initTermInput();
         this.initTagInput();
         this.initTagEditor();
+        this.initTooltip();
+    }
+
+    initTooltip() {
+        //show tootip on clicking the query
+        this.$queries.addEventListener('click', async (e) => {
+            if (!e.target.classList.contains('query-text')) {
+                return;
+            }
+            Log(TAG, e.target.classList);
+            let id = parseInt(e.target.dataset.id);
+
+            //todo: why just get does not work ??
+            let recs = await this.queryDb.findByIds([id]);
+            let q = recs[0];
+            let t = tippy(document.querySelector(`.query[data-id="${id}"]`), {
+                onHidden(instance) {
+                    Log(TAG, "destroying");
+                    instance.destroy()
+                }
+            });
+
+            let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+
+            t.setProps({
+                content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
+                placement: 'right',
+                delay: 0,
+                allowHTML: true,
+                theme: 'prosql',
+                interactive: true,
+            });
+
+            t.show();
+        });
+
+        //copy to clipboard 
+        this.$queries.addEventListener('click', async (e) => {
+            if (!e.target.classList.contains('copy-query')) {
+                return;
+            }
+
+            let id = parseInt(e.target.dataset.id);
+            Log(TAG, `Copying ${id}`);
+            let recs = await this.queryDb.findByIds([id]);
+            let q = recs[0];
+            let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+            await navigator.clipboard.writeText(json.data);
+            Utils.showAlert('Copied', 2000);
+        });
     }
 
     //set up term input
@@ -115,11 +167,12 @@ class QueryFinder {
     }
 
     async showQueries(queries) {
+        this.tippies = {};
         this.$queries.replaceChildren();
         queries.forEach((q) => {
             let n = Utils.generateNode(this.queryTemplate, {
                 id: q.id,
-                query: q.query,
+                query: Utils.truncate(q.query, 50),
                 timestamp: q.created_at.toLocaleString(),
             });
 
@@ -128,16 +181,34 @@ class QueryFinder {
                 n.querySelector('.tags').append(tag);
             });
             this.$queries.append(n);
+
+            //add tooltip
+            //let selector = `.query[data-id="${q.id}"]`;
+            //let t = tippy(document.querySelector(selector));
+            //t.setProps({
+                //content: Utils.processTemplate(this.tootipTemplate, {query: q.query}),
+                //placement: 'right',
+                //delay: 0,
+                //allowHTML: true,
+                //theme: 'prosql',
+                //interactive: true,
+                //trigger: 'click'
+            //});
+            //t.hide();
+
+            //this.tippies[q.id] = t;
         });
     }
 
     initTagEditor() {
         document.addEventListener('mouseover', (e) => {
-            if (e.target.classList.contains('query')) {
+            Log(TAG, "mouseover:" + e.classList);
+
+            if (e.target.classList.contains('tags')) {
                 //this is just hover actually
                 Log(TAG, "on query");
                 let $el = e.target;
-                let $tags = $el.querySelector('.tags');
+                let $tags = $el;
 
                 if ($tags.querySelector('.new-tag')) {
                     //new tag already present on this query

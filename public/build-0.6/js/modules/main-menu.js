@@ -23,7 +23,6 @@ class MainMenu {
 			window.location = '/app/tables';
 			break;
 
-
 		case 'help-menu':
 			window.location = '/app/help';
 			break;

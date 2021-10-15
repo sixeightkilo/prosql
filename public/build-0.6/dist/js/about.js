@@ -4,7 +4,7 @@
     const DISABLED = [
         'grid-resizer',
         'query-db',
-        'query-finder',
+        //'query-finder',
     ];
 
     function Log(tag, str) {
@@ -85,18 +85,21 @@
             return window.localStorage.getItem(key) ?? null;
         }
 
-        //https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
-        static generateNode(templ, data) {
-            let re = new RegExp(/{(.*?)}/g);
+    	static processTemplate(templ, data) {
+    		var re = new RegExp(/{(.*?)}/g);
+    		templ = templ.replace(re, function(match, p1) {
+    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
+    				return data[p1];
+    			} else {
+    				return match;
+    			}
+    		});
+    		return templ;
+    	}
 
-            templ = templ.replace(re, function(match, p1) {
-                if (data[p1] || data[p1] == 0 || data[p1] == '') {
-                    return data[p1];
-                } else {
-                    return match;
-                }
-            });
-
+    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
+    	static generateNode(templ, data) {
+            templ = Utils.processTemplate(templ, data);	
             let template = document.createElement('template');
             template.innerHTML = templ.trim();
             return template.content
@@ -220,6 +223,13 @@
 
             return cols
         }
+
+        static truncate(s, max) {
+    		if (s.length > max) {
+    			return s.substring(0, max) + '...';
+    		}
+    		return s;
+    	}
     }
 
     class Constants {

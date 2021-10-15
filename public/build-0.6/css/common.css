@@ -124,3 +124,40 @@ font-family: 'Roboto Mono', monospace;
 sup {
 	font-size:x-small;
 }
+/* tippy */
+.tippy-box[data-theme~='prosql'] {
+  background-color: hsl(0, 0%, 96%);
+  color: hsl(0, 0%, 21%)
+}
+
+.tippy-box[data-theme~='prosql'][data-placement^='top'] > .tippy-arrow::before {
+  border-top-color: hsl(0, 0%, 96%);
+}
+.tippy-box[data-theme~='prosql'][data-placement^='bottom'] > .tippy-arrow::before {
+  border-bottom-color: hsl(0, 0%, 96%);
+}
+.tippy-box[data-theme~='prosql'][data-placement^='left'] > .tippy-arrow::before {
+  border-left-color: hsl(0, 0%, 96%);
+}
+.tippy-box[data-theme~='prosql'][data-placement^='right'] > .tippy-arrow::before {
+  border-right-color: hsl(0, 0%, 96%);
+}
+
+.tooltip > .bottom {
+	margin-top:5px;
+	border-top:1px solid hsl(0, 0%, 21%);
+	padding-top:5px;
+}
+
+.tooltip .fa-copy {
+	cursor: pointer;
+}
+
+.tooltip pre {
+	max-height:300px;
+	overflow:auto;
+}
+
+.card .query-text {
+	cursor:pointer;
+}
