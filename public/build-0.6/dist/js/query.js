@@ -1139,7 +1139,7 @@
                     let k = 0;
                     for (let j = 0; j < row.length; j += 2) {
 
-                        let show = selection[row[j]] ?? true;
+                        let show = selection[k] ?? true;
                         if (row[j] == fkMap['primary-key']) {
                             fkMap['primary-key-id'] = k;
                         }
