@@ -161,3 +161,8 @@ sup {
 .card .query-text {
 	cursor:pointer;
 }
+
+.tippy-box {
+	min-width:400px;
+	overflow:auto;
+}
