@@ -2530,7 +2530,6 @@
                     placement: 'right',
                     delay: 0,
                     allowHTML: true,
-                    theme: 'prosql',
                     interactive: true,
                 });
 
@@ -2549,7 +2548,7 @@
                 let q = recs[0];
                 let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
                 await navigator.clipboard.writeText(json.data);
-                Utils.showAlert('Copied', 2000);
+                e.target.nextElementSibling.innerHTML = "&nbsp;&nbsp;&nbsp;Copied.";
             });
         }
 

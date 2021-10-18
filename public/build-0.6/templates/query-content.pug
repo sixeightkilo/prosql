@@ -79,9 +79,10 @@
                 input(type='file')
 
     script(type='code' id='tooltip-template')
-        div.tooltip
+        div.tooltip 
             div.top
                 pre
                     {query}
             div.bottom
                 i.fas.fa-copy.copy-query(data-id="{id}")
+                span.copy-status
