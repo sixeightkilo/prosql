@@ -1161,13 +1161,20 @@
                             editable: editable,
                             sortable: true,
                             onCellValueChanged: (params) => {
-                                TableUtils.handleCellValueChanged(fkMap, params);
+                                this.handleCellValueChanged(fkMap, params);
                             },
                             cellRenderer: (params) => {
                                 return cellRenderer.render(params)
                             },
                             cellEditor: CellEditor,
+                            valueGetter: params => {
+                                Log(TAG$b, "valueGetter");
+                                let id = params.colDef.colId;
+                                let c = params.colDef.field;
+                                return params.data[`${c}-${id}`];
+                            },
                             valueSetter: params => {
+                                Log(TAG$b, "valueSetter");
                                 let id = params.colDef.colId;
                                 let c = params.colDef.field;
                                 params.data[`${c}-${id}`] = params.newValue;
@@ -1292,6 +1299,7 @@
         }
 
         undo() {
+            this.undoStarted = true;
             this.api.undoCellEditing();
         }
 
@@ -1301,7 +1309,14 @@
             }
         }
 
-        static handleCellValueChanged(fkMap, params) {
+        handleCellValueChanged(fkMap, params) {
+            if (this.undoStarted) {
+                //handleCellValueChanged will be called even after undo.
+                //At that time we don't want to trigger cell_edited event
+                this.undoStarted = false;
+                return;
+            }
+            Log(TAG$b, "handleCellValueChanged");
             let key = fkMap['primary-key'];
 
             let keyId = fkMap['primary-key-id'];
