@@ -1223,13 +1223,20 @@
                             editable: editable,
                             sortable: true,
                             onCellValueChanged: (params) => {
-                                TableUtils.handleCellValueChanged(fkMap, params);
+                                this.handleCellValueChanged(fkMap, params);
                             },
                             cellRenderer: (params) => {
                                 return cellRenderer.render(params)
                             },
                             cellEditor: CellEditor,
+                            valueGetter: params => {
+                                Log(TAG$d, "valueGetter");
+                                let id = params.colDef.colId;
+                                let c = params.colDef.field;
+                                return params.data[`${c}-${id}`];
+                            },
                             valueSetter: params => {
+                                Log(TAG$d, "valueSetter");
                                 let id = params.colDef.colId;
                                 let c = params.colDef.field;
                                 params.data[`${c}-${id}`] = params.newValue;
@@ -1354,6 +1361,7 @@
         }
 
         undo() {
+            this.undoStarted = true;
             this.api.undoCellEditing();
         }
 
@@ -1363,7 +1371,14 @@
             }
         }
 
-        static handleCellValueChanged(fkMap, params) {
+        handleCellValueChanged(fkMap, params) {
+            if (this.undoStarted) {
+                //handleCellValueChanged will be called even after undo.
+                //At that time we don't want to trigger cell_edited event
+                this.undoStarted = false;
+                return;
+            }
+            Log(TAG$d, "handleCellValueChanged");
             let key = fkMap['primary-key'];
 
             let keyId = fkMap['primary-key-id'];
@@ -2478,6 +2493,7 @@
             });
 
             PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
+                Log(TAG$9, Constants.CELL_EDITED);
                 await this.handleCellEdit(data);
             });
         }
@@ -2561,11 +2577,14 @@
 
                 let rows = res.data[0][1];
                 Utils.showAlert(`Updated ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
+
+                if (rows == 0) {
+                    this.tableUtils.undo();
+                }
                 return;
             }
 
             this.tableUtils.undo();
-            alert(res.msg);
         }
 
         async showFkRef(table, col, val) {

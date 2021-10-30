@@ -108,6 +108,7 @@ class TableContents {
         });
 
         PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
+            Log(TAG, Constants.CELL_EDITED);
             await this.handleCellEdit(data);
         });
     }
@@ -191,11 +192,14 @@ class TableContents {
 
             let rows = res.data[0][1];
             Utils.showAlert(`Updated ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
+
+            if (rows == 0) {
+                this.tableUtils.undo();
+            }
             return;
         }
 
         this.tableUtils.undo();
-        alert(res.msg);
     }
 
     async showFkRef(table, col, val) {
