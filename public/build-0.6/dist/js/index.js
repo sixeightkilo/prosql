@@ -7,7 +7,7 @@
         //'query-finder',
     ];
 
-    function Log(tag, str) {
+    function Log(tag, str, port = null) {
         //if (!ENABLED.has(tag)) {
             //return
         //}
@@ -16,10 +16,16 @@
             return;
         }
 
+        if (tag == "worker") {
+            port.postMessage(`${tag}: ${str}`);
+            return
+        }
+
         let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
         let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
 
-        console.log(`${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`);
+        let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
+        console.log(o);
     }
 
     class Err {

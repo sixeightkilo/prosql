@@ -35,10 +35,16 @@ class Login {
     }
 
     async init() {
-        this.initDom();
+        //sync worker
+        const worker = new SharedWorker("/build-0.6/dist/js/init-worker.js");
+		worker.port.onmessage = (e) => {
+			Log(TAG, e.data);
+		}
 
-        this.connectionDb = new ConnectionDB({version: 1});
-        await this.connectionDb.open();
+		this.initDom();
+
+		this.connectionDb = new ConnectionDB({version: 1});
+		await this.connectionDb.open();
 
         this.initHandlers();
         
