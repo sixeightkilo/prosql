@@ -1,3 +1,4 @@
+import { Utils } from './utils.js'
 import { Log } from './logger.js'
 import { Constants } from './constants.js'
 import { ConnectionDB } from './connection-db.js'
@@ -12,8 +13,16 @@ class Worker {
     }
 
     async init() {
-        let res = await fetch(`${URL}/about`);
-        res = await res.json();
+        let res = await Utils.fetch(Constants.URL + '/about', false);
+        if (res.status == "error") {
+            Log(TAG, JSON.stringify(res), this.port);
+            return
+        }
+
+        res = await Utils.fetch(`${URL}/connections/updated`, false, {
+            db: res.data['device-id']
+        });
+
         Log(TAG, JSON.stringify(res), this.port);
     }
 }

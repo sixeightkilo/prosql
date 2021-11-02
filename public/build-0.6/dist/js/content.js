@@ -111,12 +111,14 @@
             return template.content
         }
 
-        static async fetch(url, handleError = true) {
+        static async fetch(url, handleError = true, headers = {}) {
             try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
                 let response = await fetch(url, {
-                    headers: {
-                        'X-Request-ID': Utils.uuid()
-                    }
+                    headers: hdrs
                 });
 
                 Log(TAG$j, response);
