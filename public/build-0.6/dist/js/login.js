@@ -672,7 +672,7 @@
         async init() {
             //sync worker
             //const worker = new SharedWorker("/build-0.6/dist/js/worker.js");
-            const worker = new SharedWorker("/build-0.6/dist/js/worker.js");
+            const worker = new SharedWorker("/build-0.6/dist/js/init-worker.js");
     		worker.port.onmessage = (e) => {
     			Log(TAG, 'Message received from worker: ' + e.data);
     		};

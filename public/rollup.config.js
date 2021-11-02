@@ -49,9 +49,9 @@ export default [
         },
     },
     {
-        'input': 'build-0.6/js/modules/worker.js',
+        'input': 'build-0.6/js/modules/init-worker.js',
         'output': {
-            'file': 'build-0.6/dist/js/worker.js',
+            'file': 'build-0.6/dist/js/init-worker.js',
             'format': 'iife'
         },
     },
