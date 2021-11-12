@@ -18,7 +18,7 @@ class BaseDB {
                 };
 
                 req.onerror = (e) => {
-                    Log(TAG, "open.onerror");
+                    Log(TAG, e.target.error);
                     reject(e.target.errorCode);
                 };
 

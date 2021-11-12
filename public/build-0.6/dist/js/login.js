@@ -238,6 +238,11 @@
     		}
     		return s;
     	}
+
+        static getTimestamp() {
+            let d = new Date();
+            return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        }
     }
 
     class Constants {
@@ -429,6 +434,10 @@
             return 2
         }
 
+        static get CONN_DB_VERSION() {
+            return 3
+        }
+
         static get INIT_PROGRESS() {
             return "init-progress"
         }
@@ -464,7 +473,7 @@
                     };
 
                     req.onerror = (e) => {
-                        Log(TAG$2, "open.onerror");
+                        Log(TAG$2, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -561,6 +570,7 @@
 
     const TAG$1 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
+    const DB_ID_INDEX = "db-id-index";
     const DB_NAME = "connections";
 
     class ConnectionDB extends BaseDB {
@@ -571,10 +581,49 @@
         }
 
         onUpgrade(e) {
-            Log(TAG$1, "open.onupgradeneeded");
-            var store = e.currentTarget.result.createObjectStore(
-                this.store, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
+            Log(TAG$1, `open.onupgradeneeded: ${e.oldVersion}`);
+            if (e.oldVersion < 1) {
+                let store = e.currentTarget.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
+            }
+
+            if (e.oldVersion < 2) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(DB_ID_INDEX, ["id", "db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 3) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+                store.deleteIndex(DB_ID_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
+                store.createIndex(DB_ID_INDEX, ["db_id"], {unique: true});
+            }
+        }
+
+        async getAll() {
+            //transform data for clients 
+            let conns = await super.getAll();
+            for (let i = 0; i < conns.length; i++) {
+                conns[i] = ConnectionDB.transform(conns[i]);
+            }
+
+            return conns;
+        }
+
+        async get(id) {
+            let conn = await super.get(id);
+            return ConnectionDB.transform(conn);
+        }
+
+        static transform(conn) {
+            delete conn.db_id;
+            delete conn.synced_at;
+            conn['is-default'] = conn.is_default ?? conn['is-default'];// this will handle legacy dbs
+            delete conn.is_default;
+            return conn;
         }
 
         async save(conn) {
@@ -583,7 +632,7 @@
                 if (conn['is-default'] == true) {
                     let conns = await super.getAll();
                     conns.forEach(async (c) => {
-                        await this.put(c.id, false);
+                        await this.put(c.id, c.pass, false);
                     });
                 }
 
@@ -591,11 +640,14 @@
                 let rec = await this.search(conn);
                 if (rec) {
                     //if exists , update and return
-                    await this.put(rec.id, conn['is-default']);
+                    await this.put(rec.id, conn['pass'], conn['is-default']);
                     return rec.id;
                 }
 
                 //create new record
+                conn[i].is_default = conn[i]['is-default'];
+                delete conn[i]['is-default'];
+
                 return await super.save(this.store, conn);
 
             } catch (e) {
@@ -603,7 +655,7 @@
             }
         }
 
-        async put(id, isDefault) {
+        async put(id, password, isDefault) {
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store, "readwrite");
                 let objectStore = transaction.objectStore(this.store);
@@ -611,7 +663,8 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o['is-default'] = isDefault;
+                    o['pass'] = password;
+                    o['is_default'] = isDefault;
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = function(event) {
@@ -634,7 +687,7 @@
                 let objectStore = transaction.objectStore(this.store);
                 let index = objectStore.index(CONNECTION_INDEX);
 
-                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.pass, conn.port, conn.db]));
+                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.port, conn.db]));
                 request.onsuccess = (e) => {
                     resolve(request.result);
                 };
@@ -645,6 +698,31 @@
             })
         }
 
+        async sync(conn) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(conn.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = conn.db_id;
+                    o['synced_at'] = Utils.getTimestamp();
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = function(event) {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = function(event) {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
     }
 
     const TAG = 'login';
@@ -675,18 +753,19 @@
             this.$port = document.getElementById('port');
             this.$db = document.getElementById('db');
             this.$isDefault = document.getElementById('is-default');
+            this.version = document.getElementById('version').val;
         }
 
         async init() {
             //sync worker
-            const worker = new SharedWorker("/build-0.6/dist/js/init-worker.js");
+            const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.version}`);
     		worker.port.onmessage = (e) => {
     			Log(TAG, e.data);
     		};
 
     		this.initDom();
 
-    		this.connectionDb = new ConnectionDB({version: 1});
+    		this.connectionDb = new ConnectionDB({version: Constants.CONN_DB_VERSION});
     		await this.connectionDb.open();
 
             this.initHandlers();
@@ -766,6 +845,7 @@
             //if there is a default set, use it otherwise
             //arbitrarily choose the first connection as current
             for (let i = 0; i < conns.length; i++) {
+                Log(TAG, "c:" + JSON.stringify(conns[i]));
                 if (conns[i]['is-default'] == true) {
                     return conns[i];
                 }
@@ -811,6 +891,7 @@
                     continue;
                 }
 
+                Log(TAG, `key: ${k}`);
                 let $elem = document.getElementById(k);
                 $elem.value = conn[k];
             }

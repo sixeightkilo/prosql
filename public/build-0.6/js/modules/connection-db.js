@@ -1,9 +1,11 @@
 import { Log } from './logger.js'
 import { Constants } from './constants.js'
 import { BaseDB } from './base-db.js'
+import { Utils } from './utils.js'
 
 const TAG = "connection-db"
 const CONNECTION_INDEX = "connection-index";
+const DB_ID_INDEX = "db-id-index";
 const DB_NAME = "connections";
 
 class ConnectionDB extends BaseDB {
@@ -14,10 +16,49 @@ class ConnectionDB extends BaseDB {
     }
 
     onUpgrade(e) {
-        Log(TAG, "open.onupgradeneeded");
-        var store = e.currentTarget.result.createObjectStore(
-            this.store, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
+        Log(TAG, `open.onupgradeneeded: ${e.oldVersion}`);
+        if (e.oldVersion < 1) {
+            let store = e.currentTarget.result.createObjectStore(
+                this.store, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
+        }
+
+        if (e.oldVersion < 2) {
+            let store = e.currentTarget.transaction.objectStore(this.store);
+            store.createIndex(DB_ID_INDEX, ["id", "db_id"], {unique: true});
+        }
+
+        if (e.oldVersion < 3) {
+            let store = e.currentTarget.transaction.objectStore(this.store);
+            store.deleteIndex(CONNECTION_INDEX);
+            store.deleteIndex(DB_ID_INDEX);
+
+            store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
+            store.createIndex(DB_ID_INDEX, ["db_id"], {unique: true});
+        }
+    }
+
+    async getAll() {
+        //transform data for clients 
+        let conns = await super.getAll();
+        for (let i = 0; i < conns.length; i++) {
+            conns[i] = ConnectionDB.transform(conns[i])
+        }
+
+        return conns;
+    }
+
+    async get(id) {
+        let conn = await super.get(id);
+        return ConnectionDB.transform(conn);
+    }
+
+    static transform(conn) {
+        delete conn.db_id;
+        delete conn.synced_at;
+        conn['is-default'] = conn.is_default ?? conn['is-default'];// this will handle legacy dbs
+        delete conn.is_default;
+        return conn;
     }
 
     async save(conn) {
@@ -26,7 +67,7 @@ class ConnectionDB extends BaseDB {
             if (conn['is-default'] == true) {
                 let conns = await super.getAll();
                 conns.forEach(async (c) => {
-                    await this.put(c.id, false);
+                    await this.put(c.id, c.pass, false);
                 });
             }
 
@@ -34,11 +75,14 @@ class ConnectionDB extends BaseDB {
             let rec = await this.search(conn);
             if (rec) {
                 //if exists , update and return
-                await this.put(rec.id, conn['is-default']);
+                await this.put(rec.id, conn['pass'], conn['is-default']);
                 return rec.id;
             }
 
             //create new record
+            conn[i].is_default = conn[i]['is-default'];
+            delete conn[i]['is-default']
+
             return await super.save(this.store, conn);
 
         } catch (e) {
@@ -46,7 +90,7 @@ class ConnectionDB extends BaseDB {
         }
     }
 
-    async put(id, isDefault) {
+    async put(id, password, isDefault) {
         return new Promise((resolve, reject) => {
             let transaction = this.db.transaction(this.store, "readwrite");
             let objectStore = transaction.objectStore(this.store);
@@ -54,7 +98,8 @@ class ConnectionDB extends BaseDB {
 
             request.onsuccess = (e) => {
                 let o = e.target.result;
-                o['is-default'] = isDefault;
+                o['pass'] = password;
+                o['is_default'] = isDefault;
 
                 let requestUpdate = objectStore.put(o);
                 requestUpdate.onerror = function(event) {
@@ -77,7 +122,7 @@ class ConnectionDB extends BaseDB {
             let objectStore = transaction.objectStore(this.store);
             let index = objectStore.index(CONNECTION_INDEX);
 
-            let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.pass, conn.port, conn.db]))
+            let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.port, conn.db]))
             request.onsuccess = (e) => {
                 resolve(request.result);
             };
@@ -88,6 +133,31 @@ class ConnectionDB extends BaseDB {
         })
     }
 
+    async sync(conn) {
+        return new Promise((resolve, reject) => {
+            let transaction = this.db.transaction(this.store, "readwrite");
+            let objectStore = transaction.objectStore(this.store);
+            let request = objectStore.get(conn.id);
+
+            request.onsuccess = (e) => {
+                let o = e.target.result;
+                o['db_id'] = conn.db_id
+                o['synced_at'] = Utils.getTimestamp()
+
+                let requestUpdate = objectStore.put(o);
+                requestUpdate.onerror = function(event) {
+                    resolve(e.target.error);
+                };
+                requestUpdate.onsuccess = function(event) {
+                    resolve(0);
+                };
+            };
+
+            request.onerror = (e) => {
+                resolve(e.target.error);
+            };
+        })
+    }
 } 
 
 export { ConnectionDB }

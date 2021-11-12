@@ -32,18 +32,19 @@ class Login {
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
         this.$isDefault = document.getElementById('is-default')
+        this.version = document.getElementById('version').val
     }
 
     async init() {
         //sync worker
-        const worker = new SharedWorker("/build-0.6/dist/js/init-worker.js");
+        const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.version}`);
 		worker.port.onmessage = (e) => {
 			Log(TAG, e.data);
 		}
 
 		this.initDom();
 
-		this.connectionDb = new ConnectionDB({version: 1});
+		this.connectionDb = new ConnectionDB({version: Constants.CONN_DB_VERSION});
 		await this.connectionDb.open();
 
         this.initHandlers();
@@ -123,6 +124,7 @@ class Login {
         //if there is a default set, use it otherwise
         //arbitrarily choose the first connection as current
         for (let i = 0; i < conns.length; i++) {
+            Log(TAG, "c:" + JSON.stringify(conns[i]));
             if (conns[i]['is-default'] == true) {
                 return conns[i];
             }
@@ -168,6 +170,7 @@ class Login {
                 continue;
             }
 
+            Log(TAG, `key: ${k}`);
             let $elem = document.getElementById(k);
             $elem.value = conn[k];
         }

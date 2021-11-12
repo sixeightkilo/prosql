@@ -238,6 +238,11 @@
     		}
     		return s;
     	}
+
+        static getTimestamp() {
+            let d = new Date();
+            return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        }
     }
 
     class Constants {
@@ -427,6 +432,10 @@
 
         static get QUERY_DB_VERSION() {
             return 2
+        }
+
+        static get CONN_DB_VERSION() {
+            return 3
         }
 
         static get INIT_PROGRESS() {

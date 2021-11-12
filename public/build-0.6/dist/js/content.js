@@ -238,6 +238,11 @@
     		}
     		return s;
     	}
+
+        static getTimestamp() {
+            let d = new Date();
+            return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        }
     }
 
     class Constants {
@@ -427,6 +432,10 @@
 
         static get QUERY_DB_VERSION() {
             return 2
+        }
+
+        static get CONN_DB_VERSION() {
+            return 3
         }
 
         static get INIT_PROGRESS() {
@@ -3081,7 +3090,7 @@
                     };
 
                     req.onerror = (e) => {
-                        Log(TAG$4, "open.onerror");
+                        Log(TAG$4, e.target.error);
                         reject(e.target.errorCode);
                     };
 

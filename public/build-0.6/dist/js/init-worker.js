@@ -72,7 +72,7 @@
         }
     }
 
-    const TAG$1 = "utils";
+    const TAG$3 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -121,7 +121,7 @@
                     headers: hdrs
                 });
 
-                Log(TAG$1, response);
+                Log(TAG$3, response);
 
                 let json = await response.json();
 
@@ -131,7 +131,7 @@
 
                 return json
             } catch (e) {
-                Log(TAG$1, e);
+                Log(TAG$3, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -202,7 +202,7 @@
         }
 
         static showNoData() {
-            Log(TAG$1, "No data");
+            Log(TAG$3, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -238,6 +238,11 @@
     		}
     		return s;
     	}
+
+        static getTimestamp() {
+            let d = new Date();
+            return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+        }
     }
 
     class Constants {
@@ -429,6 +434,10 @@
             return 2
         }
 
+        static get CONN_DB_VERSION() {
+            return 3
+        }
+
         static get INIT_PROGRESS() {
             return "init-progress"
         }
@@ -447,27 +456,340 @@
 
     }
 
+    const TAG$2 = "base-db";
+    class BaseDB {
+        constructor(options) {
+            this.version = options.version;
+            this.dbName = options.dbName;
+        }
+
+        async open() {
+            return new Promise((resolve, reject) => {
+                let req = indexedDB.open(this.dbName, this.version);
+                    req.onsuccess = (e) => {
+                        Log(TAG$2, "open.onsuccess");
+                        this.db = req.result;
+                        resolve(0);
+                    };
+
+                    req.onerror = (e) => {
+                        Log(TAG$2, e.target.error);
+                        reject(e.target.errorCode);
+                    };
+
+                    req.onupgradeneeded = (evt) => {
+                        this.onUpgrade(evt);
+                    };
+            })
+        }
+
+        async save(store, rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction([store], "readwrite");
+
+                let objectStore = transaction.objectStore(store);
+                let request = objectStore.add(rec);
+                request.onsuccess = (e) => {
+                    resolve(e.target.result);
+                };
+
+                request.onerror = (e) => {
+                    Log(TAG$2, e.target.error);
+                    resolve(-1);
+                };
+            })
+        }
+
+        async put(store, rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction([store], "readwrite");
+                let objectStore = transaction.objectStore(store);
+
+                let request = objectStore.put(rec);
+                request.onsuccess = (e) => {
+                    resolve(0);
+                };
+
+                request.onerror = (e) => {
+                    Log(TAG$2, e.target.error);
+                    resolve(-1);
+                };
+            })
+        }
+
+        async del(id) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.delete(id);
+
+                request.onsuccess = (e) => {
+                    resolve(0);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async get(id) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    resolve(null);
+                };
+            })
+        }
+
+        async getAll() {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+
+                let results = [];
+                objectStore.openCursor().onsuccess = (e) => {
+                    var cursor = e.target.result;
+                    if (cursor) {
+                        results.push(cursor.value);
+                        cursor.continue();
+                    } else {
+                        resolve(results);
+                    }
+                };
+            })
+        }
+    }
+
+    const TAG$1 = "connection-db";
+    const CONNECTION_INDEX = "connection-index";
+    const DB_ID_INDEX = "db-id-index";
+    const DB_NAME = "connections";
+
+    class ConnectionDB extends BaseDB {
+        constructor(options) {
+            options.dbName = DB_NAME;
+            super(options);
+            this.store = "connections";
+        }
+
+        onUpgrade(e) {
+            Log(TAG$1, `open.onupgradeneeded: ${e.oldVersion}`);
+            if (e.oldVersion < 1) {
+                let store = e.currentTarget.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
+            }
+
+            if (e.oldVersion < 2) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(DB_ID_INDEX, ["id", "db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 3) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+                store.deleteIndex(DB_ID_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
+                store.createIndex(DB_ID_INDEX, ["db_id"], {unique: true});
+            }
+        }
+
+        async getAll() {
+            //transform data for clients 
+            let conns = await super.getAll();
+            for (let i = 0; i < conns.length; i++) {
+                conns[i] = ConnectionDB.transform(conns[i]);
+            }
+
+            return conns;
+        }
+
+        async get(id) {
+            let conn = await super.get(id);
+            return ConnectionDB.transform(conn);
+        }
+
+        static transform(conn) {
+            delete conn.db_id;
+            delete conn.synced_at;
+            conn['is-default'] = conn.is_default ?? conn['is-default'];// this will handle legacy dbs
+            delete conn.is_default;
+            return conn;
+        }
+
+        async save(conn) {
+            try {
+                //make sure there is only one connection with is-default = true
+                if (conn['is-default'] == true) {
+                    let conns = await super.getAll();
+                    conns.forEach(async (c) => {
+                        await this.put(c.id, c.pass, false);
+                    });
+                }
+
+                //search if this connection exists
+                let rec = await this.search(conn);
+                if (rec) {
+                    //if exists , update and return
+                    await this.put(rec.id, conn['pass'], conn['is-default']);
+                    return rec.id;
+                }
+
+                //create new record
+                conn[i].is_default = conn[i]['is-default'];
+                delete conn[i]['is-default'];
+
+                return await super.save(this.store, conn);
+
+            } catch (e) {
+                Log(TAG$1, e.message);
+            }
+        }
+
+        async put(id, password, isDefault) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['pass'] = password;
+                    o['is_default'] = isDefault;
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = function(event) {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = function(event) {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async search(conn) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(CONNECTION_INDEX);
+
+                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.port, conn.db]));
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async sync(conn) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(conn.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = conn.db_id;
+                    o['synced_at'] = Utils.getTimestamp();
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = function(event) {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = function(event) {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+    }
+
     const TAG = "worker";
     const URL = '/browser-api/sqlite';
 
     class Worker {
         constructor(port) {
             this.port = port;
-            //this.port.postMessage(Constants.USER);
         }
 
         async init() {
+            Log(TAG, "worker init", this.port);
+
             let res = await Utils.fetch(Constants.URL + '/about', false);
             if (res.status == "error") {
                 Log(TAG, JSON.stringify(res), this.port);
                 return
             }
 
+            this.deviceId = res.data['device-id'];
+
             res = await Utils.fetch(`${URL}/connections/updated`, false, {
                 db: res.data['device-id']
             });
 
             Log(TAG, JSON.stringify(res), this.port);
+
+    		this.connectionDb = new ConnectionDB({version: Constants.CONN_DB_VERSION});
+    		await this.connectionDb.open();
+
+            this.syncUp();
+        }
+
+        async syncUp() {
+            //find all records missing db_id and sync them up to cloud
+            let conns = await this.connectionDb.getAll();
+            if (conns.length == 0) {
+                return;
+            }
+
+            for (let i = 0; i < conns.length; i++) {
+                if (!conns[i].db_id) {
+                    let res = await fetch(`${URL}/connections`, {
+                        body: JSON.stringify(conns[i]),
+                        method: "post",
+                        headers: {
+                            db: this.deviceId,
+                            'Content-Type': 'application/json',
+                        }
+                    });
+
+                    Log(TAG, "Syncing2: " + JSON.stringify(conns[i]), this.port);
+
+                    res = await res.json();
+                    Log(TAG, JSON.stringify(res), this.port);
+
+                    if (res.status == "ok") {
+                        conns[i].db_id = res.data.db_id;
+                        Log(TAG, `syncing: ${JSON.stringify(conns[i])}`, this.port);
+                        try {
+                            this.connectionDb.sync(conns[i]);
+                        } catch (e) {
+                            Log(TAG, e, this.port);
+                        }
+                    }
+                }
+            }
         }
     }
 

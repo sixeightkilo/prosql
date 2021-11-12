@@ -187,6 +187,10 @@ class Constants {
         return 2
     }
 
+    static get CONN_DB_VERSION() {
+        return 3
+    }
+
     static get INIT_PROGRESS() {
         return "init-progress"
     }

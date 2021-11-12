@@ -60,6 +60,8 @@ html
 
                     button.button(id="login") Login 
 
+        input#version(type=hidden value="#{version}")
+
         script(type='module' src='/#{root}/dist/js/login.js?ver=#{version}')
         script(type='code' id='conn-template')
             .conn-container
