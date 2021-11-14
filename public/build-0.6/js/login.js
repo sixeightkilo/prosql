@@ -7,6 +7,8 @@ import { ConnectionDB } from './modules/connection-db.js'
 const TAG = 'login'
 class Login {
     constructor() {
+        this.keys = ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default"]);
+
         document.addEventListener('DOMContentLoaded', async () => {
             await this.init()
 
@@ -49,7 +51,9 @@ class Login {
 
         this.initHandlers();
         
-        let conns = await this.connectionDb.getAll();
+        let conns = ConnectionDB.fromDbArray(await this.connectionDb.getAll(this.keys));
+        Logger.Log(TAG, JSON.stringify(conns));
+
         if (conns.length == 0) {
             return;
         }
@@ -79,7 +83,7 @@ class Login {
 
             Logger.Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
-            let conn = await this.connectionDb.get(connId);
+            let conn = ConnectionDB.fromDb(await this.connectionDb.get(connId, this.keys));
             this.setConn(conn);
             Logger.Log(TAG, JSON.stringify(conn));
             this.testConn();
@@ -109,7 +113,9 @@ class Login {
 
     async initConns() {
         document.querySelector('#conn-list').replaceChildren();
-        let conns = await this.connectionDb.getAll();
+
+        let conns = ConnectionDB.fromDbArray(await this.connectionDb.getAll(this.keys));
+
         if (conns.length == 0) {
             return;
         }
@@ -216,8 +222,8 @@ class Login {
 
         if (await this.ping(conn) == 'ok') {
             Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
-            let id = await this.connectionDb.save(conn);
-            Logger.Log(TAG, `saved to ${id}`);
+            let id = await this.connectionDb.save(ConnectionDB.toDb(conn));
+            Logger.Log(TAG, `${JSON.stringify(ConnectionDB.toDb(conn))} saved to ${id}`);
 
             //set agent version for the rest of web app
             let response = await Utils.fetch(Constants.URL + '/about', false);

@@ -79,14 +79,25 @@ class BaseDB {
         })
     }
 
-    async get(id) {
+    async get(id, keys = []) {
         return new Promise((resolve, reject) => {
             let transaction = this.db.transaction(this.store);
             let objectStore = transaction.objectStore(this.store);
             let request = objectStore.get(id);
-
+            
             request.onsuccess = (e) => {
-                resolve(request.result);
+                let result = [];
+                if (keys.length > 0) {
+                    for (let k in request.result) {
+                        if (keys.includes(k)) {
+                            result[k] = request.result[k];
+                        }
+                    }
+                } else {
+                    result = request.result
+                }
+
+                resolve(result);
             };
 
             request.onerror = (e) => {
@@ -95,7 +106,7 @@ class BaseDB {
         })
     }
 
-    async getAll() {
+    async getAll(keys = []) {
         return new Promise((resolve, reject) => {
             let transaction = this.db.transaction(this.store)
             let objectStore = transaction.objectStore(this.store)
@@ -104,13 +115,63 @@ class BaseDB {
             objectStore.openCursor().onsuccess = (e) => {
                 var cursor = e.target.result;
                 if (cursor) {
-                    results.push(cursor.value);
+                    if (keys.length > 0) {
+                        let r = {};
+                        for (let k in cursor.value) {
+                            if (keys.includes(k)) {
+                                r[k] = cursor.value[k];
+                            }
+                        }
+                        results.push(r);
+                    } else {
+                        results.push(cursor.value);
+                    }
                     cursor.continue();
                 } else {
                     resolve(results);
                 }
             }
         })
+    }
+
+    static toDb(o = {}) {
+        //convert all "_" to "-"
+        let r = {};
+        for (let k in o) {
+            r[k.replaceAll(/-/g, '_')] = o[k];
+        }
+        return r
+    }
+
+    static toDbArray(keys = []) {
+        //convert all "-" to "_"
+        let result = []
+        keys.forEach((k) => {
+            result.push(k.replaceAll(/-/g, '_'));
+        });
+        return result
+    }
+
+    static fromDbArray(vals = []) {
+        //convert all "_" to "-"
+        let result = []
+        vals.forEach((o) => {
+            let r = {};
+            for (let k in o) {
+                r[k.replaceAll(/_/g, '-')] = o[k];
+            }
+            result.push(r);
+        });
+        return result;
+    }
+
+    static fromDb(o = {}) {
+        //convert all "_" to "-"
+        let r = {};
+        for (let k in o) {
+            r[k.replaceAll(/_/g, '-')] = o[k];
+        }
+        return r
     }
 }
 

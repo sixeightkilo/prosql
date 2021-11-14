@@ -46,33 +46,10 @@ class ConnectionDB extends BaseDB {
         }
     }
 
-    async getAll() {
-        //transform data for clients 
-        let conns = await super.getAll();
-        for (let i = 0; i < conns.length; i++) {
-            conns[i] = ConnectionDB.transform(conns[i])
-        }
-
-        return conns;
-    }
-
-    async get(id) {
-        let conn = await super.get(id);
-        return ConnectionDB.transform(conn);
-    }
-
-    static transform(conn) {
-        delete conn.db_id;
-        delete conn.synced_at;
-        conn['is-default'] = conn.is_default ?? conn['is-default'];// this will handle legacy dbs
-        delete conn.is_default;
-        return conn;
-    }
-
     async save(conn) {
         try {
-            //make sure there is only one connection with is-default = true
-            if (conn['is-default'] == true) {
+            //make sure there is only one connection with is_default = true
+            if (conn['is_default'] == true) {
                 let conns = await super.getAll();
                 conns.forEach(async (c) => {
                     await this.put(c.id, c.pass, false);
@@ -83,14 +60,11 @@ class ConnectionDB extends BaseDB {
             let rec = await this.search(conn);
             if (rec) {
                 //if exists , update and return
-                await this.put(rec.id, conn['pass'], conn['is-default']);
+                await this.put(rec.id, conn['pass'], conn['is_default']);
                 return rec.id;
             }
 
             //create new record
-            conn[i].is_default = conn[i]['is-default'];
-            delete conn[i]['is-default']
-
             return await super.save(this.store, conn);
 
         } catch (e) {
@@ -130,7 +104,7 @@ class ConnectionDB extends BaseDB {
             let objectStore = transaction.objectStore(this.store);
             let index = objectStore.index(CONNECTION_INDEX);
 
-            let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.port, conn.db]))
+            let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.host, conn.port, conn.db]))
             request.onsuccess = (e) => {
                 resolve(request.result);
             };

@@ -557,14 +557,25 @@
             })
         }
 
-        async get(id) {
+        async get(id, keys = []) {
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
                 let request = objectStore.get(id);
-
+                
                 request.onsuccess = (e) => {
-                    resolve(request.result);
+                    let result = [];
+                    if (keys.length > 0) {
+                        for (let k in request.result) {
+                            if (keys.includes(k)) {
+                                result[k] = request.result[k];
+                            }
+                        }
+                    } else {
+                        result = request.result;
+                    }
+
+                    resolve(result);
                 };
 
                 request.onerror = (e) => {
@@ -573,7 +584,7 @@
             })
         }
 
-        async getAll() {
+        async getAll(keys = []) {
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -582,13 +593,63 @@
                 objectStore.openCursor().onsuccess = (e) => {
                     var cursor = e.target.result;
                     if (cursor) {
-                        results.push(cursor.value);
+                        if (keys.length > 0) {
+                            let r = {};
+                            for (let k in cursor.value) {
+                                if (keys.includes(k)) {
+                                    r[k] = cursor.value[k];
+                                }
+                            }
+                            results.push(r);
+                        } else {
+                            results.push(cursor.value);
+                        }
                         cursor.continue();
                     } else {
                         resolve(results);
                     }
                 };
             })
+        }
+
+        static toDb(o = {}) {
+            //convert all "_" to "-"
+            let r = {};
+            for (let k in o) {
+                r[k.replaceAll(/-/g, '_')] = o[k];
+            }
+            return r
+        }
+
+        static toDbArray(keys = []) {
+            //convert all "-" to "_"
+            let result = [];
+            keys.forEach((k) => {
+                result.push(k.replaceAll(/-/g, '_'));
+            });
+            return result
+        }
+
+        static fromDbArray(vals = []) {
+            //convert all "_" to "-"
+            let result = [];
+            vals.forEach((o) => {
+                let r = {};
+                for (let k in o) {
+                    r[k.replaceAll(/_/g, '-')] = o[k];
+                }
+                result.push(r);
+            });
+            return result;
+        }
+
+        static fromDb(o = {}) {
+            //convert all "_" to "-"
+            let r = {};
+            for (let k in o) {
+                r[k.replaceAll(/_/g, '-')] = o[k];
+            }
+            return r
         }
     }
 
@@ -635,33 +696,10 @@
             }
         }
 
-        async getAll() {
-            //transform data for clients 
-            let conns = await super.getAll();
-            for (let i = 0; i < conns.length; i++) {
-                conns[i] = ConnectionDB.transform(conns[i]);
-            }
-
-            return conns;
-        }
-
-        async get(id) {
-            let conn = await super.get(id);
-            return ConnectionDB.transform(conn);
-        }
-
-        static transform(conn) {
-            delete conn.db_id;
-            delete conn.synced_at;
-            conn['is-default'] = conn.is_default ?? conn['is-default'];// this will handle legacy dbs
-            delete conn.is_default;
-            return conn;
-        }
-
         async save(conn) {
             try {
-                //make sure there is only one connection with is-default = true
-                if (conn['is-default'] == true) {
+                //make sure there is only one connection with is_default = true
+                if (conn['is_default'] == true) {
                     let conns = await super.getAll();
                     conns.forEach(async (c) => {
                         await this.put(c.id, c.pass, false);
@@ -672,14 +710,11 @@
                 let rec = await this.search(conn);
                 if (rec) {
                     //if exists , update and return
-                    await this.put(rec.id, conn['pass'], conn['is-default']);
+                    await this.put(rec.id, conn['pass'], conn['is_default']);
                     return rec.id;
                 }
 
                 //create new record
-                conn[i].is_default = conn[i]['is-default'];
-                delete conn[i]['is-default'];
-
                 return await super.save(this.store, conn);
 
             } catch (e) {
@@ -719,7 +754,7 @@
                 let objectStore = transaction.objectStore(this.store);
                 let index = objectStore.index(CONNECTION_INDEX);
 
-                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.port, conn.db]));
+                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.host, conn.port, conn.db]));
                 request.onsuccess = (e) => {
                     resolve(request.result);
                 };
@@ -760,6 +795,8 @@
     const TAG = 'login';
     class Login {
         constructor() {
+            this.keys = ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default"]);
+
             document.addEventListener('DOMContentLoaded', async () => {
                 await this.init();
 
@@ -802,7 +839,9 @@
 
             this.initHandlers();
             
-            let conns = await this.connectionDb.getAll();
+            let conns = ConnectionDB.fromDbArray(await this.connectionDb.getAll(this.keys));
+            Logger.Log(TAG, JSON.stringify(conns));
+
             if (conns.length == 0) {
                 return;
             }
@@ -832,7 +871,7 @@
 
                 Logger.Log(TAG, `${target.dataset.id}`);
                 let connId = parseInt(target.dataset.id);
-                let conn = await this.connectionDb.get(connId);
+                let conn = ConnectionDB.fromDb(await this.connectionDb.get(connId, this.keys));
                 this.setConn(conn);
                 Logger.Log(TAG, JSON.stringify(conn));
                 this.testConn();
@@ -862,7 +901,9 @@
 
         async initConns() {
             document.querySelector('#conn-list').replaceChildren();
-            let conns = await this.connectionDb.getAll();
+
+            let conns = ConnectionDB.fromDbArray(await this.connectionDb.getAll(this.keys));
+
             if (conns.length == 0) {
                 return;
             }
@@ -964,8 +1005,8 @@
 
             if (await this.ping(conn) == 'ok') {
                 Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
-                let id = await this.connectionDb.save(conn);
-                Logger.Log(TAG, `saved to ${id}`);
+                let id = await this.connectionDb.save(ConnectionDB.toDb(conn));
+                Logger.Log(TAG, `${JSON.stringify(ConnectionDB.toDb(conn))} saved to ${id}`);
 
                 //set agent version for the rest of web app
                 let response = await Utils.fetch(Constants.URL + '/about', false);
