@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
@@ -14,14 +14,14 @@ const MAX_DAYS = 10000;
 class QueryHistory {
     constructor() {
         PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
-            Log(TAG, JSON.stringify(query));
+            Logger.Log(TAG, JSON.stringify(query));
 
             if (!this.queryDb) {
                 await this.init();
             }
 
             let id = await this.queryDb.save(query); 
-            Log(TAG, `Saved to ${id}`);
+            Logger.Log(TAG, `Saved to ${id}`);
             PubSub.publish(Constants.QUERY_SAVED, {id: id});
         });
 
@@ -44,7 +44,7 @@ class QueryHistory {
     }
 
     async init() {
-        this.queryDb = new QueryDB({version: Constants.QUERY_DB_VERSION});
+        this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
         await this.queryDb.open();
     }
 
@@ -104,7 +104,7 @@ class QueryHistory {
                 message: `Imported ${i + 1} of ${data.length}`
             });
 
-            Log(TAG, `Saved to ${id}`);
+            Logger.Log(TAG, `Saved to ${id}`);
         }
         PubSub.publish(Constants.STOP_PROGRESS, {});
     }

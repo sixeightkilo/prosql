@@ -188,7 +188,7 @@ class Constants {
     }
 
     static get CONN_DB_VERSION() {
-        return 3
+        return 4
     }
 
     static get INIT_PROGRESS() {

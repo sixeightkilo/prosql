@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Err } from './error.js'
 
 const TAG = "utils"
@@ -50,7 +50,7 @@ class Utils {
                 headers: hdrs
             })
 
-            Log(TAG, response)
+            Logger.Log(TAG, response)
 
             let json = await response.json()
 
@@ -60,7 +60,7 @@ class Utils {
 
             return json
         } catch (e) {
-            Log(TAG, e)
+            Logger.Log(TAG, e)
             let res = {
                 'status' : 'error',
                 'data': null,
@@ -131,7 +131,7 @@ class Utils {
     }
 
     static showNoData() {
-        Log(TAG, "No data")
+        Logger.Log(TAG, "No data")
     }
 
     //https://gist.github.com/gordonbrander/2230317

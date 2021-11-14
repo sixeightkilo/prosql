@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
@@ -16,11 +16,11 @@ class QueryRunner {
     constructor(sessionId) {
 
         this.sessionId = sessionId
-        Log(TAG, `sessionId: ${sessionId}`)
+        Logger.Log(TAG, `sessionId: ${sessionId}`)
         this.init()
 
         PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
-            Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
+            Logger.Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
             Err.handle(err);
         });
 
@@ -56,7 +56,7 @@ class QueryRunner {
     setSessionInfo(sessionId, db) {
         this.sessionId = sessionId
         this.db = db
-        Log(TAG, `sessionId: ${sessionId} db: ${db}`)
+        Logger.Log(TAG, `sessionId: ${sessionId} db: ${db}`)
     }
 
     async init() {
@@ -209,24 +209,24 @@ class QueryRunner {
 
     async runAll() {
         let json = await Utils.fetch('/split?' + new URLSearchParams({q: this.editor.getAll()}));
-        Log(TAG, JSON.stringify(json));
+        Logger.Log(TAG, JSON.stringify(json));
         for (let i = 0; i < json.data.length; i++) {
             let q = json.data[i];
             this.cursorId = null;
             let res = await this.runQuery(q);
 
             if (res.status == "error") {
-                Log(TAG, `runall breaking: ${res.msg}`);
+                Logger.Log(TAG, `runall breaking: ${res.msg}`);
                 break;
             }
 
-            Log(TAG, `${res['rows-affected']}`);
+            Logger.Log(TAG, `${res['rows-affected']}`);
         }
     }
 
     async formatQuery() {
         let q = this.editor.getValue();
-        Log(TAG, q);
+        Logger.Log(TAG, q);
         let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}));
         this.editor.setValue(json.data);
         this.editor.clearSelection();

@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
 
@@ -27,7 +27,7 @@ class Stack {
     }
 
     async handleBack() {
-        Log(TAG, `${this.stack.length}: ${this.curr}`)
+        Logger.Log(TAG, `${this.stack.length}: ${this.curr}`)
 
         if (this.stack.length == 0) {
             return
@@ -40,7 +40,7 @@ class Stack {
         this.curr--
         this.stack.pop();
         await this.cb(this.stack[this.curr])
-        Log(TAG, "Done back")
+        Logger.Log(TAG, "Done back")
         if (this.curr == 0) {
             this.$back.classList.add('stack-disable')
         }
@@ -61,13 +61,13 @@ class Stack {
     }
 
     push(...args) {
-        Log(TAG, JSON.stringify(args))
+        Logger.Log(TAG, JSON.stringify(args))
         if (args.length == 1) {
             this.stack.push({
                 'type': 'table',
                 'table': args[0]
             })
-            Log(TAG, "table:" + JSON.stringify(this.stack));
+            Logger.Log(TAG, "table:" + JSON.stringify(this.stack));
             return
         }
 
@@ -81,7 +81,7 @@ class Stack {
 
             this.curr++
             this.$back.classList.remove('stack-disable')
-            Log(TAG, "fk-ref:" + JSON.stringify(this.stack));
+            Logger.Log(TAG, "fk-ref:" + JSON.stringify(this.stack));
 
             return
         }
@@ -97,7 +97,7 @@ class Stack {
 
             this.curr++
             this.$back.classList.remove('stack-disable')
-            Log(TAG, "search:" + JSON.stringify(this.stack));
+            Logger.Log(TAG, "search:" + JSON.stringify(this.stack));
 
             return
         }

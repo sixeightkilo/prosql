@@ -7,25 +7,48 @@
         //'query-finder',
     ];
 
-    function Log(tag, str, port = null) {
-        //if (!ENABLED.has(tag)) {
-            //return
-        //}
-        //
-        if (DISABLED.includes(tag)) {
-            return;
+    //workers do not support console.log. How to debug ? 
+    // We send a message to the module that initiated worker and 
+    // have it print the debug log
+    // But sending message requires port which is available only in 
+    // worker. How to use a common logger for entire system?
+    // We create static "Log" method which can use used for all code that 
+    // does not get directly called from worker. For any code that gets
+    // called from worker we use the "log" method.
+
+    class Logger {
+        constructor(port = null) {
+            this.port = port;
         }
 
-        if (tag == "worker") {
-            port.postMessage(`${tag}: ${str}`);
-            return
+        log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
+
+            if (this.port) {
+                this.port.postMessage(`${tag}: ${str}`);
+                return
+            }
+
+            Logger.print(tag, str);
         }
 
-        let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
-        let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
+        static Log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
 
-        let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
-        console.log(o);
+            Logger.print(tag, str);
+        }
+
+        static print(tag, str) {
+            let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
+            let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
+
+            let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
+            console.log(o);
+        }
     }
 
     class Err {
@@ -121,7 +144,7 @@
                     headers: hdrs
                 });
 
-                Log(TAG, response);
+                Logger.Log(TAG, response);
 
                 let json = await response.json();
 
@@ -131,7 +154,7 @@
 
                 return json
             } catch (e) {
-                Log(TAG, e);
+                Logger.Log(TAG, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -202,7 +225,7 @@
         }
 
         static showNoData() {
-            Log(TAG, "No data");
+            Logger.Log(TAG, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -435,7 +458,7 @@
         }
 
         static get CONN_DB_VERSION() {
-            return 3
+            return 4
         }
 
         static get INIT_PROGRESS() {

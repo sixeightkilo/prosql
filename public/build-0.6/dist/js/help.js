@@ -7,25 +7,48 @@
         //'query-finder',
     ];
 
-    function Log(tag, str, port = null) {
-        //if (!ENABLED.has(tag)) {
-            //return
-        //}
-        //
-        if (DISABLED.includes(tag)) {
-            return;
+    //workers do not support console.log. How to debug ? 
+    // We send a message to the module that initiated worker and 
+    // have it print the debug log
+    // But sending message requires port which is available only in 
+    // worker. How to use a common logger for entire system?
+    // We create static "Log" method which can use used for all code that 
+    // does not get directly called from worker. For any code that gets
+    // called from worker we use the "log" method.
+
+    class Logger {
+        constructor(port = null) {
+            this.port = port;
         }
 
-        if (tag == "worker") {
-            port.postMessage(`${tag}: ${str}`);
-            return
+        log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
+
+            if (this.port) {
+                this.port.postMessage(`${tag}: ${str}`);
+                return
+            }
+
+            Logger.print(tag, str);
         }
 
-        let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
-        let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
+        static Log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
 
-        let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
-        console.log(o);
+            Logger.print(tag, str);
+        }
+
+        static print(tag, str) {
+            let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
+            let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
+
+            let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
+            console.log(o);
+        }
     }
 
     const TAG = "tabs";
@@ -33,7 +56,7 @@
     class Tabs {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
-                Log(TAG, 'DOMContentLoaded');
+                Logger.Log(TAG, 'DOMContentLoaded');
                 this.$tabs = document.querySelector('.tabs');
                 this.$contents = document.querySelectorAll('.tab-content');
                 this.init();
@@ -60,7 +83,7 @@
 
                     //and the content
                     let target = e.target;
-                    Log(TAG, target.className);
+                    Logger.Log(TAG, target.className);
                     this.$contents.forEach(($c) => {
                         if ($c.classList.contains(`${target.className}`)) {
                             $c.style.display = "block";

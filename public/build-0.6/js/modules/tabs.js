@@ -1,11 +1,11 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 
 const TAG = "tabs"
 
 class Tabs {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
-            Log(TAG, 'DOMContentLoaded');
+            Logger.Log(TAG, 'DOMContentLoaded');
             this.$tabs = document.querySelector('.tabs');
             this.$contents = document.querySelectorAll('.tab-content');
             this.init();
@@ -32,7 +32,7 @@ class Tabs {
 
                 //and the content
                 let target = e.target;
-                Log(TAG, target.className);
+                Logger.Log(TAG, target.className);
                 this.$contents.forEach(($c) => {
                     if ($c.classList.contains(`${target.className}`)) {
                         $c.style.display = "block";

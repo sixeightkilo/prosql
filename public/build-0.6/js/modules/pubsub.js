@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 
 let subscribers = {};

@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { QueryRunner } from './query-runner.js'
 import { QueryFinder } from './query-finder.js'
 import { QueryHistory } from './query-history.js'
@@ -9,7 +9,7 @@ const USE_WS = true
 class Queries {
     constructor(sessionId) {
         this.sessionId = sessionId
-        Log(TAG, `sessionId: ${sessionId}`)
+        Logger.Log(TAG, `sessionId: ${sessionId}`)
         this.queryRunner = new QueryRunner(this.sessionId)
         this.history = new QueryHistory();
     }
@@ -17,7 +17,7 @@ class Queries {
     setSessionInfo(sessionId, db) {
         this.sessionId = sessionId
         this.db = db
-        Log(TAG, `sessionId: ${sessionId} db: ${db}`)
+        Logger.Log(TAG, `sessionId: ${sessionId} db: ${db}`)
         this.queryRunner.setSessionInfo(sessionId, db);
     }
 

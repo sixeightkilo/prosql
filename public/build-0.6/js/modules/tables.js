@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { DbUtils } from './dbutils.js'
@@ -63,7 +63,7 @@ class Tables {
             }
         });
 
-        Log(TAG, `sessionId: ${sessionId}`);
+        Logger.Log(TAG, `sessionId: ${sessionId}`);
         //handle all keyboard shortcuts
         [
             Constants.CMD_EXPORT_TABLE,
@@ -103,7 +103,7 @@ class Tables {
     setSessionInfo(sessionId, db) {
         this.sessionId = sessionId
         this.db = db
-        Log(TAG, `sessionId: ${sessionId} db: ${db}`)
+        Logger.Log(TAG, `sessionId: ${sessionId} db: ${db}`)
     }
 
     filter() {
@@ -114,7 +114,7 @@ class Tables {
             return
         }
 
-        Log(TAG, `Filtering ${f}`)
+        Logger.Log(TAG, `Filtering ${f}`)
 
         let regex = new RegExp(`${f}`)
         let tables = this.tables.filter(t => regex.test(t))
@@ -122,7 +122,7 @@ class Tables {
     }
 
     async show(db) {
-        Log(TAG, "show")
+        Logger.Log(TAG, "show")
         let q = `show tables from \`${db}\``
         let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
 

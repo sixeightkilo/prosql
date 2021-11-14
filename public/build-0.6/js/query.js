@@ -1,4 +1,4 @@
-import { Log } from './modules/logger.js'
+import { Logger } from './modules/logger.js'
 import { Err } from './modules/error.js'
 import { Utils } from './modules/utils.js'
 import { DbUtils } from './modules/dbutils.js'
@@ -22,7 +22,7 @@ class Query {
 
     async initHandlers() {
         PubSub.subscribe(Constants.DB_CHANGED, async (data) => {
-            Log(TAG, "Db changed");
+            Logger.Log(TAG, "Db changed");
             this.creds.db = data.db;
             Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds));
 
@@ -45,7 +45,7 @@ class Query {
 
         this.creds = JSON.parse(creds);
         this.sessionId = await DbUtils.login(this.creds);
-        Log(TAG, this.sessionId);
+        Logger.Log(TAG, this.sessionId);
 
         this.queryRunner = new QueryRunner(this.sessionId);
         this.history = new QueryHistory();
@@ -82,7 +82,7 @@ class Query {
 
         let h = rpDims.height - sbDims.height - edDims.height;
         h -= 50;
-        Log(TAG, `h: ${h}`);
+        Logger.Log(TAG, `h: ${h}`);
         let queryContainer = document.querySelector('#query-container');
         queryContainer.style.gridTemplateRows = `200px 2px ${h}px`;
     }

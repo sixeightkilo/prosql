@@ -1,5 +1,5 @@
 import { Constants } from './constants.js'
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { PubSub } from './pubsub.js'
 import { DbUtils } from './dbutils.js'
 import { Utils } from './utils.js'
@@ -13,7 +13,7 @@ class AppBar {
         AppBar.showDatabases($databases, sessionId, db);
 
         $databases.addEventListener('change', () => {
-            Log(TAG, "Db changed");
+            Logger.Log(TAG, "Db changed");
             let db = $databases.value;
             PubSub.publish(Constants.DB_CHANGED, {db: db});
         })

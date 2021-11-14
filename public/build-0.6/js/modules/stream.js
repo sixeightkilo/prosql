@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
@@ -13,12 +13,12 @@ class Stream {
         this.ws = new WebSocket(url);
 
         this.ws.onerror = (evt) => {
-            Log(TAG, "onerror:" + evt);
+            Logger.Log(TAG, "onerror:" + evt);
             this.rej(Err.ERR_NO_AGENT);
         }
 
         this.ws.onclose = (evt) => {
-            Log(TAG, "onclose");
+            Logger.Log(TAG, "onclose");
             this.ws = null;
         }
     }

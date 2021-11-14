@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
 import { Utils } from './utils.js'
@@ -31,7 +31,7 @@ class ColumnSelector {
 
             this.$title.innerHTML = `Select columns from ${this.table} to display`;
             this.$body.replaceChildren();
-            Log(TAG, this.columns);
+            Logger.Log(TAG, this.columns);
 
             let selection = this.selections[this.table] ?? {};
 
@@ -86,7 +86,7 @@ class ColumnSelector {
                 id++;
             });
 
-            Log(TAG, JSON.stringify(selections));
+            Logger.Log(TAG, JSON.stringify(selections));
             PubSub.publish(Constants.COLUMNS_SELECTED, {
                 cols: selection
             });

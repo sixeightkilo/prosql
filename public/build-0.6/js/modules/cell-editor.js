@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Utils } from './utils.js'
 const TAG = 'cell-editor';
 
@@ -15,7 +15,7 @@ class CellEditor {
 
        this.input.addEventListener('input', (event) => {
            this.value = event.target.value;
-           Log(TAG, "listener:" + this.value);
+           Logger.Log(TAG, "listener:" + this.value);
        });
    }
 
@@ -28,7 +28,7 @@ class CellEditor {
    // the final value to send to the grid, on completion of editing
    getValue() {
        // this simple editor doubles any value entered into the input
-       Log(TAG, "getvalue:" + this.value);
+       Logger.Log(TAG, "getvalue:" + this.value);
        return this.input.value;
    }
 

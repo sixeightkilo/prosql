@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
 import { Utils } from './utils.js'
@@ -25,7 +25,7 @@ class RowAdder {
 
             this.$title.innerHTML = `Add new row to ${this.table}`;
             this.$body.replaceChildren();
-            Log(TAG, this.columns);
+            Logger.Log(TAG, this.columns);
             this.$dialog.classList.add('is-active');
             this.columns.forEach((c) => {
                 let n = Utils.generateNode(this.templ, {
@@ -48,13 +48,13 @@ class RowAdder {
                 }
             });
 
-            Log(TAG, `cols: ${cols}`);
-            Log(TAG, `vals: ${vals}`);
+            Logger.Log(TAG, `cols: ${cols}`);
+            Logger.Log(TAG, `vals: ${vals}`);
             cols = cols.map(e => `\`${e}\``).join(",");
             vals = vals.map(e => `'${e}'`).join(",");
 
             let query = `insert into \`${this.table}\` (${cols}) values (${vals})`;
-            Log(TAG, query);
+            Logger.Log(TAG, query);
 
             let dbUtils = new DbUtils();
             let res = await dbUtils.execute.apply(this, [query]);

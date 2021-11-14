@@ -1,5 +1,5 @@
 import { Err } from './modules/error.js'
-import { Log } from './modules/logger.js'
+import { Logger } from './modules/logger.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
 import { ConnectionDB } from './modules/connection-db.js'
@@ -39,12 +39,12 @@ class Login {
         //sync worker
         const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.version}`);
 		worker.port.onmessage = (e) => {
-			Log(TAG, e.data);
+			Logger.Log("worker", e.data);
 		}
 
 		this.initDom();
 
-		this.connectionDb = new ConnectionDB({version: Constants.CONN_DB_VERSION});
+		this.connectionDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
 		await this.connectionDb.open();
 
         this.initHandlers();
@@ -77,11 +77,11 @@ class Login {
             let parent = target.parentElement;
             parent.classList.add('highlight');
 
-            Log(TAG, `${target.dataset.id}`);
+            Logger.Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
             let conn = await this.connectionDb.get(connId);
             this.setConn(conn);
-            Log(TAG, JSON.stringify(conn));
+            Logger.Log(TAG, JSON.stringify(conn));
             this.testConn();
         });
 
@@ -91,7 +91,7 @@ class Login {
                 return
             }
 
-            Log(TAG, `${target.dataset.id}`);
+            Logger.Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
             await this.connectionDb.del(connId);
             this.initConns();
@@ -124,7 +124,7 @@ class Login {
         //if there is a default set, use it otherwise
         //arbitrarily choose the first connection as current
         for (let i = 0; i < conns.length; i++) {
-            Log(TAG, "c:" + JSON.stringify(conns[i]));
+            Logger.Log(TAG, "c:" + JSON.stringify(conns[i]));
             if (conns[i]['is-default'] == true) {
                 return conns[i];
             }
@@ -170,7 +170,7 @@ class Login {
                 continue;
             }
 
-            Log(TAG, `key: ${k}`);
+            Logger.Log(TAG, `key: ${k}`);
             let $elem = document.getElementById(k);
             $elem.value = conn[k];
         }
@@ -217,7 +217,7 @@ class Login {
         if (await this.ping(conn) == 'ok') {
             Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
             let id = await this.connectionDb.save(conn);
-            Log(TAG, `saved to ${id}`);
+            Logger.Log(TAG, `saved to ${id}`);
 
             //set agent version for the rest of web app
             let response = await Utils.fetch(Constants.URL + '/about', false);
@@ -235,7 +235,7 @@ class Login {
 
                 res = await res.json();
 
-                Log(TAG, JSON.stringify(res));
+                Logger.Log(TAG, JSON.stringify(res));
 
                 //todo: what happens if this is not OK?
                 if (res.status == "ok") {
@@ -261,7 +261,7 @@ class Login {
         }
 
         let s = await this.ping(conn);
-        Log(TAG, s);
+        Logger.Log(TAG, s);
 
         if (s == 'ok') {
             this.showSuccess();

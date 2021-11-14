@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { Stream } from './stream.js'
@@ -31,7 +31,7 @@ const TAG = "table-contents"
 
 class TableContents {
     constructor(sessionId) {
-        Log(TAG, `sessionId: ${sessionId}`)
+        Logger.Log(TAG, `sessionId: ${sessionId}`)
 
         this.sessionId = sessionId
         this.init()
@@ -44,7 +44,7 @@ class TableContents {
         this.rowAdder.setSessionId(this.sessionId);
         this.tableInfo.setSessionId(this.sessionId);
 
-        Log(TAG, `sessionId: ${sessionId} db: ${db}`)
+        Logger.Log(TAG, `sessionId: ${sessionId} db: ${db}`)
     }
 
     async init() {
@@ -78,7 +78,7 @@ class TableContents {
 
     initSubscribers() {
         PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
-            Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
+            Logger.Log(TAG, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
             Err.handle(err);
         });
 
@@ -108,7 +108,7 @@ class TableContents {
         });
 
         PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
-            Log(TAG, Constants.CELL_EDITED);
+            Logger.Log(TAG, Constants.CELL_EDITED);
             await this.handleCellEdit(data);
         });
     }
@@ -133,7 +133,7 @@ class TableContents {
         })
 
         this.$tableContents.addEventListener('click', async (e) => {
-            Log(TAG, "clicked");
+            Logger.Log(TAG, "clicked");
             let target = event.target;
             if (!target.classList.contains('fk-icon')) {
                 return
@@ -141,7 +141,7 @@ class TableContents {
 
             let value = target.dataset.value;
 
-            Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
+            Logger.Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
             PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
             await this.showFkRef(target.dataset.table, target.dataset.column, value)
             this.stack.push(target.dataset.table, target.dataset.column, value)
@@ -165,7 +165,7 @@ class TableContents {
     }
 
     async handleSort(data) {
-        Log(TAG, JSON.stringify(data));
+        Logger.Log(TAG, JSON.stringify(data));
         this.sortColumn = data.column;
         this.sortOrder = data.order;
 
@@ -177,7 +177,7 @@ class TableContents {
     }
 
     async handleCellEdit(data) {
-        Log(TAG, JSON.stringify(data));
+        Logger.Log(TAG, JSON.stringify(data));
         let query = `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
                     where \`${data.key.name}\` = '${data.key.value}'`;
@@ -241,7 +241,7 @@ class TableContents {
                              '${this.$searchText.value}'`;
         }
 
-        Log(TAG, this.query);
+        Logger.Log(TAG, this.query);
 
         const f = async (query) => {
             let res = await this.showContents(query, this.fkMap);
@@ -267,7 +267,7 @@ class TableContents {
     async show(table) {
         this.table = table
 
-        Log(TAG, `Displaying ${table}`)
+        Logger.Log(TAG, `Displaying ${table}`)
 
         this.stack.reset()
         this.stack.push(this.table)
@@ -284,7 +284,7 @@ class TableContents {
             return res;
         }
 
-        Log(TAG, `${this.sortColumn}:${this.sortOrder}`);
+        Logger.Log(TAG, `${this.sortColumn}:${this.sortOrder}`);
         Pager.init(this.query, f, this.sortColumn, this.sortOrder);
     }
 
@@ -388,7 +388,7 @@ class TableContents {
     }
 
     async navigate(e) {
-        Log(TAG, JSON.stringify(e))
+        Logger.Log(TAG, JSON.stringify(e))
         PubSub.publish(Constants.TABLE_CHANGED, {table: e.table});
 
         switch (e.type) {
@@ -411,7 +411,7 @@ class TableContents {
                 await this.search()
                 break
         }
-        Log(TAG, "Done navigate")
+        Logger.Log(TAG, "Done navigate")
     }
 }
 

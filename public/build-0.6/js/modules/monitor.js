@@ -1,6 +1,6 @@
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 
 const TAG = "monitor"
 class Monitor {

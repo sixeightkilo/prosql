@@ -7,25 +7,48 @@
         //'query-finder',
     ];
 
-    function Log(tag, str, port = null) {
-        //if (!ENABLED.has(tag)) {
-            //return
-        //}
-        //
-        if (DISABLED.includes(tag)) {
-            return;
+    //workers do not support console.log. How to debug ? 
+    // We send a message to the module that initiated worker and 
+    // have it print the debug log
+    // But sending message requires port which is available only in 
+    // worker. How to use a common logger for entire system?
+    // We create static "Log" method which can use used for all code that 
+    // does not get directly called from worker. For any code that gets
+    // called from worker we use the "log" method.
+
+    class Logger {
+        constructor(port = null) {
+            this.port = port;
         }
 
-        if (tag == "worker") {
-            port.postMessage(`${tag}: ${str}`);
-            return
+        log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
+
+            if (this.port) {
+                this.port.postMessage(`${tag}: ${str}`);
+                return
+            }
+
+            Logger.print(tag, str);
         }
 
-        let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
-        let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
+        static Log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
 
-        let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
-        console.log(o);
+            Logger.print(tag, str);
+        }
+
+        static print(tag, str) {
+            let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
+            let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
+
+            let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
+            console.log(o);
+        }
     }
 
     class Err {
@@ -121,7 +144,7 @@
                     headers: hdrs
                 });
 
-                Log(TAG$3, response);
+                Logger.Log(TAG$3, response);
 
                 let json = await response.json();
 
@@ -131,7 +154,7 @@
 
                 return json
             } catch (e) {
-                Log(TAG$3, e);
+                Logger.Log(TAG$3, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -202,7 +225,7 @@
         }
 
         static showNoData() {
-            Log(TAG$3, "No data");
+            Logger.Log(TAG$3, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -435,7 +458,7 @@
         }
 
         static get CONN_DB_VERSION() {
-            return 3
+            return 4
         }
 
         static get INIT_PROGRESS() {
@@ -458,7 +481,8 @@
 
     const TAG$2 = "base-db";
     class BaseDB {
-        constructor(options) {
+        constructor(logger, options) {
+            this.logger = logger;
             this.version = options.version;
             this.dbName = options.dbName;
         }
@@ -467,13 +491,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        Log(TAG$2, "open.onsuccess");
+                        this.logger.log(TAG$2, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        Log(TAG$2, e.target.error);
+                        this.logger.log(TAG$2, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -494,7 +518,7 @@
                 };
 
                 request.onerror = (e) => {
-                    Log(TAG$2, e.target.error);
+                    this.logger.log(TAG$2, e.target.error);
                     resolve(-1);
                 };
             })
@@ -511,7 +535,7 @@
                 };
 
                 request.onerror = (e) => {
-                    Log(TAG$2, e.target.error);
+                    this.logger.log(TAG$2, e.target.error);
                     resolve(-1);
                 };
             })
@@ -574,14 +598,15 @@
     const DB_NAME = "connections";
 
     class ConnectionDB extends BaseDB {
-        constructor(options) {
+        constructor(logger, options) {
             options.dbName = DB_NAME;
-            super(options);
+            super(logger, options);
+            this.logger = logger;
             this.store = "connections";
         }
 
         onUpgrade(e) {
-            Log(TAG$1, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$1, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -600,6 +625,13 @@
 
                 store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
                 store.createIndex(DB_ID_INDEX, ["db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 4) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "host", "port", "db"], { unique: true });
             }
         }
 
@@ -651,7 +683,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                Log(TAG$1, e.message);
+                this.logger.log(TAG$1, e.message);
             }
         }
 
@@ -725,20 +757,19 @@
         }
     }
 
-    const TAG = "worker";
+    const TAG = "main";
     const URL = '/browser-api/sqlite';
 
     class Worker {
         constructor(port) {
             this.port = port;
+            this.logger = new Logger(this.port);
         }
 
         async init() {
-            Log(TAG, "worker init", this.port);
-
             let res = await Utils.fetch(Constants.URL + '/about', false);
             if (res.status == "error") {
-                Log(TAG, JSON.stringify(res), this.port);
+                this.logger.log(TAG, JSON.stringify(res));
                 return
             }
 
@@ -748,9 +779,9 @@
                 db: res.data['device-id']
             });
 
-            Log(TAG, JSON.stringify(res), this.port);
+            this.logger.log(TAG, JSON.stringify(res));
 
-    		this.connectionDb = new ConnectionDB({version: Constants.CONN_DB_VERSION});
+    		this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
     		await this.connectionDb.open();
 
             this.syncUp();
@@ -774,18 +805,18 @@
                         }
                     });
 
-                    Log(TAG, "Syncing2: " + JSON.stringify(conns[i]), this.port);
+                    this.logger.log(TAG, "Syncing2: " + JSON.stringify(conns[i]));
 
                     res = await res.json();
-                    Log(TAG, JSON.stringify(res), this.port);
+                    this.logger.log(TAG, JSON.stringify(res));
 
                     if (res.status == "ok") {
                         conns[i].db_id = res.data.db_id;
-                        Log(TAG, `syncing: ${JSON.stringify(conns[i])}`, this.port);
+                        this.logger.log(TAG, `syncing: ${JSON.stringify(conns[i])}`);
                         try {
                             this.connectionDb.sync(conns[i]);
                         } catch (e) {
-                            Log(TAG, e, this.port);
+                            this.logger.log(TAG, e, this.port);
                         }
                     }
                 }

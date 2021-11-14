@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { BaseDB } from './base-db.js'
 import { Utils } from './utils.js'
@@ -9,14 +9,15 @@ const DB_ID_INDEX = "db-id-index";
 const DB_NAME = "connections";
 
 class ConnectionDB extends BaseDB {
-    constructor(options) {
+    constructor(logger, options) {
         options.dbName = DB_NAME;
-        super(options);
+        super(logger, options);
+        this.logger = logger;
         this.store = "connections";
     }
 
     onUpgrade(e) {
-        Log(TAG, `open.onupgradeneeded: ${e.oldVersion}`);
+        this.logger.log(TAG, `open.onupgradeneeded: ${e.oldVersion}`);
         if (e.oldVersion < 1) {
             let store = e.currentTarget.result.createObjectStore(
                 this.store, { keyPath: 'id', autoIncrement: true });
@@ -35,6 +36,13 @@ class ConnectionDB extends BaseDB {
 
             store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
             store.createIndex(DB_ID_INDEX, ["db_id"], {unique: true});
+        }
+
+        if (e.oldVersion < 4) {
+            let store = e.currentTarget.transaction.objectStore(this.store);
+            store.deleteIndex(CONNECTION_INDEX);
+
+            store.createIndex(CONNECTION_INDEX, ["name", "user", "host", "port", "db"], { unique: true });
         }
     }
 
@@ -86,7 +94,7 @@ class ConnectionDB extends BaseDB {
             return await super.save(this.store, conn);
 
         } catch (e) {
-            Log(TAG, e.message);
+            this.logger.log(TAG, e.message);
         }
     }
 

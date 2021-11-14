@@ -1,9 +1,10 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 
 const TAG = "base-db"
 class BaseDB {
-    constructor(options) {
+    constructor(logger, options) {
+        this.logger = logger;
         this.version = options.version;
         this.dbName = options.dbName;
     }
@@ -12,13 +13,13 @@ class BaseDB {
         return new Promise((resolve, reject) => {
             let req = indexedDB.open(this.dbName, this.version);
                 req.onsuccess = (e) => {
-                    Log(TAG, "open.onsuccess");
+                    this.logger.log(TAG, "open.onsuccess");
                     this.db = req.result
                     resolve(0)
                 };
 
                 req.onerror = (e) => {
-                    Log(TAG, e.target.error);
+                    this.logger.log(TAG, e.target.error);
                     reject(e.target.errorCode);
                 };
 
@@ -39,7 +40,7 @@ class BaseDB {
             };
 
             request.onerror = (e) => {
-                Log(TAG, e.target.error);
+                this.logger.log(TAG, e.target.error);
                 resolve(-1);
             };
         })
@@ -56,7 +57,7 @@ class BaseDB {
             };
 
             request.onerror = (e) => {
-                Log(TAG, e.target.error);
+                this.logger.log(TAG, e.target.error);
                 resolve(-1);
             };
         })

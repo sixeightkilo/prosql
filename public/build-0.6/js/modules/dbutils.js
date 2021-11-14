@@ -1,5 +1,5 @@
 import { Err } from './error.js'
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
 import { Stream } from './stream.js'
@@ -18,7 +18,7 @@ class DbUtils {
 
         let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params))
         if (json.status == 'error') {
-            Log(TAG, JSON.stringify(json))
+            Logger.Log(TAG, JSON.stringify(json))
             return []
         }
 
@@ -36,11 +36,11 @@ class DbUtils {
         do {
             json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params))
             if (json.status == "error") {
-                Log(TAG, JSON.stringify(json))
+                Logger.Log(TAG, JSON.stringify(json))
                 return []
             }
 
-            Log(TAG, JSON.stringify(json))
+            Logger.Log(TAG, JSON.stringify(json))
             if (!json.data) {
                 //if batch size == num of rows in query result, then we might get json.data = null
                 //but we should still return results fetched till this point
@@ -56,7 +56,7 @@ class DbUtils {
     static async login(creds) {
         let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds))
         if (json.status == 'error') {
-            Log(TAG, JSON.stringify(json))
+            Logger.Log(TAG, JSON.stringify(json))
             return ""
         }
 
@@ -102,7 +102,7 @@ class DbUtils {
 
     async exportResults(q) {
         let cursorId = await DbUtils.fetchCursorId(this.sessionId, q)
-        Log(TAG, `cursorId: ${cursorId}`);
+        Logger.Log(TAG, `cursorId: ${cursorId}`);
         let params = {
             'session-id': this.sessionId,
             'cursor-id': cursorId,
@@ -118,7 +118,7 @@ class DbUtils {
             buttons: true,
             cancel: () => {
                 DbUtils.cancel(this.sessionId, cursorId)
-                Log(TAG, `Cancelled ${cursorId}`);
+                Logger.Log(TAG, `Cancelled ${cursorId}`);
             }
         });
 

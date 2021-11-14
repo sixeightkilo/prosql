@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { BaseDB } from './base-db.js'
 
@@ -9,16 +9,17 @@ const TERM_INDEX = "term-index";
 const TAG_INDEX = "tag-index";
 
 class QueryDB extends BaseDB {
-    constructor(options) {
+    constructor(logger, options) {
         options.dbName = "queries";
-        super(options);
+        super(logger, options);
+        this.logger = logger;
         this.store = "queries";
         this.searchIndex = "search-index";
         this.tagIndex = "tag-index";
     }
 
     onUpgrade(evt) {
-        Log(TAG, "open.onupgradeneeded");
+        this.logger.log(TAG, "open.onupgradeneeded");
         let store = evt.target.result.createObjectStore(
             this.store, { keyPath: 'id', autoIncrement: true });
         store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
@@ -44,7 +45,7 @@ class QueryDB extends BaseDB {
             //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
             terms = [...new Set(terms)];
 
-            Log(TAG, JSON.stringify(terms));
+            this.logger.log(TAG, JSON.stringify(terms));
             let id = -1;
             try {
                 //apppend timestamp if required
@@ -63,7 +64,7 @@ class QueryDB extends BaseDB {
 
                 resolve(id);
             } catch (e) {
-                Log(TAG, `error: ${JSON.stringify(e.message)}`);
+                this.logger.log(TAG, `error: ${JSON.stringify(e.message)}`);
                 reject(e.message);
             }
         })
@@ -93,7 +94,7 @@ class QueryDB extends BaseDB {
 
                 //update tag
                 rec['queries'].push(id);
-                Log(TAG, JSON.stringify(rec));
+                this.logger.log(TAG, JSON.stringify(rec));
                 super.put(this.searchIndex, {
                     id: rec.id,
                     term: t,
@@ -101,7 +102,7 @@ class QueryDB extends BaseDB {
                 });
 
             } catch (e) {
-                Log(TAG, `error: e.message`);
+                this.logger.log(TAG, `error: e.message`);
             }
         }
     }
@@ -116,7 +117,7 @@ class QueryDB extends BaseDB {
             index.openCursor(key).onsuccess = (ev) => {
                 let cursor = ev.target.result;
                 if (cursor) {
-                    Log(TAG, JSON.stringify(cursor.value));
+                    this.logger.log(TAG, JSON.stringify(cursor.value));
                     resolve(cursor.value);
                     return;
                 }
@@ -150,7 +151,7 @@ class QueryDB extends BaseDB {
 
                 //update tag
                 rec['queries'].push(id);
-                Log(TAG, JSON.stringify(rec));
+                this.logger.log(TAG, JSON.stringify(rec));
                 super.put(this.tagIndex, {
                     id: rec.id,
                     tag: t,
@@ -158,7 +159,7 @@ class QueryDB extends BaseDB {
                 });
 
             } catch (e) {
-                Log(TAG, `error: e.message`);
+                this.logger.log(TAG, `error: e.message`);
             }
         }
     }
@@ -173,7 +174,7 @@ class QueryDB extends BaseDB {
             index.openCursor(key).onsuccess = (ev) => {
                 let cursor = ev.target.result;
                 if (cursor) {
-                    Log(TAG, JSON.stringify(cursor.value));
+                    this.logger.log(TAG, JSON.stringify(cursor.value));
                     resolve(cursor.value);
                     return;
                 }
@@ -193,7 +194,7 @@ class QueryDB extends BaseDB {
             index.openCursor(key).onsuccess = (ev) => {
                 let cursor = ev.target.result;
                 if (cursor) {
-                    Log(TAG, JSON.stringify(cursor.value));
+                    this.logger.log(TAG, JSON.stringify(cursor.value));
                     resolve(cursor.value);
                     return;
                 }
@@ -243,7 +244,7 @@ class QueryDB extends BaseDB {
 
         let result = [];
         if (start || end) {
-            Log(TAG, 'filtering');
+            this.logger.log(TAG, 'filtering');
             result = await this.searchByCreatedAt(start, end);
 
             if (result.length == 0) {

@@ -1,4 +1,4 @@
-import { Log } from './modules/logger.js'
+import { Logger } from './modules/logger.js'
 import { Err } from './modules/error.js'
 import { Utils } from './modules/utils.js'
 import { DbUtils } from './modules/dbutils.js'
@@ -22,7 +22,7 @@ class Content {
 
     async initHandlers() {
         PubSub.subscribe(Constants.DB_CHANGED, async (data) => {
-            Log(TAG, "Db changed");
+            Logger.Log(TAG, "Db changed");
             this.creds.db = data.db
             Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds))
 
@@ -54,11 +54,11 @@ class Content {
             return
         }
 
-        Log(TAG, JSON.stringify(creds));
+        Logger.Log(TAG, JSON.stringify(creds));
 
         this.creds = JSON.parse(creds)
         this.sessionId = await DbUtils.login(this.creds)
-        Log(TAG, this.sessionId)
+        Logger.Log(TAG, this.sessionId)
 
         this.tableContents = new TableContents(this.sessionId)
         this.tables = new Tables(this.sessionId)

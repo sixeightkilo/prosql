@@ -1,7 +1,7 @@
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
 import { Monitor } from './modules/monitor.js'
-import { Log } from './modules/logger.js'
+import { Logger } from './modules/logger.js'
 import { Tabs } from './modules/tabs.js'
 
 const TAG = "install"
@@ -11,7 +11,7 @@ const REDIRECT_DELAY = 2000;
 class Install {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
-            Log(TAG, 'DOMContentLoaded');
+            Logger.Log(TAG, 'DOMContentLoaded');
             this.$card = document.querySelector('.card');
             this.$cardText = this.$card.querySelector('.card-header-title');
             this.$cardIcon = this.$card.querySelector('i');
