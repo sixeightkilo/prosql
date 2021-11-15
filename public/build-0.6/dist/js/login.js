@@ -792,11 +792,30 @@
         }
     }
 
+    //just a wrapper over connectiondb so we dont have to deal with from/to stuff in 
+    //client
+    class Connections extends ConnectionDB {
+        constructor(logger, options) {
+            super(logger, options);
+            this.keys = ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default"]);
+        }
+
+        async getAll() {
+            return ConnectionDB.fromDbArray(await super.getAll(this.keys));
+        }
+
+        async get(id) {
+                return ConnectionDB.fromDb(await super.get(id, this.keys));
+        }
+
+        async save(conn) {
+            return await(super.save(ConnectionDB.toDb(conn)));
+        }
+    }
+
     const TAG = 'login';
     class Login {
         constructor() {
-            this.keys = ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default"]);
-
             document.addEventListener('DOMContentLoaded', async () => {
                 await this.init();
 
@@ -823,23 +842,52 @@
             this.$db = document.getElementById('db');
             this.$isDefault = document.getElementById('is-default');
             this.version = document.getElementById('version').val;
+
+            //debug only
+            document.getElementById('debug-add-conns').addEventListener('click', async () => {
+                let conns = [
+                    {
+                        'name': 'aws-stag',
+                        'user': 'server',
+                        'pass': 'dev-server',
+                        'host': '127.0.0.1',
+                        'port': '3308',
+                        'db': 'pankaj-05-24-generico',
+                        'is-default': true
+                    },
+                    {
+                        'name': 'aws-rw',
+                        'user': 'admin',
+                        'pass': 'dev-server',
+                        'host': '127.0.0.1',
+                        'port': '3309',
+                        'db': 'prod2-generico',
+                        'is-default': true
+                    },
+                ];
+
+                for (let i = 0; i < conns.length; i++) {
+                    let id = await this.connections.save(conns[i]);
+                    Logger.Log(`saved to ${id}`);
+                }
+            });
         }
 
         async init() {
             //sync worker
             const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.version}`);
-    		worker.port.onmessage = (e) => {
-    			Logger.Log("worker", e.data);
-    		};
+            worker.port.onmessage = (e) => {
+                Logger.Log("worker", e.data);
+            };
 
     		this.initDom();
 
-    		this.connectionDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
-    		await this.connectionDb.open();
+    		this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
+    		await this.connections.open();
 
             this.initHandlers();
             
-            let conns = ConnectionDB.fromDbArray(await this.connectionDb.getAll(this.keys));
+            let conns = await this.connections.getAll();
             Logger.Log(TAG, JSON.stringify(conns));
 
             if (conns.length == 0) {
@@ -871,7 +919,7 @@
 
                 Logger.Log(TAG, `${target.dataset.id}`);
                 let connId = parseInt(target.dataset.id);
-                let conn = ConnectionDB.fromDb(await this.connectionDb.get(connId, this.keys));
+                let conn = await this.connections.get(connId);
                 this.setConn(conn);
                 Logger.Log(TAG, JSON.stringify(conn));
                 this.testConn();
@@ -885,7 +933,7 @@
 
                 Logger.Log(TAG, `${target.dataset.id}`);
                 let connId = parseInt(target.dataset.id);
-                await this.connectionDb.del(connId);
+                await this.connections.del(connId);
                 this.initConns();
             });
 
@@ -902,7 +950,7 @@
         async initConns() {
             document.querySelector('#conn-list').replaceChildren();
 
-            let conns = ConnectionDB.fromDbArray(await this.connectionDb.getAll(this.keys));
+            let conns = await this.connections.getAll();
 
             if (conns.length == 0) {
                 return;
@@ -1005,8 +1053,8 @@
 
             if (await this.ping(conn) == 'ok') {
                 Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
-                let id = await this.connectionDb.save(ConnectionDB.toDb(conn));
-                Logger.Log(TAG, `${JSON.stringify(ConnectionDB.toDb(conn))} saved to ${id}`);
+                let id = await this.connections.save(conn);
+                Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
 
                 //set agent version for the rest of web app
                 let response = await Utils.fetch(Constants.URL + '/about', false);
