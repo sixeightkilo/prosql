@@ -263,8 +263,8 @@
     	}
 
         static getTimestamp() {
-            let d = new Date();
-            return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()} ${d.getHours()}:${d.getMinutes()}:${d.getSeconds()}`;
+            let d = (new Date()).toISOString();
+            return d.replace(/T/, ' ').replace(/\..*$/, '');
         }
     }
 
@@ -790,6 +790,27 @@
                 };
             })
         }
+
+        async findByDbId(id) {
+            return new Promise((resolve, reject) => {
+                this.logger.log(TAG$1, "findByDbId");
+
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(DB_ID_INDEX);
+
+                let request = index.get(IDBKeyRange.only([id]));
+                request.onsuccess = (e) => {
+                    this.logger.log(TAG$1, JSON.stringify(request.result));
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$1, "error");
+                    resolve(e.target.error);
+                };
+            })
+        }
     }
 
     //just a wrapper over connectiondb so we dont have to deal with from/to stuff in 
@@ -841,27 +862,18 @@
             this.$port = document.getElementById('port');
             this.$db = document.getElementById('db');
             this.$isDefault = document.getElementById('is-default');
-            this.version = document.getElementById('version').val;
+            this.$version = document.getElementById('version');
 
             //debug only
             document.getElementById('debug-add-conns').addEventListener('click', async () => {
                 let conns = [
                     {
-                        'name': 'aws-stag',
+                        'name': Utils.uuid(),
                         'user': 'server',
                         'pass': 'dev-server',
                         'host': '127.0.0.1',
                         'port': '3308',
                         'db': 'pankaj-05-24-generico',
-                        'is-default': true
-                    },
-                    {
-                        'name': 'aws-rw',
-                        'user': 'admin',
-                        'pass': 'dev-server',
-                        'host': '127.0.0.1',
-                        'port': '3309',
-                        'db': 'prod2-generico',
                         'is-default': true
                     },
                 ];
@@ -874,13 +886,13 @@
         }
 
         async init() {
+    		this.initDom();
+
             //sync worker
-            const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.version}`);
+            const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.$version.val}`);
             worker.port.onmessage = (e) => {
                 Logger.Log("worker", e.data);
             };
-
-    		this.initDom();
 
     		this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
     		await this.connections.open();
@@ -920,8 +932,8 @@
                 Logger.Log(TAG, `${target.dataset.id}`);
                 let connId = parseInt(target.dataset.id);
                 let conn = await this.connections.get(connId);
+                Logger.Log(TAG, "setconn: " + JSON.stringify(conn));
                 this.setConn(conn);
-                Logger.Log(TAG, JSON.stringify(conn));
                 this.testConn();
             });
 
@@ -998,6 +1010,8 @@
         }
 
         setConn(conn) {
+            this.reset();
+
             for (let k in conn) {
                 if (k == "id") {
                     continue;
@@ -1014,8 +1028,21 @@
 
                 Logger.Log(TAG, `key: ${k}`);
                 let $elem = document.getElementById(k);
-                $elem.value = conn[k];
+                //sometimes password can be undefined
+                if (conn[k]) {
+                    $elem.value = conn[k];
+                }
             }
+        }
+
+        reset() {
+            this.$name.value = '';
+            this.$user.value = '';
+            this.$pass.value = '';
+            this.$host.value = '';
+            this.$port.value = '';
+            this.$db.value = '';
+            this.$isDefault.checked = false;
         }
 
         validate(conn) {

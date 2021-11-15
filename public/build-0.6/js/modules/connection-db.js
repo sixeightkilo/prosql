@@ -140,6 +140,27 @@ class ConnectionDB extends BaseDB {
             };
         })
     }
+
+    async findByDbId(id) {
+        return new Promise((resolve, reject) => {
+            this.logger.log(TAG, "findByDbId");
+
+            let transaction = this.db.transaction(this.store);
+            let objectStore = transaction.objectStore(this.store);
+            let index = objectStore.index(DB_ID_INDEX);
+
+            let request = index.get(IDBKeyRange.only([id]))
+            request.onsuccess = (e) => {
+                this.logger.log(TAG, JSON.stringify(request.result));
+                resolve(request.result);
+            };
+
+            request.onerror = (e) => {
+                this.logger.log(TAG, "error");
+                resolve(e.target.error);
+            };
+        })
+    }
 } 
 
 export { ConnectionDB }
