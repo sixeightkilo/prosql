@@ -31,8 +31,9 @@ class Worker {
 		this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
 		await this.connectionDb.open();
 
-        this.logger.log(TAG, "Starting syncup timer");
+        this.syncUp();
 
+        this.logger.log(TAG, "Starting syncup timer");
         setInterval(() => {
             this.syncUp();
         }, SYNCUP_INTERVAL);
