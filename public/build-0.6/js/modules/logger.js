@@ -1,3 +1,4 @@
+import { Constants } from './constants.js'
 const TAGS = [
     'query-finder',
     'query-history',
@@ -33,7 +34,10 @@ class Logger {
         }
 
         if (this.port) {
-            this.port.postMessage(`${tag}: ${str}`)
+            this.port.postMessage({
+                type: Constants.DEBUG_LOG,
+                payload: `${tag}: ${str}`
+            })
             return
         }
 

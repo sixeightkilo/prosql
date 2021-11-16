@@ -207,5 +207,12 @@ class Constants {
         return "update-progress"
     }
 
+    static get DEBUG_LOG() {
+        return "worker.debug-log"
+    }
+
+    static get NEW_CONNECTION() {
+        return "worker.new-connection"
+    }
 }
 export { Constants }

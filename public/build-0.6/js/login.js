@@ -59,27 +59,33 @@ class Login {
 		this.initDom();
 
         //sync worker
-        const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.$version.val}`);
+        Logger.Log(TAG, `ver: ${this.$version.value}`);
+        const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.$version.value}`);
         worker.port.onmessage = (e) => {
-            Logger.Log("worker", e.data);
+            switch (e.data.type) {
+                case Constants.DEBUG_LOG:
+                    Logger.Log("worker", e.data.payload);
+                    break;
+
+                case Constants.NEW_CONNECTION:
+                    this.showConns();
+                    break;
+            }
         }
 
-		this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
+        this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
 		await this.connections.open();
 
         this.initHandlers();
-        
+        this.showConns();
+    }
+
+    async showConns() {
         let conns = await this.connections.getAll();
         Logger.Log(TAG, JSON.stringify(conns));
-
-        if (conns.length == 0) {
-            return;
-        }
-
         this.showRecents(conns);
         let conn = this.getDefault(conns);
         this.setConn(conn);
-        this.testConn();
     }
 
     initHandlers() {
@@ -116,7 +122,7 @@ class Login {
             Logger.Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
             await this.connections.del(connId);
-            this.initConns();
+            this.showConns();
         });
 
         this.$addNew.addEventListener('click', () => {
@@ -127,21 +133,6 @@ class Login {
             this.$port.value = '';
             this.$db.value = '';
         })
-    }
-
-    async initConns() {
-        document.querySelector('#conn-list').replaceChildren();
-
-        let conns = await this.connections.getAll();
-
-        if (conns.length == 0) {
-            return;
-        }
-
-        this.showRecents(conns);
-        let conn = this.getDefault(conns);
-        this.setConn(conn);
-        this.testConn();
     }
 
     getDefault(conns) {
@@ -158,8 +149,9 @@ class Login {
     }
 
     async showRecents(conns) {
-        let list = document.getElementById('conn-list');
+        let $list = document.getElementById('conn-list');
         let templ = document.getElementById('conn-template').innerHTML;
+        $list.replaceChildren();
 
         conns.forEach((c) => {
             let item = "No name";
@@ -175,7 +167,7 @@ class Login {
             if (c['is-default'] == true) {
                 n.querySelector('.conn-container').classList.add('highlight');
             }
-            list.appendChild(n);
+            $list.appendChild(n);
         })
     }
 

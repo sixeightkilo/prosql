@@ -12,6 +12,7 @@ class Worker {
     constructor(port) {
         this.port = port;
         this.logger = new Logger(this.port);
+        this.logger.log(TAG, "version 10");
     }
 
     async init() {
@@ -65,6 +66,12 @@ class Worker {
 
                     let id = await this.connectionDb.save(conns[i]);
                     this.logger.log(TAG, `saved to : ${id}`);
+                    if (id >= 1) {
+                        this.port.postMessage({
+                            type: Constants.NEW_CONNECTION,
+                            payload: id
+                        })
+                    }
                 }
             }
         }

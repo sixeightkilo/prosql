@@ -45,229 +45,6 @@
         }
     }
 
-    const DISABLED = [
-        'grid-resizer',
-        'query-db',
-        //'query-finder',
-    ];
-
-    //workers do not support console.log. How to debug ? 
-    // We send a message to the module that initiated worker and 
-    // have it print the debug log
-    // But sending message requires port which is available only in 
-    // worker. How to use a common logger for entire system?
-    // We create static "Log" method which can use used for all code that 
-    // does not get directly called from worker. For any code that gets
-    // called from worker we use the "log" method.
-
-    class Logger {
-        constructor(port = null) {
-            this.port = port;
-        }
-
-        log(tag, str) {
-            if (DISABLED.includes(tag)) {
-                return;
-            }
-
-            if (this.port) {
-                this.port.postMessage(`${tag}: ${str}`);
-                return
-            }
-
-            Logger.print(tag, str);
-        }
-
-        static Log(tag, str) {
-            if (DISABLED.includes(tag)) {
-                return;
-            }
-
-            Logger.print(tag, str);
-        }
-
-        static print(tag, str) {
-            let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
-            let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
-
-            let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
-            console.log(o);
-        }
-    }
-
-    const TAG$3 = "utils";
-    class Utils {
-        static saveToSession(key, val) {
-            window.sessionStorage.setItem(key, val);
-        }
-
-        static getFromSession(key) {
-            return window.sessionStorage.getItem(key)
-        }
-
-
-        static saveToLocalStorage(key, value) {
-            window.localStorage.setItem(key, value);
-        }
-
-        static getFromLocalStorage(key) {
-            return window.localStorage.getItem(key) ?? null;
-        }
-
-    	static processTemplate(templ, data) {
-    		var re = new RegExp(/{(.*?)}/g);
-    		templ = templ.replace(re, function(match, p1) {
-    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
-    				return data[p1];
-    			} else {
-    				return match;
-    			}
-    		});
-    		return templ;
-    	}
-
-    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
-    	static generateNode(templ, data) {
-            templ = Utils.processTemplate(templ, data);	
-            let template = document.createElement('template');
-            template.innerHTML = templ.trim();
-            return template.content
-        }
-
-        static async fetch(url, handleError = true, headers = {}) {
-            try {
-                let hdrs = {
-                    'X-Request-ID': Utils.uuid()
-                };
-                hdrs = {...hdrs, ...headers};
-                let response = await fetch(url, {
-                    headers: hdrs
-                });
-
-                Logger.Log(TAG$3, response);
-
-                let json = await response.json();
-
-                if (json.status == 'error') {
-                    throw json
-                }
-
-                return json
-            } catch (e) {
-                Logger.Log(TAG$3, e);
-                let res = {
-                    'status' : 'error',
-                    'data': null,
-                };
-
-                if (e instanceof TypeError) {
-                    if (!handleError) {
-                        res.msg = Err.ERR_NO_AGENT;
-                        return res;
-                    }
-                    //user must install agent
-                    window.location = '/install';
-                    return;
-                }
-
-                res.msg = e.msg;
-                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
-                    //user must login
-                    window.location = '/login';
-                    return;
-                }
-
-                //let client handle this
-                if (!handleError) {
-                    return res
-                }
-
-                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
-                    //let caller handle this too
-                    return res
-                }
-
-                //common error handling
-                if (res.msg) {
-                    //normal error. Display to user
-                    alert(res.msg);
-                    return res
-                }
-            }
-        }
-
-        static async setOptions($ctx, values, def) {
-            $ctx.replaceChildren();
-
-            let $ot = document.getElementById('option-template');
-            let ot = $ot.innerHTML;
-
-            values.forEach((v) => {
-                let h = Utils.generateNode(ot, {value: v});
-                $ctx.append(h);
-            });
-
-            $ctx.value = def;
-        }
-
-        static showAlert(msg, t) {
-            let $alrt = document.getElementById('alert');
-            let $msg = $alrt.querySelector('.msg');
-            $msg.innerHTML = msg;
-            $alrt.style.display = 'block';
-
-            let bodyDims = document.querySelector('body').getBoundingClientRect();
-            $alrt.style.left = (bodyDims.width / 2) + 'px';
-
-            setTimeout(() => {
-                $alrt.style.display = 'none';
-            }, t);
-        }
-
-        static showNoData() {
-            Logger.Log(TAG$3, "No data");
-        }
-
-        //https://gist.github.com/gordonbrander/2230317
-        static uuid() {
-            // Math.random should be unique because of its seeding algorithm.
-            // Convert it to base 36 (numbers + letters), and grab the first 9 characters
-            // after the decimal.
-            return '_' + Math.random().toString(36).substr(2, 9);
-        };
-
-        static getOffset(el) {
-            const rect = el.getBoundingClientRect();
-            return {
-                left: rect.left + window.scrollX,
-                top: rect.top + window.scrollY,
-                width: rect.width,
-                height: rect.height,
-            };
-        }
-
-       static extractColumns(arr) {
-            let cols = [];
-            arr.forEach((e) => {
-                cols.push(e[1]);
-            });
-
-            return cols
-        }
-
-        static truncate(s, max) {
-    		if (s.length > max) {
-    			return s.substring(0, max) + '...';
-    		}
-    		return s;
-    	}
-
-        static getTimestamp() {
-            let d = (new Date()).toISOString();
-            return d.replace(/T/, ' ').replace(/\..*$/, '');
-        }
-    }
-
     class Constants {
         //hotkeys
         static get SHIFT_A() {
@@ -477,6 +254,239 @@
             return "update-progress"
         }
 
+        static get DEBUG_LOG() {
+            return "worker.debug-log"
+        }
+
+        static get NEW_CONNECTION() {
+            return "worker.new-connection"
+        }
+    }
+
+    const DISABLED = [
+        'grid-resizer',
+        'query-db',
+        //'query-finder',
+    ];
+
+    //workers do not support console.log. How to debug ? 
+    // We send a message to the module that initiated worker and 
+    // have it print the debug log
+    // But sending message requires port which is available only in 
+    // worker. How to use a common logger for entire system?
+    // We create static "Log" method which can use used for all code that 
+    // does not get directly called from worker. For any code that gets
+    // called from worker we use the "log" method.
+
+    class Logger {
+        constructor(port = null) {
+            this.port = port;
+        }
+
+        log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
+
+            if (this.port) {
+                this.port.postMessage({
+                    type: Constants.DEBUG_LOG,
+                    payload: `${tag}: ${str}`
+                });
+                return
+            }
+
+            Logger.print(tag, str);
+        }
+
+        static Log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
+
+            Logger.print(tag, str);
+        }
+
+        static print(tag, str) {
+            let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
+            let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
+
+            let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
+            console.log(o);
+        }
+    }
+
+    const TAG$3 = "utils";
+    class Utils {
+        static saveToSession(key, val) {
+            window.sessionStorage.setItem(key, val);
+        }
+
+        static getFromSession(key) {
+            return window.sessionStorage.getItem(key)
+        }
+
+
+        static saveToLocalStorage(key, value) {
+            window.localStorage.setItem(key, value);
+        }
+
+        static getFromLocalStorage(key) {
+            return window.localStorage.getItem(key) ?? null;
+        }
+
+    	static processTemplate(templ, data) {
+    		var re = new RegExp(/{(.*?)}/g);
+    		templ = templ.replace(re, function(match, p1) {
+    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
+    				return data[p1];
+    			} else {
+    				return match;
+    			}
+    		});
+    		return templ;
+    	}
+
+    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
+    	static generateNode(templ, data) {
+            templ = Utils.processTemplate(templ, data);	
+            let template = document.createElement('template');
+            template.innerHTML = templ.trim();
+            return template.content
+        }
+
+        static async fetch(url, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let response = await fetch(url, {
+                    headers: hdrs
+                });
+
+                Logger.Log(TAG$3, response);
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$3, e);
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/login';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async setOptions($ctx, values, def) {
+            $ctx.replaceChildren();
+
+            let $ot = document.getElementById('option-template');
+            let ot = $ot.innerHTML;
+
+            values.forEach((v) => {
+                let h = Utils.generateNode(ot, {value: v});
+                $ctx.append(h);
+            });
+
+            $ctx.value = def;
+        }
+
+        static showAlert(msg, t) {
+            let $alrt = document.getElementById('alert');
+            let $msg = $alrt.querySelector('.msg');
+            $msg.innerHTML = msg;
+            $alrt.style.display = 'block';
+
+            let bodyDims = document.querySelector('body').getBoundingClientRect();
+            $alrt.style.left = (bodyDims.width / 2) + 'px';
+
+            setTimeout(() => {
+                $alrt.style.display = 'none';
+            }, t);
+        }
+
+        static showNoData() {
+            Logger.Log(TAG$3, "No data");
+        }
+
+        //https://gist.github.com/gordonbrander/2230317
+        static uuid() {
+            // Math.random should be unique because of its seeding algorithm.
+            // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+            // after the decimal.
+            return '_' + Math.random().toString(36).substr(2, 9);
+        };
+
+        static getOffset(el) {
+            const rect = el.getBoundingClientRect();
+            return {
+                left: rect.left + window.scrollX,
+                top: rect.top + window.scrollY,
+                width: rect.width,
+                height: rect.height,
+            };
+        }
+
+       static extractColumns(arr) {
+            let cols = [];
+            arr.forEach((e) => {
+                cols.push(e[1]);
+            });
+
+            return cols
+        }
+
+        static truncate(s, max) {
+    		if (s.length > max) {
+    			return s.substring(0, max) + '...';
+    		}
+    		return s;
+    	}
+
+        static getTimestamp() {
+            let d = (new Date()).toISOString();
+            return d.replace(/T/, ' ').replace(/\..*$/, '');
+        }
     }
 
     const TAG$2 = "base-db";
@@ -889,27 +899,33 @@
     		this.initDom();
 
             //sync worker
-            const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.$version.val}`);
+            Logger.Log(TAG, `ver: ${this.$version.value}`);
+            const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.$version.value}`);
             worker.port.onmessage = (e) => {
-                Logger.Log("worker", e.data);
+                switch (e.data.type) {
+                    case Constants.DEBUG_LOG:
+                        Logger.Log("worker", e.data.payload);
+                        break;
+
+                    case Constants.NEW_CONNECTION:
+                        this.showConns();
+                        break;
+                }
             };
 
-    		this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
+            this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
     		await this.connections.open();
 
             this.initHandlers();
-            
+            this.showConns();
+        }
+
+        async showConns() {
             let conns = await this.connections.getAll();
             Logger.Log(TAG, JSON.stringify(conns));
-
-            if (conns.length == 0) {
-                return;
-            }
-
             this.showRecents(conns);
             let conn = this.getDefault(conns);
             this.setConn(conn);
-            this.testConn();
         }
 
         initHandlers() {
@@ -946,7 +962,7 @@
                 Logger.Log(TAG, `${target.dataset.id}`);
                 let connId = parseInt(target.dataset.id);
                 await this.connections.del(connId);
-                this.initConns();
+                this.showConns();
             });
 
             this.$addNew.addEventListener('click', () => {
@@ -957,21 +973,6 @@
                 this.$port.value = '';
                 this.$db.value = '';
             });
-        }
-
-        async initConns() {
-            document.querySelector('#conn-list').replaceChildren();
-
-            let conns = await this.connections.getAll();
-
-            if (conns.length == 0) {
-                return;
-            }
-
-            this.showRecents(conns);
-            let conn = this.getDefault(conns);
-            this.setConn(conn);
-            this.testConn();
         }
 
         getDefault(conns) {
@@ -988,8 +989,9 @@
         }
 
         async showRecents(conns) {
-            let list = document.getElementById('conn-list');
+            let $list = document.getElementById('conn-list');
             let templ = document.getElementById('conn-template').innerHTML;
+            $list.replaceChildren();
 
             conns.forEach((c) => {
                 let item = "No name";
@@ -1005,7 +1007,7 @@
                 if (c['is-default'] == true) {
                     n.querySelector('.conn-container').classList.add('highlight');
                 }
-                list.appendChild(n);
+                $list.appendChild(n);
             });
         }
 
