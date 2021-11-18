@@ -871,9 +871,9 @@
                 after: await this.getLastSyncTs()
             });
 
-            this.logger.log(TAG, JSON.stringify(res));
+            this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
             if (res.status == "ok") {
-                let newConnections = false;
+                let updateUI = false;
                 let conns = res.data.connections;
                 //see if we have connections with the remote db_id, otherwise insert
                 for (let i = 0; i < conns.length; i++) {
@@ -882,9 +882,9 @@
                     }
 
                     let c = await this.connectionDb.findByDbId(conns[i].id);
-                    this.logger.log(TAG, `c: ${c}`);
 
-                    if (!c) {
+                    if (c == null) {
+                        this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`);
                         delete conns[i].created_at;
                         delete conns[i].updated_at;
                         delete conns[i].status;
@@ -896,12 +896,16 @@
                         let id = await this.connectionDb.save(conns[i]);
                         this.logger.log(TAG, `saved to : ${id}`);
                         if (id >= 1) {
-                            newConnections = true;
+                            updateUI = true;
                         }
+                    } else {
+                        await this.connectionDb.put(c.id, c.pass, conns[i].is_default);
+                        updateUI = true;
+                        this.logger.log(TAG, `Updated ${c.id}`);
                     }
                 }
 
-                if (newConnections) {
+                if (updateUI) {
                     this.port.postMessage({
                         type: Constants.NEW_CONNECTIONS,
                     });
@@ -937,9 +941,15 @@
             }
 
             for (let i = 0; i < conns.length; i++) {
+                //every record may or may not have updated_at
+                let updatedAt = conns[i].updated_at ?? EPOCH_TIMESTAMP;
+
                 if (conns[i].db_id) {
-                    this.logger.log(TAG, `Skipping ${conns[i].id}: ${conns[i].db_id}`);
-                    continue;
+                    //if it has a db_id , it is guaranteed to haved synced_at
+                    if (conns[i].synced_at > updatedAt) {
+                        this.logger.log(TAG, `Skipping ${conns[i].id}: ${conns[i].db_id}`);
+                        continue;
+                    }
                 }
 
                 let res = await fetch(`${URL}/connections`, {
