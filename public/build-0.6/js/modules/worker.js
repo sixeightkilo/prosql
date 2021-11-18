@@ -5,14 +5,14 @@ import { ConnectionDB } from './connection-db.js'
 
 const TAG = "main"
 const URL = '/browser-api/sqlite'
-const SYNCUP_INTERVAL = 1 * 60 * 1000;//5 minutes
+const SYNCUP_INTERVAL_MIN = 1 * 60 * 1000;//1 min
+const SYNCUP_INTERVAL_MAX = 2 * 60 * 1000;//2 min
 const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
 
 class Worker {
     constructor(port) {
         this.port = port;
         this.logger = new Logger(this.port);
-        this.logger.log(TAG, "version 10");
     }
 
     async init() {
@@ -29,11 +29,11 @@ class Worker {
 
         this.syncDown();
 
-        //this.logger.log(TAG, "Starting syncup timer");
-        //this.syncUp();
-        //setInterval(() => {
-            //this.syncUp();
-        //}, SYNCUP_INTERVAL);
+        this.logger.log(TAG, "Starting syncup timer");
+        this.syncUp();
+        setInterval(() => {
+            this.syncUp();
+        }, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
     }
 
     async syncDown() {
@@ -44,9 +44,9 @@ class Worker {
 
         this.logger.log(TAG, JSON.stringify(res));
         if (res.status == "ok") {
+            let newConnections = false;
             let conns = res.data.connections
             //see if we have connections with the remote db_id, otherwise insert
-            this.logger.log(TAG, "Checking dbids")
             for (let i = 0; i < conns.length; i++) {
                 if (conns[i].status == "deleted") {
                     continue;
@@ -67,12 +67,15 @@ class Worker {
                     let id = await this.connectionDb.save(conns[i]);
                     this.logger.log(TAG, `saved to : ${id}`);
                     if (id >= 1) {
-                        this.port.postMessage({
-                            type: Constants.NEW_CONNECTION,
-                            payload: id
-                        })
+                        newConnections = true;
                     }
                 }
+            }
+
+            if (newConnections) {
+                this.port.postMessage({
+                    type: Constants.NEW_CONNECTIONS,
+                })
             }
         }
     }
@@ -84,9 +87,16 @@ class Worker {
         if (conns.length == 0) {
             return EPOCH_TIMESTAMP;
         }
-        //debug
-        this.logger.log(TAG, "Returning EPOCH_TIMESTAMP anyway");
-        return EPOCH_TIMESTAMP;
+        //get the latest sync time
+        let lastSyncTs = EPOCH_TIMESTAMP;
+        conns.forEach((c) => {
+            if (c.synced_at > lastSyncTs) {
+                lastSyncTs = c.synced_at;
+            }
+        });
+
+        this.logger.log(TAG, `lastSyncTs: ${lastSyncTs}`);
+        return lastSyncTs;
     }
 
     async syncUp() {

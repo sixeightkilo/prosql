@@ -67,7 +67,7 @@ class Login {
                     Logger.Log("worker", e.data.payload);
                     break;
 
-                case Constants.NEW_CONNECTION:
+                case Constants.NEW_CONNECTIONS:
                     this.showConns();
                     break;
             }

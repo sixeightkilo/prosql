@@ -172,5 +172,9 @@ class Utils {
         let d = (new Date()).toISOString();
         return d.replace(/T/, ' ').replace(/\..*$/, '');
     }
+
+	static getRandomIntegerInclusive(min, max) {
+		return Math.floor(Math.random() * (max - min + 1)) + min;
+	}
 }
 export { Utils }

@@ -51,9 +51,9 @@ class ConnectionDB extends BaseDB {
             //make sure there is only one connection with is_default = true
             if (conn['is_default'] == true) {
                 let conns = await super.getAll();
-                conns.forEach(async (c) => {
-                    await this.put(c.id, c.pass, false);
-                });
+                for (let i = 0; i < conns.length; i++) {
+                    await this.put(conns[i].id, conns[i].pass, false);
+                }
             }
 
             //search if this connection exists
@@ -80,14 +80,19 @@ class ConnectionDB extends BaseDB {
 
             request.onsuccess = (e) => {
                 let o = e.target.result;
-                o['pass'] = password;
-                o['is_default'] = isDefault;
+                o.pass = password;
+                if (o.is_default != isDefault) {
+                    //we set updated at only if is_default has changed. We don't
+                    //care about password change
+                    o.updated_at = Utils.getTimestamp();
+                }
+                o.is_default = isDefault;
 
                 let requestUpdate = objectStore.put(o);
-                requestUpdate.onerror = function(event) {
+                requestUpdate.onerror = (e) => {
                     resolve(e.target.error);
                 };
-                requestUpdate.onsuccess = function(event) {
+                requestUpdate.onsuccess = (e) => {
                     resolve(0);
                 };
             };
@@ -127,10 +132,10 @@ class ConnectionDB extends BaseDB {
                 o['synced_at'] = Utils.getTimestamp()
 
                 let requestUpdate = objectStore.put(o);
-                requestUpdate.onerror = function(event) {
+                requestUpdate.onerror = (e) => {
                     resolve(e.target.error);
                 };
-                requestUpdate.onsuccess = function(event) {
+                requestUpdate.onsuccess = (e) => {
                     resolve(0);
                 };
             };

@@ -487,6 +487,10 @@
             let d = (new Date()).toISOString();
             return d.replace(/T/, ' ').replace(/\..*$/, '');
         }
+
+    	static getRandomIntegerInclusive(min, max) {
+    		return Math.floor(Math.random() * (max - min + 1)) + min;
+    	}
     }
 
     const TAG$2 = "base-db";
@@ -711,9 +715,9 @@
                 //make sure there is only one connection with is_default = true
                 if (conn['is_default'] == true) {
                     let conns = await super.getAll();
-                    conns.forEach(async (c) => {
-                        await this.put(c.id, c.pass, false);
-                    });
+                    for (let i = 0; i < conns.length; i++) {
+                        await this.put(conns[i].id, conns[i].pass, false);
+                    }
                 }
 
                 //search if this connection exists
@@ -740,14 +744,19 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o['pass'] = password;
-                    o['is_default'] = isDefault;
+                    o.pass = password;
+                    if (o.is_default != isDefault) {
+                        //we set updated at only if is_default has changed. We don't
+                        //care about password change
+                        o.updated_at = Utils.getTimestamp();
+                    }
+                    o.is_default = isDefault;
 
                     let requestUpdate = objectStore.put(o);
-                    requestUpdate.onerror = function(event) {
+                    requestUpdate.onerror = (e) => {
                         resolve(e.target.error);
                     };
-                    requestUpdate.onsuccess = function(event) {
+                    requestUpdate.onsuccess = (e) => {
                         resolve(0);
                     };
                 };
@@ -787,10 +796,10 @@
                     o['synced_at'] = Utils.getTimestamp();
 
                     let requestUpdate = objectStore.put(o);
-                    requestUpdate.onerror = function(event) {
+                    requestUpdate.onerror = (e) => {
                         resolve(e.target.error);
                     };
-                    requestUpdate.onsuccess = function(event) {
+                    requestUpdate.onsuccess = (e) => {
                         resolve(0);
                     };
                 };
@@ -825,13 +834,14 @@
 
     const TAG = "main";
     const URL = '/browser-api/sqlite';
+    const SYNCUP_INTERVAL_MIN = 1 * 60 * 1000;//1 min
+    const SYNCUP_INTERVAL_MAX = 2 * 60 * 1000;//2 min
     const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
 
     class Worker {
         constructor(port) {
             this.port = port;
             this.logger = new Logger(this.port);
-            this.logger.log(TAG, "version 10");
         }
 
         async init() {
@@ -848,11 +858,11 @@
 
             this.syncDown();
 
-            //this.logger.log(TAG, "Starting syncup timer");
-            //this.syncUp();
-            //setInterval(() => {
-                //this.syncUp();
-            //}, SYNCUP_INTERVAL);
+            this.logger.log(TAG, "Starting syncup timer");
+            this.syncUp();
+            setInterval(() => {
+                this.syncUp();
+            }, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
         }
 
         async syncDown() {
@@ -863,9 +873,9 @@
 
             this.logger.log(TAG, JSON.stringify(res));
             if (res.status == "ok") {
+                let newConnections = false;
                 let conns = res.data.connections;
                 //see if we have connections with the remote db_id, otherwise insert
-                this.logger.log(TAG, "Checking dbids");
                 for (let i = 0; i < conns.length; i++) {
                     if (conns[i].status == "deleted") {
                         continue;
@@ -886,12 +896,15 @@
                         let id = await this.connectionDb.save(conns[i]);
                         this.logger.log(TAG, `saved to : ${id}`);
                         if (id >= 1) {
-                            this.port.postMessage({
-                                type: Constants.NEW_CONNECTION,
-                                payload: id
-                            });
+                            newConnections = true;
                         }
                     }
+                }
+
+                if (newConnections) {
+                    this.port.postMessage({
+                        type: Constants.NEW_CONNECTIONS,
+                    });
                 }
             }
         }
@@ -903,9 +916,16 @@
             if (conns.length == 0) {
                 return EPOCH_TIMESTAMP;
             }
-            //debug
-            this.logger.log(TAG, "Returning EPOCH_TIMESTAMP anyway");
-            return EPOCH_TIMESTAMP;
+            //get the latest sync time
+            let lastSyncTs = EPOCH_TIMESTAMP;
+            conns.forEach((c) => {
+                if (c.synced_at > lastSyncTs) {
+                    lastSyncTs = c.synced_at;
+                }
+            });
+
+            this.logger.log(TAG, `lastSyncTs: ${lastSyncTs}`);
+            return lastSyncTs;
         }
 
         async syncUp() {
