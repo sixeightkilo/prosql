@@ -11,11 +11,26 @@ const TAG = "connections"
 class Connections extends ConnectionDB {
     constructor(logger, options) {
         super(logger, options);
-        this.keys = ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default"]);
+        this.keys = 
+            ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default", "status"]);
     }
 
     async getAll() {
-        return ConnectionDB.fromDbArray(await super.getAll(this.keys));
+        let conns = ConnectionDB.fromDbArray(await super.getAll(this.keys));
+        let recs = []
+
+        for (let i = 0; i < conns.length; i++) {
+            let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+            this.logger.log(TAG, `${conns[i].id}: ${conns[i].status}: ${isDeleted}`);
+
+            if (isDeleted) {
+                continue;
+            }
+
+            recs.push(conns[i]);
+        }
+
+        return recs;
     }
 
     async get(id) {

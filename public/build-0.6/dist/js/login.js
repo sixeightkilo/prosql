@@ -261,6 +261,14 @@
         static get NEW_CONNECTION() {
             return "worker.new-connection"
         }
+
+        static get STATUS_ACTIVE() {
+            return "active"
+        }
+
+        static get STATUS_DELETED() {
+            return "deleted"
+        }
     }
 
     const DISABLED = [
@@ -316,7 +324,7 @@
         }
     }
 
-    const TAG$3 = "utils";
+    const TAG$4 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -365,7 +373,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$3, response);
+                Logger.Log(TAG$4, response);
 
                 let json = await response.json();
 
@@ -375,7 +383,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$3, e);
+                Logger.Log(TAG$4, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -446,7 +454,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$3, "No data");
+            Logger.Log(TAG$4, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -493,7 +501,7 @@
     	}
     }
 
-    const TAG$2 = "base-db";
+    const TAG$3 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -505,13 +513,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$2, "open.onsuccess");
+                        this.logger.log(TAG$3, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$2, e.target.error);
+                        this.logger.log(TAG$3, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -532,7 +540,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$2, e.target.error);
+                    this.logger.log(TAG$3, e.target.error);
                     resolve(-1);
                 };
             })
@@ -549,7 +557,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$2, e.target.error);
+                    this.logger.log(TAG$3, e.target.error);
                     resolve(-1);
                 };
             })
@@ -559,10 +567,20 @@
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store, "readwrite");
                 let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.delete(id);
+                let request = objectStore.get(id);
 
                 request.onsuccess = (e) => {
-                    resolve(0);
+                    let o = e.target.result;
+                    o.status = Constants.STATUS_DELETED;
+                    let requestUpdate = objectStore.put(o);
+
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
                 };
 
                 request.onerror = (e) => {
@@ -576,7 +594,7 @@
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
                 let request = objectStore.get(id);
-                
+
                 request.onsuccess = (e) => {
                     let result = [];
                     if (keys.length > 0) {
@@ -667,7 +685,7 @@
         }
     }
 
-    const TAG$1 = "connection-db";
+    const TAG$2 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_ID_INDEX = "db-id-index";
     const DB_NAME = "connections";
@@ -681,7 +699,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$1, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$2, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -732,7 +750,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$1, e.message);
+                this.logger.log(TAG$2, e.message);
             }
         }
 
@@ -812,7 +830,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$1, "findByDbId");
+                this.logger.log(TAG$2, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -820,28 +838,45 @@
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
-                    this.logger.log(TAG$1, JSON.stringify(request.result));
+                    this.logger.log(TAG$2, JSON.stringify(request.result));
                     resolve(request.result);
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$1, "error");
+                    this.logger.log(TAG$2, "error");
                     resolve(e.target.error);
                 };
             })
         }
     }
 
+    const TAG$1 = "connections";
+
     //just a wrapper over connectiondb so we dont have to deal with from/to stuff in 
     //client
     class Connections extends ConnectionDB {
         constructor(logger, options) {
             super(logger, options);
-            this.keys = ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default"]);
+            this.keys = 
+                ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default", "status"]);
         }
 
         async getAll() {
-            return ConnectionDB.fromDbArray(await super.getAll(this.keys));
+            let conns = ConnectionDB.fromDbArray(await super.getAll(this.keys));
+            let recs = [];
+
+            for (let i = 0; i < conns.length; i++) {
+                let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+                this.logger.log(TAG$1, `${conns[i].id}: ${conns[i].status}: ${isDeleted}`);
+
+                if (isDeleted) {
+                    continue;
+                }
+
+                recs.push(conns[i]);
+            }
+
+            return recs;
         }
 
         async get(id) {
@@ -1113,9 +1148,7 @@
                     Logger.Log(TAG, JSON.stringify(res));
 
                     //todo: what happens if this is not OK?
-                    if (res.status == "ok") {
-                        window.location = '/app/tables';
-                    }
+                    if (res.status == "ok") ;
                     return;
                 }
             }

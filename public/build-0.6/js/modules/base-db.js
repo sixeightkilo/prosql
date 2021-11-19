@@ -67,10 +67,20 @@ class BaseDB {
         return new Promise((resolve, reject) => {
             let transaction = this.db.transaction(this.store, "readwrite");
             let objectStore = transaction.objectStore(this.store);
-            let request = objectStore.delete(id);
+            let request = objectStore.get(id);
 
             request.onsuccess = (e) => {
-                resolve(0);
+                let o = e.target.result;
+                o.status = Constants.STATUS_DELETED;
+                let requestUpdate = objectStore.put(o);
+
+                requestUpdate.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+
+                requestUpdate.onsuccess = (e) => {
+                    resolve(0);
+                };
             };
 
             request.onerror = (e) => {
@@ -84,7 +94,7 @@ class BaseDB {
             let transaction = this.db.transaction(this.store);
             let objectStore = transaction.objectStore(this.store);
             let request = objectStore.get(id);
-            
+
             request.onsuccess = (e) => {
                 let result = [];
                 if (keys.length > 0) {

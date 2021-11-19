@@ -217,6 +217,14 @@
         static get NEW_CONNECTION() {
             return "worker.new-connection"
         }
+
+        static get STATUS_ACTIVE() {
+            return "active"
+        }
+
+        static get STATUS_DELETED() {
+            return "deleted"
+        }
     }
 
     const DISABLED = [

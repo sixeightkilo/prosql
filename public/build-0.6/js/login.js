@@ -270,7 +270,7 @@ class Login {
 
                 //todo: what happens if this is not OK?
                 if (res.status == "ok") {
-                    window.location = '/app/tables';
+                    //window.location = '/app/tables';
                 }
                 return;
             }

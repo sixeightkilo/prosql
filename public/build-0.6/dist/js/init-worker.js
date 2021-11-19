@@ -217,6 +217,14 @@
         static get NEW_CONNECTION() {
             return "worker.new-connection"
         }
+
+        static get STATUS_ACTIVE() {
+            return "active"
+        }
+
+        static get STATUS_DELETED() {
+            return "deleted"
+        }
     }
 
     const DISABLED = [
@@ -559,10 +567,20 @@
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store, "readwrite");
                 let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.delete(id);
+                let request = objectStore.get(id);
 
                 request.onsuccess = (e) => {
-                    resolve(0);
+                    let o = e.target.result;
+                    o.status = Constants.STATUS_DELETED;
+                    let requestUpdate = objectStore.put(o);
+
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
                 };
 
                 request.onerror = (e) => {
@@ -576,7 +594,7 @@
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
                 let request = objectStore.get(id);
-                
+
                 request.onsuccess = (e) => {
                     let result = [];
                     if (keys.length > 0) {
@@ -834,8 +852,8 @@
 
     const TAG = "main";
     const URL = '/browser-api/sqlite';
-    const SYNCUP_INTERVAL_MIN = 1 * 60 * 1000;//1 min
-    const SYNCUP_INTERVAL_MAX = 2 * 60 * 1000;//2 min
+    const SYNCUP_INTERVAL_MIN = 10000;//1 min
+    const SYNCUP_INTERVAL_MAX = 20000;//2 min
     const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
 
     class Worker {
@@ -940,7 +958,22 @@
                 return;
             }
 
+            let deleted = [];
             for (let i = 0; i < conns.length; i++) {
+                let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+
+                if (isDeleted) {
+                    this.logger.log(TAG, `Deleting ${conns[i].id}`);
+                    if (!conns[i].db_id) {
+                        //this has not been synced yet. We can safely delete
+                        this.connectionDb.del(conns[i].id);
+                        continue;
+                    }
+
+                    deleted.push(conns[i]);
+                    continue;
+                }
+
                 //every record may or may not have updated_at
                 let updatedAt = conns[i].updated_at ?? EPOCH_TIMESTAMP;
 
@@ -954,7 +987,7 @@
 
                 let res = await fetch(`${URL}/connections`, {
                     body: JSON.stringify(conns[i]),
-                    method: "post",
+                    method: "POST",
                     headers: {
                         db: this.deviceId,
                         'Content-Type': 'application/json',
@@ -974,6 +1007,32 @@
                     }
                 }
             }
+
+            this.syncDeleted(deleted);
+        }
+
+        async syncDeleted(deleted) {
+            if (deleted.length == 0) {
+                return;
+            }
+
+            let ids = [];
+            deleted.forEach((d) => {
+                ids.push(d.db_id);
+            });
+
+            this.logger.log(TAG, JSON.stringify(ids));
+            let res = await fetch(`${URL}/connections`, {
+                body: JSON.stringify(ids),
+                method: "DELETE",
+                headers: {
+                    db: this.deviceId,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            res = await res.json();
+            this.logger.log(TAG, JSON.stringify(res));
         }
     }
 

@@ -5,8 +5,8 @@ import { ConnectionDB } from './connection-db.js'
 
 const TAG = "main"
 const URL = '/browser-api/sqlite'
-const SYNCUP_INTERVAL_MIN = 1 * 60 * 1000;//1 min
-const SYNCUP_INTERVAL_MAX = 2 * 60 * 1000;//2 min
+const SYNCUP_INTERVAL_MIN = 10000;//1 min
+const SYNCUP_INTERVAL_MAX = 20000;//2 min
 const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
 
 class Worker {
@@ -111,7 +111,22 @@ class Worker {
             return;
         }
 
+        let deleted = [];
         for (let i = 0; i < conns.length; i++) {
+            let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+
+            if (isDeleted) {
+                this.logger.log(TAG, `Deleting ${conns[i].id}`);
+                if (!conns[i].db_id) {
+                    //this has not been synced yet. We can safely delete
+                    this.connectionDb.del(conns[i].id);
+                    continue;
+                }
+
+                deleted.push(conns[i]);
+                continue;
+            }
+
             //every record may or may not have updated_at
             let updatedAt = conns[i].updated_at ?? EPOCH_TIMESTAMP;
 
@@ -125,7 +140,7 @@ class Worker {
 
             let res = await fetch(`${URL}/connections`, {
                 body: JSON.stringify(conns[i]),
-                method: "post",
+                method: "POST",
                 headers: {
                     db: this.deviceId,
                     'Content-Type': 'application/json',
@@ -145,6 +160,32 @@ class Worker {
                 }
             }
         }
+
+        this.syncDeleted(deleted);
+    }
+
+    async syncDeleted(deleted) {
+        if (deleted.length == 0) {
+            return;
+        }
+
+        let ids = [];
+        deleted.forEach((d) => {
+            ids.push(d.db_id);
+        });
+
+        this.logger.log(TAG, JSON.stringify(ids));
+        let res = await fetch(`${URL}/connections`, {
+            body: JSON.stringify(ids),
+            method: "DELETE",
+            headers: {
+                db: this.deviceId,
+                'Content-Type': 'application/json',
+            }
+        });
+
+        res = await res.json();
+        this.logger.log(TAG, JSON.stringify(res));
     }
 }
 export { Worker }
