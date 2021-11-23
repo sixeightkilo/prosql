@@ -156,7 +156,6 @@ class ConnectionDB extends BaseDB {
 
             let request = index.get(IDBKeyRange.only([id]))
             request.onsuccess = (e) => {
-                this.logger.log(TAG, JSON.stringify(request.result));
                 resolve(request.result);
             };
 

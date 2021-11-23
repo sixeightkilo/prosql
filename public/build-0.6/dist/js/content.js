@@ -3180,6 +3180,24 @@
             })
         }
 
+        //delete completely from indexeddb
+    	async destroy(id) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.delete(id);
+
+                request.onsuccess = (e) => {
+                    resolve(0);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        //just mark status as deleted
         async del(id) {
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store, "readwrite");
@@ -3974,6 +3992,16 @@
             let $e2 = document.getElementById('app-right-panel');
             let $resizer = document.getElementById('app-content-resizer');
             new GridResizerH($g1, $e1, $resizer, $e2);
+
+            this.$version = document.getElementById('version');
+            const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.$version.value}`);
+            worker.port.onmessage = (e) => {
+                switch (e.data.type) {
+                    case Constants.DEBUG_LOG:
+                        Logger.Log("worker", e.data.payload);
+                        break;
+                }
+            };
         }
 
         adjustView() {

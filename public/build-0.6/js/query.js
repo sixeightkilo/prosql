@@ -67,6 +67,16 @@ class Query {
         let $e2 = document.getElementById('app-right-panel');
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
+
+        this.$version = document.getElementById('version')
+        const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.$version.value}`);
+        worker.port.onmessage = (e) => {
+            switch (e.data.type) {
+                case Constants.DEBUG_LOG:
+                    Logger.Log("worker", e.data.payload);
+                    break;
+            }
+        }
     }
 
     adjustView() {

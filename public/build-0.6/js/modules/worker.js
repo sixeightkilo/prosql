@@ -46,14 +46,25 @@ class Worker {
         if (res.status == "ok") {
             let updateUI = false;
             let conns = res.data.connections
-            //see if we have connections with the remote db_id, otherwise insert
+
             for (let i = 0; i < conns.length; i++) {
+                //check if the remore connection is already present in local db
+                let c = await this.connectionDb.findByDbId(conns[i].id)
+
+                //this may be deleted on the server. Handle this first
                 if (conns[i].status == "deleted") {
+                    if (c == null) {
+                        this.logger.log(TAG, `already deleted: ${conns[i].id}`)
+                        continue;
+                    }
+
+                    this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`)
+                    await this.connectionDb.del(c.id);
+                    updateUI = true;
                     continue;
                 }
 
-                let c = await this.connectionDb.findByDbId(conns[i].id)
-
+                //this looks like a new connection
                 if (c == null) {
                     this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`)
                     delete conns[i].created_at;
@@ -70,6 +81,7 @@ class Worker {
                         updateUI = true;
                     }
                 } else {
+                    //nope. may be is-default got updated..
                     await this.connectionDb.put(c.id, c.pass, conns[i].is_default);
                     updateUI = true;
                     this.logger.log(TAG, `Updated ${c.id}`);
@@ -186,6 +198,12 @@ class Worker {
 
         res = await res.json();
         this.logger.log(TAG, JSON.stringify(res));
+        //delete from local db
+        for (let i = 0; i < res.data.ids.length; i++) {
+            let c = await this.connectionDb.findByDbId(res.data.ids[i]);
+            await this.connectionDb.destroy(c.id);
+            this.logger.log(TAG, `Destroyed: ${c.id}`);
+        }
     }
 }
 export { Worker }

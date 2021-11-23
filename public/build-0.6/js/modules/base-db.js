@@ -63,6 +63,24 @@ class BaseDB {
         })
     }
 
+    //delete completely from indexeddb
+	async destroy(id) {
+        return new Promise((resolve, reject) => {
+            let transaction = this.db.transaction(this.store, "readwrite");
+            let objectStore = transaction.objectStore(this.store);
+            let request = objectStore.delete(id);
+
+            request.onsuccess = (e) => {
+                resolve(0);
+            };
+
+            request.onerror = (e) => {
+                resolve(e.target.error);
+            };
+        })
+    }
+
+    //just mark status as deleted
     async del(id) {
         return new Promise((resolve, reject) => {
             let transaction = this.db.transaction(this.store, "readwrite");

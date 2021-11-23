@@ -11,6 +11,7 @@ html
         include common.pug
         include appbar.pug
         include query-content.pug
+        input#version(type=hidden value="#{version}")
 
         script(src="https://unpkg.com/@popperjs/core@2")
         script(src="https://unpkg.com/tippy.js@6")

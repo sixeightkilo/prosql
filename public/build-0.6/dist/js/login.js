@@ -563,6 +563,24 @@
             })
         }
 
+        //delete completely from indexeddb
+    	async destroy(id) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.delete(id);
+
+                request.onsuccess = (e) => {
+                    resolve(0);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        //just mark status as deleted
         async del(id) {
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store, "readwrite");
@@ -838,7 +856,6 @@
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
-                    this.logger.log(TAG$2, JSON.stringify(request.result));
                     resolve(request.result);
                 };
 
@@ -1148,7 +1165,9 @@
                     Logger.Log(TAG, JSON.stringify(res));
 
                     //todo: what happens if this is not OK?
-                    if (res.status == "ok") ;
+                    if (res.status == "ok") {
+                        window.location = '/app/tables';
+                    }
                     return;
                 }
             }
