@@ -68,12 +68,30 @@ class Query {
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
 
+        this.initWorkers();
+    }
+
+    initWorkers() {
         this.$version = document.getElementById('version')
-        const worker = new SharedWorker(`/build-0.6/dist/js/init-worker.js?ver=${this.$version.value}`);
-        worker.port.onmessage = (e) => {
+        Logger.Log(TAG, `ver: ${this.$version.value}`);
+        const connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
+        connectionWorker.port.onmessage = (e) => {
             switch (e.data.type) {
                 case Constants.DEBUG_LOG:
-                    Logger.Log("worker", e.data.payload);
+                    Logger.Log("connection-worker", e.data.payload);
+                    break;
+
+                case Constants.NEW_CONNECTIONS:
+                    this.showConns();
+                    break;
+            }
+        }
+
+        const queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
+        queryWorker.port.onmessage = (e) => {
+            switch (e.data.type) {
+                case Constants.DEBUG_LOG:
+                    Logger.Log("query-worker", e.data.payload);
                     break;
             }
         }

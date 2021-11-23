@@ -49,9 +49,16 @@ export default [
         },
     },
     {
-        'input': 'build-0.6/js/modules/init-worker.js',
+        'input': 'build-0.6/js/connection-worker.js',
         'output': {
-            'file': 'build-0.6/dist/js/init-worker.js',
+            'file': 'build-0.6/dist/js/connection-worker.js',
+            'format': 'iife'
+        },
+    },
+    {
+        'input': 'build-0.6/js/query-worker.js',
+        'output': {
+            'file': 'build-0.6/dist/js/query-worker.js',
             'format': 'iife'
         },
     },

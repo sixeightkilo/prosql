@@ -9,7 +9,7 @@ const SYNCUP_INTERVAL_MIN = 10000;//1 min
 const SYNCUP_INTERVAL_MAX = 20000;//2 min
 const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
 
-class ConnectionWorker {
+class QueryWorker {
     constructor(port) {
         this.port = port;
         this.logger = new Logger(this.port);
@@ -206,4 +206,4 @@ class ConnectionWorker {
         }
     }
 }
-export { ConnectionWorker }
+export { QueryWorker }

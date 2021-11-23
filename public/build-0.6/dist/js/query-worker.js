@@ -1,50 +1,6 @@
 (function () {
     'use strict';
 
-    class Err {
-        static get ERR_NONE () {
-            return 'none'
-        }
-
-        static get ERR_NO_AGENT () {
-            return 'no-agent'
-        }
-
-        static get ERR_INVALID_USER_INPUT() {
-            return 'invalid-user-input'
-        }
-
-        static get ERR_INVALID_SESSION_ID() {
-            return 'invalid-session-id'
-        }
-
-        static get ERR_INVALID_CURSOR_ID() {
-            return 'invalid-cursor-id'
-        }
-
-        static get ERR_DB_ERROR() {
-            return 'db-error'
-        }
-
-        static get ERR_UNRECOVERABLE() {
-            return 'unrecoverable-error'
-        }
-
-        static handle(err) {
-            if (err.error == Err.ERR_NO_AGENT) {
-                window.location = '/install';
-                return;
-            }
-
-            if (err.error == Err.ERR_INVALID_SESSION_ID) {
-                window.location = '/login';
-                return;
-            }
-
-            alert(err.error);
-        }
-    }
-
     class Constants {
         //hotkeys
         static get SHIFT_A() {
@@ -324,7 +280,51 @@
         }
     }
 
-    const TAG$4 = "utils";
+    class Err {
+        static get ERR_NONE () {
+            return 'none'
+        }
+
+        static get ERR_NO_AGENT () {
+            return 'no-agent'
+        }
+
+        static get ERR_INVALID_USER_INPUT() {
+            return 'invalid-user-input'
+        }
+
+        static get ERR_INVALID_SESSION_ID() {
+            return 'invalid-session-id'
+        }
+
+        static get ERR_INVALID_CURSOR_ID() {
+            return 'invalid-cursor-id'
+        }
+
+        static get ERR_DB_ERROR() {
+            return 'db-error'
+        }
+
+        static get ERR_UNRECOVERABLE() {
+            return 'unrecoverable-error'
+        }
+
+        static handle(err) {
+            if (err.error == Err.ERR_NO_AGENT) {
+                window.location = '/install';
+                return;
+            }
+
+            if (err.error == Err.ERR_INVALID_SESSION_ID) {
+                window.location = '/login';
+                return;
+            }
+
+            alert(err.error);
+        }
+    }
+
+    const TAG$3 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -373,7 +373,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$4, response);
+                Logger.Log(TAG$3, response);
 
                 let json = await response.json();
 
@@ -383,7 +383,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$4, e);
+                Logger.Log(TAG$3, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -454,7 +454,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$4, "No data");
+            Logger.Log(TAG$3, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -501,7 +501,7 @@
     	}
     }
 
-    const TAG$3 = "base-db";
+    const TAG$2 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -513,13 +513,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$3, "open.onsuccess");
+                        this.logger.log(TAG$2, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$3, e.target.error);
+                        this.logger.log(TAG$2, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -540,7 +540,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, e.target.error);
+                    this.logger.log(TAG$2, e.target.error);
                     resolve(-1);
                 };
             })
@@ -557,7 +557,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, e.target.error);
+                    this.logger.log(TAG$2, e.target.error);
                     resolve(-1);
                 };
             })
@@ -703,7 +703,7 @@
         }
     }
 
-    const TAG$2 = "connection-db";
+    const TAG$1 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_ID_INDEX = "db-id-index";
     const DB_NAME = "connections";
@@ -717,7 +717,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$2, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$1, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -768,7 +768,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$2, e.message);
+                this.logger.log(TAG$1, e.message);
             }
         }
 
@@ -848,7 +848,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$2, "findByDbId");
+                this.logger.log(TAG$1, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -860,401 +860,221 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$2, "error");
+                    this.logger.log(TAG$1, "error");
                     resolve(e.target.error);
                 };
             })
         }
     }
 
-    const TAG$1 = "connections";
+    const TAG = "main";
+    const URL = '/browser-api/sqlite';
+    const SYNCUP_INTERVAL_MIN = 10000;//1 min
+    const SYNCUP_INTERVAL_MAX = 20000;//2 min
+    const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
 
-    //just a wrapper over connectiondb so we dont have to deal with from/to stuff in 
-    //client
-    class Connections extends ConnectionDB {
-        constructor(logger, options) {
-            super(logger, options);
-            this.keys = 
-                ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default", "status"]);
-        }
-
-        async getAll() {
-            let conns = ConnectionDB.fromDbArray(await super.getAll(this.keys));
-            let recs = [];
-
-            for (let i = 0; i < conns.length; i++) {
-                let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
-                this.logger.log(TAG$1, `${conns[i].id}: ${conns[i].status}: ${isDeleted}`);
-
-                if (isDeleted) {
-                    continue;
-                }
-
-                recs.push(conns[i]);
-            }
-
-            return recs;
-        }
-
-        async get(id) {
-                return ConnectionDB.fromDb(await super.get(id, this.keys));
-        }
-
-        async save(conn) {
-            return await(super.save(ConnectionDB.toDb(conn)));
-        }
-    }
-
-    const TAG = 'login';
-    class Login {
-        constructor() {
-            document.addEventListener('DOMContentLoaded', async () => {
-                await this.init();
-
-                this.$testConn.addEventListener('click', async () => {
-                    this.testConn();
-                });
-
-                this.$login.addEventListener('click', async () => {
-                    this.login();
-                });
-            });
-        }
-
-        initDom() {
-            this.$addNew = document.getElementById('add-new');
-            this.$testConn = document.getElementById('test');
-            this.$testIcon = document.querySelector('.test-icon');
-            this.$name = document.getElementById('name');
-            this.$login = document.getElementById('login');
-            this.$user = document.getElementById('user');
-            this.$pass = document.getElementById('pass');
-            this.$host = document.getElementById('host');
-            this.$port = document.getElementById('port');
-            this.$db = document.getElementById('db');
-            this.$isDefault = document.getElementById('is-default');
-            this.$version = document.getElementById('version');
-
-            //debug only
-            document.getElementById('debug-add-conns').addEventListener('click', async () => {
-                let conns = [
-                    {
-                        'name': Utils.uuid(),
-                        'user': 'server',
-                        'pass': 'dev-server',
-                        'host': '127.0.0.1',
-                        'port': '3308',
-                        'db': 'pankaj-05-24-generico',
-                        'is-default': true
-                    },
-                ];
-
-                for (let i = 0; i < conns.length; i++) {
-                    let id = await this.connections.save(conns[i]);
-                    Logger.Log(`saved to ${id}`);
-                }
-            });
+    class QueryWorker {
+        constructor(port) {
+            this.port = port;
+            this.logger = new Logger(this.port);
         }
 
         async init() {
-    		this.initDom();
-            this.initWorkers();
-
-            this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
-    		await this.connections.open();
-
-            this.initHandlers();
-            this.showConns();
-        }
-
-        initWorkers() {
-            Logger.Log(TAG, `ver: ${this.$version.value}`);
-            const connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-            connectionWorker.port.onmessage = (e) => {
-                switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
-                        Logger.Log("connection-worker", e.data.payload);
-                        break;
-
-                    case Constants.NEW_CONNECTIONS:
-                        this.showConns();
-                        break;
-                }
-            };
-
-            const queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
-            queryWorker.port.onmessage = (e) => {
-                switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
-                        Logger.Log("query-worker", e.data.payload);
-                        break;
-                }
-            };
-        }
-
-        async showConns() {
-            let conns = await this.connections.getAll();
-            Logger.Log(TAG, JSON.stringify(conns));
-            this.showRecents(conns);
-            let conn = this.getDefault(conns);
-            this.setConn(conn);
-        }
-
-        initHandlers() {
-            //handle click on connection
-            document.addEventListener('click', async (e) => {
-                let target = event.target;
-                if (!target.classList.contains('conn')) {
-                    return
-                }
-
-                //remove highlight on all element first
-                let list = document.querySelectorAll('.highlight');
-                list.forEach((e) => {
-                    e.classList.remove('highlight');
-                });
-
-                let parent = target.parentElement;
-                parent.classList.add('highlight');
-
-                Logger.Log(TAG, `${target.dataset.id}`);
-                let connId = parseInt(target.dataset.id);
-                let conn = await this.connections.get(connId);
-                Logger.Log(TAG, "setconn: " + JSON.stringify(conn));
-                this.setConn(conn);
-                this.testConn();
-            });
-
-            document.addEventListener('click', async (e) => {
-                let target = event.target;
-                if (!target.classList.contains('del-conn')) {
-                    return
-                }
-
-                Logger.Log(TAG, `${target.dataset.id}`);
-                let connId = parseInt(target.dataset.id);
-                await this.connections.del(connId);
-                this.showConns();
-            });
-
-            this.$addNew.addEventListener('click', () => {
-                this.$name.value = '';
-                this.$user.value = '';
-                this.$pass.value = '';
-                this.$host.value = '';
-                this.$port.value = '';
-                this.$db.value = '';
-            });
-        }
-
-        getDefault(conns) {
-            //if there is a default set, use it otherwise
-            //arbitrarily choose the first connection as current
-            for (let i = 0; i < conns.length; i++) {
-                Logger.Log(TAG, "c:" + JSON.stringify(conns[i]));
-                if (conns[i]['is-default'] == true) {
-                    return conns[i];
-                }
-            }
-
-            return conns[0];
-        }
-
-        async showRecents(conns) {
-            let $list = document.getElementById('conn-list');
-            let templ = document.getElementById('conn-template').innerHTML;
-            $list.replaceChildren();
-
-            conns.forEach((c) => {
-                let item = "No name";
-                if (c.name) {
-                    item = c.name;
-                }
-
-                let n = Utils.generateNode(templ, {
-                    id: c.id,
-                    item: item
-                });
-
-                if (c['is-default'] == true) {
-                    n.querySelector('.conn-container').classList.add('highlight');
-                }
-                $list.appendChild(n);
-            });
-        }
-
-        setConn(conn) {
-            this.reset();
-
-            for (let k in conn) {
-                if (k == "id") {
-                    continue;
-                }
-
-                if (k == 'is-default') {
-                    if (conn[k] == true) {
-                        this.$isDefault.checked = true;
-                    } else {
-                        this.$isDefault.checked = false;
-                    }
-                    continue;
-                }
-
-                Logger.Log(TAG, `key: ${k}`);
-                let $elem = document.getElementById(k);
-                //sometimes password can be undefined
-                if (conn[k]) {
-                    $elem.value = conn[k];
-                }
-            }
-        }
-
-        reset() {
-            this.$name.value = '';
-            this.$user.value = '';
-            this.$pass.value = '';
-            this.$host.value = '';
-            this.$port.value = '';
-            this.$db.value = '';
-            this.$isDefault.checked = false;
-        }
-
-        validate(conn) {
-            if (!conn.name) {
-                throw 'Please choose a connection name!';
-            }
-
-            if (!conn.user) {
-                throw 'User name not provided!';
-            }
-
-            if (!conn.pass) {
-                throw 'Password not provided!';
-            }
-
-            if (!conn.host) {
-                throw 'Hostname/IP not provided!';
-            }
-
-            if (!conn.port) {
-                throw 'Port not provided!';
-            }
-        }
-
-        async login() {
-            let conn = this.getConn();
-
-            try {
-                this.validate(conn);
-            } catch (e) {
-                alert(e);
-                this.showError();
-                return;
-            }
-
-            if (await this.ping(conn) == 'ok') {
-                Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
-                let id = await this.connections.save(conn);
-                Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
-
-                //set agent version for the rest of web app
-                let response = await Utils.fetch(Constants.URL + '/about', false);
-                //todo: what happens if this is not OK?
-                if (response.status == "ok") {
-                    let formData = new FormData();
-                    formData.append('device-id', response.data['device-id']);
-                    formData.append('version', response.data['version']);
-                    formData.append('os', response.data['os']);
-
-                    let res = await fetch("/browser-api/version", {
-                        body: formData,
-                        method: "post"
-                    });
-
-                    res = await res.json();
-
-                    Logger.Log(TAG, JSON.stringify(res));
-
-                    //todo: what happens if this is not OK?
-                    if (res.status == "ok") {
-                        window.location = '/app/tables';
-                    }
-                    return;
-                }
-            }
-        }
-
-        async testConn() {
-            this.$testIcon.classList.add('fa-spinner');
-            this.$testIcon.classList.add('fa-spin');
-
-            let conn = this.getConn();
-
-            try {
-                this.validate(conn);
-            } catch (e) {
-                alert(e);
-                this.showError();
-                return;
-            }
-
-            let s = await this.ping(conn);
-            Logger.Log(TAG, s);
-
-            if (s == 'ok') {
-                this.showSuccess();
+            let res = await Utils.fetch(Constants.URL + '/about', false);
+            if (res.status == "error") {
+                this.logger.log(TAG, JSON.stringify(res));
                 return
             }
 
-            this.showError();
+            this.deviceId = res.data['device-id'];
+
+    		this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
+    		await this.connectionDb.open();
+
+            this.syncDown();
+
+            this.logger.log(TAG, "Starting syncup timer");
+            this.syncUp();
+            setInterval(() => {
+                this.syncUp();
+            }, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
         }
 
-        showSuccess() {
-            this.$testIcon.classList.remove('fa-spinner');
-            this.$testIcon.classList.remove('fa-spin');
-            this.$testIcon.classList.remove('fa-times-circle');
-            this.$testIcon.classList.remove('has-text-danger');
-            this.$testIcon.classList.add('fa-check-circle');
-            this.$testIcon.classList.add('has-text-success');
-        }
+        async syncDown() {
+            let res = await Utils.fetch(`${URL}/connections/updated`, false, {
+                db: this.deviceId,
+                after: await this.getLastSyncTs()
+            });
 
-        showError() {
-            this.$testIcon.classList.remove('fa-spinner');
-            this.$testIcon.classList.remove('fa-spin');
-            this.$testIcon.classList.remove('fa-check-circle');
-            this.$testIcon.classList.remove('has-text-success');
-            this.$testIcon.classList.add('fa-times-circle');
-            this.$testIcon.classList.add('has-text-danger');
-        }
+            this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
+            if (res.status == "ok") {
+                let updateUI = false;
+                let conns = res.data.connections;
 
-        async ping(conn) {
-            let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(conn), false);
-            if (json.status == "error") {
-                if (json.msg == Err.ERR_NO_AGENT) {
-                    window.location = '/install';
-                    return "error";
+                for (let i = 0; i < conns.length; i++) {
+                    //check if the remore connection is already present in local db
+                    let c = await this.connectionDb.findByDbId(conns[i].id);
+
+                    //this may be deleted on the server. Handle this first
+                    if (conns[i].status == "deleted") {
+                        if (c == null) {
+                            this.logger.log(TAG, `already deleted: ${conns[i].id}`);
+                            continue;
+                        }
+
+                        this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`);
+                        await this.connectionDb.del(c.id);
+                        updateUI = true;
+                        continue;
+                    }
+
+                    //this looks like a new connection
+                    if (c == null) {
+                        this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`);
+                        delete conns[i].created_at;
+                        delete conns[i].updated_at;
+                        delete conns[i].status;
+
+                        conns[i].db_id = conns[i].id;
+                        delete conns[i].id;
+                        conns[i].synced_at = Utils.getTimestamp();
+
+                        let id = await this.connectionDb.save(conns[i]);
+                        this.logger.log(TAG, `saved to : ${id}`);
+                        if (id >= 1) {
+                            updateUI = true;
+                        }
+                    } else {
+                        //nope. may be is-default got updated..
+                        await this.connectionDb.put(c.id, c.pass, conns[i].is_default);
+                        updateUI = true;
+                        this.logger.log(TAG, `Updated ${c.id}`);
+                    }
                 }
 
-                alert(json.msg);
-                return "error";
+                if (updateUI) {
+                    this.port.postMessage({
+                        type: Constants.NEW_CONNECTIONS,
+                    });
+                }
             }
-
-            return "ok";
         }
 
-        getConn() {
-            return {
-                name: this.$name.value,
-                user: this.$user.value,
-                pass: this.$pass.value,
-                host: this.$host.value,
-                port: this.$port.value,
-                db: this.$db.value,
-                'is-default': this.$isDefault.checked
+        async getLastSyncTs() {
+            let conns = await this.connectionDb.getAll();
+            this.logger.log(TAG, `l: ${conns.length}`);
+
+            if (conns.length == 0) {
+                return EPOCH_TIMESTAMP;
+            }
+            //get the latest sync time
+            let lastSyncTs = EPOCH_TIMESTAMP;
+            conns.forEach((c) => {
+                if (c.synced_at > lastSyncTs) {
+                    lastSyncTs = c.synced_at;
+                }
+            });
+
+            this.logger.log(TAG, `lastSyncTs: ${lastSyncTs}`);
+            return lastSyncTs;
+        }
+
+        async syncUp() {
+            //find all records missing db_id and sync them up to cloud
+            let conns = await this.connectionDb.getAll();
+            if (conns.length == 0) {
+                this.logger.log(TAG, "Nothing to sync");
+                return;
+            }
+
+            let deleted = [];
+            for (let i = 0; i < conns.length; i++) {
+                let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+
+                if (isDeleted) {
+                    this.logger.log(TAG, `Deleting ${conns[i].id}`);
+                    if (!conns[i].db_id) {
+                        //this has not been synced yet. We can safely delete
+                        this.connectionDb.del(conns[i].id);
+                        continue;
+                    }
+
+                    deleted.push(conns[i]);
+                    continue;
+                }
+
+                //every record may or may not have updated_at
+                let updatedAt = conns[i].updated_at ?? EPOCH_TIMESTAMP;
+
+                if (conns[i].db_id) {
+                    //if it has a db_id , it is guaranteed to haved synced_at
+                    if (conns[i].synced_at > updatedAt) {
+                        this.logger.log(TAG, `Skipping ${conns[i].id}: ${conns[i].db_id}`);
+                        continue;
+                    }
+                }
+
+                let res = await fetch(`${URL}/connections`, {
+                    body: JSON.stringify(conns[i]),
+                    method: "POST",
+                    headers: {
+                        db: this.deviceId,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                res = await res.json();
+                this.logger.log(TAG, JSON.stringify(res));
+
+                if (res.status == "ok") {
+                    conns[i].db_id = res.data.db_id;
+                    this.logger.log(TAG, `syncing: ${JSON.stringify(conns[i])}`);
+                    try {
+                        this.connectionDb.sync(conns[i]);
+                    } catch (e) {
+                        this.logger.log(TAG, e, this.port);
+                    }
+                }
+            }
+
+            this.syncDeleted(deleted);
+        }
+
+        async syncDeleted(deleted) {
+            if (deleted.length == 0) {
+                return;
+            }
+
+            let ids = [];
+            deleted.forEach((d) => {
+                ids.push(d.db_id);
+            });
+
+            this.logger.log(TAG, JSON.stringify(ids));
+            let res = await fetch(`${URL}/connections`, {
+                body: JSON.stringify(ids),
+                method: "DELETE",
+                headers: {
+                    db: this.deviceId,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            res = await res.json();
+            this.logger.log(TAG, JSON.stringify(res));
+            //delete from local db
+            for (let i = 0; i < res.data.ids.length; i++) {
+                let c = await this.connectionDb.findByDbId(res.data.ids[i]);
+                await this.connectionDb.destroy(c.id);
+                this.logger.log(TAG, `Destroyed: ${c.id}`);
             }
         }
     }
 
-    new Login();
+    onconnect = async (e) => {
+        let port = e.ports[0];
+        let w = new QueryWorker(port);
+        w.init();
+    };
 
 }());

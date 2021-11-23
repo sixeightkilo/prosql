@@ -10,6 +10,10 @@ class SessionManager implements SessionManagerInterface {
         $this->logger->debug('constructor');
         session_start();
     }
+
+    public function getSessionId(): string {
+        return session_id();
+    }
     
     public function setVersion(string $version) {
         $_SESSION['version'] = $version;

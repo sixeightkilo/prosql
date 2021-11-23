@@ -21,6 +21,17 @@ $app = AppFactory::create();
 $app->post('/browser-api/version', 'VersionController:handle');
 $app->get('/browser-api/sql/{action}', 'SqlController:handle');
 
+$app->get('/browser-api/session', function($req, $res, $args) {
+    $sm = $this->get('session-manager');
+    $res->getBody()->write(json_encode([
+        'status' => 'ok',
+        'data' => [
+            'session-id' => $sm->getSessionId()
+        ]
+    ]));
+    return $res->withHeader('Content-Type', 'application/json');
+});
+
 $app->get('[/{params:.*}]', function($req, $res, $args) {
 	$params = explode('/', $req->getAttribute('params'));
 

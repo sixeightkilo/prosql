@@ -886,10 +886,6 @@
                 return
             }
 
-            //debug
-            res = await Utils.fetch('/browser-api/version', false);
-            this.logger.log(TAG, JSON.stringify(res));
-
             this.deviceId = res.data['device-id'];
 
     		this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
