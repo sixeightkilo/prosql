@@ -1985,7 +1985,7 @@
         }
 
         async runAll() {
-            let json = await Utils.fetch('/split?' + new URLSearchParams({q: this.editor.getAll()}));
+            let json = await Utils.fetch('/browser-api/sql/split?' + new URLSearchParams({q: this.editor.getAll()}));
             Logger.Log(TAG$8, JSON.stringify(json));
             for (let i = 0; i < json.data.length; i++) {
                 let q = json.data[i];
@@ -2004,7 +2004,7 @@
         async formatQuery() {
             let q = this.editor.getValue();
             Logger.Log(TAG$8, q);
-            let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q}));
+            let json = await Utils.fetch('/browser-api/sql/prettify?' + new URLSearchParams({q: q}));
             this.editor.setValue(json.data);
             this.editor.clearSelection();
             this.editor.focus();
@@ -2691,7 +2691,7 @@
                     }
                 });
 
-                let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+                let json = await Utils.fetch('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
 
                 t.setProps({
                     content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
@@ -2714,7 +2714,7 @@
                 Logger.Log(TAG$5, `Copying ${id}`);
                 let recs = await this.queryDb.findByIds([id]);
                 let q = recs[0];
-                let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+                let json = await Utils.fetch('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
                 await navigator.clipboard.writeText(json.data);
                 e.target.nextElementSibling.innerHTML = "&nbsp;&nbsp;&nbsp;Copied.";
             });

@@ -259,7 +259,7 @@ class Login {
                 formData.append('version', response.data['version']);
                 formData.append('os', response.data['os']);
 
-                let res = await fetch("/api/set-version", {
+                let res = await fetch("/browser-api/version", {
                     body: formData,
                     method: "post"
                 });

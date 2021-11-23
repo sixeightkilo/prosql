@@ -17,23 +17,9 @@ require(__DIR__ . "/../src/dependencies.php");
 //app
 AppFactory::setContainer($container);
 $app = AppFactory::create();
-$app->post('/api/set-version', function($req, $res, $args) {
-    $logger = $this->get('logger');
-    $sm = $this->get('session-manager');
 
-    $version = $req->getParsedBody()['version'];
-    $deviceId = $req->getParsedBody()['device-id'];
-    $os = $req->getParsedBody()['os'] ?? "unknown";
-
-    $sm->setVersion($version);
-    $sm->setDeviceId($deviceId);
-    $sm->setOs($os);
-
-    $sm->write();
-
-    $res->getBody()->write(json_encode(['status' => 'ok', 'data' => null]));
-    return $res;
-});
+$app->post('/browser-api/version', 'VersionController:handle');
+$app->get('/browser-api/sql/{action}', 'SqlController:handle');
 
 $app->get('[/{params:.*}]', function($req, $res, $args) {
 	$params = explode('/', $req->getAttribute('params'));
@@ -58,21 +44,6 @@ $app->get('[/{params:.*}]', function($req, $res, $args) {
 
 	case 'app':
         return $renderer->renderApp($res, $params[1], []);
-
-	case 'prettify':
-        $query = $req->getQueryParams()['q'];
-        $query = SqlFormatter::format($query, false);
-
-        $res->getBody()->write(json_encode(['status' => 'ok', 'data' => $query]));
-
-        return $res;
-
-    case 'split':
-        $query = $req->getQueryParams()['q'];
-        $queries = SqlFormatter::splitQuery($query, false);
-        $res->getBody()->write(json_encode(['status' => 'ok', 'data' => $queries]));
-
-        return $res;
     }
 })->add(function(Request $request, RequestHandler $handler) {
     //no changes exepcted in session when rendering pages so write close it

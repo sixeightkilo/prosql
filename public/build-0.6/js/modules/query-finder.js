@@ -56,7 +56,7 @@ class QueryFinder {
                 }
             });
 
-            let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+            let json = await Utils.fetch('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
 
             t.setProps({
                 content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
@@ -79,7 +79,7 @@ class QueryFinder {
             Logger.Log(TAG, `Copying ${id}`);
             let recs = await this.queryDb.findByIds([id]);
             let q = recs[0];
-            let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+            let json = await Utils.fetch('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
             await navigator.clipboard.writeText(json.data);
             e.target.nextElementSibling.innerHTML = "&nbsp;&nbsp;&nbsp;Copied.";
         });
