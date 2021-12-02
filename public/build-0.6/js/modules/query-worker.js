@@ -1,7 +1,7 @@
 import { Utils } from './utils.js'
 import { Logger } from './logger.js'
 import { Constants } from './constants.js'
-import { ConnectionDB } from './connection-db.js'
+import { QueryDB } from './query-db.js'
 
 const TAG = "main"
 const URL = '/browser-api/sqlite'
@@ -23,33 +23,30 @@ class QueryWorker {
         }
 
         this.deviceId = res.data['device-id'];
+        this.logger.log(TAG, "init done");
 
-		this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
-		await this.connectionDb.open();
+		this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
+		await this.queryDb.open();
 
         this.syncDown();
-
-        this.logger.log(TAG, "Starting syncup timer");
-        this.syncUp();
-        setInterval(() => {
-            this.syncUp();
-        }, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
     }
 
     async syncDown() {
-        let res = await Utils.fetch(`${URL}/connections/updated`, false, {
+        this.logger.log(TAG, "syncDown");
+        let res = await Utils.fetch(`${URL}/queries/updated`, false, {
             db: this.deviceId,
             after: await this.getLastSyncTs()
         });
 
         this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
+        /*
         if (res.status == "ok") {
             let updateUI = false;
             let conns = res.data.connections
 
             for (let i = 0; i < conns.length; i++) {
                 //check if the remore connection is already present in local db
-                let c = await this.connectionDb.findByDbId(conns[i].id)
+                let c = await this.queryDb.findByDbId(conns[i].id)
 
                 //this may be deleted on the server. Handle this first
                 if (conns[i].status == "deleted") {
@@ -59,7 +56,7 @@ class QueryWorker {
                     }
 
                     this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`)
-                    await this.connectionDb.del(c.id);
+                    await this.queryDb.del(c.id);
                     updateUI = true;
                     continue;
                 }
@@ -75,14 +72,14 @@ class QueryWorker {
                     delete conns[i].id;
                     conns[i].synced_at = Utils.getTimestamp();
 
-                    let id = await this.connectionDb.save(conns[i]);
+                    let id = await this.queryDb.save(conns[i]);
                     this.logger.log(TAG, `saved to : ${id}`);
                     if (id >= 1) {
                         updateUI = true;
                     }
                 } else {
                     //nope. may be is-default got updated..
-                    await this.connectionDb.put(c.id, c.pass, conns[i].is_default);
+                    await this.queryDb.put(c.id, c.pass, conns[i].is_default);
                     updateUI = true;
                     this.logger.log(TAG, `Updated ${c.id}`);
                 }
@@ -94,20 +91,26 @@ class QueryWorker {
                 })
             }
         }
+        */
     }
 
     async getLastSyncTs() {
-        let conns = await this.connectionDb.getAll();
-        this.logger.log(TAG, `l: ${conns.length}`);
+        let queries = await this.queryDb.getAll();
+        this.logger.log(TAG, `l: ${queries.length}`);
 
-        if (conns.length == 0) {
+        if (queries.length == 0) {
             return EPOCH_TIMESTAMP;
         }
         //get the latest sync time
         let lastSyncTs = EPOCH_TIMESTAMP;
-        conns.forEach((c) => {
-            if (c.synced_at > lastSyncTs) {
-                lastSyncTs = c.synced_at;
+        queries.forEach((q) => {
+            let syncedAt = q.synced_at ?? null;
+            if (!syncedAt) {
+                return
+            }
+
+            if (syncedAt > lastSyncTs) {
+                lastSyncTs = q.synced_at;
             }
         });
 
@@ -117,7 +120,7 @@ class QueryWorker {
 
     async syncUp() {
         //find all records missing db_id and sync them up to cloud
-        let conns = await this.connectionDb.getAll();
+        let conns = await this.queryDb.getAll();
         if (conns.length == 0) {
             this.logger.log(TAG, "Nothing to sync");
             return;
@@ -131,7 +134,7 @@ class QueryWorker {
                 this.logger.log(TAG, `Deleting ${conns[i].id}`);
                 if (!conns[i].db_id) {
                     //this has not been synced yet. We can safely delete
-                    this.connectionDb.del(conns[i].id);
+                    this.queryDb.del(conns[i].id);
                     continue;
                 }
 
@@ -166,7 +169,7 @@ class QueryWorker {
                 conns[i].db_id = res.data.db_id;
                 this.logger.log(TAG, `syncing: ${JSON.stringify(conns[i])}`);
                 try {
-                    this.connectionDb.sync(conns[i])
+                    this.queryDb.sync(conns[i])
                 } catch (e) {
                     this.logger.log(TAG, e, this.port)
                 }
@@ -200,8 +203,8 @@ class QueryWorker {
         this.logger.log(TAG, JSON.stringify(res));
         //delete from local db
         for (let i = 0; i < res.data.ids.length; i++) {
-            let c = await this.connectionDb.findByDbId(res.data.ids[i]);
-            await this.connectionDb.destroy(c.id);
+            let c = await this.queryDb.findByDbId(res.data.ids[i]);
+            await this.queryDb.destroy(c.id);
             this.logger.log(TAG, `Destroyed: ${c.id}`);
         }
     }

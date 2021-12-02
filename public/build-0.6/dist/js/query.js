@@ -3175,10 +3175,6 @@
                     case Constants.DEBUG_LOG:
                         Logger.Log("connection-worker", e.data.payload);
                         break;
-
-                    case Constants.NEW_CONNECTIONS:
-                        this.showConns();
-                        break;
                 }
             };
 

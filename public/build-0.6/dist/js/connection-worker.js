@@ -970,7 +970,12 @@
             //get the latest sync time
             let lastSyncTs = EPOCH_TIMESTAMP;
             conns.forEach((c) => {
-                if (c.synced_at > lastSyncTs) {
+                let syncedAt = q.synced_at ?? null;
+                if (!syncedAt) {
+                    return
+                }
+
+                if (syncedAt > lastSyncTs) {
                     lastSyncTs = c.synced_at;
                 }
             });
@@ -989,6 +994,7 @@
 
             let deleted = [];
             for (let i = 0; i < conns.length; i++) {
+                //when we delete from UI, we just mark the status as deleted, then sync up later
                 let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
 
                 if (isDeleted) {

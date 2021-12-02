@@ -703,174 +703,421 @@
         }
     }
 
-    const TAG$1 = "connection-db";
-    const CONNECTION_INDEX = "connection-index";
-    const DB_ID_INDEX = "db-id-index";
-    const DB_NAME = "connections";
+    const TAG$1 = "query-db";
+    const CREATED_AT_INDEX = "created-at-index";
+    const QUERY_INDEX = "query-index";
+    const TERM_INDEX = "term-index";
+    const TAG_INDEX = "tag-index";
 
-    class ConnectionDB extends BaseDB {
+    class QueryDB extends BaseDB {
         constructor(logger, options) {
-            options.dbName = DB_NAME;
+            options.dbName = "queries";
             super(logger, options);
             this.logger = logger;
-            this.store = "connections";
+            this.store = "queries";
+            this.searchIndex = "search-index";
+            this.tagIndex = "tag-index";
         }
 
-        onUpgrade(e) {
-            this.logger.log(TAG$1, `open.onupgradeneeded: ${e.oldVersion}`);
-            if (e.oldVersion < 1) {
-                let store = e.currentTarget.result.createObjectStore(
-                    this.store, { keyPath: 'id', autoIncrement: true });
-                store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
-            }
+        onUpgrade(evt) {
+            this.logger.log(TAG$1, "open.onupgradeneeded");
+            let store = evt.target.result.createObjectStore(
+                this.store, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
 
-            if (e.oldVersion < 2) {
-                let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(DB_ID_INDEX, ["id", "db_id"], {unique: true});
-            }
+            store = evt.target.result.createObjectStore(
+                this.searchIndex, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(TERM_INDEX, "term", { unique : true });
 
-            if (e.oldVersion < 3) {
-                let store = e.currentTarget.transaction.objectStore(this.store);
-                store.deleteIndex(CONNECTION_INDEX);
-                store.deleteIndex(DB_ID_INDEX);
-
-                store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
-                store.createIndex(DB_ID_INDEX, ["db_id"], {unique: true});
-            }
-
-            if (e.oldVersion < 4) {
-                let store = e.currentTarget.transaction.objectStore(this.store);
-                store.deleteIndex(CONNECTION_INDEX);
-
-                store.createIndex(CONNECTION_INDEX, ["name", "user", "host", "port", "db"], { unique: true });
-            }
+            store = evt.target.result.createObjectStore(
+                this.tagIndex, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(TAG_INDEX, "tag", { unique : true });
         }
 
-        async save(conn) {
-            try {
-                //make sure there is only one connection with is_default = true
-                if (conn['is_default'] == true) {
-                    let conns = await super.getAll();
-                    for (let i = 0; i < conns.length; i++) {
-                        await this.put(conns[i].id, conns[i].pass, false);
+        async save(rec) {
+            return new Promise(async (resolve, reject) => {
+                //remove all new lines
+                rec.query = rec.query.replace(/\r?\n|\r/g, " ");
+                //remove extra white spaces
+                rec.query = rec.query.replace(/[ ]{2,}/g, " ");
+                let terms = rec.query.split(' ');
+
+                //get all unique terms
+                //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
+                terms = [...new Set(terms)];
+
+                this.logger.log(TAG$1, JSON.stringify(terms));
+                let id = -1;
+                try {
+                    //apppend timestamp if required
+                    if (!rec.created_at) {
+                        rec.created_at = new Date();
                     }
+
+                    id = await super.save(this.store, rec);
+                    if (id == -1) {
+                        resolve(-1);
+                        return;
+                    }
+
+                    await this.updateSearchIndex(id, terms);
+                    await this.updateTagIndex(id, rec.tags);
+
+                    resolve(id);
+                } catch (e) {
+                    this.logger.log(TAG$1, `error: ${JSON.stringify(e.message)}`);
+                    reject(e.message);
+                }
+            })
+        }
+
+        async updateSearchIndex(id, terms) {
+            //add id to each of the tags
+            for (let i = 0; i < terms.length; i++) {
+                let t = terms[i];
+                t = t.trim();
+
+                if (t.length <= 1) {
+                    continue;
                 }
 
-                //search if this connection exists
-                let rec = await this.search(conn);
-                if (rec) {
-                    //if exists , update and return
-                    await this.put(rec.id, conn['pass'], conn['is_default']);
-                    return rec.id;
+                t = this.cleanup(t);
+                try {
+                    let rec = await this.findByTerm(t);
+                    //add a new tag
+                    if (rec == null) {
+                        await super.save(this.searchIndex, {
+                            term: t,
+                            queries:[id]
+                        });
+                        continue;
+                    }
+
+                    //update tag
+                    rec['queries'].push(id);
+                    this.logger.log(TAG$1, JSON.stringify(rec));
+                    super.put(this.searchIndex, {
+                        id: rec.id,
+                        term: t,
+                        queries: rec['queries']
+                    });
+
+                } catch (e) {
+                    this.logger.log(TAG$1, `error: e.message`);
                 }
-
-                //create new record
-                return await super.save(this.store, conn);
-
-            } catch (e) {
-                this.logger.log(TAG$1, e.message);
             }
         }
 
-        async put(id, password, isDefault) {
+        async findByTerm(term) {
             return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store, "readwrite");
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(id);
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let index = objectStore.index(TERM_INDEX);
 
-                request.onsuccess = (e) => {
-                    let o = e.target.result;
-                    o.pass = password;
-                    if (o.is_default != isDefault) {
-                        //we set updated at only if is_default has changed. We don't
-                        //care about password change
-                        o.updated_at = Utils.getTimestamp();
+                let key = IDBKeyRange.only(term);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$1, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
                     }
-                    o.is_default = isDefault;
 
-                    let requestUpdate = objectStore.put(o);
-                    requestUpdate.onerror = (e) => {
-                        resolve(e.target.error);
-                    };
-                    requestUpdate.onsuccess = (e) => {
-                        resolve(0);
-                    };
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
+                    resolve(null);
                 };
             })
         }
 
-        async search(conn) {
+        async updateTagIndex(id, tags) {
+            //add id to each of the tags
+            for (let i = 0; i < tags.length; i++) {
+                let t = tags[i];
+                t = t.trim();
+
+                if (t.length <= 1) {
+                    continue;
+                }
+
+                t = this.cleanup(t);
+                try {
+                    let rec = await this.findByTag(t);
+                    //add a new tag
+                    if (rec == null) {
+                        await super.save(this.tagIndex, {
+                            tag: t,
+                            queries:[id]
+                        });
+                        continue;
+                    }
+
+                    //update tag
+                    rec['queries'].push(id);
+                    this.logger.log(TAG$1, JSON.stringify(rec));
+                    super.put(this.tagIndex, {
+                        id: rec.id,
+                        tag: t,
+                        queries: rec['queries']
+                    });
+
+                } catch (e) {
+                    this.logger.log(TAG$1, `error: e.message`);
+                }
+            }
+        }
+
+        async findByTag(tag) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let index = objectStore.index(TAG_INDEX);
+
+                let key = IDBKeyRange.only(tag);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$1, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve(null);
+                };
+            })
+        }
+
+        async findByQuery(query) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.dbName);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(QUERY_INDEX);
+
+                let key = IDBKeyRange.only(query);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$1, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve([]);
+                };
+            })
+        }
+
+        //https://stackoverflow.com/questions/26156292/trim-specific-character-from-a-string
+        cleanup(str) {
+            //remove table qualifiers like table_name.<...>
+            str = str.replace(/^\S+\./, "");
+
+            //remove punctuation marks
+            let chars = ['`', '`', ' ', '"', '\'', ',', ';', '+', '-', '=', '!=', '<', '>', '>=', '<='];
+            let start = 0, 
+                end = str.length;
+
+            while(start < end && chars.indexOf(str[start]) >= 0)
+                ++start;
+
+            while(end > start && chars.indexOf(str[end - 1]) >= 0)
+                --end;
+
+            return (start > 0 || end < str.length) ? str.substring(start, end) : str;
+        }
+
+        async filter(days, tags, terms) {
+            //days supercedes everything
+            //if days are provided get queries by days first
+            //then filter by terms and tags if provided
+            let start, end;
+            if (days.hasOwnProperty('start')) {
+                start = new Date(Date.now() - (days.start * 24 * 60 * 60 * 1000));
+                start.setHours(0);
+                start.setMinutes(0);
+                start.setSeconds(0);
+            }
+
+            if (days.hasOwnProperty('end')) {
+                end = new Date(Date.now() - (days.end * 24 * 60 * 60 * 1000));
+                end.setHours(23);
+                end.setMinutes(59);
+                end.setSeconds(59);
+            }
+
+            let result = [];
+            if (start || end) {
+                this.logger.log(TAG$1, 'filtering');
+                result = await this.searchByCreatedAt(start, end);
+
+                if (result.length == 0) {
+                    //if days were provided and we did not find anything
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            if (tags.length > 0) {
+                let idsByTag = await this.searchByTags(tags);
+
+                result = result.filter(x => idsByTag.includes(x));
+                if (result.length == 0) {
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            if (terms.length > 0) {
+                let idsByTerm = await this.searchByTerms(terms);
+
+                result = result.filter(x => idsByTerm.includes(x));
+                if (result.length == 0) {
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            return await this.findByIds(result);
+        }
+
+        findByIds(ids) {
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(CONNECTION_INDEX);
+                let queries = [];
 
-                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.host, conn.port, conn.db]));
-                request.onsuccess = (e) => {
-                    resolve(request.result);
+                objectStore.openCursor(null, 'prev').onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (ids.includes(cursor.value.id)) {
+                            queries.push(cursor.value);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(queries);
+                    }
                 };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
+            });
         }
 
-        async sync(conn) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store, "readwrite");
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(conn.id);
-
-                request.onsuccess = (e) => {
-                    let o = e.target.result;
-                    o['db_id'] = conn.db_id;
-                    o['synced_at'] = Utils.getTimestamp();
-
-                    let requestUpdate = objectStore.put(o);
-                    requestUpdate.onerror = (e) => {
-                        resolve(e.target.error);
-                    };
-                    requestUpdate.onsuccess = (e) => {
-                        resolve(0);
-                    };
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
+        async updateTags(rec) {
+            await super.put(this.store, rec);
+            await this.updateTagIndex(rec.id, rec.tags);
         }
 
-        async findByDbId(id) {
+        searchByTerms(terms) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$1, "findByDbId");
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let ids = [];
 
+                objectStore.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (terms.includes(cursor.value.term)) {
+                            ids = ids.concat(cursor.value.queries);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(ids);
+                    }
+                };
+            });
+        }
+
+        searchByTags(tags) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let ids = [];
+
+                objectStore.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (tags.includes(cursor.value.tag)) {
+                            ids = ids.concat(cursor.value.queries);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(ids);
+                    }
+                };
+            });
+        } 
+
+        listTags(startingWith) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let index = objectStore.index(TAG_INDEX);
+                let tags = [];
+
+                IDBKeyRange.lowerBound(startingWith);
+                index.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        tags.push(cursor.value.tag);
+                        cursor.continue();
+                    } else {
+                        resolve(tags);
+                    }
+                };
+            });
+        }
+
+        listTerms(startingWith) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let index = objectStore.index(TERM_INDEX);
+                let terms = [];
+
+                IDBKeyRange.lowerBound(startingWith);
+                index.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        terms.push(cursor.value.term);
+                        cursor.continue();
+                    } else {
+                        resolve(terms);
+                    }
+                };
+            });
+        }
+
+        searchByCreatedAt(s, e) {
+            return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(DB_ID_INDEX);
+                let index = objectStore.index(CREATED_AT_INDEX);
 
-                let request = index.get(IDBKeyRange.only([id]));
-                request.onsuccess = (e) => {
-                    resolve(request.result);
-                };
+                // s -----> e ----> now
+                let key;
+                if (s && e) {
+                    key = IDBKeyRange.bound(s, e);
+                } else if (s) {
+                    key = IDBKeyRange.lowerBound(s);
+                } else if (e) {
+                    key = IDBKeyRange.upperBound(e);
+                } else {
+                    resolve([]);
+                    return;
+                }
 
-                request.onerror = (e) => {
-                    this.logger.log(TAG$1, "error");
-                    resolve(e.target.error);
+                let queries = [];
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        queries.push(cursor.value.id);
+                        cursor.continue();
+                    } else {
+                        resolve(queries);
+                    }
                 };
-            })
+            });
         }
     }
 
     const TAG = "main";
     const URL = '/browser-api/sqlite';
-    const SYNCUP_INTERVAL_MIN = 10000;//1 min
-    const SYNCUP_INTERVAL_MAX = 20000;//2 min
     const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
 
     class QueryWorker {
@@ -887,66 +1134,63 @@
             }
 
             this.deviceId = res.data['device-id'];
+            this.logger.log(TAG, "init done");
 
-    		this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
-    		await this.connectionDb.open();
+    		this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
+    		await this.queryDb.open();
 
             this.syncDown();
-
-            this.logger.log(TAG, "Starting syncup timer");
-            this.syncUp();
-            setInterval(() => {
-                this.syncUp();
-            }, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
         }
 
         async syncDown() {
-            let res = await Utils.fetch(`${URL}/connections/updated`, false, {
+            this.logger.log(TAG, "syncDown");
+            let res = await Utils.fetch(`${URL}/queries/updated`, false, {
                 db: this.deviceId,
                 after: await this.getLastSyncTs()
             });
 
             this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
+            /*
             if (res.status == "ok") {
                 let updateUI = false;
-                let conns = res.data.connections;
+                let conns = res.data.connections
 
                 for (let i = 0; i < conns.length; i++) {
                     //check if the remore connection is already present in local db
-                    let c = await this.connectionDb.findByDbId(conns[i].id);
+                    let c = await this.queryDb.findByDbId(conns[i].id)
 
                     //this may be deleted on the server. Handle this first
                     if (conns[i].status == "deleted") {
                         if (c == null) {
-                            this.logger.log(TAG, `already deleted: ${conns[i].id}`);
+                            this.logger.log(TAG, `already deleted: ${conns[i].id}`)
                             continue;
                         }
 
-                        this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`);
-                        await this.connectionDb.del(c.id);
+                        this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`)
+                        await this.queryDb.del(c.id);
                         updateUI = true;
                         continue;
                     }
 
                     //this looks like a new connection
                     if (c == null) {
-                        this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`);
+                        this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`)
                         delete conns[i].created_at;
                         delete conns[i].updated_at;
                         delete conns[i].status;
 
-                        conns[i].db_id = conns[i].id;
+                        conns[i].db_id = conns[i].id
                         delete conns[i].id;
                         conns[i].synced_at = Utils.getTimestamp();
 
-                        let id = await this.connectionDb.save(conns[i]);
+                        let id = await this.queryDb.save(conns[i]);
                         this.logger.log(TAG, `saved to : ${id}`);
                         if (id >= 1) {
                             updateUI = true;
                         }
                     } else {
                         //nope. may be is-default got updated..
-                        await this.connectionDb.put(c.id, c.pass, conns[i].is_default);
+                        await this.queryDb.put(c.id, c.pass, conns[i].is_default);
                         updateUI = true;
                         this.logger.log(TAG, `Updated ${c.id}`);
                     }
@@ -955,23 +1199,29 @@
                 if (updateUI) {
                     this.port.postMessage({
                         type: Constants.NEW_CONNECTIONS,
-                    });
+                    })
                 }
             }
+            */
         }
 
         async getLastSyncTs() {
-            let conns = await this.connectionDb.getAll();
-            this.logger.log(TAG, `l: ${conns.length}`);
+            let queries = await this.queryDb.getAll();
+            this.logger.log(TAG, `l: ${queries.length}`);
 
-            if (conns.length == 0) {
+            if (queries.length == 0) {
                 return EPOCH_TIMESTAMP;
             }
             //get the latest sync time
             let lastSyncTs = EPOCH_TIMESTAMP;
-            conns.forEach((c) => {
-                if (c.synced_at > lastSyncTs) {
-                    lastSyncTs = c.synced_at;
+            queries.forEach((q) => {
+                let syncedAt = q.synced_at ?? null;
+                if (!syncedAt) {
+                    return
+                }
+
+                if (syncedAt > lastSyncTs) {
+                    lastSyncTs = q.synced_at;
                 }
             });
 
@@ -981,7 +1231,7 @@
 
         async syncUp() {
             //find all records missing db_id and sync them up to cloud
-            let conns = await this.connectionDb.getAll();
+            let conns = await this.queryDb.getAll();
             if (conns.length == 0) {
                 this.logger.log(TAG, "Nothing to sync");
                 return;
@@ -995,7 +1245,7 @@
                     this.logger.log(TAG, `Deleting ${conns[i].id}`);
                     if (!conns[i].db_id) {
                         //this has not been synced yet. We can safely delete
-                        this.connectionDb.del(conns[i].id);
+                        this.queryDb.del(conns[i].id);
                         continue;
                     }
 
@@ -1030,7 +1280,7 @@
                     conns[i].db_id = res.data.db_id;
                     this.logger.log(TAG, `syncing: ${JSON.stringify(conns[i])}`);
                     try {
-                        this.connectionDb.sync(conns[i]);
+                        this.queryDb.sync(conns[i]);
                     } catch (e) {
                         this.logger.log(TAG, e, this.port);
                     }
@@ -1064,8 +1314,8 @@
             this.logger.log(TAG, JSON.stringify(res));
             //delete from local db
             for (let i = 0; i < res.data.ids.length; i++) {
-                let c = await this.connectionDb.findByDbId(res.data.ids[i]);
-                await this.connectionDb.destroy(c.id);
+                let c = await this.queryDb.findByDbId(res.data.ids[i]);
+                await this.queryDb.destroy(c.id);
                 this.logger.log(TAG, `Destroyed: ${c.id}`);
             }
         }
