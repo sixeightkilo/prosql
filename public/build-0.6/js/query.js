@@ -48,11 +48,12 @@ class Query {
         Logger.Log(TAG, this.sessionId);
 
         this.queryRunner = new QueryRunner(this.sessionId);
+
         this.history = new QueryHistory();
         await this.history.init();
 
-        this.finder = new QueryFinder();
-        await this.finder.init();
+        //this.finder = new QueryFinder();
+        //await this.finder.init();
 
         this.initHandlers();
 
@@ -68,7 +69,7 @@ class Query {
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
 
-        this.initWorkers();
+        //this.initWorkers();
     }
 
     initWorkers() {

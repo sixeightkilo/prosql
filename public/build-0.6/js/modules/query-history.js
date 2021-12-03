@@ -45,7 +45,15 @@ class QueryHistory {
 
     async init() {
         this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
-        await this.queryDb.open();
+        try {
+            await this.queryDb.open();
+        } catch (e) {
+            Logger.Log(TAG, "Unable to open DB");
+            this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION}, true);
+            await this.queryDb.open();
+            await this.queryDb.removeDuplicates();
+            Logger.Log(TAG, "Removed duplicates");
+        }
     }
 
     async handleDownload() {

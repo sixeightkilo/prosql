@@ -184,7 +184,7 @@ class Constants {
     }
 
     static get QUERY_DB_VERSION() {
-        return 2
+        return 36;
     }
 
     static get CONN_DB_VERSION() {

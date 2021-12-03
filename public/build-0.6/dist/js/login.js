@@ -231,7 +231,7 @@
         }
 
         static get QUERY_DB_VERSION() {
-            return 2
+            return 36;
         }
 
         static get CONN_DB_VERSION() {
@@ -273,7 +273,7 @@
 
     const DISABLED = [
         'grid-resizer',
-        'query-db',
+        //'query-db',
         //'query-finder',
     ];
 
@@ -503,7 +503,7 @@
 
     const TAG$3 = "base-db";
     class BaseDB {
-        constructor(logger, options) {
+        constructor(logger, options, skipupgrade = false) {
             this.logger = logger;
             this.version = options.version;
             this.dbName = options.dbName;
@@ -515,6 +515,9 @@
                     req.onsuccess = (e) => {
                         this.logger.log(TAG$3, "open.onsuccess");
                         this.db = req.result;
+                        this.db.onversionchange = (e) => {
+                            this.logger.log(TAG$3, "onversionchange");
+                        };
                         resolve(0);
                     };
 
@@ -523,8 +526,12 @@
                         reject(e.target.errorCode);
                     };
 
-                    req.onupgradeneeded = (evt) => {
-                        this.onUpgrade(evt);
+                    req.onupgradeneeded = (e) => {
+                        this.onUpgrade(e);
+                    };
+
+                    req.onblocked = (e) => {
+                        this.logger.log(TAG$3, "onblocked");
                     };
             })
         }

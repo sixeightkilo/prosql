@@ -3,7 +3,7 @@ import { Constants } from './constants.js'
 
 const TAG = "base-db"
 class BaseDB {
-    constructor(logger, options) {
+    constructor(logger, options, skipupgrade = false) {
         this.logger = logger;
         this.version = options.version;
         this.dbName = options.dbName;
@@ -15,6 +15,9 @@ class BaseDB {
                 req.onsuccess = (e) => {
                     this.logger.log(TAG, "open.onsuccess");
                     this.db = req.result
+                    this.db.onversionchange = (e) => {
+                        this.logger.log(TAG, "onversionchange")
+                    }
                     resolve(0)
                 };
 
@@ -23,8 +26,12 @@ class BaseDB {
                     reject(e.target.errorCode);
                 };
 
-                req.onupgradeneeded = (evt) => {
-                    this.onUpgrade(evt);
+                req.onupgradeneeded = (e) => {
+                    this.onUpgrade(e);
+                };
+
+                req.onblocked = (e) => {
+                    this.logger.log(TAG, "onblocked")
                 };
         })
     }

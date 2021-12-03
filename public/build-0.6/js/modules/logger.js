@@ -10,7 +10,7 @@ const TAGS = [
 
 const DISABLED = [
     'grid-resizer',
-    'query-db',
+    //'query-db',
     //'query-finder',
 ]
 

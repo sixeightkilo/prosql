@@ -187,7 +187,7 @@
         }
 
         static get QUERY_DB_VERSION() {
-            return 2
+            return 36;
         }
 
         static get CONN_DB_VERSION() {
@@ -229,7 +229,7 @@
 
     const DISABLED = [
         'grid-resizer',
-        'query-db',
+        //'query-db',
         //'query-finder',
     ];
 
@@ -3120,7 +3120,7 @@
 
     const TAG$4 = "base-db";
     class BaseDB {
-        constructor(logger, options) {
+        constructor(logger, options, skipupgrade = false) {
             this.logger = logger;
             this.version = options.version;
             this.dbName = options.dbName;
@@ -3132,6 +3132,9 @@
                     req.onsuccess = (e) => {
                         this.logger.log(TAG$4, "open.onsuccess");
                         this.db = req.result;
+                        this.db.onversionchange = (e) => {
+                            this.logger.log(TAG$4, "onversionchange");
+                        };
                         resolve(0);
                     };
 
@@ -3140,8 +3143,12 @@
                         reject(e.target.errorCode);
                     };
 
-                    req.onupgradeneeded = (evt) => {
-                        this.onUpgrade(evt);
+                    req.onupgradeneeded = (e) => {
+                        this.onUpgrade(e);
+                    };
+
+                    req.onblocked = (e) => {
+                        this.logger.log(TAG$4, "onblocked");
                     };
             })
         }
@@ -3327,28 +3334,50 @@
     const TAG_INDEX = "tag-index";
 
     class QueryDB extends BaseDB {
-        constructor(logger, options) {
+        constructor(logger, options, skipUpgrade = false) {
             options.dbName = "queries";
             super(logger, options);
             this.logger = logger;
             this.store = "queries";
             this.searchIndex = "search-index";
             this.tagIndex = "tag-index";
+            this.skipUpgrade = skipUpgrade;
         }
 
-        onUpgrade(evt) {
-            this.logger.log(TAG$3, "open.onupgradeneeded");
-            let store = evt.target.result.createObjectStore(
-                this.store, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+        onUpgrade(e) {
+            this.logger.log(TAG$3, `open.onupgradeneeded o: ${e.oldVersion} n: ${e.newVersion}`);
 
-            store = evt.target.result.createObjectStore(
-                this.searchIndex, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(TERM_INDEX, "term", { unique : true });
+            if (e.oldVersion < 2) {
+                let store = e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
 
-            store = evt.target.result.createObjectStore(
-                this.tagIndex, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(TAG_INDEX, "tag", { unique : true });
+                store = e.target.result.createObjectStore(
+                    this.searchIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TERM_INDEX, "term", { unique : true });
+
+                store = e.target.result.createObjectStore(
+                    this.tagIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TAG_INDEX, "tag", { unique : true });
+            }
+            
+            let store = e.currentTarget.transaction.objectStore(this.store);
+            try {
+                store.deleteIndex(QUERY_INDEX);
+            } catch (e) {
+                this.logger.log(TAG$3, "QUERY_INDEX does not exist");
+            }
+        
+            //we first call open with skipUpgrade = false. For some clients
+            //createIndex will fail because queries in indexeddb are not unique. We catch that exception
+            //then call open again with skipUpgrade = false, remove duplicates, then call open with ver+1 and
+            //skipUpgrade = false. This time createIndex should succeed
+
+            if (this.skipUpgrade) {
+                return;
+            }
+
+            store.createIndex(QUERY_INDEX, ["query"], { unique : true });
         }
 
         async save(rec) {
@@ -3731,6 +3760,16 @@
                 };
             });
         }
+
+        //this method will get called only from clients which have some saved queries
+        //from the earlier version of DB
+
+        //Remove duplicate records so we can create a unique index on query
+        async removeDuplicates() {
+            this.logger.log(TAG$3, `removeDuplicates`);
+            let recs = await super.getAll(['query', 'tags']);
+            this.logger.log(TAG$3, `${JSON.stringify(recs[0])}`);
+        }
     }
 
     /*Copyright 2017 Kenneth Jiang
@@ -3860,7 +3899,15 @@
 
         async init() {
             this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
-            await this.queryDb.open();
+            try {
+                await this.queryDb.open();
+            } catch (e) {
+                Logger.Log(TAG$1, "Unable to open DB");
+                this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION}, true);
+                await this.queryDb.open();
+                await this.queryDb.removeDuplicates();
+                Logger.Log(TAG$1, "Removed duplicates");
+            }
         }
 
         async handleDownload() {

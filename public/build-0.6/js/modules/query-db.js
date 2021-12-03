@@ -9,28 +9,50 @@ const TERM_INDEX = "term-index";
 const TAG_INDEX = "tag-index";
 
 class QueryDB extends BaseDB {
-    constructor(logger, options) {
+    constructor(logger, options, skipUpgrade = false) {
         options.dbName = "queries";
         super(logger, options);
         this.logger = logger;
         this.store = "queries";
         this.searchIndex = "search-index";
         this.tagIndex = "tag-index";
+        this.skipUpgrade = skipUpgrade
     }
 
-    onUpgrade(evt) {
-        this.logger.log(TAG, "open.onupgradeneeded");
-        let store = evt.target.result.createObjectStore(
-            this.store, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+    onUpgrade(e) {
+        this.logger.log(TAG, `open.onupgradeneeded o: ${e.oldVersion} n: ${e.newVersion}`);
 
-        store = evt.target.result.createObjectStore(
-            this.searchIndex, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(TERM_INDEX, "term", { unique : true });
+        if (e.oldVersion < 2) {
+            let store = e.target.result.createObjectStore(
+                this.store, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
 
-        store = evt.target.result.createObjectStore(
-            this.tagIndex, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(TAG_INDEX, "tag", { unique : true });
+            store = e.target.result.createObjectStore(
+                this.searchIndex, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(TERM_INDEX, "term", { unique : true });
+
+            store = e.target.result.createObjectStore(
+                this.tagIndex, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(TAG_INDEX, "tag", { unique : true });
+        }
+        
+        let store = e.currentTarget.transaction.objectStore(this.store);
+        try {
+            store.deleteIndex(QUERY_INDEX);
+        } catch (e) {
+            this.logger.log(TAG, "QUERY_INDEX does not exist");
+        }
+    
+        //we first call open with skipUpgrade = false. For some clients
+        //createIndex will fail because queries in indexeddb are not unique. We catch that exception
+        //then call open again with skipUpgrade = false, remove duplicates, then call open with ver+1 and
+        //skipUpgrade = false. This time createIndex should succeed
+
+        if (this.skipUpgrade) {
+            return;
+        }
+
+        store.createIndex(QUERY_INDEX, ["query"], { unique : true });
     }
 
     async save(rec) {
@@ -412,6 +434,16 @@ class QueryDB extends BaseDB {
                 }
             };
         });
+    }
+
+    //this method will get called only from clients which have some saved queries
+    //from the earlier version of DB
+
+    //Remove duplicate records so we can create a unique index on query
+    async removeDuplicates() {
+        this.logger.log(TAG, `removeDuplicates`);
+        let recs = await super.getAll(['query', 'tags'])
+        this.logger.log(TAG, `${JSON.stringify(recs[0])}`)
     }
 } 
 
