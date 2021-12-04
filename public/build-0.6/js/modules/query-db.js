@@ -18,19 +18,26 @@ class QueryDB extends BaseDB {
         this.tagIndex = "tag-index";
     }
 
-    onUpgrade(evt) {
-        this.logger.log(TAG, "open.onupgradeneeded");
-        let store = evt.target.result.createObjectStore(
-            this.store, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+    onUpgrade(e) {
+        this.logger.log(TAG, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+        if (e.oldVersion < 2) {
+            let store = e.target.result.createObjectStore(
+                this.store, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
 
-        store = evt.target.result.createObjectStore(
-            this.searchIndex, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(TERM_INDEX, "term", { unique : true });
+            store = e.target.result.createObjectStore(
+                this.searchIndex, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(TERM_INDEX, "term", { unique : true });
 
-        store = evt.target.result.createObjectStore(
-            this.tagIndex, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(TAG_INDEX, "tag", { unique : true });
+            store = e.target.result.createObjectStore(
+                this.tagIndex, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(TAG_INDEX, "tag", { unique : true });
+        }
+
+        if (e.oldVersion < 37) {
+            let store = e.currentTarget.transaction.objectStore(this.store);
+            store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+        }
     }
 
     async save(rec) {
@@ -227,6 +234,8 @@ class QueryDB extends BaseDB {
         //days supercedes everything
         //if days are provided get queries by days first
         //then filter by terms and tags if provided
+        this.logger.log(TAG, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+
         let start, end;
         if (days.hasOwnProperty('start')) {
             start = new Date(Date.now() - (days.start * 24 * 60 * 60 * 1000));
@@ -241,6 +250,7 @@ class QueryDB extends BaseDB {
             end.setMinutes(59);
             end.setSeconds(59);
         }
+
 
         let result = [];
         if (start || end) {

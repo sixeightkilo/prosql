@@ -186,8 +186,12 @@
             return 'user'
         }
 
+        static get DB_ID_INDEX() {
+            return "db-id-index";
+        }
+
         static get QUERY_DB_VERSION() {
-            return 2
+            return 37;
         }
 
         static get CONN_DB_VERSION() {
@@ -218,6 +222,10 @@
             return "worker.new-connection"
         }
 
+        static get NEW_QUERIES() {
+            return "worker.new-queries"
+        }
+
         static get STATUS_ACTIVE() {
             return "active"
         }
@@ -229,7 +237,7 @@
 
     const DISABLED = [
         'grid-resizer',
-        'query-db',
+        //'query-db',
         //'query-finder',
     ];
 
@@ -551,6 +559,7 @@
                 let transaction = this.db.transaction([store], "readwrite");
                 let objectStore = transaction.objectStore(store);
 
+                rec.updated_at = Utils.getTimestamp();
                 let request = objectStore.put(rec);
                 request.onsuccess = (e) => {
                     resolve(0);
@@ -662,6 +671,52 @@
             })
         }
 
+        async sync(conn) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(conn.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = conn.db_id;
+                    o['synced_at'] = Utils.getTimestamp();
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async findByDbId(id) {
+            return new Promise((resolve, reject) => {
+                this.logger.log(TAG$2, "findByDbId");
+
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(Constants.DB_ID_INDEX);
+
+                let request = index.get(IDBKeyRange.only([id]));
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$2, "error");
+                    resolve(e.target.error);
+                };
+            })
+        }
+
         static toDb(o = {}) {
             //convert all "_" to "-"
             let r = {};
@@ -705,7 +760,6 @@
 
     const TAG$1 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
-    const DB_ID_INDEX = "db-id-index";
     const DB_NAME = "connections";
 
     class ConnectionDB extends BaseDB {
@@ -726,16 +780,16 @@
 
             if (e.oldVersion < 2) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(DB_ID_INDEX, ["id", "db_id"], {unique: true});
+                store.createIndex(Constants.DB_ID_INDEX, ["id", "db_id"], {unique: true});
             }
 
             if (e.oldVersion < 3) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
                 store.deleteIndex(CONNECTION_INDEX);
-                store.deleteIndex(DB_ID_INDEX);
+                store.deleteIndex(Constants.DB_ID_INDEX);
 
                 store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
-                store.createIndex(DB_ID_INDEX, ["db_id"], {unique: true});
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"], {unique: true});
             }
 
             if (e.oldVersion < 4) {
@@ -815,52 +869,6 @@
                 };
 
                 request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
-        }
-
-        async sync(conn) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store, "readwrite");
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(conn.id);
-
-                request.onsuccess = (e) => {
-                    let o = e.target.result;
-                    o['db_id'] = conn.db_id;
-                    o['synced_at'] = Utils.getTimestamp();
-
-                    let requestUpdate = objectStore.put(o);
-                    requestUpdate.onerror = (e) => {
-                        resolve(e.target.error);
-                    };
-                    requestUpdate.onsuccess = (e) => {
-                        resolve(0);
-                    };
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
-        }
-
-        async findByDbId(id) {
-            return new Promise((resolve, reject) => {
-                this.logger.log(TAG$1, "findByDbId");
-
-                let transaction = this.db.transaction(this.store);
-                let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(DB_ID_INDEX);
-
-                let request = index.get(IDBKeyRange.only([id]));
-                request.onsuccess = (e) => {
-                    resolve(request.result);
-                };
-
-                request.onerror = (e) => {
-                    this.logger.log(TAG$1, "error");
                     resolve(e.target.error);
                 };
             })

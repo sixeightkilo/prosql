@@ -28,9 +28,9 @@ export default [
         },
     },
     {
-        'input': 'build-0.6/js/query.js',
+        'input': 'build-0.6/js/queries.js',
         'output': {
-            'file': 'build-0.6/dist/js/query.js',
+            'file': 'build-0.6/dist/js/queries.js',
             'format': 'iife'
         },
     },

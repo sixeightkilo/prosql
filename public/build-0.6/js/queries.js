@@ -89,6 +89,11 @@ class Query {
                 case Constants.DEBUG_LOG:
                     Logger.Log("query-worker", e.data.payload);
                     break;
+
+                case Constants.NEW_QUERIES:
+                    Logger.Log("query-worker", e.data.payload);
+                    PubSub.publish(Constants.QUERY_SAVED, {});
+                    break;
             }
         }
     }

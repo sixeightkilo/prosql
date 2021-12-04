@@ -187,7 +187,7 @@
         }
 
         static get QUERY_DB_VERSION() {
-            return 2
+            return 37;
         }
 
         static get CONN_DB_VERSION() {
@@ -2232,6 +2232,7 @@
     const QUERY_INDEX = "query-index";
     const TERM_INDEX = "term-index";
     const TAG_INDEX = "tag-index";
+    const DB_ID_INDEX = "db-id-index";
 
     class QueryDB extends BaseDB {
         constructor(logger, options) {
@@ -2243,19 +2244,26 @@
             this.tagIndex = "tag-index";
         }
 
-        onUpgrade(evt) {
-            this.logger.log(TAG$6, "open.onupgradeneeded");
-            let store = evt.target.result.createObjectStore(
-                this.store, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+        onUpgrade(e) {
+            this.logger.log(TAG$6, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 2) {
+                let store = e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
 
-            store = evt.target.result.createObjectStore(
-                this.searchIndex, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(TERM_INDEX, "term", { unique : true });
+                store = e.target.result.createObjectStore(
+                    this.searchIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TERM_INDEX, "term", { unique : true });
 
-            store = evt.target.result.createObjectStore(
-                this.tagIndex, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(TAG_INDEX, "tag", { unique : true });
+                store = e.target.result.createObjectStore(
+                    this.tagIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TAG_INDEX, "tag", { unique : true });
+            }
+
+            if (e.oldVersion < 37) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(DB_ID_INDEX, ["db_id"]);
+            }
         }
 
         async save(rec) {

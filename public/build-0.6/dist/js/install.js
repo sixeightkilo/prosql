@@ -186,8 +186,12 @@
             return 'user'
         }
 
+        static get DB_ID_INDEX() {
+            return "db-id-index";
+        }
+
         static get QUERY_DB_VERSION() {
-            return 2
+            return 37;
         }
 
         static get CONN_DB_VERSION() {
@@ -218,6 +222,10 @@
             return "worker.new-connection"
         }
 
+        static get NEW_QUERIES() {
+            return "worker.new-queries"
+        }
+
         static get STATUS_ACTIVE() {
             return "active"
         }
@@ -229,7 +237,7 @@
 
     const DISABLED = [
         'grid-resizer',
-        'query-db',
+        //'query-db',
         //'query-finder',
     ];
 

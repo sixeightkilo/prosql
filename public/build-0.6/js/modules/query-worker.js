@@ -25,10 +25,76 @@ class QueryWorker {
         this.deviceId = res.data['device-id'];
         this.logger.log(TAG, "init done");
 
-		this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
-		await this.queryDb.open();
+        this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
+        await this.queryDb.open();
 
         this.syncDown();
+        this.syncUp();
+        //setInterval(() => {
+            //this.syncUp();
+        //}, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
+    }
+
+    async syncUp() {
+        //find all records missing db_id and sync them up to cloud
+        let queries = await this.queryDb.getAll();
+        if (queries.length == 0) {
+            this.logger.log(TAG, "Nothing to sync");
+            return;
+        }
+
+        let deleted = [];
+        for (let i = 0; i < queries.length; i++) {
+            //when we delete from UI, we just mark the status as deleted, then sync up later
+            let isDeleted = ((queries[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+
+            if (isDeleted) {
+                this.logger.log(TAG, `Deleting ${queries[i].id}`);
+                if (!queries[i].db_id) {
+                    //this has not been synced yet. We can safely delete
+                    this.queryDb.del(queries[i].id);
+                    continue;
+                }
+
+                deleted.push(queries[i]);
+                continue;
+            }
+
+            if (queries[i].db_id) {
+                //every record may or may not have updated_at
+                let updatedAt = queries[i].updated_at ?? EPOCH_TIMESTAMP;
+
+                //if it has a db_id , it is guaranteed to haved synced_at
+                if (queries[i].synced_at > updatedAt) {
+                    this.logger.log(TAG, `Skipping ${queries[i].id}: ${queries[i].db_id}`);
+                    continue;
+                }
+            }
+
+            let res = await fetch(`${URL}/queries`, {
+                body: JSON.stringify(queries[i]),
+                method: "POST",
+                headers: {
+                    db: this.deviceId,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            res = await res.json();
+            this.logger.log(TAG, JSON.stringify(res));
+
+            if (res.status == "ok") {
+                queries[i].db_id = res.data.db_id;
+                this.logger.log(TAG, `syncing: ${JSON.stringify(queries[i])}`);
+                try {
+                    this.queryDb.sync(queries[i])
+                } catch (e) {
+                    this.logger.log(TAG, e, this.port)
+                }
+            }
+        }
+
+        //this.syncDeleted(deleted);
     }
 
     async syncDown() {
@@ -39,59 +105,60 @@ class QueryWorker {
         });
 
         this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
-        /*
-        if (res.status == "ok") {
-            let updateUI = false;
-            let conns = res.data.connections
 
-            for (let i = 0; i < conns.length; i++) {
-                //check if the remore connection is already present in local db
-                let c = await this.queryDb.findByDbId(conns[i].id)
+        if (res.status != "ok") {
+            this.logger.log(TAG, "Sync down error: " + res.msg);
+            return;
+        }
 
-                //this may be deleted on the server. Handle this first
-                if (conns[i].status == "deleted") {
-                    if (c == null) {
-                        this.logger.log(TAG, `already deleted: ${conns[i].id}`)
-                        continue;
-                    }
+        let updateUI = false;
+        let queries = res.data.queries
 
-                    this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`)
-                    await this.queryDb.del(c.id);
-                    updateUI = true;
+        for (let i = 0; i < queries.length; i++) {
+            //check if the remore connection is already present in local db
+            this.logger.log(TAG, `syncDown: ${i}`);
+            let q = await this.queryDb.findByDbId(queries[i].id)
+
+            //this may be deleted on the server. Handle this first
+            if (queries[i].status == "deleted") {
+                if (q == null) {
+                    this.logger.log(TAG, `already deleted: ${queries[i].id}`)
                     continue;
                 }
 
-                //this looks like a new connection
-                if (c == null) {
-                    this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`)
-                    delete conns[i].created_at;
-                    delete conns[i].updated_at;
-                    delete conns[i].status;
-
-                    conns[i].db_id = conns[i].id
-                    delete conns[i].id;
-                    conns[i].synced_at = Utils.getTimestamp();
-
-                    let id = await this.queryDb.save(conns[i]);
-                    this.logger.log(TAG, `saved to : ${id}`);
-                    if (id >= 1) {
-                        updateUI = true;
-                    }
-                } else {
-                    //nope. may be is-default got updated..
-                    await this.queryDb.put(c.id, c.pass, conns[i].is_default);
-                    updateUI = true;
-                    this.logger.log(TAG, `Updated ${c.id}`);
-                }
+                this.logger.log(TAG, `deleting: ${JSON.stringify(q)}`)
+                await this.queryDb.del(q.id);
+                updateUI = true;
+                continue;
             }
 
-            if (updateUI) {
-                this.port.postMessage({
-                    type: Constants.NEW_CONNECTIONS,
-                })
+            //this looks like a new query
+            if (q == null) {
+                this.logger.log(TAG, `inserting: ${JSON.stringify(queries[i].id)}`)
+                queries[i].db_id = queries[i].id
+                delete queries[i].id;
+                queries[i].synced_at = Utils.getTimestamp();
+                queries[i].created_at = new Date(queries[i].created_at)
+
+                let id = await this.queryDb.save(queries[i]);
+                this.logger.log(TAG, `saved to : ${id}`);
+                if (id >= 1) {
+                    updateUI = true;
+                }
+            } else {
+                //nope. may be tags got updated
+                q.tags = queries[i].tags
+                await this.queryDb.updateTags(q);
+                updateUI = true;
+                this.logger.log(TAG, `Updated ${q.id}`);
             }
         }
-        */
+
+        if (updateUI) {
+            this.port.postMessage({
+                type: Constants.NEW_QUERIES,
+            })
+        }
     }
 
     async getLastSyncTs() {
@@ -153,7 +220,7 @@ class QueryWorker {
                 }
             }
 
-            let res = await fetch(`${URL}/connections`, {
+            let res = await fetch(`${URL}/queries`, {
                 body: JSON.stringify(conns[i]),
                 method: "POST",
                 headers: {
@@ -190,7 +257,7 @@ class QueryWorker {
         });
 
         this.logger.log(TAG, JSON.stringify(ids));
-        let res = await fetch(`${URL}/connections`, {
+        let res = await fetch(`${URL}/queries`, {
             body: JSON.stringify(ids),
             method: "DELETE",
             headers: {

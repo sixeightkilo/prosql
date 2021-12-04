@@ -1,5 +1,6 @@
 import { Logger } from './logger.js'
 import { Constants } from './constants.js'
+import { Utils } from './utils.js'
 
 const TAG = "base-db"
 class BaseDB {
@@ -51,6 +52,7 @@ class BaseDB {
             let transaction = this.db.transaction([store], "readwrite")
             let objectStore = transaction.objectStore(store)
 
+            rec.updated_at = Utils.getTimestamp();
             let request = objectStore.put(rec);
             request.onsuccess = (e) => {
                 resolve(0);
@@ -159,6 +161,52 @@ class BaseDB {
                     resolve(results);
                 }
             }
+        })
+    }
+
+    async sync(conn) {
+        return new Promise((resolve, reject) => {
+            let transaction = this.db.transaction(this.store, "readwrite");
+            let objectStore = transaction.objectStore(this.store);
+            let request = objectStore.get(conn.id);
+
+            request.onsuccess = (e) => {
+                let o = e.target.result;
+                o['db_id'] = conn.db_id
+                o['synced_at'] = Utils.getTimestamp()
+
+                let requestUpdate = objectStore.put(o);
+                requestUpdate.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+                requestUpdate.onsuccess = (e) => {
+                    resolve(0);
+                };
+            };
+
+            request.onerror = (e) => {
+                resolve(e.target.error);
+            };
+        })
+    }
+
+    async findByDbId(id) {
+        return new Promise((resolve, reject) => {
+            this.logger.log(TAG, "findByDbId");
+
+            let transaction = this.db.transaction(this.store);
+            let objectStore = transaction.objectStore(this.store);
+            let index = objectStore.index(Constants.DB_ID_INDEX);
+
+            let request = index.get(IDBKeyRange.only([id]))
+            request.onsuccess = (e) => {
+                resolve(request.result);
+            };
+
+            request.onerror = (e) => {
+                this.logger.log(TAG, "error");
+                resolve(e.target.error);
+            };
         })
     }
 

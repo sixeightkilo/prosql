@@ -186,8 +186,12 @@
             return 'user'
         }
 
+        static get DB_ID_INDEX() {
+            return "db-id-index";
+        }
+
         static get QUERY_DB_VERSION() {
-            return 2
+            return 37;
         }
 
         static get CONN_DB_VERSION() {
@@ -218,6 +222,10 @@
             return "worker.new-connection"
         }
 
+        static get NEW_QUERIES() {
+            return "worker.new-queries"
+        }
+
         static get STATUS_ACTIVE() {
             return "active"
         }
@@ -229,7 +237,7 @@
 
     const DISABLED = [
         'grid-resizer',
-        'query-db',
+        //'query-db',
         //'query-finder',
     ];
 
@@ -551,6 +559,7 @@
                 let transaction = this.db.transaction([store], "readwrite");
                 let objectStore = transaction.objectStore(store);
 
+                rec.updated_at = Utils.getTimestamp();
                 let request = objectStore.put(rec);
                 request.onsuccess = (e) => {
                     resolve(0);
@@ -662,6 +671,52 @@
             })
         }
 
+        async sync(conn) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(conn.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = conn.db_id;
+                    o['synced_at'] = Utils.getTimestamp();
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async findByDbId(id) {
+            return new Promise((resolve, reject) => {
+                this.logger.log(TAG$2, "findByDbId");
+
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(Constants.DB_ID_INDEX);
+
+                let request = index.get(IDBKeyRange.only([id]));
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$2, "error");
+                    resolve(e.target.error);
+                };
+            })
+        }
+
         static toDb(o = {}) {
             //convert all "_" to "-"
             let r = {};
@@ -719,19 +774,26 @@
             this.tagIndex = "tag-index";
         }
 
-        onUpgrade(evt) {
-            this.logger.log(TAG$1, "open.onupgradeneeded");
-            let store = evt.target.result.createObjectStore(
-                this.store, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+        onUpgrade(e) {
+            this.logger.log(TAG$1, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 2) {
+                let store = e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
 
-            store = evt.target.result.createObjectStore(
-                this.searchIndex, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(TERM_INDEX, "term", { unique : true });
+                store = e.target.result.createObjectStore(
+                    this.searchIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TERM_INDEX, "term", { unique : true });
 
-            store = evt.target.result.createObjectStore(
-                this.tagIndex, { keyPath: 'id', autoIncrement: true });
-            store.createIndex(TAG_INDEX, "tag", { unique : true });
+                store = e.target.result.createObjectStore(
+                    this.tagIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TAG_INDEX, "tag", { unique : true });
+            }
+
+            if (e.oldVersion < 37) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+            }
         }
 
         async save(rec) {
@@ -928,6 +990,8 @@
             //days supercedes everything
             //if days are provided get queries by days first
             //then filter by terms and tags if provided
+            this.logger.log(TAG$1, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+
             let start, end;
             if (days.hasOwnProperty('start')) {
                 start = new Date(Date.now() - (days.start * 24 * 60 * 60 * 1000));
@@ -942,6 +1006,7 @@
                 end.setMinutes(59);
                 end.setSeconds(59);
             }
+
 
             let result = [];
             if (start || end) {
@@ -1136,10 +1201,76 @@
             this.deviceId = res.data['device-id'];
             this.logger.log(TAG, "init done");
 
-    		this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
-    		await this.queryDb.open();
+            this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
+            await this.queryDb.open();
 
             this.syncDown();
+            this.syncUp();
+            //setInterval(() => {
+                //this.syncUp();
+            //}, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
+        }
+
+        async syncUp() {
+            //find all records missing db_id and sync them up to cloud
+            let queries = await this.queryDb.getAll();
+            if (queries.length == 0) {
+                this.logger.log(TAG, "Nothing to sync");
+                return;
+            }
+
+            let deleted = [];
+            for (let i = 0; i < queries.length; i++) {
+                //when we delete from UI, we just mark the status as deleted, then sync up later
+                let isDeleted = ((queries[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+
+                if (isDeleted) {
+                    this.logger.log(TAG, `Deleting ${queries[i].id}`);
+                    if (!queries[i].db_id) {
+                        //this has not been synced yet. We can safely delete
+                        this.queryDb.del(queries[i].id);
+                        continue;
+                    }
+
+                    deleted.push(queries[i]);
+                    continue;
+                }
+
+                if (queries[i].db_id) {
+                    //every record may or may not have updated_at
+                    let updatedAt = queries[i].updated_at ?? EPOCH_TIMESTAMP;
+
+                    //if it has a db_id , it is guaranteed to haved synced_at
+                    if (queries[i].synced_at > updatedAt) {
+                        this.logger.log(TAG, `Skipping ${queries[i].id}: ${queries[i].db_id}`);
+                        continue;
+                    }
+                }
+
+                let res = await fetch(`${URL}/queries`, {
+                    body: JSON.stringify(queries[i]),
+                    method: "POST",
+                    headers: {
+                        db: this.deviceId,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                res = await res.json();
+                this.logger.log(TAG, JSON.stringify(res));
+
+                if (res.status == "ok") {
+                    queries[i].db_id = res.data.db_id;
+                    this.logger.log(TAG, `syncing: ${JSON.stringify(queries[i])}`);
+                    try {
+                        this.queryDb.sync(queries[i]);
+                    } catch (e) {
+                        this.logger.log(TAG, e, this.port);
+                    }
+                }
+            }
+
+            //this.syncDeleted(deleted);
         }
 
         async syncDown() {
@@ -1150,59 +1281,60 @@
             });
 
             this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
-            /*
-            if (res.status == "ok") {
-                let updateUI = false;
-                let conns = res.data.connections
 
-                for (let i = 0; i < conns.length; i++) {
-                    //check if the remore connection is already present in local db
-                    let c = await this.queryDb.findByDbId(conns[i].id)
+            if (res.status != "ok") {
+                this.logger.log(TAG, "Sync down error: " + res.msg);
+                return;
+            }
 
-                    //this may be deleted on the server. Handle this first
-                    if (conns[i].status == "deleted") {
-                        if (c == null) {
-                            this.logger.log(TAG, `already deleted: ${conns[i].id}`)
-                            continue;
-                        }
+            let updateUI = false;
+            let queries = res.data.queries;
 
-                        this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`)
-                        await this.queryDb.del(c.id);
-                        updateUI = true;
+            for (let i = 0; i < queries.length; i++) {
+                //check if the remore connection is already present in local db
+                this.logger.log(TAG, `syncDown: ${i}`);
+                let q = await this.queryDb.findByDbId(queries[i].id);
+
+                //this may be deleted on the server. Handle this first
+                if (queries[i].status == "deleted") {
+                    if (q == null) {
+                        this.logger.log(TAG, `already deleted: ${queries[i].id}`);
                         continue;
                     }
 
-                    //this looks like a new connection
-                    if (c == null) {
-                        this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`)
-                        delete conns[i].created_at;
-                        delete conns[i].updated_at;
-                        delete conns[i].status;
-
-                        conns[i].db_id = conns[i].id
-                        delete conns[i].id;
-                        conns[i].synced_at = Utils.getTimestamp();
-
-                        let id = await this.queryDb.save(conns[i]);
-                        this.logger.log(TAG, `saved to : ${id}`);
-                        if (id >= 1) {
-                            updateUI = true;
-                        }
-                    } else {
-                        //nope. may be is-default got updated..
-                        await this.queryDb.put(c.id, c.pass, conns[i].is_default);
-                        updateUI = true;
-                        this.logger.log(TAG, `Updated ${c.id}`);
-                    }
+                    this.logger.log(TAG, `deleting: ${JSON.stringify(q)}`);
+                    await this.queryDb.del(q.id);
+                    updateUI = true;
+                    continue;
                 }
 
-                if (updateUI) {
-                    this.port.postMessage({
-                        type: Constants.NEW_CONNECTIONS,
-                    })
+                //this looks like a new query
+                if (q == null) {
+                    this.logger.log(TAG, `inserting: ${JSON.stringify(queries[i].id)}`);
+                    queries[i].db_id = queries[i].id;
+                    delete queries[i].id;
+                    queries[i].synced_at = Utils.getTimestamp();
+                    queries[i].created_at = new Date(queries[i].created_at);
+
+                    let id = await this.queryDb.save(queries[i]);
+                    this.logger.log(TAG, `saved to : ${id}`);
+                    if (id >= 1) {
+                        updateUI = true;
+                    }
+                } else {
+                    //nope. may be tags got updated
+                    q.tags = queries[i].tags;
+                    await this.queryDb.updateTags(q);
+                    updateUI = true;
+                    this.logger.log(TAG, `Updated ${q.id}`);
                 }
             }
-            */
+
+            if (updateUI) {
+                this.port.postMessage({
+                    type: Constants.NEW_QUERIES,
+                });
+            }
         }
 
         async getLastSyncTs() {
@@ -1264,7 +1396,7 @@
                     }
                 }
 
-                let res = await fetch(`${URL}/connections`, {
+                let res = await fetch(`${URL}/queries`, {
                     body: JSON.stringify(conns[i]),
                     method: "POST",
                     headers: {
@@ -1301,7 +1433,7 @@
             });
 
             this.logger.log(TAG, JSON.stringify(ids));
-            let res = await fetch(`${URL}/connections`, {
+            let res = await fetch(`${URL}/queries`, {
                 body: JSON.stringify(ids),
                 method: "DELETE",
                 headers: {
