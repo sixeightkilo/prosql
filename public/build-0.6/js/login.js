@@ -43,7 +43,7 @@ class Login {
                     'pass': 'dev-server',
                     'host': '127.0.0.1',
                     'port': '3308',
-                    'db': 'pankaj-05-24-generico',
+                    'db': 'test-generico',
                     'is-default': true
                 },
             ];
@@ -68,8 +68,8 @@ class Login {
 
     initWorkers() {
         Logger.Log(TAG, `ver: ${this.$version.value}`);
-        const connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-        connectionWorker.port.onmessage = (e) => {
+        this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
+        this.connectionWorker.port.onmessage = (e) => {
             switch (e.data.type) {
                 case Constants.DEBUG_LOG:
                     Logger.Log("connection-worker", e.data.payload);

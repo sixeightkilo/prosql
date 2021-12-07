@@ -2,23 +2,12 @@ import { Utils } from './utils.js'
 import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { QueryDB } from './query-db.js'
+import { BaseWorker } from './base-worker.js'
 
 const TAG = "main"
 const URL = '/browser-api/sqlite'
-const SYNCUP_INTERVAL_MIN = 10000;//1 min
-const SYNCUP_INTERVAL_MAX = 20000;//2 min
-const EPOCH_TIMESTAMP = '2021-01-01T00:00:00Z';
 
-class QueryWorker {
-    constructor(port) {
-        this.port = port;
-        this.logger = new Logger(this.port);
-
-        this.port.onmessage = (m) => {
-            this.handleMessage(m);
-        }
-    }
-
+class QueryWorker extends BaseWorker {
     async handleMessage(m) {
         this.logger.log(TAG, JSON.stringify(m.data));
         switch (m.data.type) {
@@ -73,7 +62,7 @@ class QueryWorker {
 
             if (queries[i].db_id) {
                 //every record may or may not have updated_at
-                let updatedAt = queries[i].updated_at ?? new Date(EPOCH_TIMESTAMP);
+                let updatedAt = queries[i].updated_at ?? new Date(Constants.EPOCH_TIMESTAMP);
 
                 //if it has a db_id , it is guaranteed to haved synced_at
                 if (queries[i].synced_at > updatedAt) {
@@ -97,11 +86,7 @@ class QueryWorker {
             if (res.status == "ok") {
                 queries[i].db_id = res.data.db_id;
                 this.logger.log(TAG, `syncing: ${JSON.stringify(queries[i])}`);
-                try {
-                    this.queryDb.sync(queries[i])
-                } catch (e) {
-                    this.logger.log(TAG, e, this.port)
-                }
+                this.queryDb.sync(queries[i])
             }
         }
 
@@ -110,9 +95,11 @@ class QueryWorker {
 
     async syncDown() {
         this.logger.log(TAG, "syncDown");
+        let queries = await this.queryDb.getAll();
+
         let res = await Utils.fetch(`${URL}/queries/updated`, false, {
             db: this.deviceId,
-            after: await this.getLastSyncTs()
+            after: await this.getLastSyncTs(queries)
         });
 
         this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
@@ -123,7 +110,7 @@ class QueryWorker {
         }
 
         let updateUI = false;
-        let queries = res.data.queries
+        queries = res.data.queries
 
         for (let i = 0; i < queries.length; i++) {
             //check if the remore connection is already present in local db
@@ -148,6 +135,7 @@ class QueryWorker {
                 this.logger.log(TAG, `inserting: ${JSON.stringify(queries[i].id)}`)
                 queries[i].db_id = queries[i].id
                 delete queries[i].id;
+
                 queries[i].synced_at = new Date();
                 queries[i].created_at = new Date(queries[i].created_at)
                 queries[i].updated_at = new Date(queries[i].updated_at)
@@ -161,6 +149,7 @@ class QueryWorker {
                 //nope. may be tags got updated
                 q.tags = queries[i].tags
                 await this.queryDb.updateTags(q);
+                await this.queryDb.sync(q);
                 updateUI = true;
                 this.logger.log(TAG, `Updated ${q.id}`);
             }
@@ -171,30 +160,6 @@ class QueryWorker {
                 type: Constants.NEW_QUERIES,
             })
         }
-    }
-
-    async getLastSyncTs() {
-        let queries = await this.queryDb.getAll();
-        this.logger.log(TAG, `l: ${queries.length}`);
-
-        if (queries.length == 0) {
-            return EPOCH_TIMESTAMP;
-        }
-        //get the latest sync time
-        let lastSyncTs = new Date(EPOCH_TIMESTAMP);
-        queries.forEach((q) => {
-            let syncedAt = q.synced_at ?? null;
-            if (!syncedAt) {
-                return
-            }
-
-            if (syncedAt > lastSyncTs) {
-                lastSyncTs = q.synced_at;
-            }
-        });
-
-        this.logger.log(TAG, `lastSyncTs: ${lastSyncTs}`);
-        return lastSyncTs.toISOString();
     }
 
     async syncDeleted(deleted) {

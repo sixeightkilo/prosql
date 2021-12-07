@@ -281,6 +281,10 @@
         static get STATUS_DELETED() {
             return "deleted"
         }
+
+        static get EPOCH_TIMESTAMP() {
+            return '2021-01-01T00:00:00Z';
+        }
     }
 
     const DISABLED = [
@@ -722,7 +726,7 @@
         }
 
         static toDb(o = {}) {
-            //convert all "_" to "-"
+            //convert all "-" to "_"
             let r = {};
             for (let k in o) {
                 r[k.replaceAll(/-/g, '_')] = o[k];
@@ -842,7 +846,7 @@
                     if (o.is_default != isDefault) {
                         //we set updated at only if is_default has changed. We don't
                         //care about password change
-                        o.updated_at = Utils.getTimestamp();
+                        o.updated_at = new Date();
                     }
                     o.is_default = isDefault;
 
@@ -902,6 +906,8 @@
                     continue;
                 }
 
+                //status not needed by clients
+                delete conns[i].status;
                 recs.push(conns[i]);
             }
 
@@ -956,7 +962,7 @@
                         'pass': 'dev-server',
                         'host': '127.0.0.1',
                         'port': '3308',
-                        'db': 'pankaj-05-24-generico',
+                        'db': 'test-generico',
                         'is-default': true
                     },
                 ];
@@ -981,8 +987,8 @@
 
         initWorkers() {
             Logger.Log(TAG, `ver: ${this.$version.value}`);
-            const connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-            connectionWorker.port.onmessage = (e) => {
+            this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
+            this.connectionWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
                     case Constants.DEBUG_LOG:
                         Logger.Log("connection-worker", e.data.payload);

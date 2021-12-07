@@ -340,7 +340,7 @@
         }
     }
 
-    const TAG$h = "utils";
+    const TAG$j = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -389,7 +389,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$h, response);
+                Logger.Log(TAG$j, response);
 
                 let json = await response.json();
 
@@ -399,7 +399,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$h, e);
+                Logger.Log(TAG$j, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -470,7 +470,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$h, "No data");
+            Logger.Log(TAG$j, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -517,7 +517,7 @@
     	}
     }
 
-    const TAG$g = "stream";
+    const TAG$i = "stream";
 
     class Stream {
         constructor(url) {
@@ -527,12 +527,12 @@
             this.ws = new WebSocket(url);
 
             this.ws.onerror = (evt) => {
-                Logger.Log(TAG$g, "onerror:" + evt);
+                Logger.Log(TAG$i, "onerror:" + evt);
                 this.rej(Err.ERR_NO_AGENT);
             };
 
             this.ws.onclose = (evt) => {
-                Logger.Log(TAG$g, "onclose");
+                Logger.Log(TAG$i, "onclose");
                 this.ws = null;
             };
         }
@@ -673,7 +673,7 @@
 
     let progressBar = new ProgressBar();
 
-    const TAG$f = "dbutils";
+    const TAG$h = "dbutils";
     class DbUtils {
 
         //todo: use WS in fetchall and get rid of fetch route from agent
@@ -685,7 +685,7 @@
 
             let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params));
             if (json.status == 'error') {
-                Logger.Log(TAG$f, JSON.stringify(json));
+                Logger.Log(TAG$h, JSON.stringify(json));
                 return []
             }
 
@@ -703,11 +703,11 @@
             do {
                 json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params));
                 if (json.status == "error") {
-                    Logger.Log(TAG$f, JSON.stringify(json));
+                    Logger.Log(TAG$h, JSON.stringify(json));
                     return []
                 }
 
-                Logger.Log(TAG$f, JSON.stringify(json));
+                Logger.Log(TAG$h, JSON.stringify(json));
                 if (!json.data) {
                     //if batch size == num of rows in query result, then we might get json.data = null
                     //but we should still return results fetched till this point
@@ -723,7 +723,7 @@
         static async login(creds) {
             let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds));
             if (json.status == 'error') {
-                Logger.Log(TAG$f, JSON.stringify(json));
+                Logger.Log(TAG$h, JSON.stringify(json));
                 return ""
             }
 
@@ -769,7 +769,7 @@
 
         async exportResults(q) {
             let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
-            Logger.Log(TAG$f, `cursorId: ${cursorId}`);
+            Logger.Log(TAG$h, `cursorId: ${cursorId}`);
             let params = {
                 'session-id': this.sessionId,
                 'cursor-id': cursorId,
@@ -784,7 +784,7 @@
                 buttons: true,
                 cancel: () => {
                     DbUtils.cancel(this.sessionId, cursorId);
-                    Logger.Log(TAG$f, `Cancelled ${cursorId}`);
+                    Logger.Log(TAG$h, `Cancelled ${cursorId}`);
                 }
             });
 
@@ -921,43 +921,105 @@
         }
     }
 
-    const TAG$e = "grid-resizer";
-    class GridResizerH {
-        //resize two elements contained in grid horizontal direction
-        constructor($grid, $e1, $resizer, $e2) {
-            this.d1 = $e1.getBoundingClientRect().width;
-            this.d2 = $e2.getBoundingClientRect().width;
+    const TAG$g = "stack";
 
-            Logger.Log(TAG$e, `${this.d1} ${this.d2}`);
+    class Stack {
+        constructor(cb) {
+            this.cb = cb;
+            this.stack = [];
+            this.curr = 0;
 
-            $resizer.addEventListener('mousedown', (e) => {
-                this.isDragging = true;
-                this.startx = e.clientX;
-                Logger.Log(TAG$e, `mousedown: ${e.clientX}`);
-                e.preventDefault();
+            this.$back = document.getElementById('back');
+            this.$back.addEventListener('click', async () => {
+                this.handleCmd(Constants.CMD_BACK);
             });
 
-            document.addEventListener('mousemove', (e) => {
-                if (!this.isDragging) {
-                    return;
-                }
-                Logger.Log(TAG$e, `mousemove: ${e.clientX}`);
-                let delta = e.clientX - this.startx;
-                this.d1 += delta;
-                this.d2 += -1 * delta;
-                Logger.Log(TAG$e, `${delta} ${this.d1} ${this.d2}`);
-
-                $grid.style.gridTemplateColumns = `${this.d1}px 2px ${this.d2}px`;
-                this.startx = e.clientX;
-                e.preventDefault();
+            [
+                Constants.CMD_BACK,
+            ].forEach((c) => {
+                ((c) => {
+                    PubSub.subscribe(c, () => {
+                        this.handleCmd(c);
+                    });
+                })(c);
             });
+        }
 
-            document.addEventListener('mouseup', (e) => {
-                this.isDragging = false;
-                Logger.Log(TAG$e, `mouseup: ${e.clientX}`);
-                e.preventDefault();
-                PubSub.publish(Constants.GRID_H_RESIZED, {});
-            });
+        async handleBack() {
+            Logger.Log(TAG$g, `${this.stack.length}: ${this.curr}`);
+
+            if (this.stack.length == 0) {
+                return
+            }
+
+            if (this.curr == 0) {
+                return
+            }
+
+            this.curr--;
+            this.stack.pop();
+            await this.cb(this.stack[this.curr]);
+            Logger.Log(TAG$g, "Done back");
+            if (this.curr == 0) {
+                this.$back.classList.add('stack-disable');
+            }
+        }
+
+        async handleCmd(cmd) {
+            switch (cmd) {
+                case Constants.CMD_BACK:
+                    this.handleBack();
+                    break;
+            }
+        }
+
+        reset() {
+            this.stack = [];
+            this.curr = 0;
+            this.$back.classList.add('stack-disable');
+        }
+
+        push(...args) {
+            Logger.Log(TAG$g, JSON.stringify(args));
+            if (args.length == 1) {
+                this.stack.push({
+                    'type': 'table',
+                    'table': args[0]
+                });
+                Logger.Log(TAG$g, "table:" + JSON.stringify(this.stack));
+                return
+            }
+
+            if (args.length == 3) {
+                this.stack.push({
+                    'type': 'fk-ref',
+                    'table': args[0],
+                    'column': args[1],
+                    'value': args[2]
+                });
+
+                this.curr++;
+                this.$back.classList.remove('stack-disable');
+                Logger.Log(TAG$g, "fk-ref:" + JSON.stringify(this.stack));
+
+                return
+            }
+
+            if (args.length == 4) {
+                this.stack.push({
+                    'type': 'search',
+                    'table': args[0],
+                    'column': args[1],
+                    'operator': args[2],
+                    'value': args[3]
+                });
+
+                this.curr++;
+                this.$back.classList.remove('stack-disable');
+                Logger.Log(TAG$g, "search:" + JSON.stringify(this.stack));
+
+                return
+            }
         }
     }
 
@@ -987,7 +1049,7 @@
     	}
     }
 
-    const TAG$d = 'cell-renderer';
+    const TAG$f = 'cell-renderer';
 
     class CellRenderer {
     	constructor(fkMap) {
@@ -997,7 +1059,7 @@
         }
 
         render(params) {
-            Logger.Log(TAG$d, `${params.colDef.field}`);
+            Logger.Log(TAG$f, `${params.colDef.field}`);
             let id = params.colDef.colId;
             let c = params.colDef.field;
             let v = params.data[`${c}-${id}`];
@@ -1112,7 +1174,7 @@
         } 
     }
 
-    const TAG$c = 'cell-editor';
+    const TAG$e = 'cell-editor';
 
     class CellEditor {
        init(params) {
@@ -1127,7 +1189,7 @@
 
            this.input.addEventListener('input', (event) => {
                this.value = event.target.value;
-               Logger.Log(TAG$c, "listener:" + this.value);
+               Logger.Log(TAG$e, "listener:" + this.value);
            });
        }
 
@@ -1140,7 +1202,7 @@
        // the final value to send to the grid, on completion of editing
        getValue() {
            // this simple editor doubles any value entered into the input
-           Logger.Log(TAG$c, "getvalue:" + this.value);
+           Logger.Log(TAG$e, "getvalue:" + this.value);
            return this.input.value;
        }
 
@@ -1163,7 +1225,7 @@
        }
     }
 
-    const TAG$b = "table-utils";
+    const TAG$d = "table-utils";
 
     class TableUtils {
         constructor($root) {
@@ -1177,7 +1239,7 @@
                     return;
                 }
 
-                Logger.Log(TAG$b, "Cancel clicked");
+                Logger.Log(TAG$d, "Cancel clicked");
                 PubSub.publish(Constants.QUERY_CANCELLED, {});
             });
         }
@@ -1246,13 +1308,13 @@
                             },
                             cellEditor: CellEditor,
                             valueGetter: params => {
-                                Logger.Log(TAG$b, "valueGetter");
+                                Logger.Log(TAG$d, "valueGetter");
                                 let id = params.colDef.colId;
                                 let c = params.colDef.field;
                                 return params.data[`${c}-${id}`];
                             },
                             valueSetter: params => {
-                                Logger.Log(TAG$b, "valueSetter");
+                                Logger.Log(TAG$d, "valueSetter");
                                 let id = params.colDef.colId;
                                 let c = params.colDef.field;
                                 params.data[`${c}-${id}`] = params.newValue;
@@ -1394,7 +1456,7 @@
                 this.undoStarted = false;
                 return;
             }
-            Logger.Log(TAG$b, "handleCellValueChanged");
+            Logger.Log(TAG$d, "handleCellValueChanged");
             let key = fkMap['primary-key'];
 
             let keyId = fkMap['primary-key-id'];
@@ -1441,404 +1503,880 @@
         }
     }
 
-    const TAG$a = "grid-resizer";
-    class GridResizerV {
-        //resize two elements contained in grid horizontal direction
-        constructor($grid, $e1, $resizer, $e2) {
-            this.d1 = $e1.getBoundingClientRect().height;
-            this.d2 = $e2.getBoundingClientRect().height;
+    /*!
+     * hotkeys-js v3.8.7
+     * A simple micro-library for defining and dispatching keyboard shortcuts. It has no dependencies.
+     * 
+     * Copyright (c) 2021 kenny wong <wowohoo@qq.com>
+     * http://jaywcjlove.github.io/hotkeys
+     * 
+     * Licensed under the MIT license.
+     */
 
-            Logger.Log(TAG$a, `${this.d1} ${this.d2}`);
+    var isff = typeof navigator !== 'undefined' ? navigator.userAgent.toLowerCase().indexOf('firefox') > 0 : false; // 绑定事件
 
-            $resizer.addEventListener('mousedown', (e) => {
-                this.isDragging = true;
-                this.starty = e.clientY;
-                Logger.Log(TAG$a, `mousedown: ${e.clientY}`);
-                e.preventDefault();
+    function addEvent(object, event, method) {
+      if (object.addEventListener) {
+        object.addEventListener(event, method, false);
+      } else if (object.attachEvent) {
+        object.attachEvent("on".concat(event), function () {
+          method(window.event);
+        });
+      }
+    } // 修饰键转换成对应的键码
+
+
+    function getMods(modifier, key) {
+      var mods = key.slice(0, key.length - 1);
+
+      for (var i = 0; i < mods.length; i++) {
+        mods[i] = modifier[mods[i].toLowerCase()];
+      }
+
+      return mods;
+    } // 处理传的key字符串转换成数组
+
+
+    function getKeys(key) {
+      if (typeof key !== 'string') key = '';
+      key = key.replace(/\s/g, ''); // 匹配任何空白字符,包括空格、制表符、换页符等等
+
+      var keys = key.split(','); // 同时设置多个快捷键，以','分割
+
+      var index = keys.lastIndexOf(''); // 快捷键可能包含','，需特殊处理
+
+      for (; index >= 0;) {
+        keys[index - 1] += ',';
+        keys.splice(index, 1);
+        index = keys.lastIndexOf('');
+      }
+
+      return keys;
+    } // 比较修饰键的数组
+
+
+    function compareArray(a1, a2) {
+      var arr1 = a1.length >= a2.length ? a1 : a2;
+      var arr2 = a1.length >= a2.length ? a2 : a1;
+      var isIndex = true;
+
+      for (var i = 0; i < arr1.length; i++) {
+        if (arr2.indexOf(arr1[i]) === -1) isIndex = false;
+      }
+
+      return isIndex;
+    }
+
+    var _keyMap = {
+      backspace: 8,
+      tab: 9,
+      clear: 12,
+      enter: 13,
+      return: 13,
+      esc: 27,
+      escape: 27,
+      space: 32,
+      left: 37,
+      up: 38,
+      right: 39,
+      down: 40,
+      del: 46,
+      delete: 46,
+      ins: 45,
+      insert: 45,
+      home: 36,
+      end: 35,
+      pageup: 33,
+      pagedown: 34,
+      capslock: 20,
+      num_0: 96,
+      num_1: 97,
+      num_2: 98,
+      num_3: 99,
+      num_4: 100,
+      num_5: 101,
+      num_6: 102,
+      num_7: 103,
+      num_8: 104,
+      num_9: 105,
+      num_multiply: 106,
+      num_add: 107,
+      num_enter: 108,
+      num_subtract: 109,
+      num_decimal: 110,
+      num_divide: 111,
+      '⇪': 20,
+      ',': 188,
+      '.': 190,
+      '/': 191,
+      '`': 192,
+      '-': isff ? 173 : 189,
+      '=': isff ? 61 : 187,
+      ';': isff ? 59 : 186,
+      '\'': 222,
+      '[': 219,
+      ']': 221,
+      '\\': 220
+    }; // Modifier Keys
+
+    var _modifier = {
+      // shiftKey
+      '⇧': 16,
+      shift: 16,
+      // altKey
+      '⌥': 18,
+      alt: 18,
+      option: 18,
+      // ctrlKey
+      '⌃': 17,
+      ctrl: 17,
+      control: 17,
+      // metaKey
+      '⌘': 91,
+      cmd: 91,
+      command: 91
+    };
+    var modifierMap = {
+      16: 'shiftKey',
+      18: 'altKey',
+      17: 'ctrlKey',
+      91: 'metaKey',
+      shiftKey: 16,
+      ctrlKey: 17,
+      altKey: 18,
+      metaKey: 91
+    };
+    var _mods = {
+      16: false,
+      18: false,
+      17: false,
+      91: false
+    };
+    var _handlers = {}; // F1~F12 special key
+
+    for (var k = 1; k < 20; k++) {
+      _keyMap["f".concat(k)] = 111 + k;
+    }
+
+    var _downKeys = []; // 记录摁下的绑定键
+
+    var _scope = 'all'; // 默认热键范围
+
+    var elementHasBindEvent = []; // 已绑定事件的节点记录
+    // 返回键码
+
+    var code = function code(x) {
+      return _keyMap[x.toLowerCase()] || _modifier[x.toLowerCase()] || x.toUpperCase().charCodeAt(0);
+    }; // 设置获取当前范围（默认为'所有'）
+
+
+    function setScope(scope) {
+      _scope = scope || 'all';
+    } // 获取当前范围
+
+
+    function getScope() {
+      return _scope || 'all';
+    } // 获取摁下绑定键的键值
+
+
+    function getPressedKeyCodes() {
+      return _downKeys.slice(0);
+    } // 表单控件控件判断 返回 Boolean
+    // hotkey is effective only when filter return true
+
+
+    function filter(event) {
+      var target = event.target || event.srcElement;
+      var tagName = target.tagName;
+      var flag = true; // ignore: isContentEditable === 'true', <input> and <textarea> when readOnly state is false, <select>
+
+      if (target.isContentEditable || (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') && !target.readOnly) {
+        flag = false;
+      }
+
+      return flag;
+    } // 判断摁下的键是否为某个键，返回true或者false
+
+
+    function isPressed(keyCode) {
+      if (typeof keyCode === 'string') {
+        keyCode = code(keyCode); // 转换成键码
+      }
+
+      return _downKeys.indexOf(keyCode) !== -1;
+    } // 循环删除handlers中的所有 scope(范围)
+
+
+    function deleteScope(scope, newScope) {
+      var handlers;
+      var i; // 没有指定scope，获取scope
+
+      if (!scope) scope = getScope();
+
+      for (var key in _handlers) {
+        if (Object.prototype.hasOwnProperty.call(_handlers, key)) {
+          handlers = _handlers[key];
+
+          for (i = 0; i < handlers.length;) {
+            if (handlers[i].scope === scope) handlers.splice(i, 1);else i++;
+          }
+        }
+      } // 如果scope被删除，将scope重置为all
+
+
+      if (getScope() === scope) setScope(newScope || 'all');
+    } // 清除修饰键
+
+
+    function clearModifier(event) {
+      var key = event.keyCode || event.which || event.charCode;
+
+      var i = _downKeys.indexOf(key); // 从列表中清除按压过的键
+
+
+      if (i >= 0) {
+        _downKeys.splice(i, 1);
+      } // 特殊处理 cmmand 键，在 cmmand 组合快捷键 keyup 只执行一次的问题
+
+
+      if (event.key && event.key.toLowerCase() === 'meta') {
+        _downKeys.splice(0, _downKeys.length);
+      } // 修饰键 shiftKey altKey ctrlKey (command||metaKey) 清除
+
+
+      if (key === 93 || key === 224) key = 91;
+
+      if (key in _mods) {
+        _mods[key] = false; // 将修饰键重置为false
+
+        for (var k in _modifier) {
+          if (_modifier[k] === key) hotkeys[k] = false;
+        }
+      }
+    }
+
+    function unbind(keysInfo) {
+      // unbind(), unbind all keys
+      if (!keysInfo) {
+        Object.keys(_handlers).forEach(function (key) {
+          return delete _handlers[key];
+        });
+      } else if (Array.isArray(keysInfo)) {
+        // support like : unbind([{key: 'ctrl+a', scope: 's1'}, {key: 'ctrl-a', scope: 's2', splitKey: '-'}])
+        keysInfo.forEach(function (info) {
+          if (info.key) eachUnbind(info);
+        });
+      } else if (typeof keysInfo === 'object') {
+        // support like unbind({key: 'ctrl+a, ctrl+b', scope:'abc'})
+        if (keysInfo.key) eachUnbind(keysInfo);
+      } else if (typeof keysInfo === 'string') {
+        for (var _len = arguments.length, args = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+          args[_key - 1] = arguments[_key];
+        }
+
+        // support old method
+        // eslint-disable-line
+        var scope = args[0],
+            method = args[1];
+
+        if (typeof scope === 'function') {
+          method = scope;
+          scope = '';
+        }
+
+        eachUnbind({
+          key: keysInfo,
+          scope: scope,
+          method: method,
+          splitKey: '+'
+        });
+      }
+    } // 解除绑定某个范围的快捷键
+
+
+    var eachUnbind = function eachUnbind(_ref) {
+      var key = _ref.key,
+          scope = _ref.scope,
+          method = _ref.method,
+          _ref$splitKey = _ref.splitKey,
+          splitKey = _ref$splitKey === void 0 ? '+' : _ref$splitKey;
+      var multipleKeys = getKeys(key);
+      multipleKeys.forEach(function (originKey) {
+        var unbindKeys = originKey.split(splitKey);
+        var len = unbindKeys.length;
+        var lastKey = unbindKeys[len - 1];
+        var keyCode = lastKey === '*' ? '*' : code(lastKey);
+        if (!_handlers[keyCode]) return; // 判断是否传入范围，没有就获取范围
+
+        if (!scope) scope = getScope();
+        var mods = len > 1 ? getMods(_modifier, unbindKeys) : [];
+        _handlers[keyCode] = _handlers[keyCode].map(function (record) {
+          // 通过函数判断，是否解除绑定，函数相等直接返回
+          var isMatchingMethod = method ? record.method === method : true;
+
+          if (isMatchingMethod && record.scope === scope && compareArray(record.mods, mods)) {
+            return {};
+          }
+
+          return record;
+        });
+      });
+    }; // 对监听对应快捷键的回调函数进行处理
+
+
+    function eventHandler(event, handler, scope) {
+      var modifiersMatch; // 看它是否在当前范围
+
+      if (handler.scope === scope || handler.scope === 'all') {
+        // 检查是否匹配修饰符（如果有返回true）
+        modifiersMatch = handler.mods.length > 0;
+
+        for (var y in _mods) {
+          if (Object.prototype.hasOwnProperty.call(_mods, y)) {
+            if (!_mods[y] && handler.mods.indexOf(+y) > -1 || _mods[y] && handler.mods.indexOf(+y) === -1) {
+              modifiersMatch = false;
+            }
+          }
+        } // 调用处理程序，如果是修饰键不做处理
+
+
+        if (handler.mods.length === 0 && !_mods[16] && !_mods[18] && !_mods[17] && !_mods[91] || modifiersMatch || handler.shortcut === '*') {
+          if (handler.method(event, handler) === false) {
+            if (event.preventDefault) event.preventDefault();else event.returnValue = false;
+            if (event.stopPropagation) event.stopPropagation();
+            if (event.cancelBubble) event.cancelBubble = true;
+          }
+        }
+      }
+    } // 处理keydown事件
+
+
+    function dispatch(event) {
+      var asterisk = _handlers['*'];
+      var key = event.keyCode || event.which || event.charCode; // 表单控件过滤 默认表单控件不触发快捷键
+
+      if (!hotkeys.filter.call(this, event)) return; // Gecko(Firefox)的command键值224，在Webkit(Chrome)中保持一致
+      // Webkit左右 command 键值不一样
+
+      if (key === 93 || key === 224) key = 91;
+      /**
+       * Collect bound keys
+       * If an Input Method Editor is processing key input and the event is keydown, return 229.
+       * https://stackoverflow.com/questions/25043934/is-it-ok-to-ignore-keydown-events-with-keycode-229
+       * http://lists.w3.org/Archives/Public/www-dom/2010JulSep/att-0182/keyCode-spec.html
+       */
+
+      if (_downKeys.indexOf(key) === -1 && key !== 229) _downKeys.push(key);
+      /**
+       * Jest test cases are required.
+       * ===============================
+       */
+
+      ['ctrlKey', 'altKey', 'shiftKey', 'metaKey'].forEach(function (keyName) {
+        var keyNum = modifierMap[keyName];
+
+        if (event[keyName] && _downKeys.indexOf(keyNum) === -1) {
+          _downKeys.push(keyNum);
+        } else if (!event[keyName] && _downKeys.indexOf(keyNum) > -1) {
+          _downKeys.splice(_downKeys.indexOf(keyNum), 1);
+        } else if (keyName === 'metaKey' && event[keyName] && _downKeys.length === 3) {
+          /**
+           * Fix if Command is pressed:
+           * ===============================
+           */
+          if (!(event.ctrlKey || event.shiftKey || event.altKey)) {
+            _downKeys = _downKeys.slice(_downKeys.indexOf(keyNum));
+          }
+        }
+      });
+      /**
+       * -------------------------------
+       */
+
+      if (key in _mods) {
+        _mods[key] = true; // 将特殊字符的key注册到 hotkeys 上
+
+        for (var k in _modifier) {
+          if (_modifier[k] === key) hotkeys[k] = true;
+        }
+
+        if (!asterisk) return;
+      } // 将 modifierMap 里面的修饰键绑定到 event 中
+
+
+      for (var e in _mods) {
+        if (Object.prototype.hasOwnProperty.call(_mods, e)) {
+          _mods[e] = event[modifierMap[e]];
+        }
+      }
+      /**
+       * https://github.com/jaywcjlove/hotkeys/pull/129
+       * This solves the issue in Firefox on Windows where hotkeys corresponding to special characters would not trigger.
+       * An example of this is ctrl+alt+m on a Swedish keyboard which is used to type μ.
+       * Browser support: https://caniuse.com/#feat=keyboardevent-getmodifierstate
+       */
+
+
+      if (event.getModifierState && !(event.altKey && !event.ctrlKey) && event.getModifierState('AltGraph')) {
+        if (_downKeys.indexOf(17) === -1) {
+          _downKeys.push(17);
+        }
+
+        if (_downKeys.indexOf(18) === -1) {
+          _downKeys.push(18);
+        }
+
+        _mods[17] = true;
+        _mods[18] = true;
+      } // 获取范围 默认为 `all`
+
+
+      var scope = getScope(); // 对任何快捷键都需要做的处理
+
+      if (asterisk) {
+        for (var i = 0; i < asterisk.length; i++) {
+          if (asterisk[i].scope === scope && (event.type === 'keydown' && asterisk[i].keydown || event.type === 'keyup' && asterisk[i].keyup)) {
+            eventHandler(event, asterisk[i], scope);
+          }
+        }
+      } // key 不在 _handlers 中返回
+
+
+      if (!(key in _handlers)) return;
+
+      for (var _i = 0; _i < _handlers[key].length; _i++) {
+        if (event.type === 'keydown' && _handlers[key][_i].keydown || event.type === 'keyup' && _handlers[key][_i].keyup) {
+          if (_handlers[key][_i].key) {
+            var record = _handlers[key][_i];
+            var splitKey = record.splitKey;
+            var keyShortcut = record.key.split(splitKey);
+            var _downKeysCurrent = []; // 记录当前按键键值
+
+            for (var a = 0; a < keyShortcut.length; a++) {
+              _downKeysCurrent.push(code(keyShortcut[a]));
+            }
+
+            if (_downKeysCurrent.sort().join('') === _downKeys.sort().join('')) {
+              // 找到处理内容
+              eventHandler(event, record, scope);
+            }
+          }
+        }
+      }
+    } // 判断 element 是否已经绑定事件
+
+
+    function isElementBind(element) {
+      return elementHasBindEvent.indexOf(element) > -1;
+    }
+
+    function hotkeys(key, option, method) {
+      _downKeys = [];
+      var keys = getKeys(key); // 需要处理的快捷键列表
+
+      var mods = [];
+      var scope = 'all'; // scope默认为all，所有范围都有效
+
+      var element = document; // 快捷键事件绑定节点
+
+      var i = 0;
+      var keyup = false;
+      var keydown = true;
+      var splitKey = '+'; // 对为设定范围的判断
+
+      if (method === undefined && typeof option === 'function') {
+        method = option;
+      }
+
+      if (Object.prototype.toString.call(option) === '[object Object]') {
+        if (option.scope) scope = option.scope; // eslint-disable-line
+
+        if (option.element) element = option.element; // eslint-disable-line
+
+        if (option.keyup) keyup = option.keyup; // eslint-disable-line
+
+        if (option.keydown !== undefined) keydown = option.keydown; // eslint-disable-line
+
+        if (typeof option.splitKey === 'string') splitKey = option.splitKey; // eslint-disable-line
+      }
+
+      if (typeof option === 'string') scope = option; // 对于每个快捷键进行处理
+
+      for (; i < keys.length; i++) {
+        key = keys[i].split(splitKey); // 按键列表
+
+        mods = []; // 如果是组合快捷键取得组合快捷键
+
+        if (key.length > 1) mods = getMods(_modifier, key); // 将非修饰键转化为键码
+
+        key = key[key.length - 1];
+        key = key === '*' ? '*' : code(key); // *表示匹配所有快捷键
+        // 判断key是否在_handlers中，不在就赋一个空数组
+
+        if (!(key in _handlers)) _handlers[key] = [];
+
+        _handlers[key].push({
+          keyup: keyup,
+          keydown: keydown,
+          scope: scope,
+          mods: mods,
+          shortcut: keys[i],
+          method: method,
+          key: keys[i],
+          splitKey: splitKey
+        });
+      } // 在全局document上设置快捷键
+
+
+      if (typeof element !== 'undefined' && !isElementBind(element) && window) {
+        elementHasBindEvent.push(element);
+        addEvent(element, 'keydown', function (e) {
+          dispatch(e);
+        });
+        addEvent(window, 'focus', function () {
+          _downKeys = [];
+        });
+        addEvent(element, 'keyup', function (e) {
+          dispatch(e);
+          clearModifier(e);
+        });
+      }
+    }
+
+    var _api = {
+      setScope: setScope,
+      getScope: getScope,
+      deleteScope: deleteScope,
+      getPressedKeyCodes: getPressedKeyCodes,
+      isPressed: isPressed,
+      filter: filter,
+      unbind: unbind
+    };
+
+    for (var a in _api) {
+      if (Object.prototype.hasOwnProperty.call(_api, a)) {
+        hotkeys[a] = _api[a];
+      }
+    }
+
+    if (typeof window !== 'undefined') {
+      var _hotkeys = window.hotkeys;
+
+      hotkeys.noConflict = function (deep) {
+        if (deep && window.hotkeys === hotkeys) {
+          window.hotkeys = _hotkeys;
+        }
+
+        return hotkeys;
+      };
+
+      window.hotkeys = hotkeys;
+    }
+
+    class Hotkeys {
+        static init() {
+            hotkeys(Constants.SHIFT_R, () => {
+                PubSub.publish(Constants.CMD_RUN_QUERY, {});
             });
 
-            document.addEventListener('mousemove', (e) => {
-                if (!this.isDragging) {
+            hotkeys(Constants.SHIFT_F, () => {
+                PubSub.publish(Constants.CMD_FORMAT_QUERY, {});
+            });
+
+            hotkeys(Constants.SHIFT_N, () => {
+                PubSub.publish(Constants.CMD_NEXT_ROWS, {});
+            });
+
+            hotkeys(Constants.SHIFT_P, () => {
+                PubSub.publish(Constants.CMD_PREV_ROWS, {});
+            });
+
+            hotkeys(Constants.SHIFT_E, () => {
+                PubSub.publish(Constants.CMD_EXPORT, {});
+            });
+
+            hotkeys(Constants.SHIFT_L, () => {
+                PubSub.publish(Constants.CMD_EXPORT_TABLE , {});
+            });
+
+            hotkeys(Constants.SHIFT_S, () => {
+                PubSub.publish(Constants.CMD_SEARCH_TABLES , {});
+            });
+
+            hotkeys(Constants.SHIFT_BACK, () => {
+                PubSub.publish(Constants.CMD_BACK , {});
+            });
+        }
+    }
+
+    const TAG$c = "row-adder";
+
+    class RowAdder {
+        constructor(sessionId) {
+            this.sessionId = sessionId;
+
+            this.$add = document.getElementById('add-row');
+            this.$dialog = document.getElementById('row-adder-dialog');
+            this.$cancel = this.$dialog.querySelector('.cancel');
+            this.$ok = this.$dialog.querySelector('.ok');
+            this.templ = this.$dialog.querySelector('#col-input-template').innerHTML;
+            this.$body = this.$dialog.querySelector('.modal-card-body');
+            this.$title = this.$dialog.querySelector('.modal-card-title');
+
+            this.$add.addEventListener('click', () => {
+                if (this.table == null || this.columns == null) {
                     return;
                 }
-                Logger.Log(TAG$a, `mousemove: ${e.clientY}`);
-                let delta = e.clientY - this.starty;
-                this.d1 += delta;
-                this.d2 += -1 * delta;
-                Logger.Log(TAG$a, `${delta} ${this.d1} ${this.d2}`);
 
-                $grid.style.gridTemplateRows = `${this.d1}px 2px ${this.d2}px`;
-                this.starty = e.clientY;
-                e.preventDefault();
+                this.$title.innerHTML = `Add new row to ${this.table}`;
+                this.$body.replaceChildren();
+                Logger.Log(TAG$c, this.columns);
+                this.$dialog.classList.add('is-active');
+                this.columns.forEach((c) => {
+                    let n = Utils.generateNode(this.templ, {
+                        col: c
+                    });
+                    this.$body.append(n);
+                });
             });
 
-            document.addEventListener('mouseup', (e) => {
-                this.isDragging = false;
-                Logger.Log(TAG$a, `mouseup: ${e.clientY}`);
-                e.preventDefault();
-            });
-        }
-    }
+            this.$ok.addEventListener('click', async () => {
+                let cols = [];
+                let vals = [];
+                let $inputs = this.$dialog.querySelectorAll('input');
 
-    /*Copyright 2017 Kenneth Jiang
+                $inputs.forEach((e) => {
+                    let v = e.value;
+                    if (v) {
+                        cols.push(e.dataset.col);
+                        vals.push(v);
+                    }
+                });
 
-    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+                Logger.Log(TAG$c, `cols: ${cols}`);
+                Logger.Log(TAG$c, `vals: ${vals}`);
+                cols = cols.map(e => `\`${e}\``).join(",");
+                vals = vals.map(e => `'${e}'`).join(",");
 
-    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+                let query = `insert into \`${this.table}\` (${cols}) values (${vals})`;
+                Logger.Log(TAG$c, query);
 
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE*/
+                let dbUtils = new DbUtils();
+                let res = await dbUtils.execute.apply(this, [query]);
 
-    //https://github.com/kennethjiang/js-file-download/blob/master/file-download.js
-
-    class FileDownloader {
-    	static download(data, filename, mime, bom) {
-    		var blobData = (typeof bom !== 'undefined') ? [bom, data] : [data];
-    		var blob = new Blob(blobData, {type: mime || 'application/octet-stream'});
-    		if (typeof window.navigator.msSaveBlob !== 'undefined') {
-    			// IE workaround for "HTML7007: One or more blob URLs were
-    			// revoked by closing the blob for which they were created.
-    			// These URLs will no longer resolve as the data backing
-    			// the URL has been freed."
-    			window.navigator.msSaveBlob(blob, filename);
-    		}
-    		else {
-    			var blobURL = (window.URL && window.URL.createObjectURL) ? window.URL.createObjectURL(blob) : window.webkitURL.createObjectURL(blob);
-    			var tempLink = document.createElement('a');
-    			tempLink.style.display = 'none';
-    			tempLink.href = blobURL;
-    			tempLink.setAttribute('download', filename);
-
-    			// Safari thinks _blank anchor are pop ups. We only want to set _blank
-    			// target if the browser does not support the HTML5 download attribute.
-    			// This allows you to download files in desktop safari if pop up blocking
-    			// is enabled.
-    			if (typeof tempLink.download === 'undefined') {
-    				tempLink.setAttribute('target', '_blank');
-    			}
-
-    			document.body.appendChild(tempLink);
-    			tempLink.click();
-
-    			// Fixes "webkit blob resource error 1"
-    			setTimeout(function() {
-    				document.body.removeChild(tempLink);
-    				window.URL.revokeObjectURL(blobURL);
-    			}, 200);
-    		}
-    	}
-    }
-
-    const TAG$9 = 'ace';
-    const MAX_COL = 100000;
-
-    class Ace {
-        constructor(elemId) {
-            this.elemId = elemId;
-        }
-
-        init() {
-            return new Promise((resolve, reject) => {
-                let script = document.createElement('script');
-                script.src = '/ace-builds/src-min/ace.js';
-                document.head.appendChild(script);
-
-                script.onload = () => {
-                    this.editor = ace.edit(this.elemId);
-                    this.range = ace.require('ace/range').Range;
-
-                    this.editor.setTheme("ace/theme/github");
-                    this.editor.session.setMode("ace/mode/mysql");
-                    this.editor.setHighlightActiveLine(false);
-
-                    this.editor.textInput.getElement().addEventListener('keyup', () => {
-                        this.onKeyup();
+                if (res.status == "ok") {
+                    PubSub.publish(Constants.QUERY_DISPATCHED, {
+                        query: query,
+                        tags: [Constants.USER]
                     });
 
-                    this.editor.on('dblclick', (e) => {
-                        Logger.Log(TAG$9, 'dblclick');
-                        this.onKeyup();
-                    });
-
-                    this.editor.on('mousedown', (e) => {
-                        Logger.Log(TAG$9, 'mousedown');
-                        setTimeout(() => {
-                            this.onKeyup();
-                        }, 5);
-                    });
-
-                    this.setKeyBindings();
-
-                    resolve();
-                };
-            });
-        }
-
-        resize() {
-            this.editor.resize();
-        }
-
-        setValue(v) {
-            if (!this.selRange) {
-                this.editor.setValue(v);
-                return;
-            }
-            this.editor.session.replace(this.selRange, v + ";");
-
-            this.editor.$search.setOptions({
-                needle: ';',
-                backwards: true,
-                preventScroll: true,
-            });
-
-            let cursor = this.editor.selection.getCursor();
-            this.editor.moveCursorTo(cursor.row, cursor.column - 1);
-
-            //and highlight it
-            this.onKeyup();
-        }
-
-        clearSelection() {
-            this.editor.clearSelection();
-        }
-
-        focus() {
-            this.editor.focus();
-        }
-
-        getValue() {
-            if (!this.selRange) {
-                return this.editor.getValue();
-            }
-
-            let v = this.editor.session.getTextRange(this.selRange);
-            return this.cleanup(v);
-        }
-
-        getAll() {
-            return this.editor.getValue();
-        }
-
-        cleanup(str) {
-            //remove spaces and ;
-            let chars = [' ', ';'];
-            let start = 0, 
-                end = str.length;
-
-            while(start < end && chars.indexOf(str[start]) >= 0)
-                ++start;
-
-            while(end > start && chars.indexOf(str[end - 1]) >= 0)
-                --end;
-
-            return (start > 0 || end < str.length) ? str.substring(start, end) : str;
-        }
-
-        onKeyup(e) {
-            if (this.marker) {
-                this.editor.session.removeMarker(this.marker);
-            }
-
-            let cursor = this.editor.selection.getCursor();
-            Logger.Log(TAG$9, JSON.stringify(cursor));
-
-            this.updateSelRange(cursor);
-            if (this.selRange) {
-                this.marker = this.editor.session.addMarker(this.selRange, "ace_active-line", "text");
-            }
-        }
-
-        updateSelRange(cursor) {
-            this.editor.$search.setOptions({
-                needle: ';',
-                backwards: true,
-                preventScroll: true,
-                wrap: true
-            });
-
-            let startRow = 0;
-            let startColumn = 0;
-            let endRow = (this.editor.session.getLength() - 1);
-            let endColumn = MAX_COL;
-
-            let ranges = this.editor.$search.findAll(this.editor.session);
-
-            Logger.Log(TAG$9, JSON.stringify(ranges));
-            if (ranges.length == 0) {
-                this.selRange = null;
-                return;
-            }
-
-            //determine start position of marker
-            for (let i = 0; i < ranges.length; i++) {
-                let r = ranges[i];
-                //for start position , the range start MUST be <= cursor position
-                if (r.start.row <= cursor.row) {
-                    //if ; is on a previous line, definitely it should be considered
-                    if (r.start.row < cursor.row) {
-                        startRow = r.start.row;
-                        startColumn = r.start.column;
-                    }
-
-                    //if ; is on the same line we can consider it only if its column is less than
-                    //current cursor position
-                    if (r.start.row == cursor.row) {
-                        if (r.start.column < cursor.column) {
-                            startRow = r.start.row;
-                            startColumn = r.start.column;
-                        }
-                    }
-                }
-            }
-
-            //determine end poisition of marker
-            for (let i = 0; i < ranges.length; i++) {
-                let r = ranges[i];
-
-                if (r.start.row > cursor.row) {
-                    endRow = r.end.row;
-                    endColumn = r.end.column;
-                    //ranges are ordered , so if we find a ; on next row, it must 
-                    //be the closest one. There is nothing more to do
-                    break;
+                    let rows = res.data[0][1];
+                    Utils.showAlert(`Inserted ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
+                    this.$dialog.classList.remove('is-active');
+                    return;
                 }
 
-                if (r.start.row == cursor.row) {
-                    if (r.start.column >= cursor.column) {
-                        endRow = r.end.row;
-                        endColumn = r.end.column;
-                        break;
-                    }
-                }
-            }
-
-            //if there are no characters starting from startRange, shift to next row
-            let check = this.editor.session.getTextRange(new this.range(startRow, startColumn, startRow, MAX_COL));
-            check = this.cleanup(check);
-            if (!check) {
-                startRow++;
-                startColumn = 0;
-            } else {
-                //shift to the first non white space character, unless its the start of the line
-                if (startColumn > 0) {
-                    startColumn++;
-                }
-            }
-
-            Logger.Log(TAG$9, `sr ${startRow} sc ${startColumn} er ${endRow} ec ${endColumn}`);
-            this.selRange = new this.range(startRow, startColumn, endRow, endColumn);
-        }
-
-        setKeyBindings() {
-            this.editor.commands.addCommand({
-                name: Constants.CMD_RUN_QUERY,
-                bindKey: {
-                    win: Constants.SHIFT_R,
-                    mac: Constants.SHIFT_R,
-                },
-                exec: (editor) => {
-                    PubSub.publish(Constants.CMD_RUN_QUERY, {});
-                },
-                readOnly: true // false if this command should not apply in readOnly mode
+                alert(res.msg);
             });
 
-            this.editor.commands.addCommand({
-                name: Constants.CMD_NEXT_ROWS,
-                bindKey: {
-                    win: Constants.SHIFT_N,
-                    mac: Constants.SHIFT_N,
-                },
-                exec: (editor) => {
-                    PubSub.publish(Constants.CMD_NEXT_ROWS, {});
-                },
-                readOnly: true // false if this command should not apply in readOnly mode
-            });
-
-            this.editor.commands.addCommand({
-                name: Constants.CMD_PREV_ROWS,
-                bindKey: {
-                    win: Constants.SHIFT_P,
-                    mac: Constants.SHIFT_P,
-                },
-                exec: (editor) => {
-                    PubSub.publish(Constants.CMD_PREV_ROWS, {});
-                },
-                readOnly: true // false if this command should not apply in readOnly mode
-            });
-
-            this.editor.commands.addCommand({
-                name: Constants.CMD_EXPORT,
-                bindKey: {
-                    win: Constants.SHIFT_E,
-                    mac: Constants.SHIFT_E,
-                },
-                exec: (editor) => {
-                    PubSub.publish(Constants.CMD_EXPORT, {});
-                },
-                readOnly: true // false if this command should not apply in readOnly mode
-            });
-
-            this.editor.commands.addCommand({
-                name: Constants.CMD_FORMAT_QUERY,
-                bindKey: {
-                    win: Constants.SHIFT_T,
-                    mac: Constants.SHIFT_T
-                },
-                exec: (editor) => {
-                    Logger.Log(TAG$9, "format");
-                    PubSub.publish(Constants.CMD_FORMAT_QUERY, {});
-                },
-                readOnly: true // false if this command should not apply in readOnly mode
-            });
-
-            this.editor.commands.addCommand({
-                name: Constants.CMD_RUN_ALL,
-                bindKey: {
-                    win: Constants.SHIFT_A,
-                    mac: Constants.SHIFT_A
-                },
-                exec: (editor) => {
-                    Logger.Log(TAG$9, "runall");
-                    PubSub.publish(Constants.CMD_RUN_ALL, {});
-                },
-                readOnly: true // false if this command should not apply in readOnly mode
+            this.$cancel.addEventListener('click', () => {
+                this.$dialog.classList.remove('is-active');
             });
         }
-    }
 
-    const TAG$8 = "query-runner";
-
-    class QueryRunner {
-        constructor(sessionId) {
-
+        setSessionId(sessionId) {
             this.sessionId = sessionId;
-            Logger.Log(TAG$8, `sessionId: ${sessionId}`);
-            this.init();
+        }
 
-            PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
-                Logger.Log(TAG$8, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
-                Err.handle(err);
+        init(table, columns) {
+            this.table = table;
+            this.columns = columns;
+        }
+    }
+
+    const TAG$b = "col-selector";
+
+    class ColumnSelector {
+        constructor() {
+            let selections = Utils.getFromLocalStorage(Constants.COLUMN_SELECTIONS);
+            if (selections) {
+                this.selections = JSON.parse(selections);
+            } else {
+                this.selections = {};
+            }
+
+            this.$selCols = document.getElementById('select-cols');
+            this.$dialog = document.getElementById('column-selector-dialog');
+            this.$cancel = this.$dialog.querySelector('.cancel');
+            this.$ok = this.$dialog.querySelector('.ok');
+            this.templ = this.$dialog.querySelector('#col-select-template').innerHTML;
+            this.$body = this.$dialog.querySelectorAll('.modal-card-body')[1];
+            this.$title = this.$dialog.querySelector('.modal-card-title');
+            this.$checkAll = this.$dialog.querySelector('.checkall');
+
+            this.$selCols.addEventListener('click', () => {
+                if (this.table == null || this.columns == null) {
+                    alert('No table selected');
+                    return;
+                }
+
+                this.$title.innerHTML = `Select columns from ${this.table} to display`;
+                this.$body.replaceChildren();
+                Logger.Log(TAG$b, this.columns);
+
+                let selection = this.selections[this.table] ?? {};
+
+                let allChecked = true;
+
+                for (let i = 0; i < this.columns.length; i++) {
+                    let c = this.columns[i];
+                    let n = Utils.generateNode(this.templ, {
+                        col: c
+                    });
+
+                    let checked = selection[i] ?? true;
+                    if (!checked) {
+                        allChecked = false;
+                    }
+                    n.querySelector('.checkbox').checked = checked;
+
+                    this.$body.append(n);
+                }
+
+                this.$checkAll.checked = allChecked;
+
+                this.$dialog.classList.add('is-active');
             });
 
-            PubSub.subscribe(Constants.QUERY_CANCELLED, () => {
-                DbUtils.cancel(this.sessionId, this.cursorId);
+            this.$checkAll.addEventListener('change', () => {
+                let $inputs = this.$body.querySelectorAll('input');
+                if (this.$checkAll.checked) {
+                    $inputs.forEach((i) => {
+                        i.checked = true;
+                    });
+
+                    return;
+                }
+
+                $inputs.forEach((i) => {
+                    i.checked = false;
+                });
             });
 
-            PubSub.subscribe(Constants.GRID_H_RESIZED, () => {
-                this.editor.resize();
+            this.$ok.addEventListener('click', async () => {
+                let selection = {};
+                let $inputs = this.$body.querySelectorAll('input');
+                //column ids are in sequence
+                let id = 0;
+                $inputs.forEach((e) => {
+                    if (e.checked) {
+                        selection[id] = true;
+                    } else {
+                        selection[id] = false;
+                    }
+                    id++;
+                });
+
+                Logger.Log(TAG$b, JSON.stringify(selections));
+                PubSub.publish(Constants.COLUMNS_SELECTED, {
+                    cols: selection
+                });
+
+                this.selections[this.table] = selection;
+                Utils.saveToLocalStorage(Constants.COLUMN_SELECTIONS, JSON.stringify(this.selections));
+
+                this.$dialog.classList.remove('is-active');
             });
 
-            PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
-                this.tableUtils.undo();
+            this.$cancel.addEventListener('click', () => {
+                this.$dialog.classList.remove('is-active');
+            });
+        }
+
+        init(table, columns) {
+            this.table = table;
+            this.columns = columns;
+        }
+
+        getSelection(table) {
+            return this.selections[table] ?? {};
+        }
+    }
+
+    const TAG$a = "table-info";
+
+    class TableInfo {
+        constructor(sessionId) {
+            this.sessionId = sessionId;
+
+            this.$info = document.getElementById('table-info');
+            this.$dialog = document.getElementById('table-info-dialog');
+            //this.$cancel = this.$dialog.querySelector('.cancel');
+            this.$ok = this.$dialog.querySelector('.ok');
+            this.$body = this.$dialog.querySelector('.modal-card-body');
+            this.$title = this.$dialog.querySelector('.modal-card-title');
+
+            this.$info.addEventListener('click', () => {
+                if (this.table == null) {
+                    return;
+                }
+
+                this.$title.innerHTML = `${this.table}`;
+                this.$body.replaceChildren();
+                this.$body.innerHTML = this.createQuery;
+                Logger.Log(TAG$a, this.columns);
+                this.$dialog.classList.add('is-active');
             });
 
-            //handle all keyboard shortcuts
+            this.$ok.addEventListener('click', async () => {
+                this.$dialog.classList.remove('is-active');
+            });
+
+            //this.$cancel.addEventListener('click', () => {
+                //this.$dialog.classList.remove('is-active');
+            //});
+
+            PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
+                this.table = data.table;
+                this.fetchQuery();
+            });
+
+            PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
+                this.table = data.table;
+                this.fetchQuery();
+            });
+        }
+
+        async fetchQuery() {
+            let res = await DbUtils.fetchAll(this.sessionId, `show create table \`${this.table}\``);
+            Logger.Log(TAG$a, JSON.stringify(res));
+            this.createQuery = `<pre> ${res[0][3]} </pre>`;
+        }
+
+        setSessionId(sessionId) {
+            this.sessionId = sessionId;
+        }
+    }
+
+    class Pager {
+        constructor() {
+            document.addEventListener('DOMContentLoaded', async () => {
+                this.$next = document.getElementById('next');
+                this.$prev = document.getElementById('prev');
+
+                this.$next.addEventListener('click', async (e) => {
+                    this.handleCmd(Constants.CMD_NEXT_ROWS);
+                });
+
+                this.$prev.addEventListener('click', async (e) => {
+                    this.handleCmd(Constants.CMD_PREV_ROWS);
+                });
+            });
+
             [
-                Constants.CMD_RUN_QUERY,
-                Constants.CMD_RUN_ALL,
                 Constants.CMD_NEXT_ROWS,
                 Constants.CMD_PREV_ROWS,
-                Constants.CMD_EXPORT,
-                Constants.CMD_FORMAT_QUERY,
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -1848,136 +2386,396 @@
             });
         }
 
-        setSessionInfo(sessionId, db) {
-            this.sessionId = sessionId;
-            this.db = db;
-            Logger.Log(TAG$8, `sessionId: ${sessionId} db: ${db}`);
+        reset() {
+            this.page = 0;
+            this.$prev.classList.add('pager-disable');
+            this.sortColumn = '';
+            this.sortOrder = '';
+            this.query = '';
         }
 
-        async init() {
-            this.$root = document.getElementById('app-right-panel');
-            this.$footer = document.getElementById('footer-right-panel');
+        setQuery(query) {
+            this.query = query;
+        }
 
-            let $g1 = document.getElementById('query-container');
-            let $e1 = document.getElementById('query-editor');
-            let $e2 = document.getElementById('query-results');
-            let $resizer = document.getElementById('query-container-resizer');
-            new GridResizerV($g1, $e1, $resizer, $e2);
+        setSortInfo(col, order) {
+            this.sortColumn = col;
+            this.sortOrder = order;
+        }
 
-            this.$queryResults = document.getElementById('query-results');
-            this.$table = this.$queryResults.querySelector('table');
-            this.tableUtils = new TableUtils(this.$queryResults);
+        init(query, renderFunc, sortColumn = null, sortOrder = null) {
+            this.page = 0;
+            this.query = query;
+            this.sortColumn = sortColumn;
+            this.sortOrder = sortOrder;
+            this.renderFunc = renderFunc;
 
-            //this.adjustView()
-
-            this.editor = new Ace('query-editor');
-            await this.editor.init();
-
-            this.$formatQuery = document.getElementById('format-query');
-
-            this.$formatQuery.addEventListener('click', async (e) => {
-                this.handleCmd(Constants.CMD_FORMAT_QUERY);
-            });
-
-            this.$runQuery = document.getElementById('run-query');
-            this.$runQuery.addEventListener('click', async (e) => {
-                this.handleCmd(Constants.CMD_RUN_QUERY);
-            });
-
-            this.$runAll = document.getElementById('run-all');
-            this.$runAll.addEventListener('click', async (e) => {
-                this.handleCmd(Constants.CMD_RUN_ALL);
-            });
-
-            this.$exportResults = document.getElementById('export-results');
-            this.$exportResults.addEventListener('click', async (e) => {
-                this.handleCmd(Constants.CMD_EXPORT);
-            });
-
-            this.$next = document.getElementById('next');
-            this.$next.addEventListener('click', async (e) => {
-                this.handleCmd(Constants.CMD_NEXT_ROWS);
-            });
+            this.$prev.classList.add('pager-disable');
+            query = 
+                `${this.query} ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, 0)}`;
+            this.renderFunc(query);
         }
 
         async handleCmd(cmd) {
-            let q;
             switch (cmd) {
-            case Constants.CMD_RUN_QUERY:
-                this.cursorId = null;
-                q = this.editor.getValue();
-                this.runQuery(q);
-                break;
+                case Constants.CMD_NEXT_ROWS:
+                    this.handleNextRows();
+                    break;
 
-            case Constants.CMD_RUN_ALL:
-                this.runAll();
-                break;
-
-            case Constants.CMD_NEXT_ROWS:
-                q = this.editor.getValue();
-                this.runQuery(q, false);
-                break;
-
-            case Constants.CMD_EXPORT:
-                this.handleExport();
-                break;
-
-            case Constants.CMD_FORMAT_QUERY:
-                this.formatQuery();
-                break;
+                case Constants.CMD_PREV_ROWS:
+                    this.handlePrevNows();
+                    break;
             }
         }
 
-        async handleExport() {
-            let q = this.editor.getValue();
-            let dbUtils = new DbUtils();
-            let err = await dbUtils.exportResults.apply(this, [q]);
+        async handleNextRows() {
+            if (this.inFlight) {
+                return;
+            }
 
-            if (err == Err.ERR_NONE) {
+            this.inFlight = true;
+
+            let query = 
+                `${this.query} ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, 1)}`;
+
+            let res = await this.renderFunc(query);
+            if (res.status == "ok") {
+                this.$prev.classList.remove('pager-disable');
+                this.page++;
+            }
+
+            this.inFlight = false;
+        }
+
+        async handlePrevNows() {
+            if (this.inFlight) {
+                return;
+            }
+
+            this.inFlight = true;
+
+            if (this.page == 0) {
+                this.inFlight = false;
+                return;
+            }
+
+            let query = 
+                `${this.query} ${DbUtils.getOrder(this.sortColumn, this.sortOrder)} limit ${DbUtils.getLimit(this.page, -1)}`;
+
+            let res = await this.renderFunc(query);
+            if (res.status == "ok") {
+                this.page--;
+                if (this.page == 0) {
+                    this.$prev.classList.add('pager-disable');
+                }
+            }
+
+            this.inFlight = false;
+        }
+    }
+
+    let pager = new Pager();
+
+    const OPERATORS = [
+        '=',
+        '<>',
+        '>',
+        '<',
+        '>=',
+        '<=',
+        //'IN',
+        'LIKE',
+        //'BETWEEN',
+        'IS NULL',
+        'IS NOT NULL',
+    ];
+
+    const TAG$9 = "table-contents";
+
+    class TableContents {
+        constructor(sessionId) {
+            Logger.Log(TAG$9, `sessionId: ${sessionId}`);
+
+            this.sessionId = sessionId;
+            this.init();
+        }
+
+        //public method
+        setSessionInfo(sessionId, db) {
+            this.sessionId = sessionId;
+            this.db = db;
+            this.rowAdder.setSessionId(this.sessionId);
+            this.tableInfo.setSessionId(this.sessionId);
+
+            Logger.Log(TAG$9, `sessionId: ${sessionId} db: ${db}`);
+        }
+
+        async init() {
+            Hotkeys.init();
+            this.rowAdder = new RowAdder(this.sessionId);
+            this.tableInfo = new TableInfo(this.sessionId);
+            this.colSelector = new ColumnSelector();
+
+            this.initDom();
+
+            this.stack = new Stack(async (e) => {
+                await this.navigate(e);
+            });
+
+            this.tableUtils = new TableUtils(this.$contents);
+
+            this.initSubscribers();
+            this.initHandlers();
+        }
+
+        initDom() {
+            this.$columNames = document.getElementById('column-names');
+            this.$operators = document.getElementById('operators');
+            this.$searchText = document.getElementById('search-text');
+            this.$search = document.getElementById('search');
+            this.$tableContents = document.getElementById('table-contents');
+            this.$contents = document.getElementById('table-contents');
+            this.$exportFiltered = document.getElementById('export-filtered-results');
+            this.$clearFilter = document.getElementById('clear-filter');
+        }
+
+        initSubscribers() {
+            PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
+                Logger.Log(TAG$9, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
+                Err.handle(err);
+            });
+
+            PubSub.subscribe(Constants.QUERY_CANCELLED, () => {
+                DbUtils.cancel(this.sessionId, this.cursorId);
+            });
+
+            PubSub.subscribe(Constants.SORT_REQUESTED, (data) => {
+                this.handleSort(data);
+            });
+
+            PubSub.subscribe(Constants.COLUMNS_SELECTED, (data) => {
+                this.handleSelectColumns(data);
+            });
+
+            //handle all keyboard shortcuts
+            [
+                Constants.CMD_RUN_QUERY,
+                Constants.CMD_EXPORT,
+                Constants.CMD_FORMAT_QUERY,
+            ].forEach((c) => {
+                ((c) => {
+                    PubSub.subscribe(c, () => {
+                        this.handleCmd(c);
+                    });
+                })(c);
+            });
+
+            PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
+                Logger.Log(TAG$9, Constants.CELL_EDITED);
+                await this.handleCellEdit(data);
+            });
+        }
+
+        async initHandlers() {
+            this.$search.addEventListener('click', async () => {
+                this.search();
+                this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value);
+            });
+
+            this.$searchText.addEventListener('keyup', async (e) => {
+                if (this.$searchText.value) {
+                    this.$clearFilter.style.display = 'block';
+                } else {
+                    this.$clearFilter.style.display = 'none';
+                }
+
+                if (e.key == "Enter") {
+                    this.search();
+                    this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value);
+                }
+            });
+
+            this.$tableContents.addEventListener('click', async (e) => {
+                Logger.Log(TAG$9, "clicked");
+                let target = event.target;
+                if (!target.classList.contains('fk-icon')) {
+                    return
+                }
+
+                let value = target.dataset.value;
+
+                Logger.Log(TAG$9, `${target.dataset.table}:${target.dataset.column}:${value}`);
+                PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
+                await this.showFkRef(target.dataset.table, target.dataset.column, value);
+                this.stack.push(target.dataset.table, target.dataset.column, value);
+            });
+
+            this.$operators.addEventListener('change', () => {
+                if (this.$operators.value == "IS NULL" || this.$operators.value == "IS NOT NULL") {
+                    this.$searchText.disabled = true;
+                    return;
+                }
+                this.$searchText.disabled = false;
+            });
+
+            this.$exportFiltered.addEventListener('click', async (e) => {
+                this.handleCmd(Constants.CMD_EXPORT);
+            });
+
+            this.$clearFilter.addEventListener('click', async (e) => {
+                this.handleCmd(Constants.CMD_CLEAR_FILTER);
+            });
+        }
+
+        async handleSort(data) {
+            Logger.Log(TAG$9, JSON.stringify(data));
+            this.sortColumn = data.column;
+            this.sortOrder = data.order;
+
+            const f = async (query) => {
+                return await this.updateContents(query);
+            };
+
+            pager.init(this.query, f, this.sortColumn, this.sortOrder);
+        }
+
+        async handleCellEdit(data) {
+            Logger.Log(TAG$9, JSON.stringify(data));
+            let query = `update \`${this.table}\`
+                    set \`${data.col.name}\` = '${data.col.value}' 
+                    where \`${data.key.name}\` = '${data.key.value}'`;
+            let dbUtils = new DbUtils();
+            let res = await dbUtils.execute.apply(this, [query]);
+
+            if (res.status == "ok") {
                 PubSub.publish(Constants.QUERY_DISPATCHED, {
-                    query: q,
+                    query: query,
                     tags: [Constants.USER]
                 });
+
+                let rows = res.data[0][1];
+                Utils.showAlert(`Updated ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
+
+                if (rows == 0) {
+                    this.tableUtils.undo();
+                }
+                return;
             }
+
+            this.tableUtils.undo();
         }
 
-        async runQuery(q, save = true) {
-            if (!this.db) {
-                alert('No database selected');
-                return {
-                    'status': 'error',
-                    'msg': 'No database selected'
+        async showFkRef(table, col, val) {
+            this.table = table;
+
+            await this.initTable(this.table);
+            this.rowAdder.init(this.table, this.columns);
+            this.colSelector.init(this.table, this.columns);
+
+            let query = `select * from \`${table}\` 
+                         where \`${col}\` = '${val}'`;
+
+            const f = async (query) => {
+                let res = await this.showContents(query, this.fkMap);
+
+                if (res.status == "ok") {
+                    PubSub.publish(Constants.QUERY_DISPATCHED, {
+                        query: query,
+                        tags: [Constants.USER]
+                    });
+
                 }
+                return res
+            };
+
+            pager.init(query, f);
+        }
+
+        async search() {
+            //disable input field for is null and is not null
+            if (this.$operators.value == "IS NULL" || this.$operators.value == "IS NOT NULL") {
+                this.query = `select * from \`${this.table}\` 
+                             where \`${this.$columNames.value}\`
+                             ${this.$operators.value}`;
+            } else {
+                this.query = `select * from \`${this.table}\` 
+                             where \`${this.$columNames.value}\`
+                             ${this.$operators.value}
+                             '${this.$searchText.value}'`;
             }
 
-            q = q.trim();
+            Logger.Log(TAG$9, this.query);
 
-            if (!/^select|show/i.test(q)) {
-                this.tableUtils.showLoader();
-                let dbUtils = new DbUtils();
-                let res = await dbUtils.execute.apply(this, [q]);
-                if (res.status == "error") {
-                    this.tableUtils.hideLoader();
-                    return res;
-                }
+            const f = async (query) => {
+                let res = await this.showContents(query, this.fkMap);
 
-                if (save) {
+                if (res.status == "ok") {
                     PubSub.publish(Constants.QUERY_DISPATCHED, {
-                        query: q,
+                        query: this.query,
                         tags: [Constants.USER]
                     });
                 }
 
-                this.tableUtils.hideLoader();
-                return {
-                    'status': 'ok',
-                    'rows-affected': res.data[0][1]
-                }
-            }
+                return res;
+            };
 
-            if (!this.cursorId) {
-                this.cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
-            }
+            pager.init(this.query, f);
+        }
+
+        reset() {
+            this.sortColumn = null;
+            this.sortOrder = null;
+        }
+
+        async show(table) {
+            this.table = table;
+
+            Logger.Log(TAG$9, `Displaying ${table}`);
+
+            this.stack.reset();
+            this.stack.push(this.table);
+
+            await this.initTable(this.table);
+            this.rowAdder.init(this.table, this.columns);
+            this.colSelector.init(this.table, this.columns);
+
+            //the base query currently in operation
+            this.query = `select * from \`${this.table}\``;
+
+            const f = async (query) => {
+                let res = this.showContents(query, this.fkMap);
+                return res;
+            };
+
+            Logger.Log(TAG$9, `${this.sortColumn}:${this.sortOrder}`);
+            pager.init(this.query, f, this.sortColumn, this.sortOrder);
+        }
+
+        async initTable(table) {
+            let columns = DbUtils.fetchAll(this.sessionId, `show columns from \`${table}\``);
+            let contraints = DbUtils.fetchAll(this.sessionId, `SELECT
+                TABLE_NAME,
+                COLUMN_NAME,
+                CONSTRAINT_NAME,
+                REFERENCED_TABLE_NAME,
+                REFERENCED_COLUMN_NAME
+                FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+                WHERE
+                TABLE_SCHEMA = '${this.db}\' and
+                TABLE_NAME = '${table}\'`);
+
+            let values = await Promise.all([columns, contraints]);
+            this.fkMap = DbUtils.createFKMap(values[1]);
+            this.columns = Utils.extractColumns(values[0]);
+
+            //update the column name selector
+            Utils.setOptions(this.$columNames, this.columns, '');
+            Utils.setOptions(this.$operators, OPERATORS, '');
+            this.$searchText.value = '';
+        }
+
+        async showContents(query, fkMap, sel = true) {
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
 
             let params = {
                 'session-id': this.sessionId,
@@ -1987,61 +2785,356 @@
             };
 
             let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
-
-            let res = await this.tableUtils.showContents(stream, {}, {}, true);
-
-            if (res.status == "ok" && save) {
-                PubSub.publish(Constants.QUERY_DISPATCHED, {
-                    query: q,
-                    tags: [Constants.USER]
-                });
-            }
+            let selection = this.colSelector.getSelection(this.table);
+            let res =  await this.tableUtils.showContents(stream, fkMap, selection, true, true);
 
             return res;
         }
 
-        async runAll() {
-            let json = await Utils.fetch('/browser-api/sql/split?' + new URLSearchParams({q: this.editor.getAll()}));
-            Logger.Log(TAG$8, JSON.stringify(json));
-            for (let i = 0; i < json.data.length; i++) {
-                let q = json.data[i];
-                this.cursorId = null;
-                let res = await this.runQuery(q);
+        async updateContents(query) {
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
+            let params = {
+                'session-id': this.sessionId,
+                'cursor-id': this.cursorId,
+                'req-id': Utils.uuid(),
+                'num-of-rows': Constants.BATCH_SIZE_WS
+            };
 
-                if (res.status == "error") {
-                    Logger.Log(TAG$8, `runall breaking: ${res.msg}`);
-                    break;
-                }
+            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            return this.tableUtils.update(stream);
+        }
 
-                Logger.Log(TAG$8, `${res['rows-affected']}`);
+        async handleCmd(cmd) {
+            switch (cmd) {
+            case Constants.CMD_EXPORT:
+                this.handleExport();
+                break;
+
+            case Constants.CMD_CLEAR_FILTER:
+                this.handleClearFilter();
+                break;
             }
         }
 
-        async formatQuery() {
-            let q = this.editor.getValue();
-            Logger.Log(TAG$8, q);
-            let json = await Utils.fetch('/browser-api/sql/prettify?' + new URLSearchParams({q: q}));
-            this.editor.setValue(json.data);
-            this.editor.clearSelection();
-            this.editor.focus();
+        handleSelectColumns(data) {
+            this.tableUtils.selectColumns(data.cols);
         }
 
-        async adjustView() {
-            //fix height of query editor and results div
-            let rpDims = document.getElementById('app-right-panel').getBoundingClientRect();
-            let sbDims = document.getElementById('query-sub-menu').getBoundingClientRect();
-            let footerDims = document.getElementById('footer').getBoundingClientRect();
-            let editor = document.getElementById('query-editor');
-            let results = document.getElementById('query-results');
+        handleClearFilter() {
+            Utils.setOptions(this.$columNames, this.columns, '');
+            Utils.setOptions(this.$operators, OPERATORS, '');
 
-            let h = (rpDims.height - sbDims.height - footerDims.height) / 2;
+            this.$searchText.value = '';
+            this.$searchText.focus();
 
-            editor.style.height = h + 'px';
-            results.style.height = h + 'px';
+            this.$clearFilter.style.display = 'none';
+
+            if (this.table) {
+                this.show(this.table);
+            }
+        }
+
+        async handleExport() {
+            if (!this.query) {
+                return;
+            }
+
+            let dbUtils = new DbUtils();
+            let res = await dbUtils.exportResults.apply(this, [this.query]);
+
+            if (res.status == "ok") {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    query: this.query,
+                    tags: [Constants.USER]
+                });
+            }
+        }
+
+        async navigate(e) {
+            Logger.Log(TAG$9, JSON.stringify(e));
+            PubSub.publish(Constants.TABLE_CHANGED, {table: e.table});
+
+            switch (e.type) {
+                case 'table':
+                    await this.show(e.table);
+                    break
+
+                case 'fk-ref':
+                    await this.showFkRef(e.table, e.column, e.value);
+                    break
+
+                case 'search':
+                    this.table = e.table;
+                    await this.initTable(this.table);
+
+                    this.$columNames.value = e.column;
+                    this.$operators.value = e.operator;
+                    this.$searchText.value = e.value;
+
+                    await this.search();
+                    break
+            }
+            Logger.Log(TAG$9, "Done navigate");
         }
     }
 
-    const TAG$7 = "base-db";
+    const TAG$8 = "tables";
+
+    class Tables {
+        constructor(sessionId) {
+            this.$root = document.getElementById('app-left-panel');
+            this.sessionId = sessionId;
+            this.$tables = document.getElementById('tables');
+            this.$tableFilter = document.getElementById('table-filter');
+            this.$exportTable = document.getElementById('export-table');
+            this.$tableFilter.addEventListener('keyup', () => {
+                this.filter();
+            });
+
+            this.$exportTable.addEventListener('click', () => {
+                this.handleCmd(Constants.CMD_EXPORT_TABLE);
+            });
+
+            this.$tables.addEventListener('click', async (e) => {
+                let target = e.target;
+                if (target.className != 'table-name') {
+                    return
+                }
+
+                //remove highlight on all element first
+                let list = this.$tables.querySelectorAll('.highlight');
+                list.forEach((e) => {
+                    e.classList.remove('highlight');
+                });
+
+                let parent = target.parentElement;
+                parent.classList.add('highlight');
+
+                this.table = target.innerHTML;
+
+                PubSub.publish(Constants.TABLE_SELECTED, {table: target.innerHTML});
+            });
+
+            //update highlighted table if table is changed from elsewhere
+            PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
+                //remove highlight on all element first
+                let list = this.$tables.querySelectorAll('.highlight');
+                list.forEach((e) => {
+                    e.classList.remove('highlight');
+                });
+
+                //highlight new table
+                list = this.$tables.querySelectorAll('.table-name');
+                for (let i = 0; i < list.length; i++) {
+                    if (list[i].innerHTML == data.table) {
+                        let parent = list[i].parentElement;
+                        parent.classList.add('highlight');
+                        break;
+                    }
+                }
+            });
+
+            Logger.Log(TAG$8, `sessionId: ${sessionId}`);
+            //handle all keyboard shortcuts
+            [
+                Constants.CMD_EXPORT_TABLE,
+                Constants.CMD_SEARCH_TABLES
+            ].forEach((c) => {
+                ((c) => {
+                    PubSub.subscribe(c, () => {
+                        this.handleCmd(c);
+                    });
+                })(c);
+            });
+        }
+
+        async handleCmd(cmd) {
+            switch (cmd) {
+            case Constants.CMD_EXPORT_TABLE:
+                this.handleExportTable();
+                break;
+
+            case Constants.CMD_SEARCH_TABLES:
+                this.$tableFilter.focus();
+                break;
+            }
+        }
+
+        async handleExportTable() {
+            if (!this.table) {
+                alert('No table selected');
+                return
+            }
+
+            let q = `select * from \`${this.table}\``;
+            let dbUtils = new DbUtils();
+            dbUtils.exportResults.apply(this, [q]);
+        }
+
+        setSessionInfo(sessionId, db) {
+            this.sessionId = sessionId;
+            this.db = db;
+            Logger.Log(TAG$8, `sessionId: ${sessionId} db: ${db}`);
+        }
+
+        filter() {
+            let f = this.$tableFilter.value;
+
+            if (f == '') {
+                this.render(this.tables);
+                return
+            }
+
+            Logger.Log(TAG$8, `Filtering ${f}`);
+
+            let regex = new RegExp(`${f}`);
+            let tables = this.tables.filter(t => regex.test(t));
+            this.render(tables);
+        }
+
+        async show(db) {
+            Logger.Log(TAG$8, "show");
+            let q = `show tables from \`${db}\``;
+            let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
+
+            let params = {
+                'session-id': this.sessionId,
+                'cursor-id': cursorId,
+                'req-id': Utils.uuid(),
+                'num-of-rows': -1 //get all table names
+            };
+
+            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+
+            this.$tables.replaceChildren();
+            let $t = document.getElementById('table-template');
+            let t = $t.innerHTML;
+
+            this.tables = [];
+
+            while (true) {
+                let row = await stream.get();
+
+                if (row.length == 1 && row[0] == "eos") {
+                    break;
+                }
+
+                let h = Utils.generateNode(t, {table: row[1]});
+                this.$tables.append(h);
+                this.tables.push(row[1]);
+            }
+        }
+
+        render(tables) {
+            this.$tables.replaceChildren();
+            let $t = document.getElementById('table-template');
+            let t = $t.innerHTML;
+
+            tables.forEach((tbl) => {
+                let h = Utils.generateNode(t, {table: tbl});
+                this.$tables.append(h);
+            });
+        }
+    }
+
+    const TAG$7 = "grid-resizer";
+    class GridResizerH {
+        //resize two elements contained in grid horizontal direction
+        constructor($grid, $e1, $resizer, $e2) {
+            this.d1 = $e1.getBoundingClientRect().width;
+            this.d2 = $e2.getBoundingClientRect().width;
+
+            Logger.Log(TAG$7, `${this.d1} ${this.d2}`);
+
+            $resizer.addEventListener('mousedown', (e) => {
+                this.isDragging = true;
+                this.startx = e.clientX;
+                Logger.Log(TAG$7, `mousedown: ${e.clientX}`);
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!this.isDragging) {
+                    return;
+                }
+                Logger.Log(TAG$7, `mousemove: ${e.clientX}`);
+                let delta = e.clientX - this.startx;
+                this.d1 += delta;
+                this.d2 += -1 * delta;
+                Logger.Log(TAG$7, `${delta} ${this.d1} ${this.d2}`);
+
+                $grid.style.gridTemplateColumns = `${this.d1}px 2px ${this.d2}px`;
+                this.startx = e.clientX;
+                e.preventDefault();
+            });
+
+            document.addEventListener('mouseup', (e) => {
+                this.isDragging = false;
+                Logger.Log(TAG$7, `mouseup: ${e.clientX}`);
+                e.preventDefault();
+                PubSub.publish(Constants.GRID_H_RESIZED, {});
+            });
+        }
+    }
+
+    const TAG$6 = "main-menu";
+    class MainMenu {
+        static init() {
+    		let elementsArray = document.querySelectorAll('[id$="-menu"]');
+
+            elementsArray.forEach((elem) => {
+                elem.addEventListener("click", (e) => {
+                    Logger.Log(TAG$6, `${e.currentTarget.id} clicked `);
+                    MainMenu.handleMenu(e.currentTarget.id);
+                });
+            });
+        }
+
+    	static handleMenu(id) {
+    		switch (id) {
+    		case 'query-menu':
+    			window.location = '/app/queries';
+    			break;
+
+    		case 'content-menu':
+    			window.location = '/app/tables';
+    			break;
+
+    		case 'help-menu':
+    			window.location = '/app/help';
+    			break;
+
+    		case 'about-menu':
+    			window.location = '/app/about';
+    			break;
+    		}
+    	}
+    }
+
+    const TAG$5 = "appbar";
+    class AppBar {
+        static init(name, sessionId, db) {
+            let $databases = document.getElementById('databases');
+            document.getElementById('conn-name').innerHTML = name;
+
+            AppBar.showDatabases($databases, sessionId, db);
+
+            $databases.addEventListener('change', () => {
+                Logger.Log(TAG$5, "Db changed");
+                let db = $databases.value;
+                PubSub.publish(Constants.DB_CHANGED, {db: db});
+            });
+        }
+
+        static async showDatabases($databases, sessionId, db) {
+            let dbs = await DbUtils.fetchAll(sessionId, 'show databases');
+            dbs = Utils.extractColumns(dbs);
+            Utils.setOptions($databases, dbs, db);
+            //PubSub.publish(Constants.DB_CHANGED, {db: db});
+        }
+    }
+
+    const TAG$4 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -2053,13 +3146,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$7, "open.onsuccess");
+                        this.logger.log(TAG$4, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$7, e.target.error);
+                        this.logger.log(TAG$4, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -2080,7 +3173,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$7, e.target.error);
+                    this.logger.log(TAG$4, e.target.error);
                     resolve(-1);
                 };
             })
@@ -2098,7 +3191,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$7, e.target.error);
+                    this.logger.log(TAG$4, e.target.error);
                     resolve(-1);
                 };
             })
@@ -2231,7 +3324,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$7, "findByDbId");
+                this.logger.log(TAG$4, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -2243,7 +3336,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$7, "error");
+                    this.logger.log(TAG$4, "error");
                     resolve(e.target.error);
                 };
             })
@@ -2290,7 +3383,7 @@
         }
     }
 
-    const TAG$6 = "query-db";
+    const TAG$3 = "query-db";
     const CREATED_AT_INDEX = "created-at-index";
     const QUERY_INDEX = "query-index";
     const TERM_INDEX = "term-index";
@@ -2307,7 +3400,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$6, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$3, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 2) {
                 let store = e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -2340,7 +3433,7 @@
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
                 terms = [...new Set(terms)];
 
-                this.logger.log(TAG$6, JSON.stringify(terms));
+                this.logger.log(TAG$3, JSON.stringify(terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -2359,7 +3452,7 @@
 
                     resolve(id);
                 } catch (e) {
-                    this.logger.log(TAG$6, `error: ${JSON.stringify(e.message)}`);
+                    this.logger.log(TAG$3, `error: ${JSON.stringify(e.message)}`);
                     reject(e.message);
                 }
             })
@@ -2389,7 +3482,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$6, JSON.stringify(rec));
+                    this.logger.log(TAG$3, JSON.stringify(rec));
                     super.put(this.searchIndex, {
                         id: rec.id,
                         term: t,
@@ -2397,7 +3490,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$6, `error: e.message`);
+                    this.logger.log(TAG$3, `error: e.message`);
                 }
             }
         }
@@ -2412,7 +3505,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -2446,7 +3539,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$6, JSON.stringify(rec));
+                    this.logger.log(TAG$3, JSON.stringify(rec));
                     super.put(this.tagIndex, {
                         id: rec.id,
                         tag: t,
@@ -2454,7 +3547,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$6, `error: e.message`);
+                    this.logger.log(TAG$3, `error: e.message`);
                 }
             }
         }
@@ -2469,7 +3562,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -2489,7 +3582,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -2522,7 +3615,7 @@
             //days supercedes everything
             //if days are provided get queries by days first
             //then filter by terms and tags if provided
-            this.logger.log(TAG$6, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+            this.logger.log(TAG$3, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
 
             let start, end;
             if (days.hasOwnProperty('start')) {
@@ -2542,7 +3635,7 @@
 
             let result = [];
             if (start || end) {
-                this.logger.log(TAG$6, 'filtering');
+                this.logger.log(TAG$3, 'filtering');
                 result = await this.searchByCreatedAt(start, end);
 
                 if (result.length == 0) {
@@ -2713,273 +3806,55 @@
         }
     }
 
-    const TAG$5 = "query-finder";
-    const MAX_DAYS$1 = 10000;
-    const VIEW_DAYS = 10;
+    /*Copyright 2017 Kenneth Jiang
 
-    class QueryFinder {
-        constructor() {
-            this.$queries = document.getElementById('queries');
-            this.queryTemplate = document.getElementById('query-template').innerHTML;
-            this.tootipTemplate = document.getElementById('tooltip-template').innerHTML;
-            this.tippies = {};
-        }
+    Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-        async init() {
-            this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
-            await this.queryDb.open();
+    The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-            let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
-            this.showQueries(queries);
-            Logger.Log(TAG$5, JSON.stringify(queries));
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE*/
 
-            PubSub.subscribe(Constants.QUERY_SAVED, async (query) => {
-                let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
-                this.showQueries(queries);
-                Logger.Log(TAG$5, JSON.stringify(queries));
-            });
+    //https://github.com/kennethjiang/js-file-download/blob/master/file-download.js
 
-            this.initTermInput();
-            this.initTagInput();
-            this.initTagEditor();
-            this.initTooltip();
-        }
+    class FileDownloader {
+    	static download(data, filename, mime, bom) {
+    		var blobData = (typeof bom !== 'undefined') ? [bom, data] : [data];
+    		var blob = new Blob(blobData, {type: mime || 'application/octet-stream'});
+    		if (typeof window.navigator.msSaveBlob !== 'undefined') {
+    			// IE workaround for "HTML7007: One or more blob URLs were
+    			// revoked by closing the blob for which they were created.
+    			// These URLs will no longer resolve as the data backing
+    			// the URL has been freed."
+    			window.navigator.msSaveBlob(blob, filename);
+    		}
+    		else {
+    			var blobURL = (window.URL && window.URL.createObjectURL) ? window.URL.createObjectURL(blob) : window.webkitURL.createObjectURL(blob);
+    			var tempLink = document.createElement('a');
+    			tempLink.style.display = 'none';
+    			tempLink.href = blobURL;
+    			tempLink.setAttribute('download', filename);
 
-        initTooltip() {
-            //show tootip on clicking the query
-            this.$queries.addEventListener('click', async (e) => {
-                if (!e.target.classList.contains('query-text')) {
-                    return;
-                }
-                Logger.Log(TAG$5, e.target.classList);
-                let id = parseInt(e.target.dataset.id);
+    			// Safari thinks _blank anchor are pop ups. We only want to set _blank
+    			// target if the browser does not support the HTML5 download attribute.
+    			// This allows you to download files in desktop safari if pop up blocking
+    			// is enabled.
+    			if (typeof tempLink.download === 'undefined') {
+    				tempLink.setAttribute('target', '_blank');
+    			}
 
-                //todo: why just get does not work ??
-                let recs = await this.queryDb.findByIds([id]);
-                let q = recs[0];
-                let t = tippy(document.querySelector(`.query[data-id="${id}"]`), {
-                    onHidden(instance) {
-                        Logger.Log(TAG$5, "destroying");
-                        instance.destroy();
-                    }
-                });
+    			document.body.appendChild(tempLink);
+    			tempLink.click();
 
-                let json = await Utils.fetch('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
-
-                t.setProps({
-                    content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
-                    placement: 'right',
-                    delay: 0,
-                    allowHTML: true,
-                    interactive: true,
-                });
-
-                t.show();
-            });
-
-            //copy to clipboard 
-            this.$queries.addEventListener('click', async (e) => {
-                if (!e.target.classList.contains('copy-query')) {
-                    return;
-                }
-
-                let id = parseInt(e.target.dataset.id);
-                Logger.Log(TAG$5, `Copying ${id}`);
-                let recs = await this.queryDb.findByIds([id]);
-                let q = recs[0];
-                let json = await Utils.fetch('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
-                await navigator.clipboard.writeText(json.data);
-                e.target.nextElementSibling.innerHTML = "&nbsp;&nbsp;&nbsp;Copied.";
-            });
-        }
-
-        //set up term input
-        initTermInput() {
-            let input = document.querySelector('#term-input');
-            let tagify = new Tagify(input, {placeholder: 'Search queries'});
-
-            tagify.on('input', async (e) => {
-    			var value = e.detail.value;
-
-    			tagify.whitelist = null; // reset the whitelist
-    			tagify.loading(true).dropdown.hide();
-
-                let terms = await this.queryDb.listTerms(value);
-                Logger.Log(TAG$5, terms);
-
-                tagify.whitelist = terms;
-    			tagify.loading(false).dropdown.show(value); // render the suggestions dropdown
-    		});
-
-            input.addEventListener('change', async (e) => {
-                let terms = [];
-
-                if (e.target.value == '') {
-                    let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
-                    this.showQueries(queries);
-                    return;
-                }
-
-                Logger.Log(TAG$5, e.target.value);
-                let json = JSON.parse(e.target.value);
-
-                for (let i = 0; i < json.length; i++) {
-                    terms.push(json[i].value);
-                }
-                Logger.Log(TAG$5, terms);
-
-                let queries = await this.queryDb.filter({start: MAX_DAYS$1, end: 0}, [], terms);
-                this.showQueries(queries);
-            });
-        }
-
-        //set up tag input
-        initTagInput() {
-            let input = document.querySelector('#tags-input');
-            let tagify = new Tagify(input, {placeholder: 'Search tags'});
-
-            tagify.on('input', async (e) => {
-    			var value = e.detail.value;
-
-    			tagify.whitelist = null; // reset the whitelist
-    			tagify.loading(true).dropdown.hide();
-
-                let tags = await this.queryDb.listTags(value);
-                Logger.Log(TAG$5, tags);
-
-                tagify.whitelist = tags;
-    			tagify.loading(false).dropdown.show(value); // render the suggestions dropdown
-    		});
-
-            input.addEventListener('change', async (e) => {
-                let tags = [];
-
-                if (e.target.value == '') {
-                    let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
-                    this.showQueries(queries);
-                    return;
-                }
-
-                Logger.Log(TAG$5, e.target.value);
-                let json = JSON.parse(e.target.value);
-
-                for (let i = 0; i < json.length; i++) {
-                    tags.push(json[i].value);
-                }
-                Logger.Log(TAG$5, tags);
-
-                let queries = await this.queryDb.filter({start: MAX_DAYS$1, end: 0}, tags, []);
-                this.showQueries(queries);
-            });
-        }
-
-        async showQueries(queries) {
-            this.tippies = {};
-            this.$queries.replaceChildren();
-            queries.forEach((q) => {
-                let n = Utils.generateNode(this.queryTemplate, {
-                    id: q.id,
-                    query: Utils.truncate(q.query, 50),
-                    timestamp: q.created_at.toLocaleString(),
-                });
-
-                q.tags.forEach((t) => {
-                    let tag = Utils.generateNode(`<span class=tag>${t}</span>`, {});
-                    n.querySelector('.tags').append(tag);
-                });
-                this.$queries.append(n);
-
-                //add tooltip
-                //let selector = `.query[data-id="${q.id}"]`;
-                //let t = tippy(document.querySelector(selector));
-                //t.setProps({
-                    //content: Utils.processTemplate(this.tootipTemplate, {query: q.query}),
-                    //placement: 'right',
-                    //delay: 0,
-                    //allowHTML: true,
-                    //theme: 'prosql',
-                    //interactive: true,
-                    //trigger: 'click'
-                //});
-                //t.hide();
-
-                //this.tippies[q.id] = t;
-            });
-        }
-
-        initTagEditor() {
-            document.addEventListener('mouseover', (e) => {
-                Logger.Log(TAG$5, "mouseover:" + e.classList);
-
-                if (e.target.classList.contains('tags')) {
-                    //this is just hover actually
-                    Logger.Log(TAG$5, "on query");
-                    let $el = e.target;
-                    let $tags = $el;
-
-                    if ($tags.querySelector('.new-tag')) {
-                        //new tag already present on this query
-                        //we have to handle this because mouseover may be triggered multiple times
-                        return;
-                    }
-
-                    let id = parseInt($el.dataset.id);
-
-                    let $tag = Utils.generateNode(`<span class="tag new-tag" contenteditable>click to add new</span>`, {});
-                    $tags.append($tag);
-
-                    //save new tag when user hits tab or enter
-                    let $newTag = $tags.querySelector('.new-tag');
-                    ((id, $newTag) => {
-                        $newTag.addEventListener('keyup', async (e) => {
-                            if (e.key == "Tab" || e.key == "Enter") {
-                                let tag = $newTag.innerText.trim();
-                                if (tag == '') {
-                                    $newTag.blur();
-                                    return;
-                                }
-
-                                Logger.Log(TAG$5, `Setting tag ${tag} on id ${id}`);
-                                $newTag.classList.remove('new-tag');
-                                $newTag.blur();
-                                //get the record, update tags and save. Probably not very efficient
-                                let recs = await this.queryDb.findByIds([id]);
-                                let newRec = recs[0];
-                                newRec.tags.push(tag);
-                                Logger.Log(TAG$5, newRec);
-
-                                await this.queryDb.updateTags(newRec);
-                                PubSub.publish(Constants.QUERY_UPDATED, {id: id});
-                            }
-
-                            if (e.key == "Escape") {
-                                $newTag.innerHTML = 'click to add new';
-                                $newTag.blur();
-                            }
-                        });
-
-                        $newTag.addEventListener('click', (e) => {
-                            $newTag.innerHTML = '<span>&nbsp</span>';
-                        });
-
-                    })(id, $newTag);
-
-                    //delete new tag if user leaves card without editing
-                    (($el) => {
-                        $el.addEventListener('mouseleave', () => {
-                            Logger.Log(TAG$5, "outside query");
-                            let $tag = $el.querySelector('.new-tag'); 
-                            if ($tag) {
-                                $tag.remove();
-                            }
-                        });
-                    })($el);
-                }
-            });
-        }
+    			// Fixes "webkit blob resource error 1"
+    			setTimeout(function() {
+    				document.body.removeChild(tempLink);
+    				window.URL.revokeObjectURL(blobURL);
+    			}, 200);
+    		}
+    	}
     }
 
-    const TAG$4 = "file-uploader";
+    const TAG$2 = "file-uploader";
 
     class FileUploader {
         constructor() {
@@ -2993,7 +3868,7 @@
             
             document.querySelector('body').append(n);
             document.querySelector('[type=file]').addEventListener("change", (e) => {
-                Logger.Log(TAG$4, 'changed');
+                Logger.Log(TAG$2, 'changed');
     	
                 if (e.target.files.length > 0) {
                     let reader = new FileReader();
@@ -3016,25 +3891,25 @@
         }
 
         show() {
-            Logger.Log(TAG$4, "Showing " + this.mID);
+            Logger.Log(TAG$2, "Showing " + this.mID);
             document.querySelector('[type=file]').click();
         }
     }
 
-    const TAG$3 = "query-history";
+    const TAG$1 = "query-history";
     const MAX_DAYS = 10000;
 
     class QueryHistory {
         constructor() {
             PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
-                Logger.Log(TAG$3, JSON.stringify(query));
+                Logger.Log(TAG$1, JSON.stringify(query));
 
                 if (!this.queryDb) {
                     await this.init();
                 }
 
                 let id = await this.queryDb.save(query); 
-                Logger.Log(TAG$3, `Saved to ${id}`);
+                Logger.Log(TAG$1, `Saved to ${id}`);
                 PubSub.publish(Constants.QUERY_SAVED, {id: id});
             });
 
@@ -3117,71 +3992,14 @@
                     message: `Imported ${i + 1} of ${data.length}`
                 });
 
-                Logger.Log(TAG$3, `Saved to ${id}`);
+                Logger.Log(TAG$1, `Saved to ${id}`);
             }
             PubSub.publish(Constants.STOP_PROGRESS, {});
         }
     }
 
-    const TAG$2 = "main-menu";
-    class MainMenu {
-        static init() {
-    		let elementsArray = document.querySelectorAll('[id$="-menu"]');
-
-            elementsArray.forEach((elem) => {
-                elem.addEventListener("click", (e) => {
-                    Logger.Log(TAG$2, `${e.currentTarget.id} clicked `);
-                    MainMenu.handleMenu(e.currentTarget.id);
-                });
-            });
-        }
-
-    	static handleMenu(id) {
-    		switch (id) {
-    		case 'query-menu':
-    			window.location = '/app/queries';
-    			break;
-
-    		case 'content-menu':
-    			window.location = '/app/tables';
-    			break;
-
-    		case 'help-menu':
-    			window.location = '/app/help';
-    			break;
-
-    		case 'about-menu':
-    			window.location = '/app/about';
-    			break;
-    		}
-    	}
-    }
-
-    const TAG$1 = "appbar";
-    class AppBar {
-        static init(name, sessionId, db) {
-            let $databases = document.getElementById('databases');
-            document.getElementById('conn-name').innerHTML = name;
-
-            AppBar.showDatabases($databases, sessionId, db);
-
-            $databases.addEventListener('change', () => {
-                Logger.Log(TAG$1, "Db changed");
-                let db = $databases.value;
-                PubSub.publish(Constants.DB_CHANGED, {db: db});
-            });
-        }
-
-        static async showDatabases($databases, sessionId, db) {
-            let dbs = await DbUtils.fetchAll(sessionId, 'show databases');
-            dbs = Utils.extractColumns(dbs);
-            Utils.setOptions($databases, dbs, db);
-            //PubSub.publish(Constants.DB_CHANGED, {db: db});
-        }
-    }
-
-    const TAG = "queries";
-    class Query {
+    const TAG = "tables";
+    class Content {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
                 this.adjustView();
@@ -3198,49 +4016,48 @@
                 //if db has changed we have to create new session
                 this.sessionId = await DbUtils.login(this.creds);
 
-                //update session id in modules
-                this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
+                //update session id in all modules
+                this.tableContents.setSessionInfo(this.sessionId, this.creds.db);
+                this.tables.setSessionInfo(this.sessionId, this.creds.db);
+
+                this.tables.show(this.creds.db);
             });
 
-            PubSub.subscribe(Constants.QUERY_SAVED, async () => {
-                this.queryWorker.port.postMessage({
-                    type: Constants.QUERY_SAVED
-                });
-            });
+            this.$tables = document.getElementById('tables');
 
-            PubSub.subscribe(Constants.QUERY_UPDATED, async () => {
-                this.queryWorker.port.postMessage({
-                    type: Constants.QUERY_UPDATED
-                });
+            PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
+                this.tableContents.reset();
+                this.tableContents.show(data.table);
             });
         }
 
         async init() {
             MainMenu.init();
+            this.history = new QueryHistory();
 
             let creds = Utils.getFromSession(Constants.CREDS);
             if (!creds) {
                 window.location = '/login';
-                return;
+                return
             }
+
+            Logger.Log(TAG, JSON.stringify(creds));
 
             this.creds = JSON.parse(creds);
             this.sessionId = await DbUtils.login(this.creds);
             Logger.Log(TAG, this.sessionId);
 
-            this.queryRunner = new QueryRunner(this.sessionId);
-            this.history = new QueryHistory();
-            await this.history.init();
-
-            this.finder = new QueryFinder();
-            await this.finder.init();
+            this.tableContents = new TableContents(this.sessionId);
+            this.tables = new Tables(this.sessionId);
 
             this.initHandlers();
 
             AppBar.init(this.creds.name, this.sessionId, this.creds.db);
 
             if (this.creds.db) {
-                this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
+                this.tableContents.setSessionInfo(this.sessionId, this.creds.db);
+                this.tables.setSessionInfo(this.sessionId, this.creds.db);
+                this.tables.show(this.creds.db);
             }
 
             let $g1 = document.getElementById('app-content');
@@ -3285,19 +4102,11 @@
             let appLeftPanel = document.querySelector('#app-left-panel');
             appLeftPanel.style.height = (bodyDims.height - appbarDims.height) + 'px';
 
-            //right panel
-            let rpDims = document.getElementById('app-right-panel').getBoundingClientRect();
-            let sbDims = document.getElementById('query-sub-menu').getBoundingClientRect();
-            let edDims = document.getElementById('query-editor').getBoundingClientRect();
-
-            let h = rpDims.height - sbDims.height - edDims.height;
-            h -= 50;
-            Logger.Log(TAG, `h: ${h}`);
-            let queryContainer = document.querySelector('#query-container');
-            queryContainer.style.gridTemplateRows = `200px 2px ${h}px`;
+            let appRightPanel = document.getElementById('app-right-panel');
+            appRightPanel.style.height = (bodyDims.height - appbarDims.height) + 'px';
         }
     }
 
-    new Query();
+    new Content();
 
 }());

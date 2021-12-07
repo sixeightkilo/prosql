@@ -237,6 +237,10 @@
         static get STATUS_DELETED() {
             return "deleted"
         }
+
+        static get EPOCH_TIMESTAMP() {
+            return '2021-01-01T00:00:00Z';
+        }
     }
 
     const DISABLED = [
@@ -3339,7 +3343,7 @@
         }
 
         static toDb(o = {}) {
-            //convert all "_" to "-"
+            //convert all "-" to "_"
             let r = {};
             for (let k in o) {
                 r[k.replaceAll(/-/g, '_')] = o[k];

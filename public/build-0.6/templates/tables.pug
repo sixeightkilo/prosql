@@ -2,7 +2,7 @@ doctype html
 html
     head
         include head.pug
-        link(rel="stylesheet" href="/#{root}/css/content.css?ver=#{version}")
+        link(rel="stylesheet" href="/#{root}/css/tables.css?ver=#{version}")
     body
         include common.pug
         include appbar.pug
@@ -13,4 +13,4 @@ html
 
         input#version(type=hidden value="#{version}")
 
-        script(type='module' src='/#{root}/dist/js/content.js?ver=#{version}')
+        script(type='module' src='/#{root}/dist/js/tables.js?ver=#{version}')

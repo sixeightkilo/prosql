@@ -211,7 +211,7 @@ class BaseDB {
     }
 
     static toDb(o = {}) {
-        //convert all "_" to "-"
+        //convert all "-" to "_"
         let r = {};
         for (let k in o) {
             r[k.replaceAll(/-/g, '_')] = o[k];

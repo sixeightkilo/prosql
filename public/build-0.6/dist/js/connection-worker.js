@@ -237,6 +237,10 @@
         static get STATUS_DELETED() {
             return "deleted"
         }
+
+        static get EPOCH_TIMESTAMP() {
+            return '2021-01-01T00:00:00Z';
+        }
     }
 
     const DISABLED = [
@@ -336,7 +340,7 @@
         }
     }
 
-    const TAG$3 = "utils";
+    const TAG$4 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -385,7 +389,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$3, response);
+                Logger.Log(TAG$4, response);
 
                 let json = await response.json();
 
@@ -395,7 +399,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$3, e);
+                Logger.Log(TAG$4, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -466,7 +470,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$3, "No data");
+            Logger.Log(TAG$4, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -513,7 +517,7 @@
     	}
     }
 
-    const TAG$2 = "base-db";
+    const TAG$3 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -525,13 +529,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$2, "open.onsuccess");
+                        this.logger.log(TAG$3, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$2, e.target.error);
+                        this.logger.log(TAG$3, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -552,7 +556,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$2, e.target.error);
+                    this.logger.log(TAG$3, e.target.error);
                     resolve(-1);
                 };
             })
@@ -570,7 +574,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$2, e.target.error);
+                    this.logger.log(TAG$3, e.target.error);
                     resolve(-1);
                 };
             })
@@ -703,7 +707,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$2, "findByDbId");
+                this.logger.log(TAG$3, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -715,14 +719,14 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$2, "error");
+                    this.logger.log(TAG$3, "error");
                     resolve(e.target.error);
                 };
             })
         }
 
         static toDb(o = {}) {
-            //convert all "_" to "-"
+            //convert all "-" to "_"
             let r = {};
             for (let k in o) {
                 r[k.replaceAll(/-/g, '_')] = o[k];
@@ -762,7 +766,7 @@
         }
     }
 
-    const TAG$1 = "connection-db";
+    const TAG$2 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
@@ -775,7 +779,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$1, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$2, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -826,7 +830,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$1, e.message);
+                this.logger.log(TAG$2, e.message);
             }
         }
 
@@ -842,7 +846,7 @@
                     if (o.is_default != isDefault) {
                         //we set updated at only if is_default has changed. We don't
                         //care about password change
-                        o.updated_at = Utils.getTimestamp();
+                        o.updated_at = new Date();
                     }
                     o.is_default = isDefault;
 
@@ -879,121 +883,136 @@
         }
     }
 
-    const TAG = "main";
-    const URL = '/browser-api/sqlite';
-    const SYNCUP_INTERVAL_MIN = 10000;//1 min
-    const SYNCUP_INTERVAL_MAX = 20000;//2 min
-    const EPOCH_TIMESTAMP = '2021-01-01T00:00:00Z';
+    const TAG$1 = "main";
 
-    class ConnectionWorker {
+    class BaseWorker {
         constructor(port) {
             this.port = port;
             this.logger = new Logger(this.port);
+
+            this.port.onmessage = (m) => {
+                this.handleMessage(m);
+            };
         }
 
         async init() {
             let res = await Utils.fetch(Constants.URL + '/about', false);
             if (res.status == "error") {
-                this.logger.log(TAG, JSON.stringify(res));
+                this.logger.log(TAG$1, JSON.stringify(res));
                 return
             }
 
             this.deviceId = res.data['device-id'];
-
-    		this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
-    		await this.connectionDb.open();
-
-            this.syncDown();
-
-            this.logger.log(TAG, "Starting syncup timer");
-            this.syncUp();
-            setInterval(() => {
-                this.syncUp();
-            }, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
         }
 
-        async syncDown() {
-            let res = await Utils.fetch(`${URL}/connections/updated`, false, {
-                db: this.deviceId,
-                after: await this.getLastSyncTs()
-            });
+        async getLastSyncTs(recs) {
+            let lastSyncTs = new Date(Constants.EPOCH_TIMESTAMP);
 
-            this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
-            if (res.status == "ok") {
-                let updateUI = false;
-                let conns = res.data.connections;
-
-                for (let i = 0; i < conns.length; i++) {
-                    //check if the remore connection is already present in local db
-                    let c = await this.connectionDb.findByDbId(conns[i].id);
-
-                    //this may be deleted on the server. Handle this first
-                    if (conns[i].status == "deleted") {
-                        if (c == null) {
-                            this.logger.log(TAG, `already deleted: ${conns[i].id}`);
-                            continue;
-                        }
-
-                        this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`);
-                        await this.connectionDb.del(c.id);
-                        updateUI = true;
-                        continue;
-                    }
-
-                    //this looks like a new connection
-                    if (c == null) {
-                        this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`);
-                        delete conns[i].created_at;
-                        delete conns[i].updated_at;
-                        delete conns[i].status;
-
-                        conns[i].db_id = conns[i].id;
-                        delete conns[i].id;
-                        conns[i].synced_at = Utils.getTimestamp();
-
-                        let id = await this.connectionDb.save(conns[i]);
-                        this.logger.log(TAG, `saved to : ${id}`);
-                        if (id >= 1) {
-                            updateUI = true;
-                        }
-                    } else {
-                        //nope. may be is-default got updated..
-                        await this.connectionDb.put(c.id, c.pass, conns[i].is_default);
-                        updateUI = true;
-                        this.logger.log(TAG, `Updated ${c.id}`);
-                    }
-                }
-
-                if (updateUI) {
-                    this.port.postMessage({
-                        type: Constants.NEW_CONNECTIONS,
-                    });
-                }
+            if (recs.length == 0) {
+                this.logger.log(TAG$1, `getLastSyncTs: returning epoch`);
+                return lastSyncTs.toISOString();
             }
-        }
 
-        async getLastSyncTs() {
-            let conns = await this.connectionDb.getAll();
-            this.logger.log(TAG, `l: ${conns.length}`);
-
-            if (conns.length == 0) {
-                return EPOCH_TIMESTAMP;
-            }
             //get the latest sync time
-            let lastSyncTs = EPOCH_TIMESTAMP;
-            conns.forEach((c) => {
-                let syncedAt = q.synced_at ?? null;
+            recs.forEach((r) => {
+                let syncedAt = r.synced_at ?? null;
                 if (!syncedAt) {
                     return
                 }
 
                 if (syncedAt > lastSyncTs) {
-                    lastSyncTs = c.synced_at;
+                    lastSyncTs = r.synced_at;
                 }
             });
 
-            this.logger.log(TAG, `lastSyncTs: ${lastSyncTs}`);
-            return lastSyncTs;
+            this.logger.log(TAG$1, `lastSyncTs: ${lastSyncTs}`);
+            return lastSyncTs.toISOString();
+        }
+    }
+
+    const TAG = "main";
+    const URL = '/browser-api/sqlite';
+
+    class ConnectionWorker extends BaseWorker {
+        async handleMessage(m) {
+            this.logger.log(TAG, JSON.stringify(m.data));
+        }
+
+        async init() {
+            await super.init();
+            this.logger.log(TAG, "deviceid:" + this.deviceId);
+
+            this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
+            await this.connectionDb.open();
+
+            this.syncDown();
+            this.syncUp();
+        }
+
+        async syncDown() {
+            let conns = await this.connectionDb.getAll();
+
+            let res = await Utils.fetch(`${URL}/connections/updated`, false, {
+                db: this.deviceId,
+                after: await this.getLastSyncTs(conns)
+            });
+
+            this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
+
+            if (res.status != "ok") {
+                this.logger.log(TAG, "Sync down error: " + res.msg);
+                return;
+            }
+
+            let updateUI = false;
+            conns = res.data.connections;
+
+            for (let i = 0; i < conns.length; i++) {
+                //check if the remore connection is already present in local db
+                let c = await this.connectionDb.findByDbId(conns[i].id);
+
+                //this may be deleted on the server. Handle this first
+                if (conns[i].status == "deleted") {
+                    if (c == null) {
+                        this.logger.log(TAG, `already deleted: ${conns[i].id}`);
+                        continue;
+                    }
+
+                    this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`);
+                    await this.connectionDb.del(c.id);
+                    updateUI = true;
+                    continue;
+                }
+
+                //this looks like a new connection
+                if (c == null) {
+                    this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`);
+                    conns[i].db_id = conns[i].id;
+                    delete conns[i].id;
+
+                    conns[i].synced_at = new Date();
+                    conns[i].created_at = new Date(conns[i].created_at);
+                    conns[i].updated_at = new Date(conns[i].updated_at);
+
+                    let id = await this.connectionDb.save(conns[i]);
+                    this.logger.log(TAG, `saved to : ${id}`);
+                    if (id >= 1) {
+                        updateUI = true;
+                    }
+                } else {
+                    //nope. may be is-default got updated..
+                    await this.connectionDb.put(c.id, c.pass, conns[i].is_default);
+                    await this.connectionDb.sync(c);
+                    updateUI = true;
+                    this.logger.log(TAG, `Updated ${c.id}`);
+                }
+            }
+
+            if (updateUI) {
+                this.port.postMessage({
+                    type: Constants.NEW_CONNECTIONS,
+                });
+            }
         }
 
         async syncUp() {
@@ -1022,7 +1041,7 @@
                 }
 
                 //every record may or may not have updated_at
-                let updatedAt = conns[i].updated_at ?? EPOCH_TIMESTAMP;
+                let updatedAt = conns[i].updated_at ?? new Date(Constants.EPOCH_TIMESTAMP);
 
                 if (conns[i].db_id) {
                     //if it has a db_id , it is guaranteed to haved synced_at
@@ -1047,11 +1066,7 @@
                 if (res.status == "ok") {
                     conns[i].db_id = res.data.db_id;
                     this.logger.log(TAG, `syncing: ${JSON.stringify(conns[i])}`);
-                    try {
-                        this.connectionDb.sync(conns[i]);
-                    } catch (e) {
-                        this.logger.log(TAG, e, this.port);
-                    }
+                    this.connectionDb.sync(conns[i]);
                 }
             }
 

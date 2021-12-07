@@ -21,9 +21,9 @@ export default [
         },
 	},
     {
-        'input': 'build-0.6/js/content.js',
+        'input': 'build-0.6/js/tables.js',
         'output': {
-            'file': 'build-0.6/dist/js/content.js',
+            'file': 'build-0.6/dist/js/tables.js',
             'format': 'iife'
         },
     },

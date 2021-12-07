@@ -83,7 +83,7 @@ class ConnectionDB extends BaseDB {
                 if (o.is_default != isDefault) {
                     //we set updated at only if is_default has changed. We don't
                     //care about password change
-                    o.updated_at = Utils.getTimestamp();
+                    o.updated_at = new Date();
                 }
                 o.is_default = isDefault;
 

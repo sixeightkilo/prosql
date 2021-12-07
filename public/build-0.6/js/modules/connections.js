@@ -27,6 +27,8 @@ class Connections extends ConnectionDB {
                 continue;
             }
 
+            //status not needed by clients
+            delete conns[i].status;
             recs.push(conns[i]);
         }
 

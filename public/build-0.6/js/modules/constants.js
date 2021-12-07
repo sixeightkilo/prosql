@@ -234,5 +234,9 @@ class Constants {
     static get STATUS_DELETED() {
         return "deleted"
     }
+
+    static get EPOCH_TIMESTAMP() {
+        return '2021-01-01T00:00:00Z';
+    }
 }
 export { Constants }
