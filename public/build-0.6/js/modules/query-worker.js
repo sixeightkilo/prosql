@@ -13,6 +13,20 @@ class QueryWorker {
     constructor(port) {
         this.port = port;
         this.logger = new Logger(this.port);
+
+        this.port.onmessage = (m) => {
+            this.handleMessage(m);
+        }
+    }
+
+    async handleMessage(m) {
+        this.logger.log(TAG, JSON.stringify(m.data));
+        switch (m.data.type) {
+        case Constants.QUERY_SAVED:
+        case Constants.QUERY_UPDATED:
+            this.syncUp();
+            break
+        }
     }
 
     async init() {
@@ -30,9 +44,6 @@ class QueryWorker {
 
         this.syncDown();
         this.syncUp();
-        //setInterval(() => {
-            //this.syncUp();
-        //}, Utils.getRandomIntegerInclusive(SYNCUP_INTERVAL_MIN, SYNCUP_INTERVAL_MAX));
     }
 
     async syncUp() {
@@ -183,7 +194,7 @@ class QueryWorker {
         });
 
         this.logger.log(TAG, `lastSyncTs: ${lastSyncTs}`);
-        returnreturn  lastSyncTs.toISOString();
+        return lastSyncTs.toISOString();
     }
 
     async syncDeleted(deleted) {

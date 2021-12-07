@@ -138,6 +138,10 @@
             return 'query-saved'
         }
 
+        static get QUERY_UPDATED() {
+            return 'query-updated'
+        }
+
         static get SESSION_ID() {
             return 'session-id'
         }
@@ -2941,6 +2945,7 @@
                                 Logger.Log(TAG$5, newRec);
 
                                 await this.queryDb.updateTags(newRec);
+                                PubSub.publish(Constants.QUERY_UPDATED, {id: id});
                             }
 
                             if (e.key == "Escape") {
@@ -3171,7 +3176,7 @@
         }
     }
 
-    const TAG = "query";
+    const TAG = "queries";
     class Query {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
@@ -3191,6 +3196,18 @@
 
                 //update session id in modules
                 this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
+            });
+
+            PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+                this.queryWorker.port.postMessage({
+                    type: Constants.QUERY_SAVED
+                });
+            });
+
+            PubSub.subscribe(Constants.QUERY_UPDATED, async () => {
+                this.queryWorker.port.postMessage({
+                    type: Constants.QUERY_UPDATED
+                });
             });
         }
 
@@ -3234,8 +3251,8 @@
         initWorkers() {
             this.$version = document.getElementById('version');
             Logger.Log(TAG, `ver: ${this.$version.value}`);
-            const connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-            connectionWorker.port.onmessage = (e) => {
+            this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
+            this.connectionWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
                     case Constants.DEBUG_LOG:
                         Logger.Log("connection-worker", e.data.payload);
@@ -3243,8 +3260,8 @@
                 }
             };
 
-            const queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
-            queryWorker.port.onmessage = (e) => {
+            this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
+            this.queryWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
                     case Constants.DEBUG_LOG:
                         Logger.Log("query-worker", e.data.payload);

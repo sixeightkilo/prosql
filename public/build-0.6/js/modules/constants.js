@@ -135,6 +135,10 @@ class Constants {
         return 'query-saved'
     }
 
+    static get QUERY_UPDATED() {
+        return 'query-updated'
+    }
+
     static get SESSION_ID() {
         return 'session-id'
     }

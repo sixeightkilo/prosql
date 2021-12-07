@@ -241,6 +241,7 @@ class QueryFinder {
                             Logger.Log(TAG, newRec);
 
                             await this.queryDb.updateTags(newRec);
+                            PubSub.publish(Constants.QUERY_UPDATED, {id: id});
                         }
 
                         if (e.key == "Escape") {

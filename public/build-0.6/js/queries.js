@@ -11,7 +11,7 @@ import { QueryHistory } from './modules/query-history.js'
 import { MainMenu } from './modules/main-menu.js'
 import { AppBar } from './modules/appbar.js'
 
-const TAG = "query"
+const TAG = "queries"
 class Query {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
@@ -32,6 +32,18 @@ class Query {
             //update session id in modules
             this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
         })
+
+        PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+            this.queryWorker.port.postMessage({
+                type: Constants.QUERY_SAVED
+            });
+        });
+
+        PubSub.subscribe(Constants.QUERY_UPDATED, async () => {
+            this.queryWorker.port.postMessage({
+                type: Constants.QUERY_UPDATED
+            });
+        });
     }
 
     async init() {
@@ -74,8 +86,8 @@ class Query {
     initWorkers() {
         this.$version = document.getElementById('version')
         Logger.Log(TAG, `ver: ${this.$version.value}`);
-        const connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-        connectionWorker.port.onmessage = (e) => {
+        this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
+        this.connectionWorker.port.onmessage = (e) => {
             switch (e.data.type) {
                 case Constants.DEBUG_LOG:
                     Logger.Log("connection-worker", e.data.payload);
@@ -83,8 +95,8 @@ class Query {
             }
         }
 
-        const queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
-        queryWorker.port.onmessage = (e) => {
+        this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
+        this.queryWorker.port.onmessage = (e) => {
             switch (e.data.type) {
                 case Constants.DEBUG_LOG:
                     Logger.Log("query-worker", e.data.payload);
