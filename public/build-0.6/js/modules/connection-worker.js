@@ -7,7 +7,7 @@ const TAG = "main"
 const URL = '/browser-api/sqlite'
 const SYNCUP_INTERVAL_MIN = 10000;//1 min
 const SYNCUP_INTERVAL_MAX = 20000;//2 min
-const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
+const EPOCH_TIMESTAMP = '2021-01-01T00:00:00Z';
 
 class ConnectionWorker {
     constructor(port) {

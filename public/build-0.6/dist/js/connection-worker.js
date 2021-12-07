@@ -559,7 +559,7 @@
                 let transaction = this.db.transaction([store], "readwrite");
                 let objectStore = transaction.objectStore(store);
 
-                rec.updated_at = Utils.getTimestamp();
+                rec.updated_at = new Date();
                 let request = objectStore.put(rec);
                 request.onsuccess = (e) => {
                     resolve(0);
@@ -680,7 +680,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = conn.db_id;
-                    o['synced_at'] = Utils.getTimestamp();
+                    o['synced_at'] = new Date();
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {
@@ -879,7 +879,7 @@
     const URL = '/browser-api/sqlite';
     const SYNCUP_INTERVAL_MIN = 10000;//1 min
     const SYNCUP_INTERVAL_MAX = 20000;//2 min
-    const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
+    const EPOCH_TIMESTAMP = '2021-01-01T00:00:00Z';
 
     class ConnectionWorker {
         constructor(port) {

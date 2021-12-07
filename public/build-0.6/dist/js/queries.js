@@ -2083,7 +2083,7 @@
                 let transaction = this.db.transaction([store], "readwrite");
                 let objectStore = transaction.objectStore(store);
 
-                rec.updated_at = Utils.getTimestamp();
+                rec.updated_at = new Date();
                 let request = objectStore.put(rec);
                 request.onsuccess = (e) => {
                     resolve(0);
@@ -2204,7 +2204,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = conn.db_id;
-                    o['synced_at'] = Utils.getTimestamp();
+                    o['synced_at'] = new Date();
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {

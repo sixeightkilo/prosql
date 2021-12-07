@@ -7,7 +7,7 @@ const TAG = "main"
 const URL = '/browser-api/sqlite'
 const SYNCUP_INTERVAL_MIN = 10000;//1 min
 const SYNCUP_INTERVAL_MAX = 20000;//2 min
-const EPOCH_TIMESTAMP = '2021-01-01 00:00:00';
+const EPOCH_TIMESTAMP = '2021-01-01T00:00:00Z';
 
 class QueryWorker {
     constructor(port) {
@@ -62,7 +62,7 @@ class QueryWorker {
 
             if (queries[i].db_id) {
                 //every record may or may not have updated_at
-                let updatedAt = queries[i].updated_at ?? EPOCH_TIMESTAMP;
+                let updatedAt = queries[i].updated_at ?? new Date(EPOCH_TIMESTAMP);
 
                 //if it has a db_id , it is guaranteed to haved synced_at
                 if (queries[i].synced_at > updatedAt) {
@@ -137,8 +137,9 @@ class QueryWorker {
                 this.logger.log(TAG, `inserting: ${JSON.stringify(queries[i].id)}`)
                 queries[i].db_id = queries[i].id
                 delete queries[i].id;
-                queries[i].synced_at = Utils.getTimestamp();
+                queries[i].synced_at = new Date();
                 queries[i].created_at = new Date(queries[i].created_at)
+                queries[i].updated_at = new Date(queries[i].updated_at)
 
                 let id = await this.queryDb.save(queries[i]);
                 this.logger.log(TAG, `saved to : ${id}`);
@@ -169,7 +170,7 @@ class QueryWorker {
             return EPOCH_TIMESTAMP;
         }
         //get the latest sync time
-        let lastSyncTs = EPOCH_TIMESTAMP;
+        let lastSyncTs = new Date(EPOCH_TIMESTAMP);
         queries.forEach((q) => {
             let syncedAt = q.synced_at ?? null;
             if (!syncedAt) {
@@ -182,68 +183,7 @@ class QueryWorker {
         });
 
         this.logger.log(TAG, `lastSyncTs: ${lastSyncTs}`);
-        return lastSyncTs;
-    }
-
-    async syncUp() {
-        //find all records missing db_id and sync them up to cloud
-        let conns = await this.queryDb.getAll();
-        if (conns.length == 0) {
-            this.logger.log(TAG, "Nothing to sync");
-            return;
-        }
-
-        let deleted = [];
-        for (let i = 0; i < conns.length; i++) {
-            let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
-
-            if (isDeleted) {
-                this.logger.log(TAG, `Deleting ${conns[i].id}`);
-                if (!conns[i].db_id) {
-                    //this has not been synced yet. We can safely delete
-                    this.queryDb.del(conns[i].id);
-                    continue;
-                }
-
-                deleted.push(conns[i]);
-                continue;
-            }
-
-            //every record may or may not have updated_at
-            let updatedAt = conns[i].updated_at ?? EPOCH_TIMESTAMP;
-
-            if (conns[i].db_id) {
-                //if it has a db_id , it is guaranteed to haved synced_at
-                if (conns[i].synced_at > updatedAt) {
-                    this.logger.log(TAG, `Skipping ${conns[i].id}: ${conns[i].db_id}`);
-                    continue;
-                }
-            }
-
-            let res = await fetch(`${URL}/queries`, {
-                body: JSON.stringify(conns[i]),
-                method: "POST",
-                headers: {
-                    db: this.deviceId,
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            res = await res.json();
-            this.logger.log(TAG, JSON.stringify(res));
-
-            if (res.status == "ok") {
-                conns[i].db_id = res.data.db_id;
-                this.logger.log(TAG, `syncing: ${JSON.stringify(conns[i])}`);
-                try {
-                    this.queryDb.sync(conns[i])
-                } catch (e) {
-                    this.logger.log(TAG, e, this.port)
-                }
-            }
-        }
-
-        this.syncDeleted(deleted);
+        returnreturn  lastSyncTs.toISOString();
     }
 
     async syncDeleted(deleted) {
