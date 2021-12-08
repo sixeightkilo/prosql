@@ -2,6 +2,7 @@ import { Utils } from './utils.js'
 import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { ConnectionDB } from './connection-db.js'
+import { ConnectionsMetaDB } from './connections-meta-db.js'
 import { BaseWorker } from './base-worker.js'
 
 const TAG = "main"
@@ -19,6 +20,9 @@ class ConnectionWorker extends BaseWorker {
         this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
         await this.connectionDb.open();
 
+        this.metaDB = new ConnectionsMetaDB(this.logger, {version: Constants.CONNECTIONS_META_DB_VERSION});
+        await this.metaDB.open();
+
         this.syncDown();
         this.syncUp();
     }
@@ -26,9 +30,13 @@ class ConnectionWorker extends BaseWorker {
     async syncDown() {
         let conns = await this.connectionDb.getAll();
 
+        let after = await this.getLastSyncTs(this.metaDB, Constants.CONNECTIONS_META_KEY);
+        after = after.toISOString();
+        this.logger.log(TAG, `after: ${after}`);
+
         let res = await Utils.fetch(`${URL}/connections/updated`, false, {
             db: this.deviceId,
-            after: await this.getLastSyncTs(conns)
+            after: after
         });
 
         this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
@@ -39,7 +47,7 @@ class ConnectionWorker extends BaseWorker {
         }
 
         let updateUI = false;
-        conns = res.data.connections
+        conns = res.data.connections ?? [];
 
         for (let i = 0; i < conns.length; i++) {
             //check if the remore connection is already present in local db
@@ -87,6 +95,10 @@ class ConnectionWorker extends BaseWorker {
                 type: Constants.NEW_CONNECTIONS,
             })
         }
+
+        this.logger.log(TAG, "Setting last_sync_ts");
+        await this.setLastSyncTs(this.metaDB, Constants.CONNECTIONS_META_KEY);
+        this.logger.log(TAG, "Done last_sync_ts");
     }
 
     async syncUp() {

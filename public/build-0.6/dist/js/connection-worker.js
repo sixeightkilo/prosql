@@ -194,6 +194,22 @@
             return "db-id-index";
         }
 
+        static get CONNECTIONS_META_KEY() {
+            return 1;
+        }
+
+        static get QUERIES_META_KEY() {
+            return 2;
+        }
+
+        static get CONNECTIONS_META_DB_VERSION() {
+            return 1;
+        }
+
+        static get QUERIES_META_DB_VERSION() {
+            return 1;
+        }
+
         static get QUERY_DB_VERSION() {
             return 37;
         }
@@ -240,6 +256,10 @@
 
         static get EPOCH_TIMESTAMP() {
             return '2021-01-01T00:00:00Z';
+        }
+
+        static get LAST_SYNC_TS() {
+            return 'last-sync-ts';
         }
     }
 
@@ -340,7 +360,7 @@
         }
     }
 
-    const TAG$4 = "utils";
+    const TAG$5 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -389,7 +409,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$4, response);
+                Logger.Log(TAG$5, response);
 
                 let json = await response.json();
 
@@ -399,7 +419,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$4, e);
+                Logger.Log(TAG$5, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -470,7 +490,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$4, "No data");
+            Logger.Log(TAG$5, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -517,7 +537,7 @@
     	}
     }
 
-    const TAG$3 = "base-db";
+    const TAG$4 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -529,13 +549,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$3, "open.onsuccess");
+                        this.logger.log(TAG$4, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$3, e.target.error);
+                        this.logger.log(TAG$4, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -556,7 +576,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, e.target.error);
+                    this.logger.log(TAG$4, e.target.error);
                     resolve(-1);
                 };
             })
@@ -574,7 +594,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, e.target.error);
+                    this.logger.log(TAG$4, e.target.error);
                     resolve(-1);
                 };
             })
@@ -642,6 +662,7 @@
                         result = request.result;
                     }
 
+                    this.logger.log(TAG$4, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -707,7 +728,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$3, "findByDbId");
+                this.logger.log(TAG$4, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -719,7 +740,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, "error");
+                    this.logger.log(TAG$4, "error");
                     resolve(e.target.error);
                 };
             })
@@ -766,7 +787,7 @@
         }
     }
 
-    const TAG$2 = "connection-db";
+    const TAG$3 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
@@ -779,7 +800,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$2, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$3, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -830,7 +851,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$2, e.message);
+                this.logger.log(TAG$3, e.message);
             }
         }
 
@@ -883,6 +904,37 @@
         }
     }
 
+    const TAG$2 = "connections-meta-db";
+
+    class ConnectionsMetaDB extends BaseDB {
+        constructor(logger, options) {
+            options.dbName = "connections_meta";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "connections_meta";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$2, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 1) {
+                e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+            }
+        }
+
+        async save(rec) {
+            this.logger.log(TAG$2, "save");
+            let r = await super.get(rec.id);
+
+            if (r != null) {
+                await super.put(this.store, rec);
+                return
+            }
+
+            await super.save(this.store, rec);
+        }
+    }
+
     const TAG$1 = "main";
 
     class BaseWorker {
@@ -905,28 +957,20 @@
             this.deviceId = res.data['device-id'];
         }
 
-        async getLastSyncTs(recs) {
-            let lastSyncTs = new Date(Constants.EPOCH_TIMESTAMP);
-
-            if (recs.length == 0) {
-                this.logger.log(TAG$1, `getLastSyncTs: returning epoch`);
-                return lastSyncTs.toISOString();
+        async getLastSyncTs(db, id) {
+            let rec = await db.get(parseInt(id));
+            if (rec == null) {
+                return new Date(Constants.EPOCH_TIMESTAMP);
             }
 
-            //get the latest sync time
-            recs.forEach((r) => {
-                let syncedAt = r.synced_at ?? null;
-                if (!syncedAt) {
-                    return
-                }
+            return rec.last_sync_ts
+        }
 
-                if (syncedAt > lastSyncTs) {
-                    lastSyncTs = r.synced_at;
-                }
+        async setLastSyncTs(db, id) {
+            await db.save({
+                id: parseInt(id),
+                last_sync_ts: new Date()
             });
-
-            this.logger.log(TAG$1, `lastSyncTs: ${lastSyncTs}`);
-            return lastSyncTs.toISOString();
         }
     }
 
@@ -945,6 +989,9 @@
             this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
             await this.connectionDb.open();
 
+            this.metaDB = new ConnectionsMetaDB(this.logger, {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await this.metaDB.open();
+
             this.syncDown();
             this.syncUp();
         }
@@ -952,9 +999,13 @@
         async syncDown() {
             let conns = await this.connectionDb.getAll();
 
+            let after = await this.getLastSyncTs(this.metaDB, Constants.CONNECTIONS_META_KEY);
+            after = after.toISOString();
+            this.logger.log(TAG, `after: ${after}`);
+
             let res = await Utils.fetch(`${URL}/connections/updated`, false, {
                 db: this.deviceId,
-                after: await this.getLastSyncTs(conns)
+                after: after
             });
 
             this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
@@ -965,7 +1016,7 @@
             }
 
             let updateUI = false;
-            conns = res.data.connections;
+            conns = res.data.connections ?? [];
 
             for (let i = 0; i < conns.length; i++) {
                 //check if the remore connection is already present in local db
@@ -1013,6 +1064,10 @@
                     type: Constants.NEW_CONNECTIONS,
                 });
             }
+
+            this.logger.log(TAG, "Setting last_sync_ts");
+            await this.setLastSyncTs(this.metaDB, Constants.CONNECTIONS_META_KEY);
+            this.logger.log(TAG, "Done last_sync_ts");
         }
 
         async syncUp() {

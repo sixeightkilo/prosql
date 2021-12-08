@@ -2,6 +2,7 @@ import { Utils } from './utils.js'
 import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { QueryDB } from './query-db.js'
+import { QueriesMetaDB } from './queries-meta-db.js'
 import { BaseWorker } from './base-worker.js'
 
 const TAG = "main"
@@ -19,17 +20,14 @@ class QueryWorker extends BaseWorker {
     }
 
     async init() {
-        let res = await Utils.fetch(Constants.URL + '/about', false);
-        if (res.status == "error") {
-            this.logger.log(TAG, JSON.stringify(res));
-            return
-        }
-
-        this.deviceId = res.data['device-id'];
-        this.logger.log(TAG, "init done");
+        await super.init();
+        this.logger.log(TAG, "deviceid:" + this.deviceId);
 
         this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
         await this.queryDb.open();
+
+        this.metaDB = new QueriesMetaDB(this.logger, {version: Constants.QUERIES_META_DB_VERSION});
+        await this.metaDB.open();
 
         this.syncDown();
         this.syncUp();
@@ -89,17 +87,17 @@ class QueryWorker extends BaseWorker {
                 this.queryDb.sync(queries[i])
             }
         }
-
-        //this.syncDeleted(deleted);
     }
 
     async syncDown() {
         this.logger.log(TAG, "syncDown");
-        let queries = await this.queryDb.getAll();
+        let after = await this.getLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
+        after = after.toISOString();
+        this.logger.log(TAG, `after: ${after}`)
 
         let res = await Utils.fetch(`${URL}/queries/updated`, false, {
             db: this.deviceId,
-            after: await this.getLastSyncTs(queries)
+            after: after
         });
 
         this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
@@ -110,10 +108,10 @@ class QueryWorker extends BaseWorker {
         }
 
         let updateUI = false;
-        queries = res.data.queries
+        let queries = res.data.queries ?? [];
 
         for (let i = 0; i < queries.length; i++) {
-            //check if the remore connection is already present in local db
+            //check if the remote query is already present in local db
             this.logger.log(TAG, `syncDown: ${i}`);
             let q = await this.queryDb.findByDbId(queries[i].id)
 
@@ -160,36 +158,8 @@ class QueryWorker extends BaseWorker {
                 type: Constants.NEW_QUERIES,
             })
         }
-    }
 
-    async syncDeleted(deleted) {
-        if (deleted.length == 0) {
-            return;
-        }
-
-        let ids = [];
-        deleted.forEach((d) => {
-            ids.push(d.db_id);
-        });
-
-        this.logger.log(TAG, JSON.stringify(ids));
-        let res = await fetch(`${URL}/queries`, {
-            body: JSON.stringify(ids),
-            method: "DELETE",
-            headers: {
-                db: this.deviceId,
-                'Content-Type': 'application/json',
-            }
-        });
-
-        res = await res.json();
-        this.logger.log(TAG, JSON.stringify(res));
-        //delete from local db
-        for (let i = 0; i < res.data.ids.length; i++) {
-            let c = await this.queryDb.findByDbId(res.data.ids[i]);
-            await this.queryDb.destroy(c.id);
-            this.logger.log(TAG, `Destroyed: ${c.id}`);
-        }
+        this.setLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
     }
 }
 export { QueryWorker }

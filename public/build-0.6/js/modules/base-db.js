@@ -127,6 +127,7 @@ class BaseDB {
                     result = request.result
                 }
 
+                this.logger.log(TAG, JSON.stringify(result));
                 resolve(result);
             };
 

@@ -2,6 +2,7 @@ import { Utils } from './utils.js'
 import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { QueryDB } from './query-db.js'
+import { MetaDB } from './meta-db.js'
 
 const TAG = "main"
 const URL = '/browser-api/sqlite'
@@ -26,28 +27,20 @@ class BaseWorker {
         this.deviceId = res.data['device-id'];
     }
 
-    async getLastSyncTs(recs) {
-        let lastSyncTs = new Date(Constants.EPOCH_TIMESTAMP);
-
-        if (recs.length == 0) {
-            this.logger.log(TAG, `getLastSyncTs: returning epoch`);
-            return lastSyncTs.toISOString();
+    async getLastSyncTs(db, id) {
+        let rec = await db.get(parseInt(id));
+        if (rec == null) {
+            return new Date(Constants.EPOCH_TIMESTAMP);
         }
 
-        //get the latest sync time
-        recs.forEach((r) => {
-            let syncedAt = r.synced_at ?? null;
-            if (!syncedAt) {
-                return
-            }
+        return rec.last_sync_ts
+    }
 
-            if (syncedAt > lastSyncTs) {
-                lastSyncTs = r.synced_at;
-            }
-        });
-
-        this.logger.log(TAG, `lastSyncTs: ${lastSyncTs}`);
-        return lastSyncTs.toISOString();
+    async setLastSyncTs(db, id) {
+        await db.save({
+            id: parseInt(id),
+            last_sync_ts: new Date()
+        })
     }
 }
 export { BaseWorker }

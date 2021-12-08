@@ -238,6 +238,22 @@
             return "db-id-index";
         }
 
+        static get CONNECTIONS_META_KEY() {
+            return 1;
+        }
+
+        static get QUERIES_META_KEY() {
+            return 2;
+        }
+
+        static get CONNECTIONS_META_DB_VERSION() {
+            return 1;
+        }
+
+        static get QUERIES_META_DB_VERSION() {
+            return 1;
+        }
+
         static get QUERY_DB_VERSION() {
             return 37;
         }
@@ -284,6 +300,10 @@
 
         static get EPOCH_TIMESTAMP() {
             return '2021-01-01T00:00:00Z';
+        }
+
+        static get LAST_SYNC_TS() {
+            return 'last-sync-ts';
         }
     }
 
@@ -642,6 +662,7 @@
                         result = request.result;
                     }
 
+                    this.logger.log(TAG$3, JSON.stringify(result));
                     resolve(result);
                 };
 

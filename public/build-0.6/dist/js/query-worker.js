@@ -194,6 +194,22 @@
             return "db-id-index";
         }
 
+        static get CONNECTIONS_META_KEY() {
+            return 1;
+        }
+
+        static get QUERIES_META_KEY() {
+            return 2;
+        }
+
+        static get CONNECTIONS_META_DB_VERSION() {
+            return 1;
+        }
+
+        static get QUERIES_META_DB_VERSION() {
+            return 1;
+        }
+
         static get QUERY_DB_VERSION() {
             return 37;
         }
@@ -240,6 +256,10 @@
 
         static get EPOCH_TIMESTAMP() {
             return '2021-01-01T00:00:00Z';
+        }
+
+        static get LAST_SYNC_TS() {
+            return 'last-sync-ts';
         }
     }
 
@@ -340,7 +360,7 @@
         }
     }
 
-    const TAG$4 = "utils";
+    const TAG$5 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -389,7 +409,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$4, response);
+                Logger.Log(TAG$5, response);
 
                 let json = await response.json();
 
@@ -399,7 +419,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$4, e);
+                Logger.Log(TAG$5, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -470,7 +490,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$4, "No data");
+            Logger.Log(TAG$5, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -517,7 +537,7 @@
     	}
     }
 
-    const TAG$3 = "base-db";
+    const TAG$4 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -529,13 +549,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$3, "open.onsuccess");
+                        this.logger.log(TAG$4, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$3, e.target.error);
+                        this.logger.log(TAG$4, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -556,7 +576,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, e.target.error);
+                    this.logger.log(TAG$4, e.target.error);
                     resolve(-1);
                 };
             })
@@ -574,7 +594,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, e.target.error);
+                    this.logger.log(TAG$4, e.target.error);
                     resolve(-1);
                 };
             })
@@ -642,6 +662,7 @@
                         result = request.result;
                     }
 
+                    this.logger.log(TAG$4, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -707,7 +728,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$3, "findByDbId");
+                this.logger.log(TAG$4, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -719,7 +740,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, "error");
+                    this.logger.log(TAG$4, "error");
                     resolve(e.target.error);
                 };
             })
@@ -766,7 +787,7 @@
         }
     }
 
-    const TAG$2 = "query-db";
+    const TAG$3 = "query-db";
     const CREATED_AT_INDEX = "created-at-index";
     const QUERY_INDEX = "query-index";
     const TERM_INDEX = "term-index";
@@ -783,7 +804,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$2, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$3, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 2) {
                 let store = e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -816,7 +837,7 @@
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
                 terms = [...new Set(terms)];
 
-                this.logger.log(TAG$2, JSON.stringify(terms));
+                this.logger.log(TAG$3, JSON.stringify(terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -835,7 +856,7 @@
 
                     resolve(id);
                 } catch (e) {
-                    this.logger.log(TAG$2, `error: ${JSON.stringify(e.message)}`);
+                    this.logger.log(TAG$3, `error: ${JSON.stringify(e.message)}`);
                     reject(e.message);
                 }
             })
@@ -865,7 +886,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$2, JSON.stringify(rec));
+                    this.logger.log(TAG$3, JSON.stringify(rec));
                     super.put(this.searchIndex, {
                         id: rec.id,
                         term: t,
@@ -873,7 +894,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$2, `error: e.message`);
+                    this.logger.log(TAG$3, `error: e.message`);
                 }
             }
         }
@@ -888,7 +909,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$2, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -922,7 +943,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$2, JSON.stringify(rec));
+                    this.logger.log(TAG$3, JSON.stringify(rec));
                     super.put(this.tagIndex, {
                         id: rec.id,
                         tag: t,
@@ -930,7 +951,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$2, `error: e.message`);
+                    this.logger.log(TAG$3, `error: e.message`);
                 }
             }
         }
@@ -945,7 +966,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$2, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -965,7 +986,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$2, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -998,7 +1019,7 @@
             //days supercedes everything
             //if days are provided get queries by days first
             //then filter by terms and tags if provided
-            this.logger.log(TAG$2, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+            this.logger.log(TAG$3, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
 
             let start, end;
             if (days.hasOwnProperty('start')) {
@@ -1018,7 +1039,7 @@
 
             let result = [];
             if (start || end) {
-                this.logger.log(TAG$2, 'filtering');
+                this.logger.log(TAG$3, 'filtering');
                 result = await this.searchByCreatedAt(start, end);
 
                 if (result.length == 0) {
@@ -1189,6 +1210,37 @@
         }
     }
 
+    const TAG$2 = "queries-meta-db";
+
+    class QueriesMetaDB extends BaseDB {
+        constructor(logger, options) {
+            options.dbName = "queries_meta";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "queries_meta";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$2, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 1) {
+                e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+            }
+        }
+
+        async save(rec) {
+            this.logger.log(TAG$2, "save");
+            let r = await super.get(rec.id);
+
+            if (r != null) {
+                await super.put(this.store, rec);
+                return
+            }
+
+            await super.save(this.store, rec);
+        }
+    }
+
     const TAG$1 = "main";
 
     class BaseWorker {
@@ -1211,28 +1263,20 @@
             this.deviceId = res.data['device-id'];
         }
 
-        async getLastSyncTs(recs) {
-            let lastSyncTs = new Date(Constants.EPOCH_TIMESTAMP);
-
-            if (recs.length == 0) {
-                this.logger.log(TAG$1, `getLastSyncTs: returning epoch`);
-                return lastSyncTs.toISOString();
+        async getLastSyncTs(db, id) {
+            let rec = await db.get(parseInt(id));
+            if (rec == null) {
+                return new Date(Constants.EPOCH_TIMESTAMP);
             }
 
-            //get the latest sync time
-            recs.forEach((r) => {
-                let syncedAt = r.synced_at ?? null;
-                if (!syncedAt) {
-                    return
-                }
+            return rec.last_sync_ts
+        }
 
-                if (syncedAt > lastSyncTs) {
-                    lastSyncTs = r.synced_at;
-                }
+        async setLastSyncTs(db, id) {
+            await db.save({
+                id: parseInt(id),
+                last_sync_ts: new Date()
             });
-
-            this.logger.log(TAG$1, `lastSyncTs: ${lastSyncTs}`);
-            return lastSyncTs.toISOString();
         }
     }
 
@@ -1251,17 +1295,14 @@
         }
 
         async init() {
-            let res = await Utils.fetch(Constants.URL + '/about', false);
-            if (res.status == "error") {
-                this.logger.log(TAG, JSON.stringify(res));
-                return
-            }
-
-            this.deviceId = res.data['device-id'];
-            this.logger.log(TAG, "init done");
+            await super.init();
+            this.logger.log(TAG, "deviceid:" + this.deviceId);
 
             this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
             await this.queryDb.open();
+
+            this.metaDB = new QueriesMetaDB(this.logger, {version: Constants.QUERIES_META_DB_VERSION});
+            await this.metaDB.open();
 
             this.syncDown();
             this.syncUp();
@@ -1321,17 +1362,17 @@
                     this.queryDb.sync(queries[i]);
                 }
             }
-
-            //this.syncDeleted(deleted);
         }
 
         async syncDown() {
             this.logger.log(TAG, "syncDown");
-            let queries = await this.queryDb.getAll();
+            let after = await this.getLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
+            after = after.toISOString();
+            this.logger.log(TAG, `after: ${after}`);
 
             let res = await Utils.fetch(`${URL}/queries/updated`, false, {
                 db: this.deviceId,
-                after: await this.getLastSyncTs(queries)
+                after: after
             });
 
             this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
@@ -1342,10 +1383,10 @@
             }
 
             let updateUI = false;
-            queries = res.data.queries;
+            let queries = res.data.queries ?? [];
 
             for (let i = 0; i < queries.length; i++) {
-                //check if the remore connection is already present in local db
+                //check if the remote query is already present in local db
                 this.logger.log(TAG, `syncDown: ${i}`);
                 let q = await this.queryDb.findByDbId(queries[i].id);
 
@@ -1392,36 +1433,8 @@
                     type: Constants.NEW_QUERIES,
                 });
             }
-        }
 
-        async syncDeleted(deleted) {
-            if (deleted.length == 0) {
-                return;
-            }
-
-            let ids = [];
-            deleted.forEach((d) => {
-                ids.push(d.db_id);
-            });
-
-            this.logger.log(TAG, JSON.stringify(ids));
-            let res = await fetch(`${URL}/queries`, {
-                body: JSON.stringify(ids),
-                method: "DELETE",
-                headers: {
-                    db: this.deviceId,
-                    'Content-Type': 'application/json',
-                }
-            });
-
-            res = await res.json();
-            this.logger.log(TAG, JSON.stringify(res));
-            //delete from local db
-            for (let i = 0; i < res.data.ids.length; i++) {
-                let c = await this.queryDb.findByDbId(res.data.ids[i]);
-                await this.queryDb.destroy(c.id);
-                this.logger.log(TAG, `Destroyed: ${c.id}`);
-            }
+            this.setLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
         }
     }
 
