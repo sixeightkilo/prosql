@@ -211,7 +211,7 @@
         }
 
         static get QUERY_DB_VERSION() {
-            return 37;
+            return 39;
         }
 
         static get CONN_DB_VERSION() {
