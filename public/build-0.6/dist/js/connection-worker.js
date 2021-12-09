@@ -138,6 +138,14 @@
             return 'query-saved'
         }
 
+        static get CONNECTION_SAVED() {
+            return 'connection-saved'
+        }
+
+        static get CONNECTION_DELETED() {
+            return 'connection-deleted'
+        }
+
         static get QUERY_UPDATED() {
             return 'query-updated'
         }
@@ -980,6 +988,12 @@
     class ConnectionWorker extends BaseWorker {
         async handleMessage(m) {
             this.logger.log(TAG, JSON.stringify(m.data));
+            switch (m.data.type) {
+                case Constants.CONNECTION_SAVED:
+                case Constants.CONNECTION_DELETED:
+                    this.syncUp();
+                    break
+            }
         }
 
         async init() {

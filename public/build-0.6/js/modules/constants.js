@@ -135,6 +135,14 @@ class Constants {
         return 'query-saved'
     }
 
+    static get CONNECTION_SAVED() {
+        return 'connection-saved'
+    }
+
+    static get CONNECTION_DELETED() {
+        return 'connection-deleted'
+    }
+
     static get QUERY_UPDATED() {
         return 'query-updated'
     }

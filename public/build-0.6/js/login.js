@@ -133,6 +133,12 @@ class Login {
             Logger.Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
             await this.connections.del(connId);
+
+            //force sync up
+            this.connectionWorker.port.postMessage({
+                type: Constants.CONNECTION_DELETED
+            });
+
             this.showConns();
         });
 
@@ -260,6 +266,11 @@ class Login {
             Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
             let id = await this.connections.save(conn);
             Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
+
+            //force sync up
+            this.connectionWorker.port.postMessage({
+                type: Constants.CONNECTION_SAVED
+            });
 
             //set agent version for the rest of web app
             let response = await Utils.fetch(Constants.URL + '/about', false);

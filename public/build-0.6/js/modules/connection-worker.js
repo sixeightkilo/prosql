@@ -11,6 +11,12 @@ const URL = '/browser-api/sqlite'
 class ConnectionWorker extends BaseWorker {
     async handleMessage(m) {
         this.logger.log(TAG, JSON.stringify(m.data));
+        switch (m.data.type) {
+            case Constants.CONNECTION_SAVED:
+            case Constants.CONNECTION_DELETED:
+                this.syncUp();
+                break
+        }
     }
 
     async init() {

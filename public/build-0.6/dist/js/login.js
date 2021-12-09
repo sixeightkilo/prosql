@@ -182,6 +182,14 @@
             return 'query-saved'
         }
 
+        static get CONNECTION_SAVED() {
+            return 'connection-saved'
+        }
+
+        static get CONNECTION_DELETED() {
+            return 'connection-deleted'
+        }
+
         static get QUERY_UPDATED() {
             return 'query-updated'
         }
@@ -936,7 +944,9 @@
         }
 
         async get(id) {
-                return ConnectionDB.fromDb(await super.get(id, this.keys));
+            let r = ConnectionDB.fromDb(await super.get(id, this.keys));
+            delete r.status;
+            return r;
         }
 
         async save(conn) {
@@ -1073,6 +1083,12 @@
                 Logger.Log(TAG, `${target.dataset.id}`);
                 let connId = parseInt(target.dataset.id);
                 await this.connections.del(connId);
+
+                //force sync up
+                this.connectionWorker.port.postMessage({
+                    type: Constants.CONNECTION_DELETED
+                });
+
                 this.showConns();
             });
 
@@ -1195,6 +1211,11 @@
                 Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
                 let id = await this.connections.save(conn);
                 Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
+
+                //force sync up
+                this.connectionWorker.port.postMessage({
+                    type: Constants.CONNECTION_SAVED
+                });
 
                 //set agent version for the rest of web app
                 let response = await Utils.fetch(Constants.URL + '/about', false);

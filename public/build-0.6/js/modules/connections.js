@@ -36,7 +36,9 @@ class Connections extends ConnectionDB {
     }
 
     async get(id) {
-            return ConnectionDB.fromDb(await super.get(id, this.keys));
+        let r = ConnectionDB.fromDb(await super.get(id, this.keys));
+        delete r.status;
+        return r;
     }
 
     async save(conn) {
