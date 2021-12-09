@@ -101,6 +101,7 @@ class QueryWorker extends BaseWorker {
         let offset = 0;
         do {
             let res = await this.fetchRecs(after, LIMIT, offset);
+            this.logger.log(TAG, `${JSON.stringify(res)}`);
             if (res.status == "error") {
                 this.logger.log(TAG, "Syncdown error: " + res.msg)
                 return;

@@ -1037,12 +1037,12 @@
             }
 
 
-            let result = [];
+            let ids = [];
             if (start || end) {
                 this.logger.log(TAG$3, 'filtering');
-                result = await this.searchByCreatedAt(start, end);
+                ids = await this.searchByCreatedAt(start, end);
 
-                if (result.length == 0) {
+                if (ids.length == 0) {
                     //if days were provided and we did not find anything
                     //no need to process further
                     return [];
@@ -1052,8 +1052,8 @@
             if (tags.length > 0) {
                 let idsByTag = await this.searchByTags(tags);
 
-                result = result.filter(x => idsByTag.includes(x));
-                if (result.length == 0) {
+                ids = ids.filter(x => idsByTag.includes(x));
+                if (ids.length == 0) {
                     //no need to process further
                     return [];
                 }
@@ -1062,17 +1062,23 @@
             if (terms.length > 0) {
                 let idsByTerm = await this.searchByTerms(terms);
 
-                result = result.filter(x => idsByTerm.includes(x));
-                if (result.length == 0) {
+                ids = ids.filter(x => idsByTerm.includes(x));
+                if (ids.length == 0) {
                     //no need to process further
                     return [];
                 }
             }
 
-            return await this.findByIds(result);
+            let results = [];
+            this.logger.log(TAG$3, `${ids}`);
+            for (let i = 0; i < ids.length; i++) {
+                results.push(await super.get(ids[i]));
+            }
+
+            return results;
         }
 
-        findByIds(ids) {
+        async findByIds(ids) {
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -1179,6 +1185,8 @@
 
         searchByCreatedAt(s, e) {
             return new Promise((resolve, reject) => {
+                this.logger.log(TAG$3, `s: ${s} e: ${e}`);
+
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
                 let index = objectStore.index(CREATED_AT_INDEX);
@@ -1197,9 +1205,10 @@
                 }
 
                 let queries = [];
-                index.openCursor(key).onsuccess = (ev) => {
+                index.openCursor(key, "prev").onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
+                        this.logger.log(TAG$3, `id: ${cursor.value.created_at.toISOString()}`);
                         queries.push(cursor.value.id);
                         cursor.continue();
                     } else {
@@ -1376,6 +1385,7 @@
             let offset = 0;
             do {
                 let res = await this.fetchRecs(after, LIMIT, offset);
+                this.logger.log(TAG, `${JSON.stringify(res)}`);
                 if (res.status == "error") {
                     this.logger.log(TAG, "Syncdown error: " + res.msg);
                     return;
