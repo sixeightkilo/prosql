@@ -7,6 +7,7 @@ import { BaseWorker } from './base-worker.js'
 
 const TAG = "main"
 const URL = '/browser-api/sqlite'
+const LIMIT = 50;
 
 class QueryWorker extends BaseWorker {
     async handleMessage(m) {
@@ -95,63 +96,49 @@ class QueryWorker extends BaseWorker {
         after = after.toISOString();
         this.logger.log(TAG, `after: ${after}`)
 
-        let res = await Utils.fetch(`${URL}/queries/updated`, false, {
-            db: this.deviceId,
-            after: after
-        });
-
-        this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
-
-        if (res.status != "ok") {
-            this.logger.log(TAG, "Sync down error: " + res.msg);
-            return;
-        }
-
         let updateUI = false;
-        let queries = res.data.queries ?? [];
 
-        for (let i = 0; i < queries.length; i++) {
-            //check if the remote query is already present in local db
-            this.logger.log(TAG, `syncDown: ${i}`);
-            let q = await this.queryDb.findByDbId(queries[i].id)
+        let offset = 0;
+        do {
+            let res = await this.fetchRecs(after, LIMIT, offset);
+            if (res.status == "error") {
+                this.logger.log(TAG, "Syncdown error: " + res.msg)
+                return;
+            }
 
-            //this may be deleted on the server. Handle this first
-            if (queries[i].status == "deleted") {
-                if (q == null) {
-                    this.logger.log(TAG, `already deleted: ${queries[i].id}`)
+            let queries = res.data.queries ?? [];
+
+            if (queries.length == 0) {
+                break;
+            }
+
+            for (let i = 0; i < queries.length; i++) {
+                //check if the remote query is already present in local db
+                this.logger.log(TAG, `syncDown: ${i}`);
+                let q = await this.queryDb.findByDbId(queries[i].id)
+
+                //this may be deleted on the server. Handle this first
+                if (queries[i].status == "deleted") {
+                    await this.deleteRec(q);
+                    updateUI = true;
                     continue;
                 }
 
-                this.logger.log(TAG, `deleting: ${JSON.stringify(q)}`)
-                await this.queryDb.del(q.id);
-                updateUI = true;
-                continue;
-            }
-
-            //this looks like a new query
-            if (q == null) {
-                this.logger.log(TAG, `inserting: ${JSON.stringify(queries[i].id)}`)
-                queries[i].db_id = queries[i].id
-                delete queries[i].id;
-
-                queries[i].synced_at = new Date();
-                queries[i].created_at = new Date(queries[i].created_at)
-                queries[i].updated_at = new Date(queries[i].updated_at)
-
-                let id = await this.queryDb.save(queries[i]);
-                this.logger.log(TAG, `saved to : ${id}`);
-                if (id >= 1) {
+                //this looks like a new query
+                if (q == null) {
+                    let id = await this.insertRec(queries[i]);
+                    if (id >= 1) {
+                        updateUI = true;
+                    }
+                } else {
+                    //nope. may be tags got updated
+                    await this.updateRec(q, queries[i].tags);
                     updateUI = true;
                 }
-            } else {
-                //nope. may be tags got updated
-                q.tags = queries[i].tags
-                await this.queryDb.updateTags(q);
-                await this.queryDb.sync(q);
-                updateUI = true;
-                this.logger.log(TAG, `Updated ${q.id}`);
             }
-        }
+
+            offset += LIMIT;
+        } while (true);
 
         if (updateUI) {
             this.port.postMessage({
@@ -160,6 +147,46 @@ class QueryWorker extends BaseWorker {
         }
 
         this.setLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
+    }
+
+    async fetchRecs(after, limit, offset) {
+        return await Utils.fetch(`${URL}/queries/updated`, false, {
+            db: this.deviceId,
+            after: after,
+            limit: limit,
+            offset: offset
+        });
+    }
+
+    async insertRec(rec) {
+        this.logger.log(TAG, `inserting: ${JSON.stringify(rec.id)}`)
+        rec.db_id = rec.id
+        delete rec.id;
+
+        rec.synced_at = new Date();
+        rec.created_at = new Date(rec.created_at)
+        rec.updated_at = new Date(rec.updated_at)
+
+        let id = await this.queryDb.save(rec);
+        this.logger.log(TAG, `saved to : ${id}`);
+        return id
+    }
+
+    async updateRec(q, tags) {
+        q.tags = tags;
+        await this.queryDb.updateTags(q);
+        await this.queryDb.sync(q);
+        this.logger.log(TAG, `Updated ${q.id}`);
+    }
+
+    async deleteRec(q) {
+        if (q == null) {
+            this.logger.log(TAG, `already deleted`);
+            return;
+        }
+
+        this.logger.log(TAG, `deleting: ${JSON.stringify(q)}`)
+        await this.queryDb.del(q.id);
     }
 }
 export { QueryWorker }
