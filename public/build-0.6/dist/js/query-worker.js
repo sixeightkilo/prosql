@@ -1457,6 +1457,8 @@
             delete rec.id;
 
             rec.synced_at = new Date();
+            rec.created_at = new Date(rec.created_at);//convert string to date object.
+            rec.updated_at = new Date(rec.updated_at);
 
             let id = await this.queryDb.save(rec);
             this.logger.log(TAG, `saved to : ${id}`);
