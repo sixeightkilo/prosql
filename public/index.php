@@ -32,37 +32,14 @@ $app->get('/browser-api/session', function($req, $res, $args) {
     return $res->withHeader('Content-Type', 'application/json');
 });
 
-$app->get('[/{params:.*}]', function($req, $res, $args) {
-	$params = explode('/', $req->getAttribute('params'));
+$app->get('[/{params:.*}]','Renderer:handle')
+    ->add(function(Request $request, RequestHandler $handler) {
+        //no changes exepcted in session when rendering pages so write close it
+        $sm = $this->get('session-manager');
+        $sm->write();
 
-    $sm = $this->get('session-manager');
-    $logger = $this->get('logger');
-
-    $renderer = new Renderer($logger, $sm, $this->get('config'));
-
-	switch ($params[0]) {
-	case '':
-        return $renderer->render($res, "index.pug", []);
-
-	case 'read-more':
-        return $renderer->render($res, "read-more.pug", []);
-
-	case 'login':
-        return $renderer->render($res, "login.pug", []);
-
-	case 'install':
-        return $renderer->render($res, "install.pug", []);
-
-	case 'app':
-        return $renderer->renderApp($res, $params[1], []);
-    }
-})->add(function(Request $request, RequestHandler $handler) {
-    //no changes exepcted in session when rendering pages so write close it
-    $sm = $this->get('session-manager');
-    $sm->write();
-
-    $response = $handler->handle($request);
-    return $response;
-});
+        $response = $handler->handle($request);
+        return $response;
+    });
 
 $app->run();

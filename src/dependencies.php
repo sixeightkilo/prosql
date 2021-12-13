@@ -3,7 +3,7 @@ use DI\Container;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\UidProcessor;
-use Prosql\{SessionManager, VersionController, SqlController};
+use Prosql\{SessionManager, VersionController, SqlController, Renderer};
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -36,4 +36,11 @@ $container->set('SqlController', function() use ($container) {
     $logger = $container->get('logger');
     $sm = $container->get('session-manager');
     return new SqlController($logger, $sm);
+});
+
+$container->set('Renderer', function() use ($container) {
+    $logger = $container->get('logger');
+    $sm = $container->get('session-manager');
+    $config = $container->get('config');
+    return new Renderer($logger, $sm, $config);
 });

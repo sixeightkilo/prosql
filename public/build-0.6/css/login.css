@@ -1,21 +1,21 @@
-#login-container {
+#container {
 	display:grid;
 	grid-template-columns: 2fr 8fr;
 	height:100%;
 }
 
-#login-left-container {
+#left-container {
 	background-color:#eee;
 	height:100%;
 }
 
-#login-recents-title {
+#recents-title {
 	font-family:sans-serif;
 	text-align:center;
 	padding:0.5em;
 }
 
-#login-form-container {
+#form-container {
 	margin:auto;
 	width: 30em;
 	display:grid;
@@ -34,36 +34,39 @@
 	cursor:pointer;
 }
 
-#login-form-container input {
+#form-container input {
 	border-radius:5px;
 	border:1px solid #ddd;
 	font-size:larger;
 }
 
 
-#login-name-container,
-#login-user-container,
-#login-pass-container,
-#login-host-container,
-#login-port-container,
-#login-db-container,
-#login-default-container {
+#name-container,
+#user-container,
+#pass-container,
+#host-container,
+#port-container,
+#db-container,
+#default-container {
 	display:grid;
 	grid-template-columns: 1fr 1fr;
 }
 
-#login-btn-container {
+#btn-container {
 	display:grid;
-	grid-template-columns: 1fr 1fr;
-}
-
-#login-btn-container {
+	grid-template-columns: 1fr 3fr;
 	padding:0;
 	margin-top:1em;
 	margin-left:auto;
 	margin-right:auto;
 	width: 30em;
 	column-gap:0.5em;
+}
+
+#login-btn-container {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+	column-gap:0.2em;
 }
 
 .bookmark  {

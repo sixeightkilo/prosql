@@ -27,11 +27,11 @@ class Renderer {
         //we render different files for different agent versions
         $agentVersion = $sm->getVersion();
         if (!$agentVersion) {
-            //we agent version is not known, just use current agent version
+            //the agent version is not known, just use current agent version
             $agentVersion = $config['version'];
         }
 
-        //strip off minor versio
+        //strip off minor version
         $parts = explode(".", $agentVersion);
         $root = "build-{$parts[0]}.{$parts[1]}";
 
@@ -47,6 +47,28 @@ class Renderer {
         ];
 
         $this->path = __DIR__ . "/../../public/$root/templates";
+    }
+
+    public function handle(Request $req, Response $res, array $args): Response {
+
+        $params = explode('/', $req->getAttribute('params'));
+
+        switch ($params[0]) {
+        case '':
+            return $this->render($res, "index.pug", []);
+
+        case 'read-more':
+            return $this->render($res, "read-more.pug", []);
+
+        case 'login':
+            return $this->render($res, "login.pug", []);
+
+        case 'install':
+            return $this->render($res, "install.pug", []);
+
+        case 'app':
+            return $this->renderApp($res, $params[1], []);
+        }
     }
 
     public function render(Response $response, string $file, array $data): Response {
