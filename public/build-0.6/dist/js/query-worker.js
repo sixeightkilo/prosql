@@ -1316,6 +1316,15 @@
             await super.init();
             this.logger.log(TAG, "deviceid:" + this.deviceId);
 
+            let res = await Utils.fetch('/browser-api/session', false);
+            if (res.status == "error") {
+                this.logger.log(TAG, JSON.stringify(res));
+                return
+            }
+
+            this.sessionId = res.data['session-id'];
+            this.logger.log(TAG, "sessionId:" + this.sessionId);
+
             this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
             await this.queryDb.open();
 
@@ -1444,7 +1453,7 @@
 
         async fetchRecs(after, limit, offset) {
             return await Utils.fetch(`${URL}/queries/updated`, false, {
-                db: this.deviceId,
+                'session-id': this.sessionId,
                 after: after,
                 limit: limit,
                 offset: offset
