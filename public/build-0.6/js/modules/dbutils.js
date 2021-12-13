@@ -54,7 +54,7 @@ class DbUtils {
     }
 
     static async login(creds) {
-        let json = await Utils.fetch(Constants.URL + '/connections?' + new URLSearchParams(creds))
+        let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds))
         if (json.status == 'error') {
             Logger.Log(TAG, JSON.stringify(json))
             return ""

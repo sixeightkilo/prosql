@@ -58,13 +58,10 @@ class Renderer {
             return $this->render($res, "index.pug", []);
 
         case 'read-more':
-            return $this->render($res, "read-more.pug", []);
-
         case 'connections':
-            return $this->render($res, "connections.pug", []);
-
+        case 'signup':
         case 'install':
-            return $this->render($res, "install.pug", []);
+            return $this->render($res, "{$params[0]}.pug", []);
 
         case 'app':
             return $this->renderApp($res, $params[1], []);
