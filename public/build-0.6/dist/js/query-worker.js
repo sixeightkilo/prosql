@@ -1375,7 +1375,7 @@
                     body: JSON.stringify(queries[i]),
                     method: "POST",
                     headers: {
-                        db: this.deviceId,
+                        'session-id': this.sessionId,
                         'Content-Type': 'application/json',
                     }
                 });
