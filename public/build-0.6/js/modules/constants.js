@@ -243,7 +243,7 @@ class Constants {
         return "worker.debug-log"
     }
 
-    static get NEW_CONNECTION() {
+    static get NEW_CONNECTIONS() {
         return "worker.new-connection"
     }
 

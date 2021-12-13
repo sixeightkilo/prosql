@@ -10,6 +10,7 @@ import { QueryFinder } from './modules/query-finder.js'
 import { QueryHistory } from './modules/query-history.js'
 import { MainMenu } from './modules/main-menu.js'
 import { AppBar } from './modules/appbar.js'
+import { Workers } from './modules/workers.js'
 
 const TAG = "queries"
 class Query {
@@ -33,14 +34,17 @@ class Query {
             this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
         })
 
+        this.workers = new Workers();
+        this.workers.init();
+
         PubSub.subscribe(Constants.QUERY_SAVED, async () => {
-            this.queryWorker.port.postMessage({
+            this.workers.queryWorker.port.postMessage({
                 type: Constants.QUERY_SAVED
             });
         });
 
         PubSub.subscribe(Constants.QUERY_UPDATED, async () => {
-            this.queryWorker.port.postMessage({
+            this.workers.queryWorker.port.postMessage({
                 type: Constants.QUERY_UPDATED
             });
         });
@@ -79,35 +83,6 @@ class Query {
         let $e2 = document.getElementById('app-right-panel');
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
-
-        this.initWorkers();
-    }
-
-    initWorkers() {
-        this.$version = document.getElementById('version')
-        Logger.Log(TAG, `ver: ${this.$version.value}`);
-        this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-        this.connectionWorker.port.onmessage = (e) => {
-            switch (e.data.type) {
-                case Constants.DEBUG_LOG:
-                    Logger.Log("connection-worker", e.data.payload);
-                    break;
-            }
-        }
-
-        this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
-        this.queryWorker.port.onmessage = (e) => {
-            switch (e.data.type) {
-                case Constants.DEBUG_LOG:
-                    Logger.Log("query-worker", e.data.payload);
-                    break;
-
-                case Constants.NEW_QUERIES:
-                    Logger.Log("query-worker", e.data.payload);
-                    PubSub.publish(Constants.QUERY_SAVED, {});
-                    break;
-            }
-        }
     }
 
     adjustView() {

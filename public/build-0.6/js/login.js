@@ -3,6 +3,8 @@ import { Logger } from './modules/logger.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
 import { Connections } from './modules/connections.js'
+import { PubSub } from './modules/pubsub.js'
+import { Workers } from './modules/workers.js'
 
 const TAG = 'login'
 class Login {
@@ -32,7 +34,6 @@ class Login {
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
         this.$isDefault = document.getElementById('is-default')
-        this.$version = document.getElementById('version')
 
         //debug only
         document.getElementById('debug-add-conns').addEventListener('click', async () => {
@@ -57,38 +58,20 @@ class Login {
 
     async init() {
 		this.initDom();
-        this.initWorkers();
 
+        PubSub.subscribe(Constants.NEW_CONNECTIONS, async () => {
+            this.showConns();
+        });
+
+        this.workers = new Workers();
+        this.workers.init();
+
+        Logger.Log(TAG, "Workers initialized");
         this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
-		await this.connections.open();
+        await this.connections.open();
 
         this.initHandlers();
         this.showConns();
-    }
-
-    initWorkers() {
-        Logger.Log(TAG, `ver: ${this.$version.value}`);
-        this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-        this.connectionWorker.port.onmessage = (e) => {
-            switch (e.data.type) {
-                case Constants.DEBUG_LOG:
-                    Logger.Log("connection-worker", e.data.payload);
-                    break;
-
-                case Constants.NEW_CONNECTIONS:
-                    this.showConns();
-                    break;
-            }
-        }
-
-        const queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
-        queryWorker.port.onmessage = (e) => {
-            switch (e.data.type) {
-                case Constants.DEBUG_LOG:
-                    Logger.Log("query-worker", e.data.payload);
-                    break;
-            }
-        }
     }
 
     async showConns() {
@@ -135,7 +118,7 @@ class Login {
             await this.connections.del(connId);
 
             //force sync up
-            this.connectionWorker.port.postMessage({
+            this.workers.connectionWorker.port.postMessage({
                 type: Constants.CONNECTION_DELETED
             });
 
@@ -268,7 +251,7 @@ class Login {
             Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
 
             //force sync up
-            this.connectionWorker.port.postMessage({
+            this.workers.connectionWorker.port.postMessage({
                 type: Constants.CONNECTION_SAVED
             });
 

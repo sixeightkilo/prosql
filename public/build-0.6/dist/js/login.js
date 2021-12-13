@@ -290,7 +290,7 @@
             return "worker.debug-log"
         }
 
-        static get NEW_CONNECTION() {
+        static get NEW_CONNECTIONS() {
             return "worker.new-connection"
         }
 
@@ -368,7 +368,7 @@
         }
     }
 
-    const TAG$4 = "utils";
+    const TAG$5 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -417,7 +417,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$4, response);
+                Logger.Log(TAG$5, response);
 
                 let json = await response.json();
 
@@ -427,7 +427,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$4, e);
+                Logger.Log(TAG$5, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -498,7 +498,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$4, "No data");
+            Logger.Log(TAG$5, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -545,7 +545,7 @@
     	}
     }
 
-    const TAG$3 = "base-db";
+    const TAG$4 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -557,13 +557,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$3, "open.onsuccess");
+                        this.logger.log(TAG$4, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$3, e.target.error);
+                        this.logger.log(TAG$4, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -584,7 +584,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, e.target.error);
+                    this.logger.log(TAG$4, e.target.error);
                     resolve(-1);
                 };
             })
@@ -602,7 +602,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, e.target.error);
+                    this.logger.log(TAG$4, e.target.error);
                     resolve(-1);
                 };
             })
@@ -670,7 +670,7 @@
                         result = request.result;
                     }
 
-                    this.logger.log(TAG$3, JSON.stringify(result));
+                    this.logger.log(TAG$4, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -736,7 +736,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$3, "findByDbId");
+                this.logger.log(TAG$4, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -748,7 +748,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$3, "error");
+                    this.logger.log(TAG$4, "error");
                     resolve(e.target.error);
                 };
             })
@@ -795,7 +795,7 @@
         }
     }
 
-    const TAG$2 = "connection-db";
+    const TAG$3 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
@@ -808,7 +808,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$2, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$3, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -859,7 +859,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$2, e.message);
+                this.logger.log(TAG$3, e.message);
             }
         }
 
@@ -912,7 +912,7 @@
         }
     }
 
-    const TAG$1 = "connections";
+    const TAG$2 = "connections";
 
     //just a wrapper over connectiondb so we dont have to deal with from/to stuff in 
     //client
@@ -929,7 +929,7 @@
 
             for (let i = 0; i < conns.length; i++) {
                 let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
-                this.logger.log(TAG$1, `${conns[i].id}: ${conns[i].status}: ${isDeleted}`);
+                this.logger.log(TAG$2, `${conns[i].id}: ${conns[i].status}: ${isDeleted}`);
 
                 if (isDeleted) {
                     continue;
@@ -951,6 +951,61 @@
 
         async save(conn) {
             return await(super.save(ConnectionDB.toDb(conn)));
+        }
+    }
+
+    let subscribers = {};
+
+    class PubSub {
+        static subscribe(evt, cb) {
+            if (!subscribers[evt]) {
+                subscribers[evt] = new Set();
+            }
+            subscribers[evt].add(cb);
+        }
+
+        static publish(evt, data) {
+            let list = subscribers[evt];
+            if (!list) {
+                return;
+            }
+            for (let s of list) {
+                s(data);
+            }
+        }
+    }
+
+    const TAG$1 = "workers";
+    class Workers {
+        init() {
+            //init must be called after dom is loaded
+            this.$version = document.getElementById('version');
+            Logger.Log(TAG$1, `ver: ${this.$version.value}`);
+            this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
+            this.connectionWorker.port.onmessage = (e) => {
+                switch (e.data.type) {
+                    case Constants.DEBUG_LOG:
+                        Logger.Log("connection-worker", e.data.payload);
+                        break;
+
+                    case Constants.NEW_CONNECTIONS:
+                        PubSub.publish(Constants.NEW_CONNECTIONS, {});
+                        break;
+                }
+            };
+
+            this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
+            this.queryWorker.port.onmessage = (e) => {
+                switch (e.data.type) {
+                    case Constants.DEBUG_LOG:
+                        Logger.Log("query-worker", e.data.payload);
+                        break;
+
+                    case Constants.NEW_QUERIES:
+                        PubSub.publish(Constants.NEW_QUERIES, {});
+                        break;
+                }
+            };
         }
     }
 
@@ -982,7 +1037,6 @@
             this.$port = document.getElementById('port');
             this.$db = document.getElementById('db');
             this.$isDefault = document.getElementById('is-default');
-            this.$version = document.getElementById('version');
 
             //debug only
             document.getElementById('debug-add-conns').addEventListener('click', async () => {
@@ -1007,38 +1061,20 @@
 
         async init() {
     		this.initDom();
-            this.initWorkers();
 
+            PubSub.subscribe(Constants.NEW_CONNECTIONS, async () => {
+                this.showConns();
+            });
+
+            this.workers = new Workers();
+            this.workers.init();
+
+            Logger.Log(TAG, "Workers initialized");
             this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
-    		await this.connections.open();
+            await this.connections.open();
 
             this.initHandlers();
             this.showConns();
-        }
-
-        initWorkers() {
-            Logger.Log(TAG, `ver: ${this.$version.value}`);
-            this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-            this.connectionWorker.port.onmessage = (e) => {
-                switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
-                        Logger.Log("connection-worker", e.data.payload);
-                        break;
-
-                    case Constants.NEW_CONNECTIONS:
-                        this.showConns();
-                        break;
-                }
-            };
-
-            const queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
-            queryWorker.port.onmessage = (e) => {
-                switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
-                        Logger.Log("query-worker", e.data.payload);
-                        break;
-                }
-            };
         }
 
         async showConns() {
@@ -1085,7 +1121,7 @@
                 await this.connections.del(connId);
 
                 //force sync up
-                this.connectionWorker.port.postMessage({
+                this.workers.connectionWorker.port.postMessage({
                     type: Constants.CONNECTION_DELETED
                 });
 
@@ -1213,7 +1249,7 @@
                 Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
 
                 //force sync up
-                this.connectionWorker.port.postMessage({
+                this.workers.connectionWorker.port.postMessage({
                     type: Constants.CONNECTION_SAVED
                 });
 

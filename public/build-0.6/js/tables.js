@@ -10,6 +10,7 @@ import { PubSub } from './modules/pubsub.js'
 import { MainMenu } from './modules/main-menu.js'
 import { AppBar } from './modules/appbar.js'
 import { QueryHistory } from './modules/query-history.js'
+import { Workers } from './modules/workers.js'
 
 const TAG = "tables"
 class Content {
@@ -79,34 +80,14 @@ class Content {
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
 
-        this.initWorkers();
-    }
+        this.workers = new Workers();
+        this.workers.init();
 
-    initWorkers() {
-        this.$version = document.getElementById('version')
-        Logger.Log(TAG, `ver: ${this.$version.value}`);
-        this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
-        this.connectionWorker.port.onmessage = (e) => {
-            switch (e.data.type) {
-                case Constants.DEBUG_LOG:
-                    Logger.Log("connection-worker", e.data.payload);
-                    break;
-            }
-        }
-
-        this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
-        this.queryWorker.port.onmessage = (e) => {
-            switch (e.data.type) {
-                case Constants.DEBUG_LOG:
-                    Logger.Log("query-worker", e.data.payload);
-                    break;
-
-                case Constants.NEW_QUERIES:
-                    Logger.Log("query-worker", e.data.payload);
-                    PubSub.publish(Constants.QUERY_SAVED, {});
-                    break;
-            }
-        }
+        PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+            this.workers.queryWorker.port.postMessage({
+                type: Constants.QUERY_SAVED
+            });
+        });
     }
 
     adjustView() {

@@ -25,16 +25,24 @@ class QueryFinder {
         this.showQueries(queries);
         Logger.Log(TAG, JSON.stringify(queries));
 
-        PubSub.subscribe(Constants.QUERY_SAVED, async (query) => {
-            let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
-            this.showQueries(queries);
-            Logger.Log(TAG, JSON.stringify(queries));
+        PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+            this.reload();
+        });
+
+        PubSub.subscribe(Constants.NEW_QUERIES, async () => {
+            this.reload();
         });
 
         this.initTermInput();
         this.initTagInput();
         this.initTagEditor();
         this.initTooltip();
+    }
+
+    async reload() {
+        let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
+        this.showQueries(queries);
+        Logger.Log(TAG, JSON.stringify(queries));
     }
 
     initTooltip() {
