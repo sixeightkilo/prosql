@@ -34,7 +34,7 @@ class Err {
         }
 
         if (err.error == Err.ERR_INVALID_SESSION_ID) {
-            window.location = '/login';
+            window.location = '/connections';
             return;
         }
 

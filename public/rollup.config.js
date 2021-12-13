@@ -14,9 +14,9 @@ export default [
         },
 	},
 	{
-		'input': 'build-0.6/js/login.js',
+		'input': 'build-0.6/js/connections.js',
 		'output': {
-            'file': 'build-0.6/dist/js/login.js',
+            'file': 'build-0.6/dist/js/connections.js',
             'format': 'iife'
         },
 	},

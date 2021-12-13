@@ -55,7 +55,7 @@ class Query {
 
         let creds = Utils.getFromSession(Constants.CREDS);
         if (!creds) {
-            window.location = '/login';
+            window.location = '/connections';
             return;
         }
 

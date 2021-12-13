@@ -24,7 +24,7 @@ class Install {
                 this.updateInstructions();
                 clearInterval(timerId);
                 setTimeout(() => {
-                    window.location = '/login';
+                    window.location = '/connections';
                 }, REDIRECT_DELAY);
             }
         }, MONITOR_INTERVAL);

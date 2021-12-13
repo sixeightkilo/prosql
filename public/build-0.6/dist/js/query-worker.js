@@ -360,7 +360,7 @@
             }
 
             if (err.error == Err.ERR_INVALID_SESSION_ID) {
-                window.location = '/login';
+                window.location = '/connections';
                 return;
             }
 
@@ -446,7 +446,7 @@
                 res.msg = e.msg;
                 if (res.msg == Err.ERR_INVALID_SESSION_ID) {
                     //user must login
-                    window.location = '/login';
+                    window.location = '/connections';
                     return;
                 }
 

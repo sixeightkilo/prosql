@@ -360,7 +360,7 @@
             }
 
             if (err.error == Err.ERR_INVALID_SESSION_ID) {
-                window.location = '/login';
+                window.location = '/connections';
                 return;
             }
 
@@ -446,7 +446,7 @@
                 res.msg = e.msg;
                 if (res.msg == Err.ERR_INVALID_SESSION_ID) {
                     //user must login
-                    window.location = '/login';
+                    window.location = '/connections';
                     return;
                 }
 
@@ -749,7 +749,7 @@
         }
 
         static async login(creds) {
-            let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds));
+            let json = await Utils.fetch(Constants.URL + '/connections?' + new URLSearchParams(creds));
             if (json.status == 'error') {
                 Logger.Log(TAG$g, JSON.stringify(json));
                 return ""
@@ -3303,7 +3303,7 @@
 
             let creds = Utils.getFromSession(Constants.CREDS);
             if (!creds) {
-                window.location = '/login';
+                window.location = '/connections';
                 return;
             }
 
