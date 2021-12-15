@@ -19,7 +19,7 @@ class Login {
             this.$login.addEventListener('click', async () => {
                 this.login()
             })
-        })
+        });
     }
 
     initDom() {

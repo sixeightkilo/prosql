@@ -21,6 +21,13 @@ export default [
         },
 	},
     {
+		'input': 'build-0.6/js/signup.js',
+		'output': {
+            'file': 'build-0.6/dist/js/signup.js',
+            'format': 'iife'
+        },
+	},
+    {
         'input': 'build-0.6/js/tables.js',
         'output': {
             'file': 'build-0.6/dist/js/tables.js',

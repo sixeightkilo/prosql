@@ -20,6 +20,7 @@ $app = AppFactory::create();
 
 $app->post('/browser-api/version', 'VersionController:handle');
 $app->get('/browser-api/sql/{action}', 'SqlController:handle');
+$app->map(['GET', 'POST'], '/browser-api/login/{action}', 'LoginController:handle');
 
 $app->get('/browser-api/session', function($req, $res, $args) {
     $sm = $this->get('session-manager');

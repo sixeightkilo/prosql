@@ -3,7 +3,7 @@ use DI\Container;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\UidProcessor;
-use Prosql\{SessionManager, VersionController, SqlController, Renderer};
+use Prosql\{SessionManager, VersionController, SqlController, LoginController, Renderer, Emailer};
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -13,7 +13,7 @@ $container->set('logger', function() {
     $logger = new Logger('MyProsql');
     $logger->pushHandler(new StreamHandler(__DIR__ . '/../logs/prosql.log', Logger::DEBUG));
     $logger->pushProcessor(new UidProcessor());
-	return $logger;
+    return $logger;
 });
 
 $container->set('config', function() {
@@ -43,4 +43,15 @@ $container->set('Renderer', function() use ($container) {
     $sm = $container->get('session-manager');
     $config = $container->get('config');
     return new Renderer($logger, $sm, $config);
+});
+
+$container->set('LoginController', function() use ($container) {
+    $logger = $container->get('logger');
+    $sm = $container->get('session-manager');
+    $loginController = new LoginController($logger, $sm);
+    $loginController->setDownloadPath($container->get('config')['download-path']);
+
+    $emailer = new Emailer($logger, $container->get('config')['sendgrid-key']);
+    $loginController->setEmailer($emailer);
+    return $loginController;
 });
