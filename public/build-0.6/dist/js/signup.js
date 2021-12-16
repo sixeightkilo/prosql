@@ -368,7 +368,7 @@
         }
     }
 
-    const TAG = "utils";
+    const TAG$1 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -417,7 +417,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG, response);
+                Logger.Log(TAG$1, response);
 
                 let json = await response.json();
 
@@ -427,7 +427,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG, e);
+                Logger.Log(TAG$1, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -498,7 +498,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG, "No data");
+            Logger.Log(TAG$1, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -545,6 +545,7 @@
     	}
     }
 
+    const TAG = 'signup';
     class Signup {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
@@ -561,27 +562,56 @@
         }
 
         async initDom() {
+            this.$firstName = document.getElementById('first-name');
+            this.$lastName = document.getElementById('last-name');
+            this.$email = document.getElementById('email');
+            this.$image = document.getElementById('image');
+            this.$captcha = document.getElementById('captcha');
             this.$getOtp = document.getElementById('get-otp');
-            //this.$image = document.getElementById('image')
-            //let json = await Utils.fetch('/browser-api/login/captcha');
-            //Logger.Log(TAG, JSON.stringify(json));
+            this.$reset = document.getElementById('reset');
+
+            await this.setCaptcha();
+
             this.$getOtp.addEventListener('click', () => {
                 this.getOtp();
             });
+
+            this.$reset.addEventListener('click', () => {
+                this.setCaptcha();
+            });
+        }
+
+        async setCaptcha() {
+            this.$captcha.value = '';
+            let json = await Utils.fetch('/browser-api/login/get-captcha');
+            Logger.Log(TAG, JSON.stringify(json));
+            if (json.status == "ok") {
+                this.$image.src = json.data.image;
+                this.$image.dataset.id = json.data['captcha-id'];
+            }
         }
 
         async getOtp() {
             let params = {
-                'first-name': 'Pankaj',
-                'last-name': 'Kargirwar',
-                'email': 'kargirwar@gmail.com',
+                'first-name': this.$firstName.value,
+                'last-name': this.$lastName.value,
+                'email': this.$email.value,
+                'captcha-id': this.$image.dataset.id,
+                'captcha-value': this.$captcha.value
             };
+
             let url = '/browser-api/login/get-otp?' + new URLSearchParams(params);
-            await Utils.fetch(url);
+            let json = await Utils.fetch(url, false);
+            Logger.Log(TAG, JSON.stringify(json));
+            if (json.status == "error") {
+                alert(json.msg);
+                this.setCaptcha();
+                return;
+            }
         }
 
         async init() {
-    		this.initDom();
+            this.initDom();
         }
     }
 

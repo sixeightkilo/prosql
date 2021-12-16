@@ -4,6 +4,8 @@ use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\UidProcessor;
 use Prosql\{SessionManager, VersionController, SqlController, LoginController, Renderer, Emailer};
+use Prosql\Models\{User};
+use Prosql\Utils\{PDOUtils};
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -45,6 +47,13 @@ $container->set('Renderer', function() use ($container) {
     return new Renderer($logger, $sm, $config);
 });
 
+$container->set('db', function() use ($container) {
+    $logger = $container->get('logger');
+    $db = new PDOUtils($logger);
+    $db->openDB($container->get('config')['db-path']);
+    return $db;
+});
+
 $container->set('LoginController', function() use ($container) {
     $logger = $container->get('logger');
     $sm = $container->get('session-manager');
@@ -52,6 +61,8 @@ $container->set('LoginController', function() use ($container) {
     $loginController->setDownloadPath($container->get('config')['download-path']);
 
     $emailer = new Emailer($logger, $container->get('config')['sendgrid-key']);
+    $user = new User($logger, $container->get('db'));
+
     $loginController->setEmailer($emailer);
     return $loginController;
 });

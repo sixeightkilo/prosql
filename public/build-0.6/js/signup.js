@@ -23,27 +23,56 @@ class Signup {
     }
 
     async initDom() {
+        this.$firstName = document.getElementById('first-name')
+        this.$lastName = document.getElementById('last-name')
+        this.$email = document.getElementById('email')
+        this.$image = document.getElementById('image')
+        this.$captcha = document.getElementById('captcha')
         this.$getOtp = document.getElementById('get-otp')
-        //this.$image = document.getElementById('image')
-        //let json = await Utils.fetch('/browser-api/login/captcha');
-        //Logger.Log(TAG, JSON.stringify(json));
+        this.$reset = document.getElementById('reset')
+
+        await this.setCaptcha();
+
         this.$getOtp.addEventListener('click', () => {
             this.getOtp();
         });
+
+        this.$reset.addEventListener('click', () => {
+            this.setCaptcha();
+        });
+    }
+
+    async setCaptcha() {
+        this.$captcha.value = '';
+        let json = await Utils.fetch('/browser-api/login/get-captcha');
+        Logger.Log(TAG, JSON.stringify(json));
+        if (json.status == "ok") {
+            this.$image.src = json.data.image;
+            this.$image.dataset.id = json.data['captcha-id'];
+        }
     }
 
     async getOtp() {
         let params = {
-            'first-name': 'Pankaj',
-            'last-name': 'Kargirwar',
-            'email': 'kargirwar@gmail.com',
+            'first-name': this.$firstName.value,
+            'last-name': this.$lastName.value,
+            'email': this.$email.value,
+            'captcha-id': this.$image.dataset.id,
+            'captcha-value': this.$captcha.value
         }
+
         let url = '/browser-api/login/get-otp?' + new URLSearchParams(params);
-        let json = await Utils.fetch(url);
+        let json = await Utils.fetch(url, false);
+        Logger.Log(TAG, JSON.stringify(json));
+        if (json.status == "error") {
+            alert(json.msg);
+            this.setCaptcha();
+            return;
+        }
     }
 
     async init() {
-		this.initDom();
+        this.initDom();
     }
 }
 
