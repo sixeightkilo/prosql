@@ -18,7 +18,7 @@ class BaseWorker {
     }
 
     async init() {
-        let res = await Utils.fetch(Constants.URL + '/about', false);
+        let res = await Utils.get(Constants.URL + '/about', false);
         if (res.status == "error") {
             this.logger.log(TAG, JSON.stringify(res));
             return

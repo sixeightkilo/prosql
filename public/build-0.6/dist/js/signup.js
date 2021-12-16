@@ -407,7 +407,7 @@
             return template.content
         }
 
-        static async fetch(url, handleError = true, headers = {}) {
+        static async get(url, handleError = true, headers = {}) {
             try {
                 let hdrs = {
                     'X-Request-ID': Utils.uuid()
@@ -415,6 +415,76 @@
                 hdrs = {...hdrs, ...headers};
                 let response = await fetch(url, {
                     headers: hdrs
+                });
+
+                Logger.Log(TAG$1, response);
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$1, e);
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/connections';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async post(url, body, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let formData = new FormData();
+
+                for (let k in body) {
+                    formData.append(k, body[k]);
+                }
+
+                let response = await fetch(url, {
+                    headers: hdrs,
+                    body: formData,
+                    method: "post"
                 });
 
                 Logger.Log(TAG$1, response);
@@ -561,7 +631,7 @@
             });
         }
 
-        async initDom() {
+        async init() {
             this.$firstName = document.getElementById('first-name');
             this.$lastName = document.getElementById('last-name');
             this.$email = document.getElementById('email');
@@ -569,6 +639,8 @@
             this.$captcha = document.getElementById('captcha');
             this.$getOtp = document.getElementById('get-otp');
             this.$reset = document.getElementById('reset');
+            this.$otp = document.getElementById('otp');
+            this.$signup = document.getElementById('signup');
 
             await this.setCaptcha();
 
@@ -579,11 +651,19 @@
             this.$reset.addEventListener('click', () => {
                 this.setCaptcha();
             });
+
+            this.$signup.addEventListener('click', () => {
+                this.signup();
+            });
+        }
+
+        async signup() {
+            await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
         }
 
         async setCaptcha() {
             this.$captcha.value = '';
-            let json = await Utils.fetch('/browser-api/login/get-captcha');
+            let json = await Utils.get('/browser-api/login/get-captcha');
             Logger.Log(TAG, JSON.stringify(json));
             if (json.status == "ok") {
                 this.$image.src = json.data.image;
@@ -600,8 +680,7 @@
                 'captcha-value': this.$captcha.value
             };
 
-            let url = '/browser-api/login/get-otp?' + new URLSearchParams(params);
-            let json = await Utils.fetch(url, false);
+            let json = await Utils.post('/browser-api/login/set-otp', params, false);
             Logger.Log(TAG, JSON.stringify(json));
             if (json.status == "error") {
                 alert(json.msg);
@@ -610,10 +689,6 @@
             }
 
             alert(`Otp sent to ${this.$email.value}`);
-        }
-
-        async init() {
-            this.initDom();
         }
     }
 

@@ -407,7 +407,7 @@
             return template.content
         }
 
-        static async fetch(url, handleError = true, headers = {}) {
+        static async get(url, handleError = true, headers = {}) {
             try {
                 let hdrs = {
                     'X-Request-ID': Utils.uuid()
@@ -415,6 +415,76 @@
                 hdrs = {...hdrs, ...headers};
                 let response = await fetch(url, {
                     headers: hdrs
+                });
+
+                Logger.Log(TAG$2, response);
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$2, e);
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/connections';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async post(url, body, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let formData = new FormData();
+
+                for (let k in body) {
+                    formData.append(k, body[k]);
+                }
+
+                let response = await fetch(url, {
+                    headers: hdrs,
+                    body: formData,
+                    method: "post"
                 });
 
                 Logger.Log(TAG$2, response);
@@ -547,7 +617,7 @@
 
     class Monitor {
         static async isAgentInstalled() {
-            let response = await Utils.fetch(Constants.URL + '/about', false);
+            let response = await Utils.get(Constants.URL + '/about', false);
             if (response.status == "ok") {
                 return true;
             }

@@ -22,7 +22,7 @@ class Signup {
         });
     }
 
-    async initDom() {
+    async init() {
         this.$firstName = document.getElementById('first-name')
         this.$lastName = document.getElementById('last-name')
         this.$email = document.getElementById('email')
@@ -30,6 +30,8 @@ class Signup {
         this.$captcha = document.getElementById('captcha')
         this.$getOtp = document.getElementById('get-otp')
         this.$reset = document.getElementById('reset')
+        this.$otp = document.getElementById('otp')
+        this.$signup = document.getElementById('signup')
 
         await this.setCaptcha();
 
@@ -40,11 +42,19 @@ class Signup {
         this.$reset.addEventListener('click', () => {
             this.setCaptcha();
         });
+
+        this.$signup.addEventListener('click', () => {
+            this.signup();
+        });
+    }
+
+    async signup() {
+        let json = await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
     }
 
     async setCaptcha() {
         this.$captcha.value = '';
-        let json = await Utils.fetch('/browser-api/login/get-captcha');
+        let json = await Utils.get('/browser-api/login/get-captcha');
         Logger.Log(TAG, JSON.stringify(json));
         if (json.status == "ok") {
             this.$image.src = json.data.image;
@@ -61,8 +71,7 @@ class Signup {
             'captcha-value': this.$captcha.value
         }
 
-        let url = '/browser-api/login/get-otp?' + new URLSearchParams(params);
-        let json = await Utils.fetch(url, false);
+        let json = await Utils.post('/browser-api/login/set-otp', params, false);
         Logger.Log(TAG, JSON.stringify(json));
         if (json.status == "error") {
             alert(json.msg);
@@ -71,10 +80,6 @@ class Signup {
         }
 
         alert(`Otp sent to ${this.$email.value}`);
-    }
-
-    async init() {
-        this.initDom();
     }
 }
 

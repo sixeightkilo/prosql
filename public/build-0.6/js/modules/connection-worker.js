@@ -40,7 +40,7 @@ class ConnectionWorker extends BaseWorker {
         after = after.toISOString();
         this.logger.log(TAG, `after: ${after}`);
 
-        let res = await Utils.fetch(`${URL}/connections/updated`, false, {
+        let res = await Utils.get(`${URL}/connections/updated`, false, {
             db: this.deviceId,
             after: after
         });

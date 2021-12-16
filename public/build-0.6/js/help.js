@@ -8,8 +8,6 @@ class Help {
             let $contact = document.querySelector('.contact');
             $contact.classList.remove('is-hidden');
         })
-
-        let tabs = new Tabs();
     }
 }
 

@@ -407,7 +407,7 @@
             return template.content
         }
 
-        static async fetch(url, handleError = true, headers = {}) {
+        static async get(url, handleError = true, headers = {}) {
             try {
                 let hdrs = {
                     'X-Request-ID': Utils.uuid()
@@ -415,6 +415,76 @@
                 hdrs = {...hdrs, ...headers};
                 let response = await fetch(url, {
                     headers: hdrs
+                });
+
+                Logger.Log(TAG$k, response);
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$k, e);
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/connections';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async post(url, body, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let formData = new FormData();
+
+                for (let k in body) {
+                    formData.append(k, body[k]);
+                }
+
+                let response = await fetch(url, {
+                    headers: hdrs,
+                    body: formData,
+                    method: "post"
                 });
 
                 Logger.Log(TAG$k, response);
@@ -711,7 +781,7 @@
                 query: query
             };
 
-            let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
             if (json.status == 'error') {
                 Logger.Log(TAG$i, JSON.stringify(json));
                 return []
@@ -729,7 +799,7 @@
             let rows = [];
 
             do {
-                json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params));
+                json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
                 if (json.status == "error") {
                     Logger.Log(TAG$i, JSON.stringify(json));
                     return []
@@ -749,7 +819,7 @@
         }
 
         static async login(creds) {
-            let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds));
+            let json = await Utils.get(Constants.URL + '/login?' + new URLSearchParams(creds));
             if (json.status == 'error') {
                 Logger.Log(TAG$i, JSON.stringify(json));
                 return ""
@@ -759,7 +829,7 @@
         }
 
         async execute(query) {
-            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query, true);
+            this.cursorId = await DbUtils.getCursorId(this.sessionId, query, true);
 
             let params = {
                 'session-id': this.sessionId,
@@ -767,7 +837,7 @@
                 'num-of-rows': -1,//not used
             };
 
-            return await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params));
+            return await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
         }
 
         static async cancel(sessionId, cursorId) {
@@ -776,7 +846,7 @@
                 'cursor-id': cursorId,
             };
 
-            await Utils.fetch(Constants.URL + '/cancel?' + new URLSearchParams(params));
+            await Utils.get(Constants.URL + '/cancel?' + new URLSearchParams(params));
         }
 
         static async fetchCursorId(sessionId, query, execute = false) {
@@ -787,16 +857,16 @@
             };
 
             if (execute) {
-                let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params));
+                let json = await Utils.get(Constants.URL + '/execute?' + new URLSearchParams(params));
                 return json.data['cursor-id']
             }
 
-            let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
             return json.data['cursor-id']
         }
 
         async exportResults(q) {
-            let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
+            let cursorId = await DbUtils.getCursorId(this.sessionId, q);
             Logger.Log(TAG$i, `cursorId: ${cursorId}`);
             let params = {
                 'session-id': this.sessionId,

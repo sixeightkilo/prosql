@@ -256,7 +256,7 @@ class Login {
             });
 
             //set agent version for the rest of web app
-            let response = await Utils.fetch(Constants.URL + '/about', false);
+            let response = await Utils.get(Constants.URL + '/about', false);
             //todo: what happens if this is not OK?
             if (response.status == "ok") {
                 let formData = new FormData();
@@ -326,7 +326,7 @@ class Login {
     }
 
     async ping(conn) {
-        let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(conn), false)
+        let json = await Utils.get(Constants.URL + '/ping?' + new URLSearchParams(conn), false)
         if (json.status == "error") {
             if (json.msg == Err.ERR_NO_AGENT) {
                 window.location = '/install';

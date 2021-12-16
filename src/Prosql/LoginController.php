@@ -36,9 +36,6 @@ class LoginController extends BaseController {
         case 'get-captcha':
             return $this->getCaptcha();
 
-        case 'get-otp':
-            return $this->getOtp($req);
-
         default:
             throw new \Exception('invalid-operation');
         }
@@ -46,8 +43,11 @@ class LoginController extends BaseController {
 
     public function handlePost(Request $req, Response $res, array $args): Mixed {
         switch ($args['action']) {
+        case 'set-otp':
+            return $this->setOtp($req);
+
         case 'signup':
-            return $this->signup();
+            return $this->signup($req);
 
         default:
             throw new \Exception('invalid-operation');
@@ -64,8 +64,8 @@ class LoginController extends BaseController {
         $this->logger->debug("Signing up:" . print_r($user, true));
     }
 
-    private function getOtp(Request $req): void {
-        $params = $req->getQueryParams();
+    private function setOtp(Request $req): void {
+        $params = $req->getParsedBody();
         //$id = $params['captcha-id'];
         //$value = $params['captcha-value'];
         //$this->verifyCaptcha($id, $value);

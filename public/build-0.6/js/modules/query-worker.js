@@ -24,7 +24,7 @@ class QueryWorker extends BaseWorker {
         await super.init();
         this.logger.log(TAG, "deviceid:" + this.deviceId);
 
-        let res = await Utils.fetch('/browser-api/session', false);
+        let res = await Utils.get('/browser-api/session', false);
         if (res.status == "error") {
             this.logger.log(TAG, JSON.stringify(res));
             return
@@ -160,7 +160,7 @@ class QueryWorker extends BaseWorker {
     }
 
     async fetchRecs(after, limit, offset) {
-        return await Utils.fetch(`${URL}/queries/updated`, false, {
+        return await Utils.get(`${URL}/queries/updated`, false, {
             'session-id': this.sessionId,
             after: after,
             limit: limit,

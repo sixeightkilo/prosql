@@ -9,7 +9,7 @@ class About {
             let $contact = document.querySelector('.contact');
             $contact.classList.remove('is-hidden');
 
-            let response = await Utils.fetch(Constants.URL + '/about', false);
+            let response = await Utils.get(Constants.URL + '/about', false);
             if (response.status == "ok") {
                 $ver.innerHTML = response.data.version;
                 return;

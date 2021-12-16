@@ -16,7 +16,7 @@ class DbUtils {
             query: query
         }
 
-        let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params))
+        let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params))
         if (json.status == 'error') {
             Logger.Log(TAG, JSON.stringify(json))
             return []
@@ -34,7 +34,7 @@ class DbUtils {
         let rows = []
 
         do {
-            json = await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params))
+            json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params))
             if (json.status == "error") {
                 Logger.Log(TAG, JSON.stringify(json))
                 return []
@@ -54,7 +54,7 @@ class DbUtils {
     }
 
     static async login(creds) {
-        let json = await Utils.fetch(Constants.URL + '/login?' + new URLSearchParams(creds))
+        let json = await Utils.get(Constants.URL + '/login?' + new URLSearchParams(creds))
         if (json.status == 'error') {
             Logger.Log(TAG, JSON.stringify(json))
             return ""
@@ -64,7 +64,7 @@ class DbUtils {
     }
 
     async execute(query) {
-        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query, true)
+        this.cursorId = await DbUtils.getCursorId(this.sessionId, query, true)
 
         let params = {
             'session-id': this.sessionId,
@@ -72,7 +72,7 @@ class DbUtils {
             'num-of-rows': -1,//not used
         }
 
-        return await Utils.fetch(Constants.URL + '/fetch?' + new URLSearchParams(params));
+        return await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
     }
 
     static async cancel(sessionId, cursorId) {
@@ -81,7 +81,7 @@ class DbUtils {
             'cursor-id': cursorId,
         }
 
-        await Utils.fetch(Constants.URL + '/cancel?' + new URLSearchParams(params));
+        await Utils.get(Constants.URL + '/cancel?' + new URLSearchParams(params));
     }
 
     static async fetchCursorId(sessionId, query, execute = false) {
@@ -92,16 +92,16 @@ class DbUtils {
         }
 
         if (execute) {
-            let json = await Utils.fetch(Constants.URL + '/execute?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants.URL + '/execute?' + new URLSearchParams(params));
             return json.data['cursor-id']
         }
 
-        let json = await Utils.fetch(Constants.URL + '/query?' + new URLSearchParams(params));
+        let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
         return json.data['cursor-id']
     }
 
     async exportResults(q) {
-        let cursorId = await DbUtils.fetchCursorId(this.sessionId, q)
+        let cursorId = await DbUtils.getCursorId(this.sessionId, q)
         Logger.Log(TAG, `cursorId: ${cursorId}`);
         let params = {
             'session-id': this.sessionId,
