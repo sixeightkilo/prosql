@@ -15,7 +15,7 @@ class SessionManager implements SessionManagerInterface {
         return session_id();
     }
     
-    public function setVersion(string $version) {
+    public function setVersion(string $version): void {
         $_SESSION['version'] = $version;
     }
 
@@ -23,7 +23,7 @@ class SessionManager implements SessionManagerInterface {
         return $_SESSION['version'] ?? '';
     }
 
-    public function setDeviceId(string $id) {
+    public function setDeviceId(string $id): void {
         $_SESSION['device-id'] = $id;
     }
 
@@ -31,7 +31,7 @@ class SessionManager implements SessionManagerInterface {
         return $_SESSION['device-id'] ?? '';
     }
 
-    public function setOs(string $os) {
+    public function setOs(string $os): void {
         $_SESSION['os'] = $os;
     }
 
@@ -39,10 +39,28 @@ class SessionManager implements SessionManagerInterface {
         return $_SESSION['os'] ?? '';
     }
 
+    public function setOtp(string $otp): void {
+        $_SESSION['otp'] = $otp;
+    }
+
+    public function getOtp(): string {
+        return $_SESSION['otp'] ?? '';
+    }
+
+    public function setUser(array $u): void {
+        $_SESSION['user'] = $u;
+    }
+
+    public function getUser(): array {
+        return $_SESSION['user'] ?? [];
+    }
+
     public function reset() {
         $this->setVersion('');
         $this->setDeviceId('');
         $this->setOs('');
+        $this->setOtp('');
+        $this->setUser([]);
     }
 
     public function kill() {

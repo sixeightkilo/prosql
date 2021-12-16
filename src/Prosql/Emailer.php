@@ -10,7 +10,7 @@ class Emailer implements Interfaces\EmailerInterface {
         $this->sendGrid = new \SendGrid($key);
     }
 
-    public function send(string $toAddr, Mixed $cc, string $subject, string $msg) {
+    public function send(string $toAddr, array $cc, string $subject, string $msg) {
         $email = new \SendGrid\Mail\Mail(); 
         $email->setFrom("tech@prosql.io", "Prosql");
         $email->setSubject($subject);
@@ -19,11 +19,10 @@ class Emailer implements Interfaces\EmailerInterface {
 
         try {
             $response = $this->sendGrid->send($email);
-            print $response->statusCode() . "\n";
-            print_r($response->headers());
-            print $response->body() . "\n";
+            $this->logger->debug(print_r($response, true));
         } catch (Exception $e) {
-            echo 'Caught exception: '. $e->getMessage() ."\n";
+            $this->logger->critical($e->getMessage());
+            throw new \Exception('Unable to send email');
         }
     }
 }

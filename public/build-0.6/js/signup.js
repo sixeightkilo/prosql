@@ -69,6 +69,8 @@ class Signup {
             this.setCaptcha();
             return;
         }
+
+        alert(`Otp sent to ${this.$email.value}`);
     }
 
     async init() {

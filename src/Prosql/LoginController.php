@@ -4,11 +4,25 @@ use \Monolog\Logger;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Gregwar\Captcha\CaptchaBuilder;
-use \Prosql\Interfaces\EmailerInterface;
+use \Prosql\Interfaces\{EmailerInterface, SessionManagerInterface};
 use \Prosql\Utils\Validator as V;
+use \Pug\Pug as Pug;
 
 class LoginController extends BaseController {
+    const MIN = 100000;
+    const MAX = 999999;
+
     private string $path = "";
+
+    public function __construct(Logger $logger, SessionManagerInterface $sm) {
+        parent::__construct($logger, $sm);
+        $this->pug = new Pug(array(
+            'prettyprint' => true,
+            'extension' => '.pug',
+            'cache' => null
+        ));
+    }
+
     public function setDownloadPath(string $path): void {
         $this->path = $path;
     }
@@ -30,6 +44,26 @@ class LoginController extends BaseController {
         }
     }
 
+    public function handlePost(Request $req, Response $res, array $args): Mixed {
+        switch ($args['action']) {
+        case 'signup':
+            return $this->signup();
+
+        default:
+            throw new \Exception('invalid-operation');
+        }
+    }
+
+    private function signup(Request $req): void {
+        $otp = $req->getParsedBody()['otp'];
+        if ($this->sm->getOtp() != $otp) {
+            throw new \Exception("Invalid otp");
+        }
+
+        $user = $this->sm->getUser();
+        $this->logger->debug("Signing up:" . print_r($user, true));
+    }
+
     private function getOtp(Request $req): void {
         $params = $req->getQueryParams();
         //$id = $params['captcha-id'];
@@ -41,12 +75,29 @@ class LoginController extends BaseController {
             ['field' => $params['last-name'], 'alias' => 'Last name', 'rules' => [V::NOT_EMPTY]],
             ['field' => $params['email'], 'alias' => 'email', 'rules' => [V::IS_EMAIL]],
         ]);
+
+        $otp = random_int(self::MIN, self::MAX);
+
+        $this->sm->setOtp($otp);
+        $this->sm->setUser([
+            'first-name' => $params['first-name'],
+            'last-name' => $params['last-name'],
+            'email' => $params['email'],
+        ]);
+
+        $this->sm->write();
+
+        $msg = $this->pug->render(__DIR__ . "/templates/signup-otp.pug", [
+            'name' => $params['first-name'] . ' ' . $params['last-name'],
+            'otp' => $otp
+        ]);
+        $this->emailer->send($params['email'], [], "Your OTP for signing up!", $msg);
     }
 
     private function getCaptcha(): array {
         $url = 'http://localhost:8777/api/getCaptcha';
         $ch = curl_init($url);
-        # Setup request to send json via POST.
+
         $payload = json_encode([
             'CaptchaType' => 'digit',
             'DriverDigit' => [
@@ -73,7 +124,7 @@ class LoginController extends BaseController {
     private function verifyCaptcha(string $id, string $value): void {
         $url = 'http://localhost:8777/api/verifyCaptcha';
         $ch = curl_init($url);
-        # Setup request to send json via POST.
+
         $payload = json_encode([
             'Id' => $id,
             'VerifyValue' => $value

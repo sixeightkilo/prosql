@@ -27,6 +27,7 @@
 #image-container,
 #captcha-container,
 #get-otp-container,
+#signup-container,
 #otp-container {
 	display:grid;
 	grid-template-columns: 1fr 1fr;
