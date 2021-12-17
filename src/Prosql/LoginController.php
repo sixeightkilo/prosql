@@ -6,6 +6,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Gregwar\Captcha\CaptchaBuilder;
 use \Prosql\Interfaces\{EmailerInterface, SessionManagerInterface};
 use \Prosql\Utils\Validator as V;
+use \Prosql\Models\User;
 use \Pug\Pug as Pug;
 
 class LoginController extends BaseController {
@@ -29,6 +30,10 @@ class LoginController extends BaseController {
 
     public function setEmailer(EmailerInterface $emailer): void {
         $this->emailer = $emailer;
+    }
+
+    public function setUser(User $u): void {
+        $this->user = $u;
     }
 
     public function handleGet(Request $req, Response $res, array $args): Mixed {
@@ -62,6 +67,11 @@ class LoginController extends BaseController {
 
         $user = $this->sm->getUser();
         $this->logger->debug("Signing up:" . print_r($user, true));
+        $this->user->save([
+            'first_name' => $user['first-name'],
+            'last_name' => $user['last-name'],
+            'email' => $user['email']
+        ]);
     }
 
     private function setOtp(Request $req): void {

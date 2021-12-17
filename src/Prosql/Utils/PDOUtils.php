@@ -138,8 +138,7 @@ class PDOUtils implements \Prosql\Interfaces\DBInterface {
 			$values = preg_replace("/, $/", "", $values);
 			$values .= ")";
 			$keys = preg_replace("/,$/", "", $keys);
-			$sql = "insert into `$table` $columns values $values" .
-				" on duplicate key update $keys";
+			$sql = "insert into `$table` $columns values $values";
 
 			$this->logger->debug(__LINE__ . '::' .  $sql);;
 			$stmt = $this->pdo->prepare($sql);

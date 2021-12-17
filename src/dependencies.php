@@ -64,5 +64,6 @@ $container->set('LoginController', function() use ($container) {
     $user = new User($logger, $container->get('db'));
 
     $loginController->setEmailer($emailer);
+    $loginController->setUser($user);
     return $loginController;
 });
