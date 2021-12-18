@@ -65,13 +65,18 @@ class LoginController extends BaseController {
             throw new \Exception("Invalid otp");
         }
 
-        $user = $this->sm->getUser();
+        $user = $this->sm->getTempUser();
         $this->logger->debug("Signing up:" . print_r($user, true));
         $this->user->save([
             'first_name' => $user['first-name'],
             'last_name' => $user['last-name'],
             'email' => $user['email']
         ]);
+
+        $this->sm->setTempUser([]);
+        $this->sm->setOtp('');
+        $this->sm->setUser($user);
+        $this->sm->write();
     }
 
     private function setOtp(Request $req): void {
@@ -86,10 +91,21 @@ class LoginController extends BaseController {
             ['field' => $params['email'], 'alias' => 'email', 'rules' => [V::IS_EMAIL]],
         ]);
 
+        //check if user already registered
+        $email = $this->user->get(['email'], [
+            ['email', '=', $params['email']]
+        ])[0]['email'] ?? null;
+
+        $this->logger->debug("email: $email");
+
+        if ($email) {
+            throw new \Exception("Already registered. Please sign in");
+        }
+
         $otp = random_int(self::MIN, self::MAX);
 
         $this->sm->setOtp($otp);
-        $this->sm->setUser([
+        $this->sm->setTempUser([
             'first-name' => $params['first-name'],
             'last-name' => $params['last-name'],
             'email' => $params['email'],

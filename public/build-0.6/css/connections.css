@@ -101,3 +101,20 @@
 #is-default {
 	margin-top:8px;
 }
+
+#btn-container-user {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+	padding:0;
+	margin-top:1em;
+	margin-left:auto;
+	margin-right:auto;
+	width: 30em;
+	column-gap:0.5em;
+}
+
+#start-btn-container {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+	column-gap:0.2em;
+}

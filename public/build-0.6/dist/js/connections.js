@@ -270,6 +270,10 @@
             return 4
         }
 
+        static get SIGNUP_REQUIRED() {
+            return "signup-required";
+        }
+
         static get INIT_PROGRESS() {
             return "init-progress"
         }
@@ -613,6 +617,13 @@
     	static getRandomIntegerInclusive(min, max) {
     		return Math.floor(Math.random() * (max - min + 1)) + min;
     	}
+
+        static isEmpty(obj) { 
+            for (var x in obj) {
+                return false; 
+            }
+            return true;
+        }
     }
 
     const TAG$4 = "base-db";
@@ -982,11 +993,11 @@
         }
     }
 
-    const TAG$2 = "connections";
+    const TAG$2 = "connection-model";
 
     //just a wrapper over connectiondb so we dont have to deal with from/to stuff in 
     //client
-    class Connections extends ConnectionDB {
+    class ConnectionModel extends ConnectionDB {
         constructor(logger, options) {
             super(logger, options);
             this.keys = 
@@ -1061,6 +1072,11 @@
                     case Constants.NEW_CONNECTIONS:
                         PubSub.publish(Constants.NEW_CONNECTIONS, {});
                         break;
+
+                    case Constants.SIGNUP_REQUIRED:
+                        Logger.Log(TAG$1, Constants.SIGNUP_REQUIRED);
+                        PubSub.publish(Constants.SIGNUP_REQUIRED, {});
+                        break;
                 }
             };
 
@@ -1079,8 +1095,8 @@
         }
     }
 
-    const TAG = 'login';
-    class Login {
+    const TAG = 'connections';
+    class Connections {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
                 await this.init();
@@ -1136,11 +1152,15 @@
                 this.showConns();
             });
 
+            PubSub.subscribe(Constants.SIGNUP_REQUIRED, async () => {
+                window.location = '/signup';
+            });
+
             this.workers = new Workers();
             this.workers.init();
 
             Logger.Log(TAG, "Workers initialized");
-            this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
+            this.connections = new ConnectionModel(new Logger(), {version: Constants.CONN_DB_VERSION});
             await this.connections.open();
 
             this.initHandlers();
@@ -1327,17 +1347,11 @@
                 let response = await Utils.get(Constants.URL + '/about', false);
                 //todo: what happens if this is not OK?
                 if (response.status == "ok") {
-                    let formData = new FormData();
-                    formData.append('device-id', response.data['device-id']);
-                    formData.append('version', response.data['version']);
-                    formData.append('os', response.data['os']);
-
-                    let res = await fetch("/browser-api/version", {
-                        body: formData,
-                        method: "post"
+                    let res = await Utils.post('/browser-api/version', {
+                        'device-id': response.data['device-id'],
+                        'version': response.data['version'],
+                        'os': response.data['os'],
                     });
-
-                    res = await res.json();
 
                     Logger.Log(TAG, JSON.stringify(res));
 
@@ -1421,6 +1435,6 @@
         }
     }
 
-    new Login();
+    new Connections();
 
 }());

@@ -55,12 +55,21 @@ class SessionManager implements SessionManagerInterface {
         return $_SESSION['user'] ?? [];
     }
 
+    public function setTempUser(array $u): void {
+        $_SESSION['temp-user'] = $u;
+    }
+
+    public function getTempUser(): array {
+        return $_SESSION['temp-user'] ?? [];
+    }
+
     public function reset() {
         $this->setVersion('');
         $this->setDeviceId('');
         $this->setOs('');
         $this->setOtp('');
         $this->setUser([]);
+        $this->setTempUser([]);
     }
 
     public function kill() {

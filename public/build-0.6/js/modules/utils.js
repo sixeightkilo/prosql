@@ -246,5 +246,12 @@ class Utils {
 	static getRandomIntegerInclusive(min, max) {
 		return Math.floor(Math.random() * (max - min + 1)) + min;
 	}
+
+    static isEmpty(obj) { 
+        for (var x in obj) {
+            return false; 
+        }
+        return true;
+    }
 }
 export { Utils }

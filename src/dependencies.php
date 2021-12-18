@@ -3,8 +3,8 @@ use DI\Container;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Monolog\Processor\UidProcessor;
-use Prosql\{SessionManager, VersionController, SqlController, LoginController, Renderer, Emailer};
-use Prosql\Models\{User};
+use Prosql\{SessionManager, VersionController, DevicesController, SqlController, LoginController, Renderer, Emailer};
+use Prosql\Models\{User, Device};
 use Prosql\Utils\{PDOUtils};
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -13,6 +13,7 @@ require __DIR__ . '/../vendor/autoload.php';
 $container = new Container();
 $container->set('logger', function() {
     $logger = new Logger('MyProsql');
+    $logger->setTimezone(new \DateTimeZone('Asia/Kolkata'));
     $logger->pushHandler(new StreamHandler(__DIR__ . '/../logs/prosql.log', Logger::DEBUG));
     $logger->pushProcessor(new UidProcessor());
     return $logger;
@@ -26,6 +27,17 @@ $container->set('config', function() {
 $container->set('session-manager', function() use ($container) {
     $logger = $container->get('logger');
     return new SessionManager($logger);
+});
+
+$container->set('DevicesController', function() use ($container) {
+    $logger = $container->get('logger');
+    $sm = $container->get('session-manager');
+
+    $device = new Device($logger, $container->get('db'));
+    $devicesController = new DevicesController($logger, $sm);
+    $devicesController->setDevice($device);
+
+    return $devicesController;
 });
 
 $container->set('VersionController', function() use ($container) {

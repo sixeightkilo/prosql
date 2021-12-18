@@ -270,6 +270,10 @@
             return 4
         }
 
+        static get SIGNUP_REQUIRED() {
+            return "signup-required";
+        }
+
         static get INIT_PROGRESS() {
             return "init-progress"
         }
@@ -613,6 +617,13 @@
     	static getRandomIntegerInclusive(min, max) {
     		return Math.floor(Math.random() * (max - min + 1)) + min;
     	}
+
+        static isEmpty(obj) { 
+            for (var x in obj) {
+                return false; 
+            }
+            return true;
+        }
     }
 
     const TAG = 'signup';
@@ -658,7 +669,11 @@
         }
 
         async signup() {
-            await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
+            let json = await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
+
+            if (json.status == "ok") {
+                window.location = '/connections';
+            }
         }
 
         async setCaptcha() {

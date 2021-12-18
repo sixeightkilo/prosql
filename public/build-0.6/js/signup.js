@@ -2,7 +2,7 @@ import { Err } from './modules/error.js'
 import { Logger } from './modules/logger.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
-import { Connections } from './modules/connections.js'
+import { ConnectionModel } from './modules/connection-model.js'
 import { PubSub } from './modules/pubsub.js'
 import { Workers } from './modules/workers.js'
 
@@ -50,6 +50,10 @@ class Signup {
 
     async signup() {
         let json = await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
+
+        if (json.status == "ok") {
+            window.location = '/connections';
+        }
     }
 
     async setCaptcha() {

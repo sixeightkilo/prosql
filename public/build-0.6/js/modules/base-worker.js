@@ -4,7 +4,7 @@ import { Constants } from './constants.js'
 import { QueryDB } from './query-db.js'
 import { MetaDB } from './meta-db.js'
 
-const TAG = "main"
+const TAG = "base"
 const URL = '/browser-api/sqlite'
 
 class BaseWorker {
@@ -25,6 +25,33 @@ class BaseWorker {
         }
 
         this.deviceId = res.data['device-id'];
+
+        //regiser this device with backend.
+        //If signup-required, force user to signup
+        //After user signs up clear all db_id, because we are moving to a new db
+
+        res = await Utils.post('/browser-api/devices/register', {
+            'device-id': this.deviceId
+        }, false)
+
+        this.logger.log(TAG, JSON.stringify(res));
+
+        if (res.status == "error") {
+            return;
+        }
+
+        this.sessionId = res.data['session-id'];
+
+        if (res.data['signup-required']) {
+            //check if user is already logged in
+            //must check for user data. session-id will have a value even if user is not logged in
+            if (Utils.isEmpty(res.data.user)) {
+                this.logger.log(TAG, "Signup required");
+                this.port.postMessage({
+                    type: Constants.SIGNUP_REQUIRED
+                })
+            }
+        }
     }
 
     async getLastSyncTs(db, id) {

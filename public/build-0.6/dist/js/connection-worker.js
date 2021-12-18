@@ -226,6 +226,10 @@
             return 4
         }
 
+        static get SIGNUP_REQUIRED() {
+            return "signup-required";
+        }
+
         static get INIT_PROGRESS() {
             return "init-progress"
         }
@@ -613,6 +617,13 @@
     	static getRandomIntegerInclusive(min, max) {
     		return Math.floor(Math.random() * (max - min + 1)) + min;
     	}
+
+        static isEmpty(obj) { 
+            for (var x in obj) {
+                return false; 
+            }
+            return true;
+        }
     }
 
     const TAG$4 = "base-db";
@@ -1013,7 +1024,7 @@
         }
     }
 
-    const TAG$1 = "main";
+    const TAG$1 = "base";
 
     class BaseWorker {
         constructor(port) {
@@ -1033,6 +1044,33 @@
             }
 
             this.deviceId = res.data['device-id'];
+
+            //regiser this device with backend.
+            //If signup-required, force user to signup
+            //After user signs up clear all db_id, because we are moving to a new db
+
+            res = await Utils.post('/browser-api/devices/register', {
+                'device-id': this.deviceId
+            }, false);
+
+            this.logger.log(TAG$1, JSON.stringify(res));
+
+            if (res.status == "error") {
+                return;
+            }
+
+            this.sessionId = res.data['session-id'];
+
+            if (res.data['signup-required']) {
+                //check if user is already logged in
+                //must check for user data. session-id will have a value even if user is not logged in
+                if (Utils.isEmpty(res.data.user)) {
+                    this.logger.log(TAG$1, "Signup required");
+                    this.port.postMessage({
+                        type: Constants.SIGNUP_REQUIRED
+                    });
+                }
+            }
         }
 
         async getLastSyncTs(db, id) {

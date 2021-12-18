@@ -226,6 +226,10 @@
             return 4
         }
 
+        static get SIGNUP_REQUIRED() {
+            return "signup-required";
+        }
+
         static get INIT_PROGRESS() {
             return "init-progress"
         }
@@ -613,6 +617,13 @@
     	static getRandomIntegerInclusive(min, max) {
     		return Math.floor(Math.random() * (max - min + 1)) + min;
     	}
+
+        static isEmpty(obj) { 
+            for (var x in obj) {
+                return false; 
+            }
+            return true;
+        }
     }
 
     const TAG$h = "stream";
@@ -3311,6 +3322,11 @@
 
                     case Constants.NEW_CONNECTIONS:
                         PubSub.publish(Constants.NEW_CONNECTIONS, {});
+                        break;
+
+                    case Constants.SIGNUP_REQUIRED:
+                        Logger.Log(TAG$1, Constants.SIGNUP_REQUIRED);
+                        PubSub.publish(Constants.SIGNUP_REQUIRED, {});
                         break;
                 }
             };

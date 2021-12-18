@@ -23,14 +23,6 @@ class QueryWorker extends BaseWorker {
     async init() {
         await super.init();
         this.logger.log(TAG, "deviceid:" + this.deviceId);
-
-        let res = await Utils.get('/browser-api/session', false);
-        if (res.status == "error") {
-            this.logger.log(TAG, JSON.stringify(res));
-            return
-        }
-
-        this.sessionId = res.data['session-id'];
         this.logger.log(TAG, "sessionId:" + this.sessionId);
 
         this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});

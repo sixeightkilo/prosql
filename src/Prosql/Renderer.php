@@ -57,8 +57,10 @@ class Renderer {
         case '':
             return $this->render($res, "index.pug", []);
 
-        case 'read-more':
         case 'connections':
+            return $this->renderConnections($res);
+
+        case 'read-more':
         case 'signup':
         case 'install':
             return $this->render($res, "{$params[0]}.pug", []);
@@ -68,14 +70,28 @@ class Renderer {
         }
     }
 
-    public function render(Response $response, string $file, array $data): Response {
+    private function renderConnections(Response $response): Response {
+        $email = $this->sm->getUser()['email'] ?? null;
+
+        if ($email) {
+            $filepath = $this->path . "/connections-user.pug";
+        } else {
+            $filepath = $this->path . "/connections.pug";
+        }
+
+        $body = $response->getBody();
+        $body->write($this->pug->render($filepath, $this->config));
+        return $response;
+    }
+
+    private function render(Response $response, string $file, array $data): Response {
         $filepath = $this->path . "/" . $file;
         $body = $response->getBody();
         $body->write($this->pug->render($filepath, $this->config));
         return $response;
     }
 
-    public function renderApp(Response $res, string $path, array $data): Response {
+    private function renderApp(Response $res, string $path, array $data): Response {
         if (!in_array($path, ['tables', 'queries', 'help', 'about'])) {
             return $res->withStatus(404);
         }

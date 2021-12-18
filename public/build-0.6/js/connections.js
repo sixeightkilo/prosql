@@ -2,12 +2,12 @@ import { Err } from './modules/error.js'
 import { Logger } from './modules/logger.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
-import { Connections } from './modules/connections.js'
+import { ConnectionModel } from './modules/connections.js'
 import { PubSub } from './modules/pubsub.js'
 import { Workers } from './modules/workers.js'
 
-const TAG = 'login'
-class Login {
+const TAG = 'connections'
+class Connections {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             await this.init()
@@ -63,11 +63,15 @@ class Login {
             this.showConns();
         });
 
+        PubSub.subscribe(Constants.SIGNUP_REQUIRED, async () => {
+            window.location = '/signup';
+        });
+
         this.workers = new Workers();
         this.workers.init();
 
         Logger.Log(TAG, "Workers initialized");
-        this.connections = new Connections(new Logger(), {version: Constants.CONN_DB_VERSION});
+        this.connections = new ConnectionModel(new Logger(), {version: Constants.CONN_DB_VERSION});
         await this.connections.open();
 
         this.initHandlers();
@@ -259,17 +263,11 @@ class Login {
             let response = await Utils.get(Constants.URL + '/about', false);
             //todo: what happens if this is not OK?
             if (response.status == "ok") {
-                let formData = new FormData();
-                formData.append('device-id', response.data['device-id']);
-                formData.append('version', response.data['version']);
-                formData.append('os', response.data['os']);
-
-                let res = await fetch("/browser-api/version", {
-                    body: formData,
-                    method: "post"
+                let res = await Utils.post('/browser-api/version', {
+                    'device-id': response.data['device-id'],
+                    'version': response.data['version'],
+                    'os': response.data['os'],
                 });
-
-                res = await res.json();
 
                 Logger.Log(TAG, JSON.stringify(res));
 
@@ -353,4 +351,4 @@ class Login {
     }
 }
 
-new Login()
+new Connections()

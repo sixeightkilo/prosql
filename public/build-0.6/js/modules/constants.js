@@ -223,6 +223,10 @@ class Constants {
         return 4
     }
 
+    static get SIGNUP_REQUIRED() {
+        return "signup-required";
+    }
+
     static get INIT_PROGRESS() {
         return "init-progress"
     }
