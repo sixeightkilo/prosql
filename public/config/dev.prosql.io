@@ -1,13 +1,13 @@
 server {
-        listen 443;
+        listen 443 ssl;
         server_name dev.prosql.io;
         error_log /var/www/dev-prosql/logs/error.log;
         access_log /var/www/dev-prosql/logs/access.log;
 	root /var/www/dev-prosql/public-html/prosql-web/public;
 
 ### SSL Stuff ###
-        ssl_certificate /etc/letsencrypt/live/prosql.io/fullchain.pem;
-        ssl_certificate_key /etc/letsencrypt/live/prosql.io/privkey.pem;
+        ssl_certificate /etc/letsencrypt/live/dev.prosql.io/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/dev.prosql.io/privkey.pem;
 
         #enables all versions of TLS, but not SSLv2 or 3 which are weak and now deprecated.
         ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
