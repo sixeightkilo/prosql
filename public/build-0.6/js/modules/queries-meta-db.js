@@ -31,6 +31,10 @@ class QueriesMetaDB extends BaseDB {
 
         await super.save(this.store, rec);
     }
+
+    async put(rec) {
+        await super.put(this.store, rec);
+    }
 } 
 
 export { QueriesMetaDB }

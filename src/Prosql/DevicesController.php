@@ -6,7 +6,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use \Prosql\Models\Device;
 
 class DevicesController extends BaseController {
-    const MAX_GUEST_DAYS = 15;//force users to signup after MAX_GUEST_DAYS
+    const MAX_GUEST_DAYS = 15;//force users to signin after MAX_GUEST_DAYS
 
     public function setDevice(Device $d): void {
         $this->device = $d;
@@ -28,10 +28,11 @@ class DevicesController extends BaseController {
         $this->logger->debug("days: $days");
 
         return [
-            //'signup-required' => ($days > self::MAX_GUEST_DAYS) ? true : false,
-            'signup-required' => true,
+            'signin-required' => ($days > self::MAX_GUEST_DAYS) ? true : false,
+            //'signin-required' => true,
             'session-id' => $this->sm->getSessionId(),
-            'user' => $this->sm->getUser()
+            'user' => $this->sm->getUser(),
+            'db-name' => $this->sm->getDbName(),
         ];
     }
 }

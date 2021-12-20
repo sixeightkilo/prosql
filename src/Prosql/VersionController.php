@@ -14,6 +14,11 @@ class VersionController extends BaseController {
         $this->sm->setDeviceId($deviceId);
         $this->sm->setOs($os);
 
+        if (!$this->sm->getDbName()) {
+            //the user is still a guest. Use device-id as db name
+            $this->sm->setDbName($deviceId);
+        }
+
         $this->sm->write();
 
         return null;

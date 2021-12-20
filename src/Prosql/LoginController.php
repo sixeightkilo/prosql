@@ -81,7 +81,9 @@ class LoginController extends BaseController {
 
         $this->sm->setTempUser([]);
         $this->sm->setOtp('');
+        $this->sm->setDeviceId($user['email']);
         $this->sm->setUser($user);
+        $this->sm->setDbName($user['email']);
         $this->sm->write();
     }
 
@@ -100,6 +102,7 @@ class LoginController extends BaseController {
         $this->sm->setTempUser([]);
         $this->sm->setOtp('');
         $this->sm->setUser($user);
+        $this->sm->setDbName($user['email']);
         $this->sm->write();
     }
 

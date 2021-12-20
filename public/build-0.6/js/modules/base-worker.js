@@ -27,7 +27,7 @@ class BaseWorker {
         this.deviceId = res.data['device-id'];
 
         //regiser this device with backend.
-        //If signup-required, force user to signup
+        //If signin-required, force user to signin/signup
         //After user signs up clear all db_id, because we are moving to a new db
 
         res = await Utils.post('/browser-api/devices/register', {
@@ -41,12 +41,13 @@ class BaseWorker {
         }
 
         this.sessionId = res.data['session-id'];
+        this.dbName = res.data['db-name'];
 
-        if (res.data['signup-required']) {
+        if (res.data['signin-required']) {
             //check if user is already logged in
-            //must check for user data. session-id will have a value even if user is not logged in
+            //must check for user data. session-id will have a value even if user is not logged in due to guest login
             if (Utils.isEmpty(res.data.user)) {
-                this.logger.log(TAG, "Signup required");
+                this.logger.log(TAG, "Signin required");
                 this.port.postMessage({
                     type: Constants.SIGNIN_REQUIRED
                 })
@@ -54,20 +55,52 @@ class BaseWorker {
         }
     }
 
-    async getLastSyncTs(db, id) {
+	async getLastSyncTs(db, id) {
         let rec = await db.get(parseInt(id));
         if (rec == null) {
             return new Date(Constants.EPOCH_TIMESTAMP);
         }
 
-        return rec.last_sync_ts
+        return rec.last_sync_ts ?? new Date(Constants.EPOCH_TIMESTAMP);
     }
 
     async setLastSyncTs(db, id) {
-        await db.save({
-            id: parseInt(id),
-            last_sync_ts: new Date()
-        })
+        let rec = await db.get(parseInt(id));
+
+        if (rec == null) {
+            await db.save({
+                id: parseInt(id),
+                last_sync_ts: new Date()
+            })
+            return;
+        }
+
+        rec.last_sync_ts = new Date();
+        await db.put(rec)
+    }
+
+    async getDbName(db, id) {
+        let rec = await db.get(parseInt(id));
+        if (rec == null) {
+            return '';
+        }
+
+        return rec.db_name ?? '';
+    }
+
+    async setDbName(db, id, dbName) {
+        let rec = await db.get(parseInt(id));
+
+        if (rec == null) {
+            await db.save({
+                id: parseInt(id),
+                db_name: dbName
+            })
+            return;
+        }
+
+        rec.db_name = dbName;
+        await db.put(rec)
     }
 }
 export { BaseWorker }

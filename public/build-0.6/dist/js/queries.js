@@ -2313,15 +2313,43 @@
             })
         }
 
-        async sync(conn) {
+        //remove db_id so that this record can be synced again with 
+        //a different db
+        async reset(rec) {
             return new Promise((resolve, reject) => {
                 let transaction = this.db.transaction(this.store, "readwrite");
                 let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(conn.id);
+                let request = objectStore.get(rec.id);
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o['db_id'] = conn.db_id;
+                    o['db_id'] = null;
+                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async sync(rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(rec.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = rec.db_id;
                     o['synced_at'] = new Date();
 
                     let requestUpdate = objectStore.put(o);
@@ -3366,6 +3394,10 @@
 
                 //update session id in modules
                 this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
+            });
+
+            PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
+                window.location = '/signin';
             });
 
             this.workers = new Workers();

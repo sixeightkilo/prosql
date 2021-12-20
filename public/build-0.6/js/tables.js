@@ -80,6 +80,10 @@ class Content {
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
 
+        PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
+            window.location = '/signin';
+        });
+
         this.workers = new Workers();
         this.workers.init();
 

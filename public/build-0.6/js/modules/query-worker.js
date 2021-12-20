@@ -24,12 +24,16 @@ class QueryWorker extends BaseWorker {
         await super.init();
         this.logger.log(TAG, "deviceid:" + this.deviceId);
         this.logger.log(TAG, "sessionId:" + this.sessionId);
+        this.logger.log(TAG, "dbName:" + this.dbName);
 
         this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
         await this.queryDb.open();
 
         this.metaDB = new QueriesMetaDB(this.logger, {version: Constants.QUERIES_META_DB_VERSION});
         await this.metaDB.open();
+        await this.setDbName(this.metaDB, Constants.QUERIES_META_KEY, this.dbName);
+        //debug
+        this.logger.log(TAG, await this.metaDB.get(Constants.QUERIES_META_KEY));
 
         this.syncDown();
         this.syncUp();
@@ -148,7 +152,9 @@ class QueryWorker extends BaseWorker {
             })
         }
 
+        this.logger.log(TAG, `setLastSyncTs:start`);
         this.setLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
+        this.logger.log(TAG, `setLastSyncTs:done`);
     }
 
     async fetchRecs(after, limit, offset) {

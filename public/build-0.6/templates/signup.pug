@@ -4,6 +4,7 @@ html
         include head.pug
         link(rel="stylesheet" href="/#{root}/css/signup.css?ver=#{version}")
     body
+        include common.pug
         include navbar.pug
         div#container.content
             //dummy
@@ -14,20 +15,20 @@ html
                         label.label(for="first-name") First Name
                     .field-body
                         .field
-                            input(type="text" id="first-name" value="" placeholder="First Name")
+                            input(type="text" id="first-name" value="P" placeholder="")
 
                 div#last-name-container.field.is-horizontal
                     .field-label.is-normal
                         label.label(for="last-name") Last Name
                     .field-body
                         .field
-                            input(type="text" id="last-name" value="" placeholder="")
+                            input(type="text" id="last-name" value="K" placeholder="")
 
                 div#email-container.field.is-horizontal
                     .field-label.is-normal
                         label.label(for="email") Email
                     .field-body
-                        input(type="text" id="email" value="" placeholder="")
+                        input(type="text" id="email" value="kargirwar@gmail.com" placeholder="")
 
                 div#image-container.field.is-horizontal
                     .field-label.is-normal
@@ -61,8 +62,6 @@ html
                         label.label(for="signup")
                     .field-body
                         button.button#signup.is-info.is-full-width Signup!
-
-
             //dummy
             div
 

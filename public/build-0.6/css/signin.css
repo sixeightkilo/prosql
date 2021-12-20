@@ -21,11 +21,7 @@
 	font-size:larger;
 }
 
-#first-name-container,
-#last-name-container,
 #email-container,
-#image-container,
-#captcha-container,
 #get-otp-container,
 #signin-container,
 #otp-container {
