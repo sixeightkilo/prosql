@@ -226,8 +226,8 @@
             return 4
         }
 
-        static get SIGNUP_REQUIRED() {
-            return "signup-required";
+        static get SIGNIN_REQUIRED() {
+            return "signin-required";
         }
 
         static get INIT_PROGRESS() {
@@ -4134,9 +4134,9 @@
                         PubSub.publish(Constants.NEW_CONNECTIONS, {});
                         break;
 
-                    case Constants.SIGNUP_REQUIRED:
-                        Logger.Log(TAG$1, Constants.SIGNUP_REQUIRED);
-                        PubSub.publish(Constants.SIGNUP_REQUIRED, {});
+                    case Constants.SIGNIN_REQUIRED:
+                        Logger.Log(TAG$1, Constants.SIGNIN_REQUIRED);
+                        PubSub.publish(Constants.SIGNIN_REQUIRED, {});
                         break;
                 }
             };

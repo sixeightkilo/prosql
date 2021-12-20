@@ -270,8 +270,8 @@
             return 4
         }
 
-        static get SIGNUP_REQUIRED() {
-            return "signup-required";
+        static get SIGNIN_REQUIRED() {
+            return "signin-required";
         }
 
         static get INIT_PROGRESS() {
@@ -631,14 +631,6 @@
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
                 await this.init();
-    //
-                //this.$testConn.addEventListener('click', async () => {
-                    //this.testConn()
-                //})
-    //
-                //this.$login.addEventListener('click', async () => {
-                    //this.login()
-                //})
             });
         }
 
@@ -695,7 +687,7 @@
                 'captcha-value': this.$captcha.value
             };
 
-            let json = await Utils.post('/browser-api/login/set-otp', params, false);
+            let json = await Utils.post('/browser-api/login/set-signup-otp', params, false);
             Logger.Log(TAG, JSON.stringify(json));
             if (json.status == "error") {
                 alert(json.msg);

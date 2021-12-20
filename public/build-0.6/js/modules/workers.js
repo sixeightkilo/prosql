@@ -20,9 +20,9 @@ class Workers {
                     PubSub.publish(Constants.NEW_CONNECTIONS, {});
                     break;
 
-                case Constants.SIGNUP_REQUIRED:
-                    Logger.Log(TAG, Constants.SIGNUP_REQUIRED);
-                    PubSub.publish(Constants.SIGNUP_REQUIRED, {});
+                case Constants.SIGNIN_REQUIRED:
+                    Logger.Log(TAG, Constants.SIGNIN_REQUIRED);
+                    PubSub.publish(Constants.SIGNIN_REQUIRED, {});
                     break;
             }
         }

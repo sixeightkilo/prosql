@@ -1,0 +1,40 @@
+doctype html
+html
+    head
+        include head.pug
+        link(rel="stylesheet" href="/#{root}/css/signin.css?ver=#{version}")
+    body
+        include navbar.pug
+        div#container.content
+            //dummy
+            div
+            div#form-container.control
+                div#email-container.field.is-horizontal
+                    .field-label.is-normal
+                        label.label(for="email") Email
+                    .field-body
+                        input(type="text" id="email" value="" placeholder="")
+
+                div#get-otp-container.field.is-horizontal
+                    .field-label.is-normal
+                        label.label(for="")
+                    .field-body
+                        button.button#get-otp.is-info.is-full-width Get OTP
+
+                div#otp-container.field.is-horizontal
+                    .field-label.is-normal
+                        label.label(for="otp") OTP
+                    .field-body
+                        input(type="text" id="otp" value="" placeholder="")
+
+                div#signin-container.field.is-horizontal
+                    .field-label.is-normal
+                        label.label(for="signup")
+                    .field-body
+                        button.button#signin.is-info.is-full-width Signin!
+            //dummy
+            div
+
+        input#version(type=hidden value="#{version}")
+
+        script(type='module' src='/#{root}/dist/js/signin.js?ver=#{version}')

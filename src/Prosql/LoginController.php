@@ -48,11 +48,17 @@ class LoginController extends BaseController {
 
     public function handlePost(Request $req, Response $res, array $args): Mixed {
         switch ($args['action']) {
-        case 'set-otp':
-            return $this->setOtp($req);
+        case 'set-signup-otp':
+            return $this->setSignupOtp($req);
+
+        case 'set-signin-otp':
+            return $this->setSigninOtp($req);
 
         case 'signup':
             return $this->signup($req);
+
+        case 'signin':
+            return $this->signin($req);
 
         default:
             throw new \Exception('invalid-operation');
@@ -79,7 +85,25 @@ class LoginController extends BaseController {
         $this->sm->write();
     }
 
-    private function setOtp(Request $req): void {
+    private function signin(Request $req): void {
+        $otp = $req->getParsedBody()['otp'];
+        if ($this->sm->getOtp() != $otp) {
+            throw new \Exception("Invalid otp");
+        }
+
+        $user = $this->sm->getTempUser();
+        $this->logger->debug("Signing in:" . print_r($user, true));
+        $user = $this->user->get(['first_name', 'last_name', 'email'], [
+            ['email', '=', $user['email']]
+        ])[0];
+
+        $this->sm->setTempUser([]);
+        $this->sm->setOtp('');
+        $this->sm->setUser($user);
+        $this->sm->write();
+    }
+
+    private function setSignupOtp(Request $req): void {
         $params = $req->getParsedBody();
         //$id = $params['captcha-id'];
         //$value = $params['captcha-value'];
@@ -118,6 +142,35 @@ class LoginController extends BaseController {
             'otp' => $otp
         ]);
         $this->emailer->send($params['email'], [], "Your OTP for signing up!", $msg);
+    }
+
+    private function setSigninOtp(Request $req): void {
+        $params = $req->getParsedBody();
+
+        //check if user registered
+        $user = $this->user->get(['first_name', 'last_name'], [
+            ['email', '=', $params['email']]
+        ])[0] ?? null;
+
+        $this->logger->debug("user: " . print_r($user, true));
+
+        if (!$user) {
+            throw new \Exception("Unknown user. Please sign up first.");
+        }
+
+        $otp = random_int(self::MIN, self::MAX);
+
+        $this->sm->setOtp($otp);
+        $this->sm->setTempUser([
+            'email' => $params['email'],
+        ]);
+        $this->sm->write();
+
+        $msg = $this->pug->render(__DIR__ . "/templates/signup-otp.pug", [
+            'name' => $user['first_name'] . ' ' . $user['last_name'],
+            'otp' => $otp
+        ]);
+        $this->emailer->send($params['email'], [], "Your OTP for signing in!", $msg);
     }
 
     private function getCaptcha(): array {

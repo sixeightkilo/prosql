@@ -63,8 +63,8 @@ class Connections {
             this.showConns();
         });
 
-        PubSub.subscribe(Constants.SIGNUP_REQUIRED, async () => {
-            window.location = '/signup';
+        PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
+            window.location = '/signin';
         });
 
         this.workers = new Workers();

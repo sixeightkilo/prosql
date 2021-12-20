@@ -1,6 +1,50 @@
 (function () {
     'use strict';
 
+    class Err {
+        static get ERR_NONE () {
+            return 'none'
+        }
+
+        static get ERR_NO_AGENT () {
+            return 'no-agent'
+        }
+
+        static get ERR_INVALID_USER_INPUT() {
+            return 'invalid-user-input'
+        }
+
+        static get ERR_INVALID_SESSION_ID() {
+            return 'invalid-session-id'
+        }
+
+        static get ERR_INVALID_CURSOR_ID() {
+            return 'invalid-cursor-id'
+        }
+
+        static get ERR_DB_ERROR() {
+            return 'db-error'
+        }
+
+        static get ERR_UNRECOVERABLE() {
+            return 'unrecoverable-error'
+        }
+
+        static handle(err) {
+            if (err.error == Err.ERR_NO_AGENT) {
+                window.location = '/install';
+                return;
+            }
+
+            if (err.error == Err.ERR_INVALID_SESSION_ID) {
+                window.location = '/connections';
+                return;
+            }
+
+            alert(err.error);
+        }
+    }
+
     class Constants {
         //hotkeys
         static get SHIFT_A() {
@@ -328,50 +372,6 @@
         }
     }
 
-    class Err {
-        static get ERR_NONE () {
-            return 'none'
-        }
-
-        static get ERR_NO_AGENT () {
-            return 'no-agent'
-        }
-
-        static get ERR_INVALID_USER_INPUT() {
-            return 'invalid-user-input'
-        }
-
-        static get ERR_INVALID_SESSION_ID() {
-            return 'invalid-session-id'
-        }
-
-        static get ERR_INVALID_CURSOR_ID() {
-            return 'invalid-cursor-id'
-        }
-
-        static get ERR_DB_ERROR() {
-            return 'db-error'
-        }
-
-        static get ERR_UNRECOVERABLE() {
-            return 'unrecoverable-error'
-        }
-
-        static handle(err) {
-            if (err.error == Err.ERR_NO_AGENT) {
-                window.location = '/install';
-                return;
-            }
-
-            if (err.error == Err.ERR_INVALID_SESSION_ID) {
-                window.location = '/connections';
-                return;
-            }
-
-            alert(err.error);
-        }
-    }
-
     const TAG$1 = "utils";
     class Utils {
         static saveToSession(key, val) {
@@ -626,69 +626,54 @@
         }
     }
 
-    const TAG = "tabs";
-
-    class Tabs {
+    const TAG = 'signin';
+    class Signin {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
-                Logger.Log(TAG, 'DOMContentLoaded');
-                this.$tabs = document.querySelector('.tabs');
-                this.$contents = document.querySelectorAll('.tab-content');
-                this.init();
+                await this.init();
             });
         }
 
-        init() {
-            let list = this.$tabs.querySelectorAll('li');
-            list.forEach((t) => {
-                t.addEventListener('click', (e) => {
-                    let li = e.target.parentElement;
-                    if (li.classList.contains('is-active')) {
-                        return;
-                    }
+        async init() {
+            this.$email = document.getElementById('email');
+            this.$image = document.getElementById('image');
+            this.$getOtp = document.getElementById('get-otp');
+            this.$otp = document.getElementById('otp');
+            this.$signin = document.getElementById('signin');
 
-                    //disable currently active tab
-                    this.$tabs.querySelector('.is-active').classList.remove('is-active');
-                    this.$contents.forEach((e) => {
-                        e.style.display = "none";
-                    });
-
-                    //activate current tab
-                    li.classList.add('is-active');
-
-                    //and the content
-                    let target = e.target;
-                    Logger.Log(TAG, target.className);
-                    this.$contents.forEach(($c) => {
-                        if ($c.classList.contains(`${target.className}`)) {
-                            $c.style.display = "block";
-                        }
-                    });
-                });
+            this.$signin.addEventListener('click', () => {
+                this.signin();
             });
+
+            this.$getOtp.addEventListener('click', () => {
+                this.getOtp();
+            });
+        }
+
+        async signin() {
+            let json = await Utils.post('/browser-api/login/signin', {'otp': this.$otp.value});
+
+            if (json.status == "ok") {
+                window.location = '/connections';
+            }
+        }
+
+        async getOtp() {
+            let params = {
+                'email': this.$email.value,
+            };
+
+            let json = await Utils.post('/browser-api/login/set-signin-otp', params, false);
+            Logger.Log(TAG, JSON.stringify(json));
+            if (json.status == "error") {
+                alert(json.msg);
+                return;
+            }
+
+            alert(`Otp sent to ${this.$email.value}`);
         }
     }
 
-    class About {
-        constructor() {
-            document.addEventListener('DOMContentLoaded', async () => {
-                let $ver = document.querySelector('.agent-version');
-                let $contact = document.querySelector('.contact');
-                $contact.classList.remove('is-hidden');
-
-                let response = await Utils.get(Constants.URL + '/about', false);
-                if (response.status == "ok") {
-                    $ver.innerHTML = response.data.version;
-                    return;
-                }
-
-                $ver.innerHTML = 'Not detected';
-            });
-
-            new Tabs();
-        }
-    }
-
-    new About();
+    new Signin();
 
 })();

@@ -62,6 +62,7 @@ class Renderer {
 
         case 'read-more':
         case 'signup':
+        case 'signin':
         case 'install':
             return $this->render($res, "{$params[0]}.pug", []);
 

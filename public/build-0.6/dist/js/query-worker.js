@@ -226,8 +226,8 @@
             return 4
         }
 
-        static get SIGNUP_REQUIRED() {
-            return "signup-required";
+        static get SIGNIN_REQUIRED() {
+            return "signin-required";
         }
 
         static get INIT_PROGRESS() {
@@ -1382,7 +1382,7 @@
                 if (Utils.isEmpty(res.data.user)) {
                     this.logger.log(TAG$1, "Signup required");
                     this.port.postMessage({
-                        type: Constants.SIGNUP_REQUIRED
+                        type: Constants.SIGNIN_REQUIRED
                     });
                 }
             }

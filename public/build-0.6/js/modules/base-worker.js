@@ -48,7 +48,7 @@ class BaseWorker {
             if (Utils.isEmpty(res.data.user)) {
                 this.logger.log(TAG, "Signup required");
                 this.port.postMessage({
-                    type: Constants.SIGNUP_REQUIRED
+                    type: Constants.SIGNIN_REQUIRED
                 })
             }
         }
