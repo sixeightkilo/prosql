@@ -183,7 +183,7 @@ class QueryRunner {
         }
 
         if (!this.cursorId) {
-            this.cursorId = await DbUtils.getCursorId(this.sessionId, q);
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
         }
 
         let params = {

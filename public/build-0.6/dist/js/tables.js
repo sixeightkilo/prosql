@@ -840,7 +840,7 @@
         }
 
         async execute(query) {
-            this.cursorId = await DbUtils.getCursorId(this.sessionId, query, true);
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query, true);
 
             let params = {
                 'session-id': this.sessionId,
@@ -877,7 +877,7 @@
         }
 
         async exportResults(q) {
-            let cursorId = await DbUtils.getCursorId(this.sessionId, q);
+            let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
             Logger.Log(TAG$i, `cursorId: ${cursorId}`);
             let params = {
                 'session-id': this.sessionId,
@@ -4247,4 +4247,4 @@
 
     new Content();
 
-}());
+})();

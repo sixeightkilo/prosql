@@ -64,7 +64,7 @@ class DbUtils {
     }
 
     async execute(query) {
-        this.cursorId = await DbUtils.getCursorId(this.sessionId, query, true)
+        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query, true)
 
         let params = {
             'session-id': this.sessionId,
@@ -101,7 +101,7 @@ class DbUtils {
     }
 
     async exportResults(q) {
-        let cursorId = await DbUtils.getCursorId(this.sessionId, q)
+        let cursorId = await DbUtils.fetchCursorId(this.sessionId, q)
         Logger.Log(TAG, `cursorId: ${cursorId}`);
         let params = {
             'session-id': this.sessionId,
