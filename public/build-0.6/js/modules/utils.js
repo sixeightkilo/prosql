@@ -1,9 +1,10 @@
 import { Logger } from './logger.js'
 import { Err } from './error.js'
-import { QueryDB } from './modules/query-db.js'
-import { QueriesMetaDB } from './modules/queries-meta-db.js'
-import { ConnectionDB } from './modules/connection-db.js'
-import { ConnectionsMetaDB } from './modules/connections-meta-db.js'
+import { QueryDB } from './query-db.js'
+import { QueriesMetaDB } from './queries-meta-db.js'
+import { ConnectionDB } from './connection-db.js'
+import { ConnectionsMetaDB } from './connections-meta-db.js'
+import { Constants } from './constants.js'
 
 const TAG = "utils"
 class Utils {

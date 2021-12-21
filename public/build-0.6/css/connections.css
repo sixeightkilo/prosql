@@ -118,3 +118,15 @@
 	grid-template-columns: 1fr 1fr;
 	column-gap:0.2em;
 }
+
+#signin-container {
+	margin-left:auto;
+	margin-right:auto;
+	text-align:center;
+}
+
+#signout-container {
+	margin-left:auto;
+	margin-right:auto;
+	text-align:center;
+}

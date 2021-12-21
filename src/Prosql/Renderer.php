@@ -57,6 +57,10 @@ class Renderer {
         case '':
             return $this->render($res, "index.pug", []);
 
+        case 'signout':
+            $this->sm->kill();
+            return $res->withStatus(302)->withHeader('Location', '/signin');
+
         case 'connections':
             return $this->renderConnections($res);
 

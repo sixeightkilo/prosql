@@ -27,25 +27,7 @@ $app->post('/browser-api/version', 'VersionController:handle');
 $app->get('/browser-api/sql/{action}', 'SqlController:handle');
 $app->map(['GET', 'POST'], '/browser-api/login/{action}', 'LoginController:handle');
 
-$app->get('/browser-api/session', function($req, $res, $args) {
-    $sm = $this->get('session-manager');
-    $res->getBody()->write(json_encode([
-        'status' => 'ok',
-        'data' => [
-            'session-id' => $sm->getSessionId()
-        ]
-    ]));
-    return $res->withHeader('Content-Type', 'application/json');
-});
-
 $app->get('[/{params:.*}]','Renderer:handle')
-    ->add(function(Request $request, RequestHandler $handler) {
-        //no changes exepcted in session when rendering pages so write close it
-        $sm = $this->get('session-manager');
-        $sm->write();
-
-        $response = $handler->handle($request);
-        return $response;
-    });
+    ->add('SessionAuthMiddleware:handle');
 
 $app->run();

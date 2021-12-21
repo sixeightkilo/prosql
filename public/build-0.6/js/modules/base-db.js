@@ -1,6 +1,5 @@
 import { Logger } from './logger.js'
 import { Constants } from './constants.js'
-import { Utils } from './utils.js'
 
 const TAG = "base-db"
 class BaseDB {

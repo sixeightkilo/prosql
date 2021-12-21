@@ -1,7 +1,6 @@
 import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { BaseDB } from './base-db.js'
-import { Utils } from './utils.js'
 
 const TAG = "connection-db"
 const CONNECTION_INDEX = "connection-index";

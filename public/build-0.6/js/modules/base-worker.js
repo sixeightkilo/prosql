@@ -31,7 +31,9 @@ class BaseWorker {
         //After user signs up clear all db_id, because we are moving to a new db
 
         res = await Utils.post('/browser-api/devices/register', {
-            'device-id': this.deviceId
+            'device-id': res.data['device-id'],
+            'version': res.data['version'],
+            'os': res.data['os'],
         }, false)
 
         this.logger.log(TAG, JSON.stringify(res));
@@ -42,17 +44,6 @@ class BaseWorker {
 
         this.sessionId = res.data['session-id'];
         this.dbName = res.data['db-name'];
-
-        if (res.data['signin-required']) {
-            //check if user is already logged in
-            //must check for user data. session-id will have a value even if user is not logged in due to guest login
-            if (Utils.isEmpty(res.data.user)) {
-                this.logger.log(TAG, "Signin required");
-                this.port.postMessage({
-                    type: Constants.SIGNIN_REQUIRED
-                })
-            }
-        }
     }
 }
 export { BaseWorker }

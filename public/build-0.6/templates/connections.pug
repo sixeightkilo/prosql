@@ -64,6 +64,10 @@ html
                             a(href="/signup") Signup 
                         button.button(id="login") Continue as guest
 
+                div#signin-container
+                    #[br]
+                    span Already registered? Please #[a(href="/signin") Signin.]
+
         input#version(type=hidden value="#{version}")
 
         script(type='module' src='/#{root}/dist/js/connections.js?ver=#{version}')

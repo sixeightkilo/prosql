@@ -6,6 +6,7 @@ use Monolog\Processor\UidProcessor;
 use Prosql\{SessionManager, VersionController, DevicesController, SqlController, LoginController, Renderer, Emailer};
 use Prosql\Models\{User, Device};
 use Prosql\Utils\{PDOUtils};
+use Prosql\Middleware\{SessionAuthMiddleware};
 
 require __DIR__ . '/../vendor/autoload.php';
 
@@ -50,6 +51,12 @@ $container->set('SqlController', function() use ($container) {
     $logger = $container->get('logger');
     $sm = $container->get('session-manager');
     return new SqlController($logger, $sm);
+});
+
+$container->set('SessionAuthMiddleware', function() use ($container) {
+    $logger = $container->get('logger');
+    $sm = $container->get('session-manager');
+    return new SessionAuthMiddleware($logger, $sm);
 });
 
 $container->set('Renderer', function() use ($container) {

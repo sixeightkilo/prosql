@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    class Constants$1 {
+    class Constants {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -302,7 +302,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants$1.DEBUG_LOG,
+                    type: Constants.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -372,293 +372,7 @@
         }
     }
 
-    const TAG$6 = "utils";
-    class Utils {
-        static saveToSession(key, val) {
-            window.sessionStorage.setItem(key, val);
-        }
-
-        static getFromSession(key) {
-            return window.sessionStorage.getItem(key)
-        }
-
-
-        static saveToLocalStorage(key, value) {
-            window.localStorage.setItem(key, value);
-        }
-
-        static getFromLocalStorage(key) {
-            return window.localStorage.getItem(key) ?? null;
-        }
-
-    	static processTemplate(templ, data) {
-    		var re = new RegExp(/{(.*?)}/g);
-    		templ = templ.replace(re, function(match, p1) {
-    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
-    				return data[p1];
-    			} else {
-    				return match;
-    			}
-    		});
-    		return templ;
-    	}
-
-    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
-    	static generateNode(templ, data) {
-            templ = Utils.processTemplate(templ, data);	
-            let template = document.createElement('template');
-            template.innerHTML = templ.trim();
-            return template.content
-        }
-
-        static async get(url, handleError = true, headers = {}) {
-            try {
-                let hdrs = {
-                    'X-Request-ID': Utils.uuid()
-                };
-                hdrs = {...hdrs, ...headers};
-                let response = await fetch(url, {
-                    headers: hdrs
-                });
-
-                Logger.Log(TAG$6, response);
-
-                let json = await response.json();
-
-                if (json.status == 'error') {
-                    throw json
-                }
-
-                return json
-            } catch (e) {
-                Logger.Log(TAG$6, e);
-                let res = {
-                    'status' : 'error',
-                    'data': null,
-                };
-
-                if (e instanceof TypeError) {
-                    if (!handleError) {
-                        res.msg = Err.ERR_NO_AGENT;
-                        return res;
-                    }
-                    //user must install agent
-                    window.location = '/install';
-                    return;
-                }
-
-                res.msg = e.msg;
-                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
-                    //user must login
-                    window.location = '/connections';
-                    return;
-                }
-
-                //let client handle this
-                if (!handleError) {
-                    return res
-                }
-
-                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
-                    //let caller handle this too
-                    return res
-                }
-
-                //common error handling
-                if (res.msg) {
-                    //normal error. Display to user
-                    alert(res.msg);
-                    return res
-                }
-            }
-        }
-
-        static async post(url, body, handleError = true, headers = {}) {
-            try {
-                let hdrs = {
-                    'X-Request-ID': Utils.uuid()
-                };
-                hdrs = {...hdrs, ...headers};
-                let formData = new FormData();
-
-                for (let k in body) {
-                    formData.append(k, body[k]);
-                }
-
-                let response = await fetch(url, {
-                    headers: hdrs,
-                    body: formData,
-                    method: "post"
-                });
-
-                Logger.Log(TAG$6, response);
-
-                let json = await response.json();
-
-                if (json.status == 'error') {
-                    throw json
-                }
-
-                return json
-            } catch (e) {
-                Logger.Log(TAG$6, e);
-                let res = {
-                    'status' : 'error',
-                    'data': null,
-                };
-
-                if (e instanceof TypeError) {
-                    if (!handleError) {
-                        res.msg = Err.ERR_NO_AGENT;
-                        return res;
-                    }
-                    //user must install agent
-                    window.location = '/install';
-                    return;
-                }
-
-                res.msg = e.msg;
-                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
-                    //user must login
-                    window.location = '/connections';
-                    return;
-                }
-
-                //let client handle this
-                if (!handleError) {
-                    return res
-                }
-
-                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
-                    //let caller handle this too
-                    return res
-                }
-
-                //common error handling
-                if (res.msg) {
-                    //normal error. Display to user
-                    alert(res.msg);
-                    return res
-                }
-            }
-        }
-
-        static async setOptions($ctx, values, def) {
-            $ctx.replaceChildren();
-
-            let $ot = document.getElementById('option-template');
-            let ot = $ot.innerHTML;
-
-            values.forEach((v) => {
-                let h = Utils.generateNode(ot, {value: v});
-                $ctx.append(h);
-            });
-
-            $ctx.value = def;
-        }
-
-        static showAlert(msg, t) {
-            let $alrt = document.getElementById('alert');
-            let $msg = $alrt.querySelector('.msg');
-            $msg.innerHTML = msg;
-            $alrt.style.display = 'block';
-
-            let bodyDims = document.querySelector('body').getBoundingClientRect();
-            $alrt.style.left = (bodyDims.width / 2) + 'px';
-
-            setTimeout(() => {
-                $alrt.style.display = 'none';
-            }, t);
-        }
-
-        static showNoData() {
-            Logger.Log(TAG$6, "No data");
-        }
-
-        //https://gist.github.com/gordonbrander/2230317
-        static uuid() {
-            // Math.random should be unique because of its seeding algorithm.
-            // Convert it to base 36 (numbers + letters), and grab the first 9 characters
-            // after the decimal.
-            return '_' + Math.random().toString(36).substr(2, 9);
-        };
-
-        static getOffset(el) {
-            const rect = el.getBoundingClientRect();
-            return {
-                left: rect.left + window.scrollX,
-                top: rect.top + window.scrollY,
-                width: rect.width,
-                height: rect.height,
-            };
-        }
-
-       static extractColumns(arr) {
-            let cols = [];
-            arr.forEach((e) => {
-                cols.push(e[1]);
-            });
-
-            return cols
-        }
-
-        static truncate(s, max) {
-    		if (s.length > max) {
-    			return s.substring(0, max) + '...';
-    		}
-    		return s;
-    	}
-
-        static getTimestamp() {
-            let d = (new Date()).toISOString();
-            return d.replace(/T/, ' ').replace(/\..*$/, '');
-        }
-
-    	static getRandomIntegerInclusive(min, max) {
-    		return Math.floor(Math.random() * (max - min + 1)) + min;
-    	}
-
-        static isEmpty(obj) { 
-            for (var x in obj) {
-                return false; 
-            }
-            return true;
-        }
-
-        async resetAll() {
-            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
-            await connDb.open();
-            let conns = await connDb.getAll();
-            Logger.Log(TAG$6, "Resetting connections..");
-            for (let i = 0; i < conns.length; i++) {
-                await connDb.reset(conns[i]);
-            }
-            Logger.Log(TAG$6, "Done.");
-
-            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
-            await queryDb.open();
-            let queries = await queryDb.getAll();
-            Logger.Log(TAG$6, "Resetting queries..");
-            for (let i = 0; i < queries.length; i++) {
-                await queryDb.reset(queries[i]);
-            }
-            Logger.Log(TAG$6, "Done.");
-
-            Logger.Log(TAG$6, "Resetting QueriesMetaDB");
-            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
-            await queriesMetaDb.open();
-            await queriesMetaDb.destroy();
-            Logger.Log(TAG$6, "Done.");
-
-            Logger.Log(TAG$6, "Resetting connectionsMetaDb");
-            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
-            await connectionsMetaDb.open();
-            await connectionsMetaDb.destroy();
-            Logger.Log(TAG$6, "Done.");
-        }
-    }
-
-    const TAG$5 = "base-db";
+    const TAG$8 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -670,13 +384,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$5, "open.onsuccess");
+                        this.logger.log(TAG$8, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$5, e.target.error);
+                        this.logger.log(TAG$8, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -697,7 +411,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$5, e.target.error);
+                    this.logger.log(TAG$8, e.target.error);
                     resolve(-1);
                 };
             })
@@ -715,7 +429,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$5, e.target.error);
+                    this.logger.log(TAG$8, e.target.error);
                     resolve(-1);
                 };
             })
@@ -747,7 +461,7 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o.status = Constants$1.STATUS_DELETED;
+                    o.status = Constants.STATUS_DELETED;
                     let requestUpdate = objectStore.put(o);
 
                     requestUpdate.onerror = (e) => {
@@ -783,7 +497,7 @@
                         result = request.result;
                     }
 
-                    this.logger.log(TAG$5, JSON.stringify(result));
+                    this.logger.log(TAG$8, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -832,7 +546,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = null;
-                    o['synced_at'] = new Date(Constants$1.EPOCH_TIMESTAMP);
+                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {
@@ -877,11 +591,11 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$5, "findByDbId");
+                this.logger.log(TAG$8, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(Constants$1.DB_ID_INDEX);
+                let index = objectStore.index(Constants.DB_ID_INDEX);
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
@@ -889,7 +603,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$5, "error");
+                    this.logger.log(TAG$8, "error");
                     resolve(e.target.error);
                 };
             })
@@ -936,11 +650,524 @@
         }
     }
 
+    const TAG$7 = "query-db";
+    const CREATED_AT_INDEX = "created-at-index";
+    const QUERY_INDEX = "query-index";
+    const TERM_INDEX = "term-index";
+    const TAG_INDEX = "tag-index";
+
+    class QueryDB extends BaseDB {
+        constructor(logger, options) {
+            options.dbName = "queries";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "queries";
+            this.searchIndex = "search-index";
+            this.tagIndex = "tag-index";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$7, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 2) {
+                let store = e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+
+                store = e.target.result.createObjectStore(
+                    this.searchIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TERM_INDEX, "term", { unique : true });
+
+                store = e.target.result.createObjectStore(
+                    this.tagIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TAG_INDEX, "tag", { unique : true });
+            }
+
+            if (e.oldVersion < 37) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+            }
+        }
+
+        async save(rec) {
+            return new Promise(async (resolve, reject) => {
+                //remove all new lines
+                rec.query = rec.query.replace(/\r?\n|\r/g, " ");
+                //remove extra white spaces
+                rec.query = rec.query.replace(/[ ]{2,}/g, " ");
+                let terms = rec.query.split(' ');
+
+                //get all unique terms
+                //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
+                terms = [...new Set(terms)];
+
+                this.logger.log(TAG$7, JSON.stringify(terms));
+                let id = -1;
+                try {
+                    //apppend timestamp if required
+                    if (!rec.created_at) {
+                        rec.created_at = new Date();
+                    }
+
+                    id = await super.save(this.store, rec);
+                    if (id == -1) {
+                        resolve(-1);
+                        return;
+                    }
+
+                    await this.updateSearchIndex(id, terms);
+                    await this.updateTagIndex(id, rec.tags);
+
+                    resolve(id);
+                } catch (e) {
+                    this.logger.log(TAG$7, `error: ${JSON.stringify(e.message)}`);
+                    reject(e.message);
+                }
+            })
+        }
+
+        async updateSearchIndex(id, terms) {
+            //add id to each of the tags
+            for (let i = 0; i < terms.length; i++) {
+                let t = terms[i];
+                t = t.trim();
+
+                if (t.length <= 1) {
+                    continue;
+                }
+
+                t = this.cleanup(t);
+                try {
+                    let rec = await this.findByTerm(t);
+                    //add a new tag
+                    if (rec == null) {
+                        await super.save(this.searchIndex, {
+                            term: t,
+                            queries:[id]
+                        });
+                        continue;
+                    }
+
+                    //update tag
+                    rec['queries'].push(id);
+                    this.logger.log(TAG$7, JSON.stringify(rec));
+                    super.put(this.searchIndex, {
+                        id: rec.id,
+                        term: t,
+                        queries: rec['queries']
+                    });
+
+                } catch (e) {
+                    this.logger.log(TAG$7, `error: e.message`);
+                }
+            }
+        }
+
+        async findByTerm(term) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let index = objectStore.index(TERM_INDEX);
+
+                let key = IDBKeyRange.only(term);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve(null);
+                };
+            })
+        }
+
+        async updateTagIndex(id, tags) {
+            //add id to each of the tags
+            for (let i = 0; i < tags.length; i++) {
+                let t = tags[i];
+                t = t.trim();
+
+                if (t.length <= 1) {
+                    continue;
+                }
+
+                t = this.cleanup(t);
+                try {
+                    let rec = await this.findByTag(t);
+                    //add a new tag
+                    if (rec == null) {
+                        await super.save(this.tagIndex, {
+                            tag: t,
+                            queries:[id]
+                        });
+                        continue;
+                    }
+
+                    //update tag
+                    rec['queries'].push(id);
+                    this.logger.log(TAG$7, JSON.stringify(rec));
+                    super.put(this.tagIndex, {
+                        id: rec.id,
+                        tag: t,
+                        queries: rec['queries']
+                    });
+
+                } catch (e) {
+                    this.logger.log(TAG$7, `error: e.message`);
+                }
+            }
+        }
+
+        async findByTag(tag) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let index = objectStore.index(TAG_INDEX);
+
+                let key = IDBKeyRange.only(tag);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve(null);
+                };
+            })
+        }
+
+        async findByQuery(query) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.dbName);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(QUERY_INDEX);
+
+                let key = IDBKeyRange.only(query);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve([]);
+                };
+            })
+        }
+
+        //https://stackoverflow.com/questions/26156292/trim-specific-character-from-a-string
+        cleanup(str) {
+            //remove table qualifiers like table_name.<...>
+            str = str.replace(/^\S+\./, "");
+
+            //remove punctuation marks
+            let chars = ['`', '`', ' ', '"', '\'', ',', ';', '+', '-', '=', '!=', '<', '>', '>=', '<='];
+            let start = 0, 
+                end = str.length;
+
+            while(start < end && chars.indexOf(str[start]) >= 0)
+                ++start;
+
+            while(end > start && chars.indexOf(str[end - 1]) >= 0)
+                --end;
+
+            return (start > 0 || end < str.length) ? str.substring(start, end) : str;
+        }
+
+        async filter(days, tags, terms) {
+            //days supercedes everything
+            //if days are provided get queries by days first
+            //then filter by terms and tags if provided
+            this.logger.log(TAG$7, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+
+            let start, end;
+            if (days.hasOwnProperty('start')) {
+                start = new Date(Date.now() - (days.start * 24 * 60 * 60 * 1000));
+                start.setHours(0);
+                start.setMinutes(0);
+                start.setSeconds(0);
+            }
+
+            if (days.hasOwnProperty('end')) {
+                end = new Date(Date.now() - (days.end * 24 * 60 * 60 * 1000));
+                end.setHours(23);
+                end.setMinutes(59);
+                end.setSeconds(59);
+            }
+
+
+            let ids = [];
+            if (start || end) {
+                this.logger.log(TAG$7, 'filtering');
+                ids = await this.searchByCreatedAt(start, end);
+
+                if (ids.length == 0) {
+                    //if days were provided and we did not find anything
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            if (tags.length > 0) {
+                let idsByTag = await this.searchByTags(tags);
+
+                ids = ids.filter(x => idsByTag.includes(x));
+                if (ids.length == 0) {
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            if (terms.length > 0) {
+                let idsByTerm = await this.searchByTerms(terms);
+
+                ids = ids.filter(x => idsByTerm.includes(x));
+                if (ids.length == 0) {
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            let results = [];
+            this.logger.log(TAG$7, `${ids}`);
+            for (let i = 0; i < ids.length; i++) {
+                results.push(await super.get(ids[i]));
+            }
+
+            return results;
+        }
+
+        async findByIds(ids) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let queries = [];
+
+                objectStore.openCursor(null, 'prev').onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (ids.includes(cursor.value.id)) {
+                            queries.push(cursor.value);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(queries);
+                    }
+                };
+            });
+        }
+
+        async updateTags(rec) {
+            await super.put(this.store, rec);
+            await this.updateTagIndex(rec.id, rec.tags);
+        }
+
+        searchByTerms(terms) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let ids = [];
+
+                objectStore.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (terms.includes(cursor.value.term)) {
+                            ids = ids.concat(cursor.value.queries);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(ids);
+                    }
+                };
+            });
+        }
+
+        searchByTags(tags) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let ids = [];
+
+                objectStore.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (tags.includes(cursor.value.tag)) {
+                            ids = ids.concat(cursor.value.queries);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(ids);
+                    }
+                };
+            });
+        } 
+
+        listTags(startingWith) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let index = objectStore.index(TAG_INDEX);
+                let tags = [];
+
+                IDBKeyRange.lowerBound(startingWith);
+                index.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        tags.push(cursor.value.tag);
+                        cursor.continue();
+                    } else {
+                        resolve(tags);
+                    }
+                };
+            });
+        }
+
+        listTerms(startingWith) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let index = objectStore.index(TERM_INDEX);
+                let terms = [];
+
+                IDBKeyRange.lowerBound(startingWith);
+                index.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        terms.push(cursor.value.term);
+                        cursor.continue();
+                    } else {
+                        resolve(terms);
+                    }
+                };
+            });
+        }
+
+        searchByCreatedAt(s, e) {
+            return new Promise((resolve, reject) => {
+                this.logger.log(TAG$7, `s: ${s} e: ${e}`);
+
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(CREATED_AT_INDEX);
+
+                // s -----> e ----> now
+                let key;
+                if (s && e) {
+                    key = IDBKeyRange.bound(s, e);
+                } else if (s) {
+                    key = IDBKeyRange.lowerBound(s);
+                } else if (e) {
+                    key = IDBKeyRange.upperBound(e);
+                } else {
+                    resolve([]);
+                    return;
+                }
+
+                let queries = [];
+                index.openCursor(key, "prev").onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$7, `id: ${cursor.value.created_at.toISOString()}`);
+                        queries.push(cursor.value.id);
+                        cursor.continue();
+                    } else {
+                        resolve(queries);
+                    }
+                };
+            });
+        }
+    }
+
+    const TAG$6 = "base-meta-db";
+    const ID = 1;
+
+    class BaseMetaDB extends BaseDB {
+        async getDbName() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return '';
+            }
+
+            return rec.db_name ?? '';
+        }
+
+        async setDbName(dbName) {
+            this.logger.log(TAG$6, "setDbName");
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await this.save(this.store, {
+                    id: parseInt(ID),
+                    db_name: dbName
+                });
+                return;
+            }
+
+            rec.db_name = dbName;
+            await this.put(this.store, rec);
+        }
+
+        async getLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return new Date(Constants.EPOCH_TIMESTAMP);
+            }
+
+            return rec.last_sync_ts ?? new Date(Constants.EPOCH_TIMESTAMP);
+        }
+
+        async setLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await super.save(this.store, {
+                    id: parseInt(ID),
+                    last_sync_ts: new Date()
+                });
+                return;
+            }
+
+            rec.last_sync_ts = new Date();
+            await super.put(this.store, rec);
+        }
+
+        async get() {
+            return await super.get(parseInt(ID));
+        }
+
+        async destroy() {
+            return await super.destroy(parseInt(ID));
+        }
+    }
+
+    const TAG$5 = "queries-meta-db";
+
+    class QueriesMetaDB extends BaseMetaDB {
+        constructor(logger, options) {
+            options.dbName = "queries_meta";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "queries_meta";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$5, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 1) {
+                e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+            }
+        }
+    }
+
     const TAG$4 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
-    class ConnectionDB$1 extends BaseDB {
+    class ConnectionDB extends BaseDB {
         constructor(logger, options) {
             options.dbName = DB_NAME;
             super(logger, options);
@@ -958,16 +1185,16 @@
 
             if (e.oldVersion < 2) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants$1.DB_ID_INDEX, ["id", "db_id"], {unique: true});
+                store.createIndex(Constants.DB_ID_INDEX, ["id", "db_id"], {unique: true});
             }
 
             if (e.oldVersion < 3) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
                 store.deleteIndex(CONNECTION_INDEX);
-                store.deleteIndex(Constants$1.DB_ID_INDEX);
+                store.deleteIndex(Constants.DB_ID_INDEX);
 
                 store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
-                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"], {unique: true});
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"], {unique: true});
             }
 
             if (e.oldVersion < 4) {
@@ -1053,71 +1280,9 @@
         }
     }
 
-    const TAG$3 = "base-meta-db";
-    const ID = 1;
+    const TAG$3 = "connections-meta-db";
 
-    class BaseMetaDB extends BaseDB {
-        async getDbName() {
-            let rec = await super.get(parseInt(ID));
-            if (rec == null) {
-                return '';
-            }
-
-            return rec.db_name ?? '';
-        }
-
-        async setDbName(dbName) {
-            this.logger.log(TAG$3, "setDbName");
-            let rec = await super.get(parseInt(ID));
-
-            if (rec == null) {
-                await this.save(this.store, {
-                    id: parseInt(ID),
-                    db_name: dbName
-                });
-                return;
-            }
-
-            rec.db_name = dbName;
-            await this.put(this.store, rec);
-        }
-
-        async getLastSyncTs() {
-            let rec = await super.get(parseInt(ID));
-            if (rec == null) {
-                return new Date(Constants$1.EPOCH_TIMESTAMP);
-            }
-
-            return rec.last_sync_ts ?? new Date(Constants$1.EPOCH_TIMESTAMP);
-        }
-
-        async setLastSyncTs() {
-            let rec = await super.get(parseInt(ID));
-
-            if (rec == null) {
-                await super.save(this.store, {
-                    id: parseInt(ID),
-                    last_sync_ts: new Date()
-                });
-                return;
-            }
-
-            rec.last_sync_ts = new Date();
-            await super.put(this.store, rec);
-        }
-
-        async get() {
-            return await super.get(parseInt(ID));
-        }
-
-        async destroy() {
-            return await super.destroy(parseInt(ID));
-        }
-    }
-
-    const TAG$2 = "connections-meta-db";
-
-    class ConnectionsMetaDB$1 extends BaseMetaDB {
+    class ConnectionsMetaDB extends BaseMetaDB {
         constructor(logger, options) {
             options.dbName = "connections_meta";
             super(logger, options);
@@ -1126,11 +1291,297 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$2, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$3, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 1) {
                 e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
             }
+        }
+    }
+
+    const TAG$2 = "utils";
+    class Utils {
+        static saveToSession(key, val) {
+            window.sessionStorage.setItem(key, val);
+        }
+
+        static getFromSession(key) {
+            return window.sessionStorage.getItem(key)
+        }
+
+
+        static saveToLocalStorage(key, value) {
+            window.localStorage.setItem(key, value);
+        }
+
+        static getFromLocalStorage(key) {
+            return window.localStorage.getItem(key) ?? null;
+        }
+
+    	static processTemplate(templ, data) {
+    		var re = new RegExp(/{(.*?)}/g);
+    		templ = templ.replace(re, function(match, p1) {
+    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
+    				return data[p1];
+    			} else {
+    				return match;
+    			}
+    		});
+    		return templ;
+    	}
+
+    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
+    	static generateNode(templ, data) {
+            templ = Utils.processTemplate(templ, data);	
+            let template = document.createElement('template');
+            template.innerHTML = templ.trim();
+            return template.content
+        }
+
+        static async get(url, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let response = await fetch(url, {
+                    headers: hdrs
+                });
+
+                Logger.Log(TAG$2, response);
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$2, e);
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/connections';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async post(url, body, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let formData = new FormData();
+
+                for (let k in body) {
+                    formData.append(k, body[k]);
+                }
+
+                let response = await fetch(url, {
+                    headers: hdrs,
+                    body: formData,
+                    method: "post"
+                });
+
+                Logger.Log(TAG$2, response);
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$2, e);
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/connections';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async setOptions($ctx, values, def) {
+            $ctx.replaceChildren();
+
+            let $ot = document.getElementById('option-template');
+            let ot = $ot.innerHTML;
+
+            values.forEach((v) => {
+                let h = Utils.generateNode(ot, {value: v});
+                $ctx.append(h);
+            });
+
+            $ctx.value = def;
+        }
+
+        static showAlert(msg, t) {
+            let $alrt = document.getElementById('alert');
+            let $msg = $alrt.querySelector('.msg');
+            $msg.innerHTML = msg;
+            $alrt.style.display = 'block';
+
+            let bodyDims = document.querySelector('body').getBoundingClientRect();
+            $alrt.style.left = (bodyDims.width / 2) + 'px';
+
+            setTimeout(() => {
+                $alrt.style.display = 'none';
+            }, t);
+        }
+
+        static showNoData() {
+            Logger.Log(TAG$2, "No data");
+        }
+
+        //https://gist.github.com/gordonbrander/2230317
+        static uuid() {
+            // Math.random should be unique because of its seeding algorithm.
+            // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+            // after the decimal.
+            return '_' + Math.random().toString(36).substr(2, 9);
+        };
+
+        static getOffset(el) {
+            const rect = el.getBoundingClientRect();
+            return {
+                left: rect.left + window.scrollX,
+                top: rect.top + window.scrollY,
+                width: rect.width,
+                height: rect.height,
+            };
+        }
+
+       static extractColumns(arr) {
+            let cols = [];
+            arr.forEach((e) => {
+                cols.push(e[1]);
+            });
+
+            return cols
+        }
+
+        static truncate(s, max) {
+    		if (s.length > max) {
+    			return s.substring(0, max) + '...';
+    		}
+    		return s;
+    	}
+
+        static getTimestamp() {
+            let d = (new Date()).toISOString();
+            return d.replace(/T/, ' ').replace(/\..*$/, '');
+        }
+
+    	static getRandomIntegerInclusive(min, max) {
+    		return Math.floor(Math.random() * (max - min + 1)) + min;
+    	}
+
+        static isEmpty(obj) { 
+            for (var x in obj) {
+                return false; 
+            }
+            return true;
+        }
+
+        static async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$2, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$2, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$2, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$2, "Done.");
+
+            Logger.Log(TAG$2, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$2, "Done.");
+
+            Logger.Log(TAG$2, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$2, "Done.");
         }
     }
 
@@ -1147,7 +1598,7 @@
         }
 
         async init() {
-            let res = await Utils.get(Constants$1.URL + '/about', false);
+            let res = await Utils.get(Constants.URL + '/about', false);
             if (res.status == "error") {
                 this.logger.log(TAG$1, JSON.stringify(res));
                 return
@@ -1160,7 +1611,9 @@
             //After user signs up clear all db_id, because we are moving to a new db
 
             res = await Utils.post('/browser-api/devices/register', {
-                'device-id': this.deviceId
+                'device-id': res.data['device-id'],
+                'version': res.data['version'],
+                'os': res.data['os'],
             }, false);
 
             this.logger.log(TAG$1, JSON.stringify(res));
@@ -1171,17 +1624,6 @@
 
             this.sessionId = res.data['session-id'];
             this.dbName = res.data['db-name'];
-
-            if (res.data['signin-required']) {
-                //check if user is already logged in
-                //must check for user data. session-id will have a value even if user is not logged in due to guest login
-                if (Utils.isEmpty(res.data.user)) {
-                    this.logger.log(TAG$1, "Signin required");
-                    this.port.postMessage({
-                        type: Constants$1.SIGNIN_REQUIRED
-                    });
-                }
-            }
         }
     }
 
@@ -1192,8 +1634,8 @@
         async handleMessage(m) {
             this.logger.log(TAG, JSON.stringify(m.data));
             switch (m.data.type) {
-                case Constants$1.CONNECTION_SAVED:
-                case Constants$1.CONNECTION_DELETED:
+                case Constants.CONNECTION_SAVED:
+                case Constants.CONNECTION_DELETED:
                     this.syncUp();
                     break
             }
@@ -1203,10 +1645,10 @@
             await super.init();
             this.logger.log(TAG, "deviceid:" + this.deviceId);
 
-            this.connectionDb = new ConnectionDB$1(this.logger, {version: Constants$1.CONN_DB_VERSION});
+            this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
             await this.connectionDb.open();
 
-            this.metaDB = new ConnectionsMetaDB$1(this.logger, {version: Constants$1.CONNECTIONS_META_DB_VERSION});
+            this.metaDB = new ConnectionsMetaDB(this.logger, {version: Constants.CONNECTIONS_META_DB_VERSION});
             await this.metaDB.open();
             this.logger.log(TAG, "metadb.get: " + await this.metaDB.get());
 
@@ -1278,7 +1720,7 @@
 
             if (updateUI) {
                 this.port.postMessage({
-                    type: Constants$1.NEW_CONNECTIONS,
+                    type: Constants.NEW_CONNECTIONS,
                 });
             }
 
@@ -1298,7 +1740,7 @@
             let deleted = [];
             for (let i = 0; i < conns.length; i++) {
                 //when we delete from UI, we just mark the status as deleted, then sync up later
-                let isDeleted = ((conns[i].status ?? Constants$1.STATUS_ACTIVE) == Constants$1.STATUS_DELETED) ? true : false;
+                let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
 
                 if (isDeleted) {
                     this.logger.log(TAG, `Deleting ${conns[i].id}`);
@@ -1313,7 +1755,7 @@
                 }
 
                 //every record may or may not have updated_at
-                let updatedAt = conns[i].updated_at ?? new Date(Constants$1.EPOCH_TIMESTAMP);
+                let updatedAt = conns[i].updated_at ?? new Date(Constants.EPOCH_TIMESTAMP);
 
                 if (conns[i].db_id) {
                     //if it has a db_id , it is guaranteed to haved synced_at

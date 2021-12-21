@@ -4,6 +4,7 @@ use \Monolog\Logger;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use \Prosql\Interfaces\SessionManagerInterface;
+use \Prosql\RedirectException;
 
 class BaseController {
     protected ?Logger $logger;
@@ -37,6 +38,8 @@ class BaseController {
             ]));
             return $res->withHeader('Content-Type', 'application/json');
 
+        } catch (RedirectException $e) {
+            return $res->withStatus(302)->withHeader('Location', $e->getUrl());
         } catch (\Exception $e) {
             $this->logger->critical($e->getFile() . ':' . $e->getLine() . ':' . $e->getMessage());
             $this->logger->critical($e->getTraceAsString());

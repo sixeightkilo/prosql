@@ -62,6 +62,10 @@ html
                     button.button(id="login").is-full-width
                         span Start session
 
+                div#signout-container
+                    #[br]
+                    span #[a(href="/signout") Signout]
+
         input#version(type=hidden value="#{version}")
 
         script(type='module' src='/#{root}/dist/js/connections.js?ver=#{version}')

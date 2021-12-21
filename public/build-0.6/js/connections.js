@@ -254,29 +254,23 @@ class Connections {
             let id = await this.connections.save(conn);
             Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
 
-            //force sync up
-            this.workers.connectionWorker.port.postMessage({
-                type: Constants.CONNECTION_SAVED
-            });
-
             //set agent version for the rest of web app
-            let response = await Utils.get(Constants.URL + '/about', false);
-            //todo: what happens if this is not OK?
-            if (response.status == "ok") {
-                let res = await Utils.post('/browser-api/version', {
-                    'device-id': response.data['device-id'],
-                    'version': response.data['version'],
-                    'os': response.data['os'],
-                });
+            let res = await Utils.get(Constants.URL + '/about');
+            res = await Utils.post('/browser-api/devices/register', {
+                'device-id': res.data['device-id'],
+                'version': res.data['version'],
+                'os': res.data['os'],
+            }, false);
 
-                Logger.Log(TAG, JSON.stringify(res));
+            Logger.Log(TAG, JSON.stringify(res));
 
-                //todo: what happens if this is not OK?
-                if (res.status == "ok") {
-                    window.location = '/app/tables';
-                }
+            if (res.status == "ok") {
+                window.location = '/app/tables';
                 return;
             }
+
+            //this will be handled by backend anyway
+            window.location = '/signin';
         }
     }
 

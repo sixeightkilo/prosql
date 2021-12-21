@@ -26,6 +26,11 @@ class QueryWorker extends BaseWorker {
         this.logger.log(TAG, "sessionId:" + this.sessionId);
         this.logger.log(TAG, "dbName:" + this.dbName);
 
+        if (!this.sessionId) {
+            this.logger.log(TAG, "No session id");
+            return;
+        }
+
         this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
         await this.queryDb.open();
 

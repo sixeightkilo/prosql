@@ -45,7 +45,7 @@
         }
     }
 
-    class Constants$1 {
+    class Constants {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -346,7 +346,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants$1.DEBUG_LOG,
+                    type: Constants.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -372,293 +372,7 @@
         }
     }
 
-    const TAG$7 = "utils";
-    class Utils {
-        static saveToSession(key, val) {
-            window.sessionStorage.setItem(key, val);
-        }
-
-        static getFromSession(key) {
-            return window.sessionStorage.getItem(key)
-        }
-
-
-        static saveToLocalStorage(key, value) {
-            window.localStorage.setItem(key, value);
-        }
-
-        static getFromLocalStorage(key) {
-            return window.localStorage.getItem(key) ?? null;
-        }
-
-    	static processTemplate(templ, data) {
-    		var re = new RegExp(/{(.*?)}/g);
-    		templ = templ.replace(re, function(match, p1) {
-    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
-    				return data[p1];
-    			} else {
-    				return match;
-    			}
-    		});
-    		return templ;
-    	}
-
-    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
-    	static generateNode(templ, data) {
-            templ = Utils.processTemplate(templ, data);	
-            let template = document.createElement('template');
-            template.innerHTML = templ.trim();
-            return template.content
-        }
-
-        static async get(url, handleError = true, headers = {}) {
-            try {
-                let hdrs = {
-                    'X-Request-ID': Utils.uuid()
-                };
-                hdrs = {...hdrs, ...headers};
-                let response = await fetch(url, {
-                    headers: hdrs
-                });
-
-                Logger.Log(TAG$7, response);
-
-                let json = await response.json();
-
-                if (json.status == 'error') {
-                    throw json
-                }
-
-                return json
-            } catch (e) {
-                Logger.Log(TAG$7, e);
-                let res = {
-                    'status' : 'error',
-                    'data': null,
-                };
-
-                if (e instanceof TypeError) {
-                    if (!handleError) {
-                        res.msg = Err.ERR_NO_AGENT;
-                        return res;
-                    }
-                    //user must install agent
-                    window.location = '/install';
-                    return;
-                }
-
-                res.msg = e.msg;
-                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
-                    //user must login
-                    window.location = '/connections';
-                    return;
-                }
-
-                //let client handle this
-                if (!handleError) {
-                    return res
-                }
-
-                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
-                    //let caller handle this too
-                    return res
-                }
-
-                //common error handling
-                if (res.msg) {
-                    //normal error. Display to user
-                    alert(res.msg);
-                    return res
-                }
-            }
-        }
-
-        static async post(url, body, handleError = true, headers = {}) {
-            try {
-                let hdrs = {
-                    'X-Request-ID': Utils.uuid()
-                };
-                hdrs = {...hdrs, ...headers};
-                let formData = new FormData();
-
-                for (let k in body) {
-                    formData.append(k, body[k]);
-                }
-
-                let response = await fetch(url, {
-                    headers: hdrs,
-                    body: formData,
-                    method: "post"
-                });
-
-                Logger.Log(TAG$7, response);
-
-                let json = await response.json();
-
-                if (json.status == 'error') {
-                    throw json
-                }
-
-                return json
-            } catch (e) {
-                Logger.Log(TAG$7, e);
-                let res = {
-                    'status' : 'error',
-                    'data': null,
-                };
-
-                if (e instanceof TypeError) {
-                    if (!handleError) {
-                        res.msg = Err.ERR_NO_AGENT;
-                        return res;
-                    }
-                    //user must install agent
-                    window.location = '/install';
-                    return;
-                }
-
-                res.msg = e.msg;
-                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
-                    //user must login
-                    window.location = '/connections';
-                    return;
-                }
-
-                //let client handle this
-                if (!handleError) {
-                    return res
-                }
-
-                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
-                    //let caller handle this too
-                    return res
-                }
-
-                //common error handling
-                if (res.msg) {
-                    //normal error. Display to user
-                    alert(res.msg);
-                    return res
-                }
-            }
-        }
-
-        static async setOptions($ctx, values, def) {
-            $ctx.replaceChildren();
-
-            let $ot = document.getElementById('option-template');
-            let ot = $ot.innerHTML;
-
-            values.forEach((v) => {
-                let h = Utils.generateNode(ot, {value: v});
-                $ctx.append(h);
-            });
-
-            $ctx.value = def;
-        }
-
-        static showAlert(msg, t) {
-            let $alrt = document.getElementById('alert');
-            let $msg = $alrt.querySelector('.msg');
-            $msg.innerHTML = msg;
-            $alrt.style.display = 'block';
-
-            let bodyDims = document.querySelector('body').getBoundingClientRect();
-            $alrt.style.left = (bodyDims.width / 2) + 'px';
-
-            setTimeout(() => {
-                $alrt.style.display = 'none';
-            }, t);
-        }
-
-        static showNoData() {
-            Logger.Log(TAG$7, "No data");
-        }
-
-        //https://gist.github.com/gordonbrander/2230317
-        static uuid() {
-            // Math.random should be unique because of its seeding algorithm.
-            // Convert it to base 36 (numbers + letters), and grab the first 9 characters
-            // after the decimal.
-            return '_' + Math.random().toString(36).substr(2, 9);
-        };
-
-        static getOffset(el) {
-            const rect = el.getBoundingClientRect();
-            return {
-                left: rect.left + window.scrollX,
-                top: rect.top + window.scrollY,
-                width: rect.width,
-                height: rect.height,
-            };
-        }
-
-       static extractColumns(arr) {
-            let cols = [];
-            arr.forEach((e) => {
-                cols.push(e[1]);
-            });
-
-            return cols
-        }
-
-        static truncate(s, max) {
-    		if (s.length > max) {
-    			return s.substring(0, max) + '...';
-    		}
-    		return s;
-    	}
-
-        static getTimestamp() {
-            let d = (new Date()).toISOString();
-            return d.replace(/T/, ' ').replace(/\..*$/, '');
-        }
-
-    	static getRandomIntegerInclusive(min, max) {
-    		return Math.floor(Math.random() * (max - min + 1)) + min;
-    	}
-
-        static isEmpty(obj) { 
-            for (var x in obj) {
-                return false; 
-            }
-            return true;
-        }
-
-        async resetAll() {
-            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
-            await connDb.open();
-            let conns = await connDb.getAll();
-            Logger.Log(TAG$7, "Resetting connections..");
-            for (let i = 0; i < conns.length; i++) {
-                await connDb.reset(conns[i]);
-            }
-            Logger.Log(TAG$7, "Done.");
-
-            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
-            await queryDb.open();
-            let queries = await queryDb.getAll();
-            Logger.Log(TAG$7, "Resetting queries..");
-            for (let i = 0; i < queries.length; i++) {
-                await queryDb.reset(queries[i]);
-            }
-            Logger.Log(TAG$7, "Done.");
-
-            Logger.Log(TAG$7, "Resetting QueriesMetaDB");
-            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
-            await queriesMetaDb.open();
-            await queriesMetaDb.destroy();
-            Logger.Log(TAG$7, "Done.");
-
-            Logger.Log(TAG$7, "Resetting connectionsMetaDb");
-            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
-            await connectionsMetaDb.open();
-            await connectionsMetaDb.destroy();
-            Logger.Log(TAG$7, "Done.");
-        }
-    }
-
-    const TAG$6 = "base-db";
+    const TAG$7 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -670,13 +384,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$6, "open.onsuccess");
+                        this.logger.log(TAG$7, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$6, e.target.error);
+                        this.logger.log(TAG$7, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -697,7 +411,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$6, e.target.error);
+                    this.logger.log(TAG$7, e.target.error);
                     resolve(-1);
                 };
             })
@@ -715,7 +429,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$6, e.target.error);
+                    this.logger.log(TAG$7, e.target.error);
                     resolve(-1);
                 };
             })
@@ -747,7 +461,7 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o.status = Constants$1.STATUS_DELETED;
+                    o.status = Constants.STATUS_DELETED;
                     let requestUpdate = objectStore.put(o);
 
                     requestUpdate.onerror = (e) => {
@@ -783,7 +497,7 @@
                         result = request.result;
                     }
 
-                    this.logger.log(TAG$6, JSON.stringify(result));
+                    this.logger.log(TAG$7, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -832,7 +546,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = null;
-                    o['synced_at'] = new Date(Constants$1.EPOCH_TIMESTAMP);
+                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {
@@ -877,11 +591,11 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$6, "findByDbId");
+                this.logger.log(TAG$7, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(Constants$1.DB_ID_INDEX);
+                let index = objectStore.index(Constants.DB_ID_INDEX);
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
@@ -889,7 +603,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$6, "error");
+                    this.logger.log(TAG$7, "error");
                     resolve(e.target.error);
                 };
             })
@@ -936,151 +650,13 @@
         }
     }
 
-    const TAG$5 = "connection-db";
-    const CONNECTION_INDEX = "connection-index";
-    const DB_NAME = "connections";
-
-    class ConnectionDB$1 extends BaseDB {
-        constructor(logger, options) {
-            options.dbName = DB_NAME;
-            super(logger, options);
-            this.logger = logger;
-            this.store = "connections";
-        }
-
-        onUpgrade(e) {
-            this.logger.log(TAG$5, `open.onupgradeneeded: ${e.oldVersion}`);
-            if (e.oldVersion < 1) {
-                let store = e.currentTarget.result.createObjectStore(
-                    this.store, { keyPath: 'id', autoIncrement: true });
-                store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
-            }
-
-            if (e.oldVersion < 2) {
-                let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants$1.DB_ID_INDEX, ["id", "db_id"], {unique: true});
-            }
-
-            if (e.oldVersion < 3) {
-                let store = e.currentTarget.transaction.objectStore(this.store);
-                store.deleteIndex(CONNECTION_INDEX);
-                store.deleteIndex(Constants$1.DB_ID_INDEX);
-
-                store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
-                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"], {unique: true});
-            }
-
-            if (e.oldVersion < 4) {
-                let store = e.currentTarget.transaction.objectStore(this.store);
-                store.deleteIndex(CONNECTION_INDEX);
-
-                store.createIndex(CONNECTION_INDEX, ["name", "user", "host", "port", "db"], { unique: true });
-            }
-        }
-
-        async save(conn) {
-            try {
-                //make sure there is only one connection with is_default = true
-                if (conn['is_default'] == true) {
-                    let conns = await super.getAll();
-                    for (let i = 0; i < conns.length; i++) {
-                        await this.put(conns[i].id, conns[i].pass, false);
-                    }
-                }
-
-                //search if this connection exists
-                let rec = await this.search(conn);
-                if (rec) {
-                    //if exists , update and return
-                    await this.put(rec.id, conn['pass'], conn['is_default']);
-                    return rec.id;
-                }
-
-                //create new record
-                return await super.save(this.store, conn);
-
-            } catch (e) {
-                this.logger.log(TAG$5, e.message);
-            }
-        }
-
-        async put(id, password, isDefault) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store, "readwrite");
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(id);
-
-                request.onsuccess = (e) => {
-                    let o = e.target.result;
-                    o.pass = password;
-                    if (o.is_default != isDefault) {
-                        //we set updated at only if is_default has changed. We don't
-                        //care about password change
-                        o.updated_at = new Date();
-                    }
-                    o.is_default = isDefault;
-
-                    let requestUpdate = objectStore.put(o);
-                    requestUpdate.onerror = (e) => {
-                        resolve(e.target.error);
-                    };
-                    requestUpdate.onsuccess = (e) => {
-                        resolve(0);
-                    };
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
-        }
-
-        async search(conn) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store);
-                let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(CONNECTION_INDEX);
-
-                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.host, conn.port, conn.db]));
-                request.onsuccess = (e) => {
-                    resolve(request.result);
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
-        }
-    }
-
-    let subscribers = {};
-
-    class PubSub {
-        static subscribe(evt, cb) {
-            if (!subscribers[evt]) {
-                subscribers[evt] = new Set();
-            }
-            subscribers[evt].add(cb);
-        }
-
-        static publish(evt, data) {
-            let list = subscribers[evt];
-            if (!list) {
-                return;
-            }
-            for (let s of list) {
-                s(data);
-            }
-        }
-    }
-
-    const TAG$4 = "query-db";
+    const TAG$6 = "query-db";
     const CREATED_AT_INDEX = "created-at-index";
     const QUERY_INDEX = "query-index";
     const TERM_INDEX = "term-index";
     const TAG_INDEX = "tag-index";
 
-    class QueryDB$1 extends BaseDB {
+    class QueryDB extends BaseDB {
         constructor(logger, options) {
             options.dbName = "queries";
             super(logger, options);
@@ -1091,7 +667,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$4, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$6, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 2) {
                 let store = e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -1108,7 +684,7 @@
 
             if (e.oldVersion < 37) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"]);
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
             }
         }
 
@@ -1124,7 +700,7 @@
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
                 terms = [...new Set(terms)];
 
-                this.logger.log(TAG$4, JSON.stringify(terms));
+                this.logger.log(TAG$6, JSON.stringify(terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -1143,7 +719,7 @@
 
                     resolve(id);
                 } catch (e) {
-                    this.logger.log(TAG$4, `error: ${JSON.stringify(e.message)}`);
+                    this.logger.log(TAG$6, `error: ${JSON.stringify(e.message)}`);
                     reject(e.message);
                 }
             })
@@ -1173,7 +749,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$4, JSON.stringify(rec));
+                    this.logger.log(TAG$6, JSON.stringify(rec));
                     super.put(this.searchIndex, {
                         id: rec.id,
                         term: t,
@@ -1181,7 +757,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$4, `error: e.message`);
+                    this.logger.log(TAG$6, `error: e.message`);
                 }
             }
         }
@@ -1196,7 +772,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1230,7 +806,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$4, JSON.stringify(rec));
+                    this.logger.log(TAG$6, JSON.stringify(rec));
                     super.put(this.tagIndex, {
                         id: rec.id,
                         tag: t,
@@ -1238,7 +814,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$4, `error: e.message`);
+                    this.logger.log(TAG$6, `error: e.message`);
                 }
             }
         }
@@ -1253,7 +829,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1273,7 +849,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1306,7 +882,7 @@
             //days supercedes everything
             //if days are provided get queries by days first
             //then filter by terms and tags if provided
-            this.logger.log(TAG$4, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+            this.logger.log(TAG$6, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
 
             let start, end;
             if (days.hasOwnProperty('start')) {
@@ -1326,7 +902,7 @@
 
             let ids = [];
             if (start || end) {
-                this.logger.log(TAG$4, 'filtering');
+                this.logger.log(TAG$6, 'filtering');
                 ids = await this.searchByCreatedAt(start, end);
 
                 if (ids.length == 0) {
@@ -1357,7 +933,7 @@
             }
 
             let results = [];
-            this.logger.log(TAG$4, `${ids}`);
+            this.logger.log(TAG$6, `${ids}`);
             for (let i = 0; i < ids.length; i++) {
                 results.push(await super.get(ids[i]));
             }
@@ -1472,7 +1048,7 @@
 
         searchByCreatedAt(s, e) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$4, `s: ${s} e: ${e}`);
+                this.logger.log(TAG$6, `s: ${s} e: ${e}`);
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -1495,7 +1071,7 @@
                 index.openCursor(key, "prev").onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$4, `id: ${cursor.value.created_at.toISOString()}`);
+                        this.logger.log(TAG$6, `id: ${cursor.value.created_at.toISOString()}`);
                         queries.push(cursor.value.id);
                         cursor.continue();
                     } else {
@@ -1506,7 +1082,7 @@
         }
     }
 
-    const TAG$3 = "base-meta-db";
+    const TAG$5 = "base-meta-db";
     const ID = 1;
 
     class BaseMetaDB extends BaseDB {
@@ -1520,7 +1096,7 @@
         }
 
         async setDbName(dbName) {
-            this.logger.log(TAG$3, "setDbName");
+            this.logger.log(TAG$5, "setDbName");
             let rec = await super.get(parseInt(ID));
 
             if (rec == null) {
@@ -1538,10 +1114,10 @@
         async getLastSyncTs() {
             let rec = await super.get(parseInt(ID));
             if (rec == null) {
-                return new Date(Constants$1.EPOCH_TIMESTAMP);
+                return new Date(Constants.EPOCH_TIMESTAMP);
             }
 
-            return rec.last_sync_ts ?? new Date(Constants$1.EPOCH_TIMESTAMP);
+            return rec.last_sync_ts ?? new Date(Constants.EPOCH_TIMESTAMP);
         }
 
         async setLastSyncTs() {
@@ -1568,14 +1144,150 @@
         }
     }
 
-    const TAG$2 = "queries-meta-db";
+    const TAG$4 = "queries-meta-db";
 
-    class QueriesMetaDB$1 extends BaseMetaDB {
+    class QueriesMetaDB extends BaseMetaDB {
         constructor(logger, options) {
             options.dbName = "queries_meta";
             super(logger, options);
             this.logger = logger;
             this.store = "queries_meta";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$4, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 1) {
+                e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+            }
+        }
+    }
+
+    const TAG$3 = "connection-db";
+    const CONNECTION_INDEX = "connection-index";
+    const DB_NAME = "connections";
+
+    class ConnectionDB extends BaseDB {
+        constructor(logger, options) {
+            options.dbName = DB_NAME;
+            super(logger, options);
+            this.logger = logger;
+            this.store = "connections";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$3, `open.onupgradeneeded: ${e.oldVersion}`);
+            if (e.oldVersion < 1) {
+                let store = e.currentTarget.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
+            }
+
+            if (e.oldVersion < 2) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(Constants.DB_ID_INDEX, ["id", "db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 3) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+                store.deleteIndex(Constants.DB_ID_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 4) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "host", "port", "db"], { unique: true });
+            }
+        }
+
+        async save(conn) {
+            try {
+                //make sure there is only one connection with is_default = true
+                if (conn['is_default'] == true) {
+                    let conns = await super.getAll();
+                    for (let i = 0; i < conns.length; i++) {
+                        await this.put(conns[i].id, conns[i].pass, false);
+                    }
+                }
+
+                //search if this connection exists
+                let rec = await this.search(conn);
+                if (rec) {
+                    //if exists , update and return
+                    await this.put(rec.id, conn['pass'], conn['is_default']);
+                    return rec.id;
+                }
+
+                //create new record
+                return await super.save(this.store, conn);
+
+            } catch (e) {
+                this.logger.log(TAG$3, e.message);
+            }
+        }
+
+        async put(id, password, isDefault) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o.pass = password;
+                    if (o.is_default != isDefault) {
+                        //we set updated at only if is_default has changed. We don't
+                        //care about password change
+                        o.updated_at = new Date();
+                    }
+                    o.is_default = isDefault;
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async search(conn) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(CONNECTION_INDEX);
+
+                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.host, conn.port, conn.db]));
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+    }
+
+    const TAG$2 = "connections-meta-db";
+
+    class ConnectionsMetaDB extends BaseMetaDB {
+        constructor(logger, options) {
+            options.dbName = "connections_meta";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "connections_meta";
         }
 
         onUpgrade(e) {
@@ -1587,21 +1299,309 @@
         }
     }
 
-    const TAG$1 = "connections-meta-db";
-
-    class ConnectionsMetaDB$1 extends BaseMetaDB {
-        constructor(logger, options) {
-            options.dbName = "connections_meta";
-            super(logger, options);
-            this.logger = logger;
-            this.store = "connections_meta";
+    const TAG$1 = "utils";
+    class Utils {
+        static saveToSession(key, val) {
+            window.sessionStorage.setItem(key, val);
         }
 
-        onUpgrade(e) {
-            this.logger.log(TAG$1, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
-            if (e.oldVersion < 1) {
-                e.target.result.createObjectStore(
-                    this.store, { keyPath: 'id', autoIncrement: true });
+        static getFromSession(key) {
+            return window.sessionStorage.getItem(key)
+        }
+
+
+        static saveToLocalStorage(key, value) {
+            window.localStorage.setItem(key, value);
+        }
+
+        static getFromLocalStorage(key) {
+            return window.localStorage.getItem(key) ?? null;
+        }
+
+    	static processTemplate(templ, data) {
+    		var re = new RegExp(/{(.*?)}/g);
+    		templ = templ.replace(re, function(match, p1) {
+    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
+    				return data[p1];
+    			} else {
+    				return match;
+    			}
+    		});
+    		return templ;
+    	}
+
+    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
+    	static generateNode(templ, data) {
+            templ = Utils.processTemplate(templ, data);	
+            let template = document.createElement('template');
+            template.innerHTML = templ.trim();
+            return template.content
+        }
+
+        static async get(url, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let response = await fetch(url, {
+                    headers: hdrs
+                });
+
+                Logger.Log(TAG$1, response);
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$1, e);
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/connections';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async post(url, body, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let formData = new FormData();
+
+                for (let k in body) {
+                    formData.append(k, body[k]);
+                }
+
+                let response = await fetch(url, {
+                    headers: hdrs,
+                    body: formData,
+                    method: "post"
+                });
+
+                Logger.Log(TAG$1, response);
+
+                let json = await response.json();
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$1, e);
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/connections';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async setOptions($ctx, values, def) {
+            $ctx.replaceChildren();
+
+            let $ot = document.getElementById('option-template');
+            let ot = $ot.innerHTML;
+
+            values.forEach((v) => {
+                let h = Utils.generateNode(ot, {value: v});
+                $ctx.append(h);
+            });
+
+            $ctx.value = def;
+        }
+
+        static showAlert(msg, t) {
+            let $alrt = document.getElementById('alert');
+            let $msg = $alrt.querySelector('.msg');
+            $msg.innerHTML = msg;
+            $alrt.style.display = 'block';
+
+            let bodyDims = document.querySelector('body').getBoundingClientRect();
+            $alrt.style.left = (bodyDims.width / 2) + 'px';
+
+            setTimeout(() => {
+                $alrt.style.display = 'none';
+            }, t);
+        }
+
+        static showNoData() {
+            Logger.Log(TAG$1, "No data");
+        }
+
+        //https://gist.github.com/gordonbrander/2230317
+        static uuid() {
+            // Math.random should be unique because of its seeding algorithm.
+            // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+            // after the decimal.
+            return '_' + Math.random().toString(36).substr(2, 9);
+        };
+
+        static getOffset(el) {
+            const rect = el.getBoundingClientRect();
+            return {
+                left: rect.left + window.scrollX,
+                top: rect.top + window.scrollY,
+                width: rect.width,
+                height: rect.height,
+            };
+        }
+
+       static extractColumns(arr) {
+            let cols = [];
+            arr.forEach((e) => {
+                cols.push(e[1]);
+            });
+
+            return cols
+        }
+
+        static truncate(s, max) {
+    		if (s.length > max) {
+    			return s.substring(0, max) + '...';
+    		}
+    		return s;
+    	}
+
+        static getTimestamp() {
+            let d = (new Date()).toISOString();
+            return d.replace(/T/, ' ').replace(/\..*$/, '');
+        }
+
+    	static getRandomIntegerInclusive(min, max) {
+    		return Math.floor(Math.random() * (max - min + 1)) + min;
+    	}
+
+        static isEmpty(obj) { 
+            for (var x in obj) {
+                return false; 
+            }
+            return true;
+        }
+
+        static async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$1, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$1, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$1, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$1, "Done.");
+
+            Logger.Log(TAG$1, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$1, "Done.");
+
+            Logger.Log(TAG$1, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$1, "Done.");
+        }
+    }
+
+    let subscribers = {};
+
+    class PubSub {
+        static subscribe(evt, cb) {
+            if (!subscribers[evt]) {
+                subscribers[evt] = new Set();
+            }
+            subscribers[evt].add(cb);
+        }
+
+        static publish(evt, data) {
+            let list = subscribers[evt];
+            if (!list) {
+                return;
+            }
+            for (let s of list) {
+                s(data);
             }
         }
     }
@@ -1615,7 +1615,7 @@
     			this.hasButtons = false;
     		});
 
-            PubSub.subscribe(Constants$1.INIT_PROGRESS, (data) => {
+            PubSub.subscribe(Constants.INIT_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -1634,7 +1634,7 @@
                 this.progressBar.classList.add('is-active');
             });
 
-            PubSub.subscribe(Constants$1.START_PROGRESS, (data) => {
+            PubSub.subscribe(Constants.START_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -1644,7 +1644,7 @@
                 }
             });
 
-            PubSub.subscribe(Constants$1.STOP_PROGRESS, () => {
+            PubSub.subscribe(Constants.STOP_PROGRESS, () => {
                 clearInterval(this.timer);
 
                 //if we have buttons, wait till user clicks ok
@@ -1658,7 +1658,7 @@
                 this.progressBar.classList.remove('is-active');
             });
 
-            PubSub.subscribe(Constants$1.UPDATE_PROGRESS, (data) => {
+            PubSub.subscribe(Constants.UPDATE_PROGRESS, (data) => {
                 this.message.innerHTML = data.message;
             });
         }
@@ -1738,51 +1738,19 @@
             let json = await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
 
             if (json.status == "ok") {
-                //reset all saved indexeddb records so they can be synced again with the new db
                 progressBar.setOptions({});//no buttons
-                PubSub.publish(Constants$1.INIT_PROGRESS, {});
-                PubSub.publish(Constants$1.START_PROGRESS, {});
-                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
+                PubSub.publish(Constants.INIT_PROGRESS, {});
+                PubSub.publish(Constants.START_PROGRESS, {});
+                PubSub.publish(Constants.UPDATE_PROGRESS, {
                     message: `Please wait`
                 });
 
-                await this.resetAll();
+                //reset all saved indexeddb records so they can be synced again with the new db
+                await Utils.resetAll();
 
-                PubSub.publish(Constants$1.STOP_PROGRESS, {});
+                PubSub.publish(Constants.STOP_PROGRESS, {});
                 window.location = '/connections';
             }
-        }
-
-        async resetAll() {
-            let connDb = new ConnectionDB$1(new Logger(), {version: Constants$1.CONN_DB_VERSION});
-            await connDb.open();
-            let conns = await connDb.getAll();
-            Logger.Log(TAG, "Resetting connections..");
-            for (let i = 0; i < conns.length; i++) {
-                await connDb.reset(conns[i]);
-            }
-            Logger.Log(TAG, "Done.");
-
-            let queryDb = new QueryDB$1(new Logger(), {version: Constants$1.QUERY_DB_VERSION});
-            await queryDb.open();
-            let queries = await queryDb.getAll();
-            Logger.Log(TAG, "Resetting queries..");
-            for (let i = 0; i < queries.length; i++) {
-                await queryDb.reset(queries[i]);
-            }
-            Logger.Log(TAG, "Done.");
-
-            Logger.Log(TAG, "Resetting QueriesMetaDB");
-            let queriesMetaDb = new QueriesMetaDB$1(new Logger(), {version: Constants$1.QUERIES_META_DB_VERSION});
-            await queriesMetaDb.open();
-            await queriesMetaDb.destroy();
-            Logger.Log(TAG, "Done.");
-
-            Logger.Log(TAG, "Resetting connectionsMetaDb");
-            let connectionsMetaDb = new ConnectionsMetaDB$1(new Logger(), {version: Constants$1.CONNECTIONS_META_DB_VERSION});
-            await connectionsMetaDb.open();
-            await connectionsMetaDb.destroy();
-            Logger.Log(TAG, "Done.");
         }
 
         async setCaptcha() {

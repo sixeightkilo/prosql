@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    class Constants$1 {
+    class Constants {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -302,7 +302,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants$1.DEBUG_LOG,
+                    type: Constants.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -372,7 +372,934 @@
         }
     }
 
-    const TAG$k = "utils";
+    const TAG$o = "base-db";
+    class BaseDB {
+        constructor(logger, options) {
+            this.logger = logger;
+            this.version = options.version;
+            this.dbName = options.dbName;
+        }
+
+        async open() {
+            return new Promise((resolve, reject) => {
+                let req = indexedDB.open(this.dbName, this.version);
+                    req.onsuccess = (e) => {
+                        this.logger.log(TAG$o, "open.onsuccess");
+                        this.db = req.result;
+                        resolve(0);
+                    };
+
+                    req.onerror = (e) => {
+                        this.logger.log(TAG$o, e.target.error);
+                        reject(e.target.errorCode);
+                    };
+
+                    req.onupgradeneeded = (evt) => {
+                        this.onUpgrade(evt);
+                    };
+            })
+        }
+
+        async save(store, rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction([store], "readwrite");
+
+                let objectStore = transaction.objectStore(store);
+                let request = objectStore.add(rec);
+                request.onsuccess = (e) => {
+                    resolve(e.target.result);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$o, e.target.error);
+                    resolve(-1);
+                };
+            })
+        }
+
+        async put(store, rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction([store], "readwrite");
+                let objectStore = transaction.objectStore(store);
+
+                rec.updated_at = new Date();
+                let request = objectStore.put(rec);
+                request.onsuccess = (e) => {
+                    resolve(0);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$o, e.target.error);
+                    resolve(-1);
+                };
+            })
+        }
+
+        //delete completely from indexeddb
+    	async destroy(id) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.delete(id);
+
+                request.onsuccess = (e) => {
+                    resolve(0);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        //just mark status as deleted
+        async del(id) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o.status = Constants.STATUS_DELETED;
+                    let requestUpdate = objectStore.put(o);
+
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async get(id, keys = []) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    let result = [];
+                    if (keys.length > 0) {
+                        for (let k in request.result) {
+                            if (keys.includes(k)) {
+                                result[k] = request.result[k];
+                            }
+                        }
+                    } else {
+                        result = request.result;
+                    }
+
+                    this.logger.log(TAG$o, JSON.stringify(result));
+                    resolve(result);
+                };
+
+                request.onerror = (e) => {
+                    resolve(null);
+                };
+            })
+        }
+
+        async getAll(keys = []) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+
+                let results = [];
+                objectStore.openCursor().onsuccess = (e) => {
+                    var cursor = e.target.result;
+                    if (cursor) {
+                        if (keys.length > 0) {
+                            let r = {};
+                            for (let k in cursor.value) {
+                                if (keys.includes(k)) {
+                                    r[k] = cursor.value[k];
+                                }
+                            }
+                            results.push(r);
+                        } else {
+                            results.push(cursor.value);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(results);
+                    }
+                };
+            })
+        }
+
+        //remove db_id so that this record can be synced again with 
+        //a different db
+        async reset(rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(rec.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = null;
+                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async sync(rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(rec.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = rec.db_id;
+                    o['synced_at'] = new Date();
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async findByDbId(id) {
+            return new Promise((resolve, reject) => {
+                this.logger.log(TAG$o, "findByDbId");
+
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(Constants.DB_ID_INDEX);
+
+                let request = index.get(IDBKeyRange.only([id]));
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$o, "error");
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        static toDb(o = {}) {
+            //convert all "-" to "_"
+            let r = {};
+            for (let k in o) {
+                r[k.replaceAll(/-/g, '_')] = o[k];
+            }
+            return r
+        }
+
+        static toDbArray(keys = []) {
+            //convert all "-" to "_"
+            let result = [];
+            keys.forEach((k) => {
+                result.push(k.replaceAll(/-/g, '_'));
+            });
+            return result
+        }
+
+        static fromDbArray(vals = []) {
+            //convert all "_" to "-"
+            let result = [];
+            vals.forEach((o) => {
+                let r = {};
+                for (let k in o) {
+                    r[k.replaceAll(/_/g, '-')] = o[k];
+                }
+                result.push(r);
+            });
+            return result;
+        }
+
+        static fromDb(o = {}) {
+            //convert all "_" to "-"
+            let r = {};
+            for (let k in o) {
+                r[k.replaceAll(/_/g, '-')] = o[k];
+            }
+            return r
+        }
+    }
+
+    const TAG$n = "query-db";
+    const CREATED_AT_INDEX = "created-at-index";
+    const QUERY_INDEX = "query-index";
+    const TERM_INDEX = "term-index";
+    const TAG_INDEX = "tag-index";
+
+    class QueryDB extends BaseDB {
+        constructor(logger, options) {
+            options.dbName = "queries";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "queries";
+            this.searchIndex = "search-index";
+            this.tagIndex = "tag-index";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$n, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 2) {
+                let store = e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+
+                store = e.target.result.createObjectStore(
+                    this.searchIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TERM_INDEX, "term", { unique : true });
+
+                store = e.target.result.createObjectStore(
+                    this.tagIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TAG_INDEX, "tag", { unique : true });
+            }
+
+            if (e.oldVersion < 37) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+            }
+        }
+
+        async save(rec) {
+            return new Promise(async (resolve, reject) => {
+                //remove all new lines
+                rec.query = rec.query.replace(/\r?\n|\r/g, " ");
+                //remove extra white spaces
+                rec.query = rec.query.replace(/[ ]{2,}/g, " ");
+                let terms = rec.query.split(' ');
+
+                //get all unique terms
+                //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
+                terms = [...new Set(terms)];
+
+                this.logger.log(TAG$n, JSON.stringify(terms));
+                let id = -1;
+                try {
+                    //apppend timestamp if required
+                    if (!rec.created_at) {
+                        rec.created_at = new Date();
+                    }
+
+                    id = await super.save(this.store, rec);
+                    if (id == -1) {
+                        resolve(-1);
+                        return;
+                    }
+
+                    await this.updateSearchIndex(id, terms);
+                    await this.updateTagIndex(id, rec.tags);
+
+                    resolve(id);
+                } catch (e) {
+                    this.logger.log(TAG$n, `error: ${JSON.stringify(e.message)}`);
+                    reject(e.message);
+                }
+            })
+        }
+
+        async updateSearchIndex(id, terms) {
+            //add id to each of the tags
+            for (let i = 0; i < terms.length; i++) {
+                let t = terms[i];
+                t = t.trim();
+
+                if (t.length <= 1) {
+                    continue;
+                }
+
+                t = this.cleanup(t);
+                try {
+                    let rec = await this.findByTerm(t);
+                    //add a new tag
+                    if (rec == null) {
+                        await super.save(this.searchIndex, {
+                            term: t,
+                            queries:[id]
+                        });
+                        continue;
+                    }
+
+                    //update tag
+                    rec['queries'].push(id);
+                    this.logger.log(TAG$n, JSON.stringify(rec));
+                    super.put(this.searchIndex, {
+                        id: rec.id,
+                        term: t,
+                        queries: rec['queries']
+                    });
+
+                } catch (e) {
+                    this.logger.log(TAG$n, `error: e.message`);
+                }
+            }
+        }
+
+        async findByTerm(term) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let index = objectStore.index(TERM_INDEX);
+
+                let key = IDBKeyRange.only(term);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$n, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve(null);
+                };
+            })
+        }
+
+        async updateTagIndex(id, tags) {
+            //add id to each of the tags
+            for (let i = 0; i < tags.length; i++) {
+                let t = tags[i];
+                t = t.trim();
+
+                if (t.length <= 1) {
+                    continue;
+                }
+
+                t = this.cleanup(t);
+                try {
+                    let rec = await this.findByTag(t);
+                    //add a new tag
+                    if (rec == null) {
+                        await super.save(this.tagIndex, {
+                            tag: t,
+                            queries:[id]
+                        });
+                        continue;
+                    }
+
+                    //update tag
+                    rec['queries'].push(id);
+                    this.logger.log(TAG$n, JSON.stringify(rec));
+                    super.put(this.tagIndex, {
+                        id: rec.id,
+                        tag: t,
+                        queries: rec['queries']
+                    });
+
+                } catch (e) {
+                    this.logger.log(TAG$n, `error: e.message`);
+                }
+            }
+        }
+
+        async findByTag(tag) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let index = objectStore.index(TAG_INDEX);
+
+                let key = IDBKeyRange.only(tag);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$n, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve(null);
+                };
+            })
+        }
+
+        async findByQuery(query) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.dbName);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(QUERY_INDEX);
+
+                let key = IDBKeyRange.only(query);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$n, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve([]);
+                };
+            })
+        }
+
+        //https://stackoverflow.com/questions/26156292/trim-specific-character-from-a-string
+        cleanup(str) {
+            //remove table qualifiers like table_name.<...>
+            str = str.replace(/^\S+\./, "");
+
+            //remove punctuation marks
+            let chars = ['`', '`', ' ', '"', '\'', ',', ';', '+', '-', '=', '!=', '<', '>', '>=', '<='];
+            let start = 0, 
+                end = str.length;
+
+            while(start < end && chars.indexOf(str[start]) >= 0)
+                ++start;
+
+            while(end > start && chars.indexOf(str[end - 1]) >= 0)
+                --end;
+
+            return (start > 0 || end < str.length) ? str.substring(start, end) : str;
+        }
+
+        async filter(days, tags, terms) {
+            //days supercedes everything
+            //if days are provided get queries by days first
+            //then filter by terms and tags if provided
+            this.logger.log(TAG$n, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+
+            let start, end;
+            if (days.hasOwnProperty('start')) {
+                start = new Date(Date.now() - (days.start * 24 * 60 * 60 * 1000));
+                start.setHours(0);
+                start.setMinutes(0);
+                start.setSeconds(0);
+            }
+
+            if (days.hasOwnProperty('end')) {
+                end = new Date(Date.now() - (days.end * 24 * 60 * 60 * 1000));
+                end.setHours(23);
+                end.setMinutes(59);
+                end.setSeconds(59);
+            }
+
+
+            let ids = [];
+            if (start || end) {
+                this.logger.log(TAG$n, 'filtering');
+                ids = await this.searchByCreatedAt(start, end);
+
+                if (ids.length == 0) {
+                    //if days were provided and we did not find anything
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            if (tags.length > 0) {
+                let idsByTag = await this.searchByTags(tags);
+
+                ids = ids.filter(x => idsByTag.includes(x));
+                if (ids.length == 0) {
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            if (terms.length > 0) {
+                let idsByTerm = await this.searchByTerms(terms);
+
+                ids = ids.filter(x => idsByTerm.includes(x));
+                if (ids.length == 0) {
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            let results = [];
+            this.logger.log(TAG$n, `${ids}`);
+            for (let i = 0; i < ids.length; i++) {
+                results.push(await super.get(ids[i]));
+            }
+
+            return results;
+        }
+
+        async findByIds(ids) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let queries = [];
+
+                objectStore.openCursor(null, 'prev').onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (ids.includes(cursor.value.id)) {
+                            queries.push(cursor.value);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(queries);
+                    }
+                };
+            });
+        }
+
+        async updateTags(rec) {
+            await super.put(this.store, rec);
+            await this.updateTagIndex(rec.id, rec.tags);
+        }
+
+        searchByTerms(terms) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let ids = [];
+
+                objectStore.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (terms.includes(cursor.value.term)) {
+                            ids = ids.concat(cursor.value.queries);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(ids);
+                    }
+                };
+            });
+        }
+
+        searchByTags(tags) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let ids = [];
+
+                objectStore.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (tags.includes(cursor.value.tag)) {
+                            ids = ids.concat(cursor.value.queries);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(ids);
+                    }
+                };
+            });
+        } 
+
+        listTags(startingWith) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let index = objectStore.index(TAG_INDEX);
+                let tags = [];
+
+                IDBKeyRange.lowerBound(startingWith);
+                index.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        tags.push(cursor.value.tag);
+                        cursor.continue();
+                    } else {
+                        resolve(tags);
+                    }
+                };
+            });
+        }
+
+        listTerms(startingWith) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let index = objectStore.index(TERM_INDEX);
+                let terms = [];
+
+                IDBKeyRange.lowerBound(startingWith);
+                index.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        terms.push(cursor.value.term);
+                        cursor.continue();
+                    } else {
+                        resolve(terms);
+                    }
+                };
+            });
+        }
+
+        searchByCreatedAt(s, e) {
+            return new Promise((resolve, reject) => {
+                this.logger.log(TAG$n, `s: ${s} e: ${e}`);
+
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(CREATED_AT_INDEX);
+
+                // s -----> e ----> now
+                let key;
+                if (s && e) {
+                    key = IDBKeyRange.bound(s, e);
+                } else if (s) {
+                    key = IDBKeyRange.lowerBound(s);
+                } else if (e) {
+                    key = IDBKeyRange.upperBound(e);
+                } else {
+                    resolve([]);
+                    return;
+                }
+
+                let queries = [];
+                index.openCursor(key, "prev").onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$n, `id: ${cursor.value.created_at.toISOString()}`);
+                        queries.push(cursor.value.id);
+                        cursor.continue();
+                    } else {
+                        resolve(queries);
+                    }
+                };
+            });
+        }
+    }
+
+    const TAG$m = "base-meta-db";
+    const ID = 1;
+
+    class BaseMetaDB extends BaseDB {
+        async getDbName() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return '';
+            }
+
+            return rec.db_name ?? '';
+        }
+
+        async setDbName(dbName) {
+            this.logger.log(TAG$m, "setDbName");
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await this.save(this.store, {
+                    id: parseInt(ID),
+                    db_name: dbName
+                });
+                return;
+            }
+
+            rec.db_name = dbName;
+            await this.put(this.store, rec);
+        }
+
+        async getLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return new Date(Constants.EPOCH_TIMESTAMP);
+            }
+
+            return rec.last_sync_ts ?? new Date(Constants.EPOCH_TIMESTAMP);
+        }
+
+        async setLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await super.save(this.store, {
+                    id: parseInt(ID),
+                    last_sync_ts: new Date()
+                });
+                return;
+            }
+
+            rec.last_sync_ts = new Date();
+            await super.put(this.store, rec);
+        }
+
+        async get() {
+            return await super.get(parseInt(ID));
+        }
+
+        async destroy() {
+            return await super.destroy(parseInt(ID));
+        }
+    }
+
+    const TAG$l = "queries-meta-db";
+
+    class QueriesMetaDB extends BaseMetaDB {
+        constructor(logger, options) {
+            options.dbName = "queries_meta";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "queries_meta";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$l, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 1) {
+                e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+            }
+        }
+    }
+
+    const TAG$k = "connection-db";
+    const CONNECTION_INDEX = "connection-index";
+    const DB_NAME = "connections";
+
+    class ConnectionDB extends BaseDB {
+        constructor(logger, options) {
+            options.dbName = DB_NAME;
+            super(logger, options);
+            this.logger = logger;
+            this.store = "connections";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$k, `open.onupgradeneeded: ${e.oldVersion}`);
+            if (e.oldVersion < 1) {
+                let store = e.currentTarget.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
+            }
+
+            if (e.oldVersion < 2) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(Constants.DB_ID_INDEX, ["id", "db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 3) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+                store.deleteIndex(Constants.DB_ID_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 4) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "host", "port", "db"], { unique: true });
+            }
+        }
+
+        async save(conn) {
+            try {
+                //make sure there is only one connection with is_default = true
+                if (conn['is_default'] == true) {
+                    let conns = await super.getAll();
+                    for (let i = 0; i < conns.length; i++) {
+                        await this.put(conns[i].id, conns[i].pass, false);
+                    }
+                }
+
+                //search if this connection exists
+                let rec = await this.search(conn);
+                if (rec) {
+                    //if exists , update and return
+                    await this.put(rec.id, conn['pass'], conn['is_default']);
+                    return rec.id;
+                }
+
+                //create new record
+                return await super.save(this.store, conn);
+
+            } catch (e) {
+                this.logger.log(TAG$k, e.message);
+            }
+        }
+
+        async put(id, password, isDefault) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o.pass = password;
+                    if (o.is_default != isDefault) {
+                        //we set updated at only if is_default has changed. We don't
+                        //care about password change
+                        o.updated_at = new Date();
+                    }
+                    o.is_default = isDefault;
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async search(conn) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(CONNECTION_INDEX);
+
+                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.host, conn.port, conn.db]));
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+    }
+
+    const TAG$j = "connections-meta-db";
+
+    class ConnectionsMetaDB extends BaseMetaDB {
+        constructor(logger, options) {
+            options.dbName = "connections_meta";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "connections_meta";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$j, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 1) {
+                e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+            }
+        }
+    }
+
+    const TAG$i = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -421,7 +1348,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$k, response);
+                Logger.Log(TAG$i, response);
 
                 let json = await response.json();
 
@@ -431,7 +1358,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$k, e);
+                Logger.Log(TAG$i, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -491,7 +1418,7 @@
                     method: "post"
                 });
 
-                Logger.Log(TAG$k, response);
+                Logger.Log(TAG$i, response);
 
                 let json = await response.json();
 
@@ -501,7 +1428,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$k, e);
+                Logger.Log(TAG$i, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -572,7 +1499,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$k, "No data");
+            Logger.Log(TAG$i, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -625,40 +1552,40 @@
             return true;
         }
 
-        async resetAll() {
+        static async resetAll() {
             let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
             await connDb.open();
             let conns = await connDb.getAll();
-            Logger.Log(TAG$k, "Resetting connections..");
+            Logger.Log(TAG$i, "Resetting connections..");
             for (let i = 0; i < conns.length; i++) {
                 await connDb.reset(conns[i]);
             }
-            Logger.Log(TAG$k, "Done.");
+            Logger.Log(TAG$i, "Done.");
 
             let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
             await queryDb.open();
             let queries = await queryDb.getAll();
-            Logger.Log(TAG$k, "Resetting queries..");
+            Logger.Log(TAG$i, "Resetting queries..");
             for (let i = 0; i < queries.length; i++) {
                 await queryDb.reset(queries[i]);
             }
-            Logger.Log(TAG$k, "Done.");
+            Logger.Log(TAG$i, "Done.");
 
-            Logger.Log(TAG$k, "Resetting QueriesMetaDB");
+            Logger.Log(TAG$i, "Resetting QueriesMetaDB");
             let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
             await queriesMetaDb.open();
             await queriesMetaDb.destroy();
-            Logger.Log(TAG$k, "Done.");
+            Logger.Log(TAG$i, "Done.");
 
-            Logger.Log(TAG$k, "Resetting connectionsMetaDb");
+            Logger.Log(TAG$i, "Resetting connectionsMetaDb");
             let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
             await connectionsMetaDb.open();
             await connectionsMetaDb.destroy();
-            Logger.Log(TAG$k, "Done.");
+            Logger.Log(TAG$i, "Done.");
         }
     }
 
-    const TAG$j = "stream";
+    const TAG$h = "stream";
 
     class Stream {
         constructor(url) {
@@ -668,12 +1595,12 @@
             this.ws = new WebSocket(url);
 
             this.ws.onerror = (evt) => {
-                Logger.Log(TAG$j, "onerror:" + evt);
+                Logger.Log(TAG$h, "onerror:" + evt);
                 this.rej(Err.ERR_NO_AGENT);
             };
 
             this.ws.onclose = (evt) => {
-                Logger.Log(TAG$j, "onclose");
+                Logger.Log(TAG$h, "onclose");
                 this.ws = null;
             };
         }
@@ -729,7 +1656,7 @@
     			this.hasButtons = false;
     		});
 
-            PubSub.subscribe(Constants$1.INIT_PROGRESS, (data) => {
+            PubSub.subscribe(Constants.INIT_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -748,7 +1675,7 @@
                 this.progressBar.classList.add('is-active');
             });
 
-            PubSub.subscribe(Constants$1.START_PROGRESS, (data) => {
+            PubSub.subscribe(Constants.START_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -758,7 +1685,7 @@
                 }
             });
 
-            PubSub.subscribe(Constants$1.STOP_PROGRESS, () => {
+            PubSub.subscribe(Constants.STOP_PROGRESS, () => {
                 clearInterval(this.timer);
 
                 //if we have buttons, wait till user clicks ok
@@ -772,7 +1699,7 @@
                 this.progressBar.classList.remove('is-active');
             });
 
-            PubSub.subscribe(Constants$1.UPDATE_PROGRESS, (data) => {
+            PubSub.subscribe(Constants.UPDATE_PROGRESS, (data) => {
                 this.message.innerHTML = data.message;
             });
         }
@@ -814,7 +1741,7 @@
 
     let progressBar = new ProgressBar();
 
-    const TAG$i = "dbutils";
+    const TAG$g = "dbutils";
     class DbUtils {
 
         //todo: use WS in fetchall and get rid of fetch route from agent
@@ -824,9 +1751,9 @@
                 query: query
             };
 
-            let json = await Utils.get(Constants$1.URL + '/query?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
             if (json.status == 'error') {
-                Logger.Log(TAG$i, JSON.stringify(json));
+                Logger.Log(TAG$g, JSON.stringify(json));
                 return []
             }
 
@@ -835,20 +1762,20 @@
             params = {
                 'session-id': sessionId,
                 'cursor-id': cursorId,
-                'num-of-rows': Constants$1.BATCH_SIZE
+                'num-of-rows': Constants.BATCH_SIZE
             };
 
             let eof = false;
             let rows = [];
 
             do {
-                json = await Utils.get(Constants$1.URL + '/fetch?' + new URLSearchParams(params));
+                json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
                 if (json.status == "error") {
-                    Logger.Log(TAG$i, JSON.stringify(json));
+                    Logger.Log(TAG$g, JSON.stringify(json));
                     return []
                 }
 
-                Logger.Log(TAG$i, JSON.stringify(json));
+                Logger.Log(TAG$g, JSON.stringify(json));
                 if (!json.data) {
                     //if batch size == num of rows in query result, then we might get json.data = null
                     //but we should still return results fetched till this point
@@ -862,9 +1789,9 @@
         }
 
         static async login(creds) {
-            let json = await Utils.get(Constants$1.URL + '/login?' + new URLSearchParams(creds));
+            let json = await Utils.get(Constants.URL + '/login?' + new URLSearchParams(creds));
             if (json.status == 'error') {
-                Logger.Log(TAG$i, JSON.stringify(json));
+                Logger.Log(TAG$g, JSON.stringify(json));
                 return ""
             }
 
@@ -880,7 +1807,7 @@
                 'num-of-rows': -1,//not used
             };
 
-            return await Utils.get(Constants$1.URL + '/fetch?' + new URLSearchParams(params));
+            return await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
         }
 
         static async cancel(sessionId, cursorId) {
@@ -889,7 +1816,7 @@
                 'cursor-id': cursorId,
             };
 
-            await Utils.get(Constants$1.URL + '/cancel?' + new URLSearchParams(params));
+            await Utils.get(Constants.URL + '/cancel?' + new URLSearchParams(params));
         }
 
         static async fetchCursorId(sessionId, query, execute = false) {
@@ -900,17 +1827,17 @@
             };
 
             if (execute) {
-                let json = await Utils.get(Constants$1.URL + '/execute?' + new URLSearchParams(params));
+                let json = await Utils.get(Constants.URL + '/execute?' + new URLSearchParams(params));
                 return json.data['cursor-id']
             }
 
-            let json = await Utils.get(Constants$1.URL + '/query?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
             return json.data['cursor-id']
         }
 
         async exportResults(q) {
             let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
-            Logger.Log(TAG$i, `cursorId: ${cursorId}`);
+            Logger.Log(TAG$g, `cursorId: ${cursorId}`);
             let params = {
                 'session-id': this.sessionId,
                 'cursor-id': cursorId,
@@ -919,17 +1846,17 @@
                 'export': true
             };
 
-            let stream = new Stream(Constants$1.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
 
             progressBar.setOptions({
                 buttons: true,
                 cancel: () => {
                     DbUtils.cancel(this.sessionId, cursorId);
-                    Logger.Log(TAG$i, `Cancelled ${cursorId}`);
+                    Logger.Log(TAG$g, `Cancelled ${cursorId}`);
                 }
             });
 
-            PubSub.publish(Constants$1.INIT_PROGRESS, {
+            PubSub.publish(Constants.INIT_PROGRESS, {
                 title: `Running query`,
                 message: `Please wait`
             });
@@ -942,7 +1869,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub.publish(Constants$1.STREAM_ERROR, {
+                    PubSub.publish(Constants.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -956,14 +1883,14 @@
                 if (row[0] == "header") {
                     fileName = row[2];
 
-                    PubSub.publish(Constants$1.START_PROGRESS, {
+                    PubSub.publish(Constants.START_PROGRESS, {
                         title: `Exporting to ${fileName}`
                     });
 
                     //If we are here query was OK, save to DB
-                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants.QUERY_DISPATCHED, {
                         query: q,
-                        tags: [Constants$1.USER]
+                        tags: [Constants.USER]
                     });
                     continue;
                 }
@@ -971,27 +1898,27 @@
                 if (row[0] == "current-row") {
                     n += row[1];
 
-                    PubSub.publish(Constants$1.UPDATE_PROGRESS, {
+                    PubSub.publish(Constants.UPDATE_PROGRESS, {
                         message: `Processed ${row[1]} rows`
                     });
                 }
             }
 
             if (n > 0) {
-                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
+                PubSub.publish(Constants.UPDATE_PROGRESS, {
                     message: `Export complete`
                 });
             } else {
-                PubSub.publish(Constants$1.START_PROGRESS, {
+                PubSub.publish(Constants.START_PROGRESS, {
                     title: `No data`
                 });
 
-                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
+                PubSub.publish(Constants.UPDATE_PROGRESS, {
                     message: `Processed 0 rows`
                 });
             }
 
-            PubSub.publish(Constants$1.STOP_PROGRESS, {});
+            PubSub.publish(Constants.STOP_PROGRESS, {});
 
             if (err == Err.ERR_NONE) {
                 return {
@@ -1051,7 +1978,7 @@
         }
 
         static getLimit(page, delta) {
-            return `${(page + delta) * Constants$1.BATCH_SIZE_WS}, ${Constants$1.BATCH_SIZE_WS}`;
+            return `${(page + delta) * Constants.BATCH_SIZE_WS}, ${Constants.BATCH_SIZE_WS}`;
         }
 
         static getOrder(col, order) {
@@ -1062,7 +1989,7 @@
         }
     }
 
-    const TAG$h = "stack";
+    const TAG$f = "stack";
 
     class Stack {
         constructor(cb) {
@@ -1072,11 +1999,11 @@
 
             this.$back = document.getElementById('back');
             this.$back.addEventListener('click', async () => {
-                this.handleCmd(Constants$1.CMD_BACK);
+                this.handleCmd(Constants.CMD_BACK);
             });
 
             [
-                Constants$1.CMD_BACK,
+                Constants.CMD_BACK,
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -1087,7 +2014,7 @@
         }
 
         async handleBack() {
-            Logger.Log(TAG$h, `${this.stack.length}: ${this.curr}`);
+            Logger.Log(TAG$f, `${this.stack.length}: ${this.curr}`);
 
             if (this.stack.length == 0) {
                 return
@@ -1100,7 +2027,7 @@
             this.curr--;
             this.stack.pop();
             await this.cb(this.stack[this.curr]);
-            Logger.Log(TAG$h, "Done back");
+            Logger.Log(TAG$f, "Done back");
             if (this.curr == 0) {
                 this.$back.classList.add('stack-disable');
             }
@@ -1108,7 +2035,7 @@
 
         async handleCmd(cmd) {
             switch (cmd) {
-                case Constants$1.CMD_BACK:
+                case Constants.CMD_BACK:
                     this.handleBack();
                     break;
             }
@@ -1121,13 +2048,13 @@
         }
 
         push(...args) {
-            Logger.Log(TAG$h, JSON.stringify(args));
+            Logger.Log(TAG$f, JSON.stringify(args));
             if (args.length == 1) {
                 this.stack.push({
                     'type': 'table',
                     'table': args[0]
                 });
-                Logger.Log(TAG$h, "table:" + JSON.stringify(this.stack));
+                Logger.Log(TAG$f, "table:" + JSON.stringify(this.stack));
                 return
             }
 
@@ -1141,7 +2068,7 @@
 
                 this.curr++;
                 this.$back.classList.remove('stack-disable');
-                Logger.Log(TAG$h, "fk-ref:" + JSON.stringify(this.stack));
+                Logger.Log(TAG$f, "fk-ref:" + JSON.stringify(this.stack));
 
                 return
             }
@@ -1157,7 +2084,7 @@
 
                 this.curr++;
                 this.$back.classList.remove('stack-disable');
-                Logger.Log(TAG$h, "search:" + JSON.stringify(this.stack));
+                Logger.Log(TAG$f, "search:" + JSON.stringify(this.stack));
 
                 return
             }
@@ -1190,7 +2117,7 @@
     	}
     }
 
-    const TAG$g = 'cell-renderer';
+    const TAG$e = 'cell-renderer';
 
     class CellRenderer {
     	constructor(fkMap) {
@@ -1200,7 +2127,7 @@
         }
 
         render(params) {
-            Logger.Log(TAG$g, `${params.colDef.field}`);
+            Logger.Log(TAG$e, `${params.colDef.field}`);
             let id = params.colDef.colId;
             let c = params.colDef.field;
             let v = params.data[`${c}-${id}`];
@@ -1298,7 +2225,7 @@
         }
 
         onSortRequested(order, event) {
-            PubSub.publish(Constants$1.SORT_REQUESTED, {
+            PubSub.publish(Constants.SORT_REQUESTED, {
                 column: this.params.column.colDef.field,
                 order: order
             });
@@ -1315,7 +2242,7 @@
         } 
     }
 
-    const TAG$f = 'cell-editor';
+    const TAG$d = 'cell-editor';
 
     class CellEditor {
        init(params) {
@@ -1330,7 +2257,7 @@
 
            this.input.addEventListener('input', (event) => {
                this.value = event.target.value;
-               Logger.Log(TAG$f, "listener:" + this.value);
+               Logger.Log(TAG$d, "listener:" + this.value);
            });
        }
 
@@ -1343,7 +2270,7 @@
        // the final value to send to the grid, on completion of editing
        getValue() {
            // this simple editor doubles any value entered into the input
-           Logger.Log(TAG$f, "getvalue:" + this.value);
+           Logger.Log(TAG$d, "getvalue:" + this.value);
            return this.input.value;
        }
 
@@ -1366,7 +2293,7 @@
        }
     }
 
-    const TAG$e = "table-utils";
+    const TAG$c = "table-utils";
 
     class TableUtils {
         constructor($root) {
@@ -1380,8 +2307,8 @@
                     return;
                 }
 
-                Logger.Log(TAG$e, "Cancel clicked");
-                PubSub.publish(Constants$1.QUERY_CANCELLED, {});
+                Logger.Log(TAG$c, "Cancel clicked");
+                PubSub.publish(Constants.QUERY_CANCELLED, {});
             });
         }
 
@@ -1412,7 +2339,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub.publish(Constants$1.STREAM_ERROR, {
+                    PubSub.publish(Constants.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -1449,13 +2376,13 @@
                             },
                             cellEditor: CellEditor,
                             valueGetter: params => {
-                                Logger.Log(TAG$e, "valueGetter");
+                                Logger.Log(TAG$c, "valueGetter");
                                 let id = params.colDef.colId;
                                 let c = params.colDef.field;
                                 return params.data[`${c}-${id}`];
                             },
                             valueSetter: params => {
-                                Logger.Log(TAG$e, "valueSetter");
+                                Logger.Log(TAG$c, "valueSetter");
                                 let id = params.colDef.colId;
                                 let c = params.colDef.field;
                                 params.data[`${c}-${id}`] = params.newValue;
@@ -1540,7 +2467,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub.publish(Constants$1.STREAM_ERROR, {
+                    PubSub.publish(Constants.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -1597,7 +2524,7 @@
                 this.undoStarted = false;
                 return;
             }
-            Logger.Log(TAG$e, "handleCellValueChanged");
+            Logger.Log(TAG$c, "handleCellValueChanged");
             let key = fkMap['primary-key'];
 
             let keyId = fkMap['primary-key-id'];
@@ -1607,7 +2534,7 @@
             let colField = params.colDef.field;
             let colValue = params.data[`${colField}-${colId}`];
 
-            PubSub.publish(Constants$1.CELL_EDITED, {
+            PubSub.publish(Constants.CELL_EDITED, {
                 key: {
                     'name': key,
                     'value': keyValue,
@@ -2217,41 +3144,41 @@
 
     class Hotkeys {
         static init() {
-            hotkeys(Constants$1.SHIFT_R, () => {
-                PubSub.publish(Constants$1.CMD_RUN_QUERY, {});
+            hotkeys(Constants.SHIFT_R, () => {
+                PubSub.publish(Constants.CMD_RUN_QUERY, {});
             });
 
-            hotkeys(Constants$1.SHIFT_F, () => {
-                PubSub.publish(Constants$1.CMD_FORMAT_QUERY, {});
+            hotkeys(Constants.SHIFT_F, () => {
+                PubSub.publish(Constants.CMD_FORMAT_QUERY, {});
             });
 
-            hotkeys(Constants$1.SHIFT_N, () => {
-                PubSub.publish(Constants$1.CMD_NEXT_ROWS, {});
+            hotkeys(Constants.SHIFT_N, () => {
+                PubSub.publish(Constants.CMD_NEXT_ROWS, {});
             });
 
-            hotkeys(Constants$1.SHIFT_P, () => {
-                PubSub.publish(Constants$1.CMD_PREV_ROWS, {});
+            hotkeys(Constants.SHIFT_P, () => {
+                PubSub.publish(Constants.CMD_PREV_ROWS, {});
             });
 
-            hotkeys(Constants$1.SHIFT_E, () => {
-                PubSub.publish(Constants$1.CMD_EXPORT, {});
+            hotkeys(Constants.SHIFT_E, () => {
+                PubSub.publish(Constants.CMD_EXPORT, {});
             });
 
-            hotkeys(Constants$1.SHIFT_L, () => {
-                PubSub.publish(Constants$1.CMD_EXPORT_TABLE , {});
+            hotkeys(Constants.SHIFT_L, () => {
+                PubSub.publish(Constants.CMD_EXPORT_TABLE , {});
             });
 
-            hotkeys(Constants$1.SHIFT_S, () => {
-                PubSub.publish(Constants$1.CMD_SEARCH_TABLES , {});
+            hotkeys(Constants.SHIFT_S, () => {
+                PubSub.publish(Constants.CMD_SEARCH_TABLES , {});
             });
 
-            hotkeys(Constants$1.SHIFT_BACK, () => {
-                PubSub.publish(Constants$1.CMD_BACK , {});
+            hotkeys(Constants.SHIFT_BACK, () => {
+                PubSub.publish(Constants.CMD_BACK , {});
             });
         }
     }
 
-    const TAG$d = "row-adder";
+    const TAG$b = "row-adder";
 
     class RowAdder {
         constructor(sessionId) {
@@ -2272,7 +3199,7 @@
 
                 this.$title.innerHTML = `Add new row to ${this.table}`;
                 this.$body.replaceChildren();
-                Logger.Log(TAG$d, this.columns);
+                Logger.Log(TAG$b, this.columns);
                 this.$dialog.classList.add('is-active');
                 this.columns.forEach((c) => {
                     let n = Utils.generateNode(this.templ, {
@@ -2295,21 +3222,21 @@
                     }
                 });
 
-                Logger.Log(TAG$d, `cols: ${cols}`);
-                Logger.Log(TAG$d, `vals: ${vals}`);
+                Logger.Log(TAG$b, `cols: ${cols}`);
+                Logger.Log(TAG$b, `vals: ${vals}`);
                 cols = cols.map(e => `\`${e}\``).join(",");
                 vals = vals.map(e => `'${e}'`).join(",");
 
                 let query = `insert into \`${this.table}\` (${cols}) values (${vals})`;
-                Logger.Log(TAG$d, query);
+                Logger.Log(TAG$b, query);
 
                 let dbUtils = new DbUtils();
                 let res = await dbUtils.execute.apply(this, [query]);
 
                 if (res.status == "ok") {
-                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants.QUERY_DISPATCHED, {
                         query: query,
-                        tags: [Constants$1.USER]
+                        tags: [Constants.USER]
                     });
 
                     let rows = res.data[0][1];
@@ -2336,11 +3263,11 @@
         }
     }
 
-    const TAG$c = "col-selector";
+    const TAG$a = "col-selector";
 
     class ColumnSelector {
         constructor() {
-            let selections = Utils.getFromLocalStorage(Constants$1.COLUMN_SELECTIONS);
+            let selections = Utils.getFromLocalStorage(Constants.COLUMN_SELECTIONS);
             if (selections) {
                 this.selections = JSON.parse(selections);
             } else {
@@ -2364,7 +3291,7 @@
 
                 this.$title.innerHTML = `Select columns from ${this.table} to display`;
                 this.$body.replaceChildren();
-                Logger.Log(TAG$c, this.columns);
+                Logger.Log(TAG$a, this.columns);
 
                 let selection = this.selections[this.table] ?? {};
 
@@ -2419,13 +3346,13 @@
                     id++;
                 });
 
-                Logger.Log(TAG$c, JSON.stringify(selections));
-                PubSub.publish(Constants$1.COLUMNS_SELECTED, {
+                Logger.Log(TAG$a, JSON.stringify(selections));
+                PubSub.publish(Constants.COLUMNS_SELECTED, {
                     cols: selection
                 });
 
                 this.selections[this.table] = selection;
-                Utils.saveToLocalStorage(Constants$1.COLUMN_SELECTIONS, JSON.stringify(this.selections));
+                Utils.saveToLocalStorage(Constants.COLUMN_SELECTIONS, JSON.stringify(this.selections));
 
                 this.$dialog.classList.remove('is-active');
             });
@@ -2445,7 +3372,7 @@
         }
     }
 
-    const TAG$b = "table-info";
+    const TAG$9 = "table-info";
 
     class TableInfo {
         constructor(sessionId) {
@@ -2466,7 +3393,7 @@
                 this.$title.innerHTML = `${this.table}`;
                 this.$body.replaceChildren();
                 this.$body.innerHTML = this.createQuery;
-                Logger.Log(TAG$b, this.columns);
+                Logger.Log(TAG$9, this.columns);
                 this.$dialog.classList.add('is-active');
             });
 
@@ -2478,12 +3405,12 @@
                 //this.$dialog.classList.remove('is-active');
             //});
 
-            PubSub.subscribe(Constants$1.TABLE_CHANGED, (data) => {
+            PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
                 this.table = data.table;
                 this.fetchQuery();
             });
 
-            PubSub.subscribe(Constants$1.TABLE_SELECTED, (data) => {
+            PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
                 this.table = data.table;
                 this.fetchQuery();
             });
@@ -2491,7 +3418,7 @@
 
         async fetchQuery() {
             let res = await DbUtils.fetchAll(this.sessionId, `show create table \`${this.table}\``);
-            Logger.Log(TAG$b, JSON.stringify(res));
+            Logger.Log(TAG$9, JSON.stringify(res));
             this.createQuery = `<pre> ${res[0][3]} </pre>`;
         }
 
@@ -2507,17 +3434,17 @@
                 this.$prev = document.getElementById('prev');
 
                 this.$next.addEventListener('click', async (e) => {
-                    this.handleCmd(Constants$1.CMD_NEXT_ROWS);
+                    this.handleCmd(Constants.CMD_NEXT_ROWS);
                 });
 
                 this.$prev.addEventListener('click', async (e) => {
-                    this.handleCmd(Constants$1.CMD_PREV_ROWS);
+                    this.handleCmd(Constants.CMD_PREV_ROWS);
                 });
             });
 
             [
-                Constants$1.CMD_NEXT_ROWS,
-                Constants$1.CMD_PREV_ROWS,
+                Constants.CMD_NEXT_ROWS,
+                Constants.CMD_PREV_ROWS,
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -2559,11 +3486,11 @@
 
         async handleCmd(cmd) {
             switch (cmd) {
-                case Constants$1.CMD_NEXT_ROWS:
+                case Constants.CMD_NEXT_ROWS:
                     this.handleNextRows();
                     break;
 
-                case Constants$1.CMD_PREV_ROWS:
+                case Constants.CMD_PREV_ROWS:
                     this.handlePrevNows();
                     break;
             }
@@ -2631,11 +3558,11 @@
         'IS NOT NULL',
     ];
 
-    const TAG$a = "table-contents";
+    const TAG$8 = "table-contents";
 
     class TableContents {
         constructor(sessionId) {
-            Logger.Log(TAG$a, `sessionId: ${sessionId}`);
+            Logger.Log(TAG$8, `sessionId: ${sessionId}`);
 
             this.sessionId = sessionId;
             this.init();
@@ -2648,7 +3575,7 @@
             this.rowAdder.setSessionId(this.sessionId);
             this.tableInfo.setSessionId(this.sessionId);
 
-            Logger.Log(TAG$a, `sessionId: ${sessionId} db: ${db}`);
+            Logger.Log(TAG$8, `sessionId: ${sessionId} db: ${db}`);
         }
 
         async init() {
@@ -2681,28 +3608,28 @@
         }
 
         initSubscribers() {
-            PubSub.subscribe(Constants$1.STREAM_ERROR, (err) => {
-                Logger.Log(TAG$a, `${Constants$1.STREAM_ERROR}: ${JSON.stringify(err)}`);
+            PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
+                Logger.Log(TAG$8, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
                 Err.handle(err);
             });
 
-            PubSub.subscribe(Constants$1.QUERY_CANCELLED, () => {
+            PubSub.subscribe(Constants.QUERY_CANCELLED, () => {
                 DbUtils.cancel(this.sessionId, this.cursorId);
             });
 
-            PubSub.subscribe(Constants$1.SORT_REQUESTED, (data) => {
+            PubSub.subscribe(Constants.SORT_REQUESTED, (data) => {
                 this.handleSort(data);
             });
 
-            PubSub.subscribe(Constants$1.COLUMNS_SELECTED, (data) => {
+            PubSub.subscribe(Constants.COLUMNS_SELECTED, (data) => {
                 this.handleSelectColumns(data);
             });
 
             //handle all keyboard shortcuts
             [
-                Constants$1.CMD_RUN_QUERY,
-                Constants$1.CMD_EXPORT,
-                Constants$1.CMD_FORMAT_QUERY,
+                Constants.CMD_RUN_QUERY,
+                Constants.CMD_EXPORT,
+                Constants.CMD_FORMAT_QUERY,
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -2711,8 +3638,8 @@
                 })(c);
             });
 
-            PubSub.subscribe(Constants$1.CELL_EDITED, async (data) => {
-                Logger.Log(TAG$a, Constants$1.CELL_EDITED);
+            PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
+                Logger.Log(TAG$8, Constants.CELL_EDITED);
                 await this.handleCellEdit(data);
             });
         }
@@ -2737,7 +3664,7 @@
             });
 
             this.$tableContents.addEventListener('click', async (e) => {
-                Logger.Log(TAG$a, "clicked");
+                Logger.Log(TAG$8, "clicked");
                 let target = event.target;
                 if (!target.classList.contains('fk-icon')) {
                     return
@@ -2745,8 +3672,8 @@
 
                 let value = target.dataset.value;
 
-                Logger.Log(TAG$a, `${target.dataset.table}:${target.dataset.column}:${value}`);
-                PubSub.publish(Constants$1.TABLE_CHANGED, {table: target.dataset.table});
+                Logger.Log(TAG$8, `${target.dataset.table}:${target.dataset.column}:${value}`);
+                PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
                 await this.showFkRef(target.dataset.table, target.dataset.column, value);
                 this.stack.push(target.dataset.table, target.dataset.column, value);
             });
@@ -2760,16 +3687,16 @@
             });
 
             this.$exportFiltered.addEventListener('click', async (e) => {
-                this.handleCmd(Constants$1.CMD_EXPORT);
+                this.handleCmd(Constants.CMD_EXPORT);
             });
 
             this.$clearFilter.addEventListener('click', async (e) => {
-                this.handleCmd(Constants$1.CMD_CLEAR_FILTER);
+                this.handleCmd(Constants.CMD_CLEAR_FILTER);
             });
         }
 
         async handleSort(data) {
-            Logger.Log(TAG$a, JSON.stringify(data));
+            Logger.Log(TAG$8, JSON.stringify(data));
             this.sortColumn = data.column;
             this.sortOrder = data.order;
 
@@ -2781,7 +3708,7 @@
         }
 
         async handleCellEdit(data) {
-            Logger.Log(TAG$a, JSON.stringify(data));
+            Logger.Log(TAG$8, JSON.stringify(data));
             let query = `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
                     where \`${data.key.name}\` = '${data.key.value}'`;
@@ -2789,9 +3716,9 @@
             let res = await dbUtils.execute.apply(this, [query]);
 
             if (res.status == "ok") {
-                PubSub.publish(Constants$1.QUERY_DISPATCHED, {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
                     query: query,
-                    tags: [Constants$1.USER]
+                    tags: [Constants.USER]
                 });
 
                 let rows = res.data[0][1];
@@ -2820,9 +3747,9 @@
                 let res = await this.showContents(query, this.fkMap);
 
                 if (res.status == "ok") {
-                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants.QUERY_DISPATCHED, {
                         query: query,
-                        tags: [Constants$1.USER]
+                        tags: [Constants.USER]
                     });
 
                 }
@@ -2845,15 +3772,15 @@
                              '${this.$searchText.value}'`;
             }
 
-            Logger.Log(TAG$a, this.query);
+            Logger.Log(TAG$8, this.query);
 
             const f = async (query) => {
                 let res = await this.showContents(query, this.fkMap);
 
                 if (res.status == "ok") {
-                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants.QUERY_DISPATCHED, {
                         query: this.query,
-                        tags: [Constants$1.USER]
+                        tags: [Constants.USER]
                     });
                 }
 
@@ -2871,7 +3798,7 @@
         async show(table) {
             this.table = table;
 
-            Logger.Log(TAG$a, `Displaying ${table}`);
+            Logger.Log(TAG$8, `Displaying ${table}`);
 
             this.stack.reset();
             this.stack.push(this.table);
@@ -2888,7 +3815,7 @@
                 return res;
             };
 
-            Logger.Log(TAG$a, `${this.sortColumn}:${this.sortOrder}`);
+            Logger.Log(TAG$8, `${this.sortColumn}:${this.sortOrder}`);
             pager.init(this.query, f, this.sortColumn, this.sortOrder);
         }
 
@@ -2922,10 +3849,10 @@
                 'session-id': this.sessionId,
                 'cursor-id': this.cursorId,
                 'req-id': Utils.uuid(),
-                'num-of-rows': Constants$1.BATCH_SIZE_WS
+                'num-of-rows': Constants.BATCH_SIZE_WS
             };
 
-            let stream = new Stream(Constants$1.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
             let selection = this.colSelector.getSelection(this.table);
             let res =  await this.tableUtils.showContents(stream, fkMap, selection, true, true);
 
@@ -2938,20 +3865,20 @@
                 'session-id': this.sessionId,
                 'cursor-id': this.cursorId,
                 'req-id': Utils.uuid(),
-                'num-of-rows': Constants$1.BATCH_SIZE_WS
+                'num-of-rows': Constants.BATCH_SIZE_WS
             };
 
-            let stream = new Stream(Constants$1.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
             return this.tableUtils.update(stream);
         }
 
         async handleCmd(cmd) {
             switch (cmd) {
-            case Constants$1.CMD_EXPORT:
+            case Constants.CMD_EXPORT:
                 this.handleExport();
                 break;
 
-            case Constants$1.CMD_CLEAR_FILTER:
+            case Constants.CMD_CLEAR_FILTER:
                 this.handleClearFilter();
                 break;
             }
@@ -2984,16 +3911,16 @@
             let res = await dbUtils.exportResults.apply(this, [this.query]);
 
             if (res.status == "ok") {
-                PubSub.publish(Constants$1.QUERY_DISPATCHED, {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
                     query: this.query,
-                    tags: [Constants$1.USER]
+                    tags: [Constants.USER]
                 });
             }
         }
 
         async navigate(e) {
-            Logger.Log(TAG$a, JSON.stringify(e));
-            PubSub.publish(Constants$1.TABLE_CHANGED, {table: e.table});
+            Logger.Log(TAG$8, JSON.stringify(e));
+            PubSub.publish(Constants.TABLE_CHANGED, {table: e.table});
 
             switch (e.type) {
                 case 'table':
@@ -3015,11 +3942,11 @@
                     await this.search();
                     break
             }
-            Logger.Log(TAG$a, "Done navigate");
+            Logger.Log(TAG$8, "Done navigate");
         }
     }
 
-    const TAG$9 = "tables";
+    const TAG$7 = "tables";
 
     class Tables {
         constructor(sessionId) {
@@ -3033,7 +3960,7 @@
             });
 
             this.$exportTable.addEventListener('click', () => {
-                this.handleCmd(Constants$1.CMD_EXPORT_TABLE);
+                this.handleCmd(Constants.CMD_EXPORT_TABLE);
             });
 
             this.$tables.addEventListener('click', async (e) => {
@@ -3053,11 +3980,11 @@
 
                 this.table = target.innerHTML;
 
-                PubSub.publish(Constants$1.TABLE_SELECTED, {table: target.innerHTML});
+                PubSub.publish(Constants.TABLE_SELECTED, {table: target.innerHTML});
             });
 
             //update highlighted table if table is changed from elsewhere
-            PubSub.subscribe(Constants$1.TABLE_CHANGED, (data) => {
+            PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
                 //remove highlight on all element first
                 let list = this.$tables.querySelectorAll('.highlight');
                 list.forEach((e) => {
@@ -3075,11 +4002,11 @@
                 }
             });
 
-            Logger.Log(TAG$9, `sessionId: ${sessionId}`);
+            Logger.Log(TAG$7, `sessionId: ${sessionId}`);
             //handle all keyboard shortcuts
             [
-                Constants$1.CMD_EXPORT_TABLE,
-                Constants$1.CMD_SEARCH_TABLES
+                Constants.CMD_EXPORT_TABLE,
+                Constants.CMD_SEARCH_TABLES
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -3091,11 +4018,11 @@
 
         async handleCmd(cmd) {
             switch (cmd) {
-            case Constants$1.CMD_EXPORT_TABLE:
+            case Constants.CMD_EXPORT_TABLE:
                 this.handleExportTable();
                 break;
 
-            case Constants$1.CMD_SEARCH_TABLES:
+            case Constants.CMD_SEARCH_TABLES:
                 this.$tableFilter.focus();
                 break;
             }
@@ -3115,7 +4042,7 @@
         setSessionInfo(sessionId, db) {
             this.sessionId = sessionId;
             this.db = db;
-            Logger.Log(TAG$9, `sessionId: ${sessionId} db: ${db}`);
+            Logger.Log(TAG$7, `sessionId: ${sessionId} db: ${db}`);
         }
 
         filter() {
@@ -3126,7 +4053,7 @@
                 return
             }
 
-            Logger.Log(TAG$9, `Filtering ${f}`);
+            Logger.Log(TAG$7, `Filtering ${f}`);
 
             let regex = new RegExp(`${f}`);
             let tables = this.tables.filter(t => regex.test(t));
@@ -3134,7 +4061,7 @@
         }
 
         async show(db) {
-            Logger.Log(TAG$9, "show");
+            Logger.Log(TAG$7, "show");
             let q = `show tables from \`${db}\``;
             let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
 
@@ -3145,7 +4072,7 @@
                 'num-of-rows': -1 //get all table names
             };
 
-            let stream = new Stream(Constants$1.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
 
             this.$tables.replaceChildren();
             let $t = document.getElementById('table-template');
@@ -3178,19 +4105,19 @@
         }
     }
 
-    const TAG$8 = "grid-resizer";
+    const TAG$6 = "grid-resizer";
     class GridResizerH {
         //resize two elements contained in grid horizontal direction
         constructor($grid, $e1, $resizer, $e2) {
             this.d1 = $e1.getBoundingClientRect().width;
             this.d2 = $e2.getBoundingClientRect().width;
 
-            Logger.Log(TAG$8, `${this.d1} ${this.d2}`);
+            Logger.Log(TAG$6, `${this.d1} ${this.d2}`);
 
             $resizer.addEventListener('mousedown', (e) => {
                 this.isDragging = true;
                 this.startx = e.clientX;
-                Logger.Log(TAG$8, `mousedown: ${e.clientX}`);
+                Logger.Log(TAG$6, `mousedown: ${e.clientX}`);
                 e.preventDefault();
             });
 
@@ -3198,11 +4125,11 @@
                 if (!this.isDragging) {
                     return;
                 }
-                Logger.Log(TAG$8, `mousemove: ${e.clientX}`);
+                Logger.Log(TAG$6, `mousemove: ${e.clientX}`);
                 let delta = e.clientX - this.startx;
                 this.d1 += delta;
                 this.d2 += -1 * delta;
-                Logger.Log(TAG$8, `${delta} ${this.d1} ${this.d2}`);
+                Logger.Log(TAG$6, `${delta} ${this.d1} ${this.d2}`);
 
                 $grid.style.gridTemplateColumns = `${this.d1}px 2px ${this.d2}px`;
                 this.startx = e.clientX;
@@ -3211,21 +4138,21 @@
 
             document.addEventListener('mouseup', (e) => {
                 this.isDragging = false;
-                Logger.Log(TAG$8, `mouseup: ${e.clientX}`);
+                Logger.Log(TAG$6, `mouseup: ${e.clientX}`);
                 e.preventDefault();
-                PubSub.publish(Constants$1.GRID_H_RESIZED, {});
+                PubSub.publish(Constants.GRID_H_RESIZED, {});
             });
         }
     }
 
-    const TAG$7 = "main-menu";
+    const TAG$5 = "main-menu";
     class MainMenu {
         static init() {
     		let elementsArray = document.querySelectorAll('[id$="-menu"]');
 
             elementsArray.forEach((elem) => {
                 elem.addEventListener("click", (e) => {
-                    Logger.Log(TAG$7, `${e.currentTarget.id} clicked `);
+                    Logger.Log(TAG$5, `${e.currentTarget.id} clicked `);
                     MainMenu.handleMenu(e.currentTarget.id);
                 });
             });
@@ -3252,7 +4179,7 @@
     	}
     }
 
-    const TAG$6 = "appbar";
+    const TAG$4 = "appbar";
     class AppBar {
         static init(name, sessionId, db) {
             let $databases = document.getElementById('databases');
@@ -3261,9 +4188,9 @@
             AppBar.showDatabases($databases, sessionId, db);
 
             $databases.addEventListener('change', () => {
-                Logger.Log(TAG$6, "Db changed");
+                Logger.Log(TAG$4, "Db changed");
                 let db = $databases.value;
-                PubSub.publish(Constants$1.DB_CHANGED, {db: db});
+                PubSub.publish(Constants.DB_CHANGED, {db: db});
             });
         }
 
@@ -3272,716 +4199,6 @@
             dbs = Utils.extractColumns(dbs);
             Utils.setOptions($databases, dbs, db);
             //PubSub.publish(Constants.DB_CHANGED, {db: db});
-        }
-    }
-
-    const TAG$5 = "base-db";
-    class BaseDB {
-        constructor(logger, options) {
-            this.logger = logger;
-            this.version = options.version;
-            this.dbName = options.dbName;
-        }
-
-        async open() {
-            return new Promise((resolve, reject) => {
-                let req = indexedDB.open(this.dbName, this.version);
-                    req.onsuccess = (e) => {
-                        this.logger.log(TAG$5, "open.onsuccess");
-                        this.db = req.result;
-                        resolve(0);
-                    };
-
-                    req.onerror = (e) => {
-                        this.logger.log(TAG$5, e.target.error);
-                        reject(e.target.errorCode);
-                    };
-
-                    req.onupgradeneeded = (evt) => {
-                        this.onUpgrade(evt);
-                    };
-            })
-        }
-
-        async save(store, rec) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction([store], "readwrite");
-
-                let objectStore = transaction.objectStore(store);
-                let request = objectStore.add(rec);
-                request.onsuccess = (e) => {
-                    resolve(e.target.result);
-                };
-
-                request.onerror = (e) => {
-                    this.logger.log(TAG$5, e.target.error);
-                    resolve(-1);
-                };
-            })
-        }
-
-        async put(store, rec) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction([store], "readwrite");
-                let objectStore = transaction.objectStore(store);
-
-                rec.updated_at = new Date();
-                let request = objectStore.put(rec);
-                request.onsuccess = (e) => {
-                    resolve(0);
-                };
-
-                request.onerror = (e) => {
-                    this.logger.log(TAG$5, e.target.error);
-                    resolve(-1);
-                };
-            })
-        }
-
-        //delete completely from indexeddb
-    	async destroy(id) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store, "readwrite");
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.delete(id);
-
-                request.onsuccess = (e) => {
-                    resolve(0);
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
-        }
-
-        //just mark status as deleted
-        async del(id) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store, "readwrite");
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(id);
-
-                request.onsuccess = (e) => {
-                    let o = e.target.result;
-                    o.status = Constants$1.STATUS_DELETED;
-                    let requestUpdate = objectStore.put(o);
-
-                    requestUpdate.onerror = (e) => {
-                        resolve(e.target.error);
-                    };
-
-                    requestUpdate.onsuccess = (e) => {
-                        resolve(0);
-                    };
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
-        }
-
-        async get(id, keys = []) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store);
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(id);
-
-                request.onsuccess = (e) => {
-                    let result = [];
-                    if (keys.length > 0) {
-                        for (let k in request.result) {
-                            if (keys.includes(k)) {
-                                result[k] = request.result[k];
-                            }
-                        }
-                    } else {
-                        result = request.result;
-                    }
-
-                    this.logger.log(TAG$5, JSON.stringify(result));
-                    resolve(result);
-                };
-
-                request.onerror = (e) => {
-                    resolve(null);
-                };
-            })
-        }
-
-        async getAll(keys = []) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store);
-                let objectStore = transaction.objectStore(this.store);
-
-                let results = [];
-                objectStore.openCursor().onsuccess = (e) => {
-                    var cursor = e.target.result;
-                    if (cursor) {
-                        if (keys.length > 0) {
-                            let r = {};
-                            for (let k in cursor.value) {
-                                if (keys.includes(k)) {
-                                    r[k] = cursor.value[k];
-                                }
-                            }
-                            results.push(r);
-                        } else {
-                            results.push(cursor.value);
-                        }
-                        cursor.continue();
-                    } else {
-                        resolve(results);
-                    }
-                };
-            })
-        }
-
-        //remove db_id so that this record can be synced again with 
-        //a different db
-        async reset(rec) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store, "readwrite");
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(rec.id);
-
-                request.onsuccess = (e) => {
-                    let o = e.target.result;
-                    o['db_id'] = null;
-                    o['synced_at'] = new Date(Constants$1.EPOCH_TIMESTAMP);
-
-                    let requestUpdate = objectStore.put(o);
-                    requestUpdate.onerror = (e) => {
-                        resolve(e.target.error);
-                    };
-                    requestUpdate.onsuccess = (e) => {
-                        resolve(0);
-                    };
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
-        }
-
-        async sync(rec) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store, "readwrite");
-                let objectStore = transaction.objectStore(this.store);
-                let request = objectStore.get(rec.id);
-
-                request.onsuccess = (e) => {
-                    let o = e.target.result;
-                    o['db_id'] = rec.db_id;
-                    o['synced_at'] = new Date();
-
-                    let requestUpdate = objectStore.put(o);
-                    requestUpdate.onerror = (e) => {
-                        resolve(e.target.error);
-                    };
-                    requestUpdate.onsuccess = (e) => {
-                        resolve(0);
-                    };
-                };
-
-                request.onerror = (e) => {
-                    resolve(e.target.error);
-                };
-            })
-        }
-
-        async findByDbId(id) {
-            return new Promise((resolve, reject) => {
-                this.logger.log(TAG$5, "findByDbId");
-
-                let transaction = this.db.transaction(this.store);
-                let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(Constants$1.DB_ID_INDEX);
-
-                let request = index.get(IDBKeyRange.only([id]));
-                request.onsuccess = (e) => {
-                    resolve(request.result);
-                };
-
-                request.onerror = (e) => {
-                    this.logger.log(TAG$5, "error");
-                    resolve(e.target.error);
-                };
-            })
-        }
-
-        static toDb(o = {}) {
-            //convert all "-" to "_"
-            let r = {};
-            for (let k in o) {
-                r[k.replaceAll(/-/g, '_')] = o[k];
-            }
-            return r
-        }
-
-        static toDbArray(keys = []) {
-            //convert all "-" to "_"
-            let result = [];
-            keys.forEach((k) => {
-                result.push(k.replaceAll(/-/g, '_'));
-            });
-            return result
-        }
-
-        static fromDbArray(vals = []) {
-            //convert all "_" to "-"
-            let result = [];
-            vals.forEach((o) => {
-                let r = {};
-                for (let k in o) {
-                    r[k.replaceAll(/_/g, '-')] = o[k];
-                }
-                result.push(r);
-            });
-            return result;
-        }
-
-        static fromDb(o = {}) {
-            //convert all "_" to "-"
-            let r = {};
-            for (let k in o) {
-                r[k.replaceAll(/_/g, '-')] = o[k];
-            }
-            return r
-        }
-    }
-
-    const TAG$4 = "query-db";
-    const CREATED_AT_INDEX = "created-at-index";
-    const QUERY_INDEX = "query-index";
-    const TERM_INDEX = "term-index";
-    const TAG_INDEX = "tag-index";
-
-    class QueryDB$1 extends BaseDB {
-        constructor(logger, options) {
-            options.dbName = "queries";
-            super(logger, options);
-            this.logger = logger;
-            this.store = "queries";
-            this.searchIndex = "search-index";
-            this.tagIndex = "tag-index";
-        }
-
-        onUpgrade(e) {
-            this.logger.log(TAG$4, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
-            if (e.oldVersion < 2) {
-                let store = e.target.result.createObjectStore(
-                    this.store, { keyPath: 'id', autoIncrement: true });
-                store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
-
-                store = e.target.result.createObjectStore(
-                    this.searchIndex, { keyPath: 'id', autoIncrement: true });
-                store.createIndex(TERM_INDEX, "term", { unique : true });
-
-                store = e.target.result.createObjectStore(
-                    this.tagIndex, { keyPath: 'id', autoIncrement: true });
-                store.createIndex(TAG_INDEX, "tag", { unique : true });
-            }
-
-            if (e.oldVersion < 37) {
-                let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"]);
-            }
-        }
-
-        async save(rec) {
-            return new Promise(async (resolve, reject) => {
-                //remove all new lines
-                rec.query = rec.query.replace(/\r?\n|\r/g, " ");
-                //remove extra white spaces
-                rec.query = rec.query.replace(/[ ]{2,}/g, " ");
-                let terms = rec.query.split(' ');
-
-                //get all unique terms
-                //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
-                terms = [...new Set(terms)];
-
-                this.logger.log(TAG$4, JSON.stringify(terms));
-                let id = -1;
-                try {
-                    //apppend timestamp if required
-                    if (!rec.created_at) {
-                        rec.created_at = new Date();
-                    }
-
-                    id = await super.save(this.store, rec);
-                    if (id == -1) {
-                        resolve(-1);
-                        return;
-                    }
-
-                    await this.updateSearchIndex(id, terms);
-                    await this.updateTagIndex(id, rec.tags);
-
-                    resolve(id);
-                } catch (e) {
-                    this.logger.log(TAG$4, `error: ${JSON.stringify(e.message)}`);
-                    reject(e.message);
-                }
-            })
-        }
-
-        async updateSearchIndex(id, terms) {
-            //add id to each of the tags
-            for (let i = 0; i < terms.length; i++) {
-                let t = terms[i];
-                t = t.trim();
-
-                if (t.length <= 1) {
-                    continue;
-                }
-
-                t = this.cleanup(t);
-                try {
-                    let rec = await this.findByTerm(t);
-                    //add a new tag
-                    if (rec == null) {
-                        await super.save(this.searchIndex, {
-                            term: t,
-                            queries:[id]
-                        });
-                        continue;
-                    }
-
-                    //update tag
-                    rec['queries'].push(id);
-                    this.logger.log(TAG$4, JSON.stringify(rec));
-                    super.put(this.searchIndex, {
-                        id: rec.id,
-                        term: t,
-                        queries: rec['queries']
-                    });
-
-                } catch (e) {
-                    this.logger.log(TAG$4, `error: e.message`);
-                }
-            }
-        }
-
-        async findByTerm(term) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.searchIndex);
-                let objectStore = transaction.objectStore(this.searchIndex);
-                let index = objectStore.index(TERM_INDEX);
-
-                let key = IDBKeyRange.only(term);
-                index.openCursor(key).onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
-                        resolve(cursor.value);
-                        return;
-                    }
-
-                    resolve(null);
-                };
-            })
-        }
-
-        async updateTagIndex(id, tags) {
-            //add id to each of the tags
-            for (let i = 0; i < tags.length; i++) {
-                let t = tags[i];
-                t = t.trim();
-
-                if (t.length <= 1) {
-                    continue;
-                }
-
-                t = this.cleanup(t);
-                try {
-                    let rec = await this.findByTag(t);
-                    //add a new tag
-                    if (rec == null) {
-                        await super.save(this.tagIndex, {
-                            tag: t,
-                            queries:[id]
-                        });
-                        continue;
-                    }
-
-                    //update tag
-                    rec['queries'].push(id);
-                    this.logger.log(TAG$4, JSON.stringify(rec));
-                    super.put(this.tagIndex, {
-                        id: rec.id,
-                        tag: t,
-                        queries: rec['queries']
-                    });
-
-                } catch (e) {
-                    this.logger.log(TAG$4, `error: e.message`);
-                }
-            }
-        }
-
-        async findByTag(tag) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.tagIndex);
-                let objectStore = transaction.objectStore(this.tagIndex);
-                let index = objectStore.index(TAG_INDEX);
-
-                let key = IDBKeyRange.only(tag);
-                index.openCursor(key).onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
-                        resolve(cursor.value);
-                        return;
-                    }
-
-                    resolve(null);
-                };
-            })
-        }
-
-        async findByQuery(query) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.dbName);
-                let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(QUERY_INDEX);
-
-                let key = IDBKeyRange.only(query);
-                index.openCursor(key).onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
-                        resolve(cursor.value);
-                        return;
-                    }
-
-                    resolve([]);
-                };
-            })
-        }
-
-        //https://stackoverflow.com/questions/26156292/trim-specific-character-from-a-string
-        cleanup(str) {
-            //remove table qualifiers like table_name.<...>
-            str = str.replace(/^\S+\./, "");
-
-            //remove punctuation marks
-            let chars = ['`', '`', ' ', '"', '\'', ',', ';', '+', '-', '=', '!=', '<', '>', '>=', '<='];
-            let start = 0, 
-                end = str.length;
-
-            while(start < end && chars.indexOf(str[start]) >= 0)
-                ++start;
-
-            while(end > start && chars.indexOf(str[end - 1]) >= 0)
-                --end;
-
-            return (start > 0 || end < str.length) ? str.substring(start, end) : str;
-        }
-
-        async filter(days, tags, terms) {
-            //days supercedes everything
-            //if days are provided get queries by days first
-            //then filter by terms and tags if provided
-            this.logger.log(TAG$4, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
-
-            let start, end;
-            if (days.hasOwnProperty('start')) {
-                start = new Date(Date.now() - (days.start * 24 * 60 * 60 * 1000));
-                start.setHours(0);
-                start.setMinutes(0);
-                start.setSeconds(0);
-            }
-
-            if (days.hasOwnProperty('end')) {
-                end = new Date(Date.now() - (days.end * 24 * 60 * 60 * 1000));
-                end.setHours(23);
-                end.setMinutes(59);
-                end.setSeconds(59);
-            }
-
-
-            let ids = [];
-            if (start || end) {
-                this.logger.log(TAG$4, 'filtering');
-                ids = await this.searchByCreatedAt(start, end);
-
-                if (ids.length == 0) {
-                    //if days were provided and we did not find anything
-                    //no need to process further
-                    return [];
-                }
-            }
-
-            if (tags.length > 0) {
-                let idsByTag = await this.searchByTags(tags);
-
-                ids = ids.filter(x => idsByTag.includes(x));
-                if (ids.length == 0) {
-                    //no need to process further
-                    return [];
-                }
-            }
-
-            if (terms.length > 0) {
-                let idsByTerm = await this.searchByTerms(terms);
-
-                ids = ids.filter(x => idsByTerm.includes(x));
-                if (ids.length == 0) {
-                    //no need to process further
-                    return [];
-                }
-            }
-
-            let results = [];
-            this.logger.log(TAG$4, `${ids}`);
-            for (let i = 0; i < ids.length; i++) {
-                results.push(await super.get(ids[i]));
-            }
-
-            return results;
-        }
-
-        async findByIds(ids) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.store);
-                let objectStore = transaction.objectStore(this.store);
-                let queries = [];
-
-                objectStore.openCursor(null, 'prev').onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        if (ids.includes(cursor.value.id)) {
-                            queries.push(cursor.value);
-                        }
-                        cursor.continue();
-                    } else {
-                        resolve(queries);
-                    }
-                };
-            });
-        }
-
-        async updateTags(rec) {
-            await super.put(this.store, rec);
-            await this.updateTagIndex(rec.id, rec.tags);
-        }
-
-        searchByTerms(terms) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.searchIndex);
-                let objectStore = transaction.objectStore(this.searchIndex);
-                let ids = [];
-
-                objectStore.openCursor().onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        if (terms.includes(cursor.value.term)) {
-                            ids = ids.concat(cursor.value.queries);
-                        }
-                        cursor.continue();
-                    } else {
-                        resolve(ids);
-                    }
-                };
-            });
-        }
-
-        searchByTags(tags) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.tagIndex);
-                let objectStore = transaction.objectStore(this.tagIndex);
-                let ids = [];
-
-                objectStore.openCursor().onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        if (tags.includes(cursor.value.tag)) {
-                            ids = ids.concat(cursor.value.queries);
-                        }
-                        cursor.continue();
-                    } else {
-                        resolve(ids);
-                    }
-                };
-            });
-        } 
-
-        listTags(startingWith) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.tagIndex);
-                let objectStore = transaction.objectStore(this.tagIndex);
-                let index = objectStore.index(TAG_INDEX);
-                let tags = [];
-
-                IDBKeyRange.lowerBound(startingWith);
-                index.openCursor().onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        tags.push(cursor.value.tag);
-                        cursor.continue();
-                    } else {
-                        resolve(tags);
-                    }
-                };
-            });
-        }
-
-        listTerms(startingWith) {
-            return new Promise((resolve, reject) => {
-                let transaction = this.db.transaction(this.searchIndex);
-                let objectStore = transaction.objectStore(this.searchIndex);
-                let index = objectStore.index(TERM_INDEX);
-                let terms = [];
-
-                IDBKeyRange.lowerBound(startingWith);
-                index.openCursor().onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        terms.push(cursor.value.term);
-                        cursor.continue();
-                    } else {
-                        resolve(terms);
-                    }
-                };
-            });
-        }
-
-        searchByCreatedAt(s, e) {
-            return new Promise((resolve, reject) => {
-                this.logger.log(TAG$4, `s: ${s} e: ${e}`);
-
-                let transaction = this.db.transaction(this.store);
-                let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(CREATED_AT_INDEX);
-
-                // s -----> e ----> now
-                let key;
-                if (s && e) {
-                    key = IDBKeyRange.bound(s, e);
-                } else if (s) {
-                    key = IDBKeyRange.lowerBound(s);
-                } else if (e) {
-                    key = IDBKeyRange.upperBound(e);
-                } else {
-                    resolve([]);
-                    return;
-                }
-
-                let queries = [];
-                index.openCursor(key, "prev").onsuccess = (ev) => {
-                    let cursor = ev.target.result;
-                    if (cursor) {
-                        this.logger.log(TAG$4, `id: ${cursor.value.created_at.toISOString()}`);
-                        queries.push(cursor.value.id);
-                        cursor.continue();
-                    } else {
-                        resolve(queries);
-                    }
-                };
-            });
         }
     }
 
@@ -4056,7 +4273,7 @@
                     reader.addEventListener('load', () => {
                         try {
                             let result = JSON.parse(reader.result);
-                            PubSub.publish(Constants$1.FILE_UPLOADED, result);
+                            PubSub.publish(Constants.FILE_UPLOADED, result);
                         } catch (e) {
                             alert(e);
                             return;
@@ -4080,7 +4297,7 @@
 
     class QueryHistory {
         constructor() {
-            PubSub.subscribe(Constants$1.QUERY_DISPATCHED, async (query) => {
+            PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
                 Logger.Log(TAG$2, JSON.stringify(query));
 
                 if (!this.queryDb) {
@@ -4089,10 +4306,10 @@
 
                 let id = await this.queryDb.save(query); 
                 Logger.Log(TAG$2, `Saved to ${id}`);
-                PubSub.publish(Constants$1.QUERY_SAVED, {id: id});
+                PubSub.publish(Constants.QUERY_SAVED, {id: id});
             });
 
-            PubSub.subscribe(Constants$1.FILE_UPLOADED, async (data) => {
+            PubSub.subscribe(Constants.FILE_UPLOADED, async (data) => {
                 await this.handleUpload(data);
             });
 
@@ -4111,7 +4328,7 @@
         }
 
         async init() {
-            this.queryDb = new QueryDB$1(new Logger(), {version: Constants$1.QUERY_DB_VERSION});
+            this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
             await this.queryDb.open();
         }
 
@@ -4141,8 +4358,8 @@
 
         async handleUpload(data) {
             progressBar.setOptions({});//no buttons
-            PubSub.publish(Constants$1.INIT_PROGRESS, {});
-            PubSub.publish(Constants$1.START_PROGRESS, {});
+            PubSub.publish(Constants.INIT_PROGRESS, {});
+            PubSub.publish(Constants.START_PROGRESS, {});
 
             for (let i = 0; i < data.length; i++) {
                 let d = data[i];
@@ -4167,13 +4384,13 @@
                 d.created_at = createdAt;
                 let id = await this.queryDb.save(d);
 
-                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
+                PubSub.publish(Constants.UPDATE_PROGRESS, {
                     message: `Imported ${i + 1} of ${data.length}`
                 });
 
                 Logger.Log(TAG$2, `Saved to ${id}`);
             }
-            PubSub.publish(Constants$1.STOP_PROGRESS, {});
+            PubSub.publish(Constants.STOP_PROGRESS, {});
         }
     }
 
@@ -4186,17 +4403,17 @@
             this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
             this.connectionWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
-                    case Constants$1.DEBUG_LOG:
+                    case Constants.DEBUG_LOG:
                         Logger.Log("connection-worker", e.data.payload);
                         break;
 
-                    case Constants$1.NEW_CONNECTIONS:
-                        PubSub.publish(Constants$1.NEW_CONNECTIONS, {});
+                    case Constants.NEW_CONNECTIONS:
+                        PubSub.publish(Constants.NEW_CONNECTIONS, {});
                         break;
 
-                    case Constants$1.SIGNIN_REQUIRED:
-                        Logger.Log(TAG$1, Constants$1.SIGNIN_REQUIRED);
-                        PubSub.publish(Constants$1.SIGNIN_REQUIRED, {});
+                    case Constants.SIGNIN_REQUIRED:
+                        Logger.Log(TAG$1, Constants.SIGNIN_REQUIRED);
+                        PubSub.publish(Constants.SIGNIN_REQUIRED, {});
                         break;
                 }
             };
@@ -4204,12 +4421,12 @@
             this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
             this.queryWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
-                    case Constants$1.DEBUG_LOG:
+                    case Constants.DEBUG_LOG:
                         Logger.Log("query-worker", e.data.payload);
                         break;
 
-                    case Constants$1.NEW_QUERIES:
-                        PubSub.publish(Constants$1.NEW_QUERIES, {});
+                    case Constants.NEW_QUERIES:
+                        PubSub.publish(Constants.NEW_QUERIES, {});
                         break;
                 }
             };
@@ -4226,10 +4443,10 @@
         }
 
         async initHandlers() {
-            PubSub.subscribe(Constants$1.DB_CHANGED, async (data) => {
+            PubSub.subscribe(Constants.DB_CHANGED, async (data) => {
                 Logger.Log(TAG, "Db changed");
                 this.creds.db = data.db;
-                Utils.saveToSession(Constants$1.CREDS, JSON.stringify(this.creds));
+                Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds));
 
                 //if db has changed we have to create new session
                 this.sessionId = await DbUtils.login(this.creds);
@@ -4243,7 +4460,7 @@
 
             this.$tables = document.getElementById('tables');
 
-            PubSub.subscribe(Constants$1.TABLE_SELECTED, (data) => {
+            PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
                 this.tableContents.reset();
                 this.tableContents.show(data.table);
             });
@@ -4253,7 +4470,7 @@
             MainMenu.init();
             this.history = new QueryHistory();
 
-            let creds = Utils.getFromSession(Constants$1.CREDS);
+            let creds = Utils.getFromSession(Constants.CREDS);
             if (!creds) {
                 window.location = '/connections';
                 return
@@ -4284,16 +4501,16 @@
             let $resizer = document.getElementById('app-content-resizer');
             new GridResizerH($g1, $e1, $resizer, $e2);
 
-            PubSub.subscribe(Constants$1.SIGNIN_REQUIRED, async () => {
+            PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
                 window.location = '/signin';
             });
 
             this.workers = new Workers();
             this.workers.init();
 
-            PubSub.subscribe(Constants$1.QUERY_SAVED, async () => {
+            PubSub.subscribe(Constants.QUERY_SAVED, async () => {
                 this.workers.queryWorker.port.postMessage({
-                    type: Constants$1.QUERY_SAVED
+                    type: Constants.QUERY_SAVED
                 });
             });
         }
