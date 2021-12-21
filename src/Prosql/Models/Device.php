@@ -15,4 +15,12 @@ class Device extends BaseModel {
 
         return parent::save($values);
     }
+
+    function setUserId(string $deviceId, int $userId): void {
+        parent::update([
+            'user_id' => $userId
+        ], [
+            ['device_id', '=', $deviceId]
+        ]);
+    }
 }

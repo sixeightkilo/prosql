@@ -45,7 +45,7 @@
         }
     }
 
-    class Constants {
+    class Constants$1 {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -346,7 +346,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants.DEBUG_LOG,
+                    type: Constants$1.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -623,6 +623,38 @@
                 return false; 
             }
             return true;
+        }
+
+        async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$1, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$1, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$1, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$1, "Done.");
+
+            Logger.Log(TAG$1, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$1, "Done.");
+
+            Logger.Log(TAG$1, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$1, "Done.");
         }
     }
 

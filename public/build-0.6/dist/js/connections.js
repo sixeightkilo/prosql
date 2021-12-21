@@ -45,7 +45,7 @@
         }
     }
 
-    class Constants {
+    class Constants$1 {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -346,7 +346,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants.DEBUG_LOG,
+                    type: Constants$1.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -624,6 +624,38 @@
             }
             return true;
         }
+
+        async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$5, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$5, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$5, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$5, "Done.");
+
+            Logger.Log(TAG$5, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$5, "Done.");
+
+            Logger.Log(TAG$5, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$5, "Done.");
+        }
     }
 
     const TAG$4 = "base-db";
@@ -715,7 +747,7 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o.status = Constants.STATUS_DELETED;
+                    o.status = Constants$1.STATUS_DELETED;
                     let requestUpdate = objectStore.put(o);
 
                     requestUpdate.onerror = (e) => {
@@ -800,7 +832,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = null;
-                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
+                    o['synced_at'] = new Date(Constants$1.EPOCH_TIMESTAMP);
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {
@@ -849,7 +881,7 @@
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(Constants.DB_ID_INDEX);
+                let index = objectStore.index(Constants$1.DB_ID_INDEX);
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
@@ -908,7 +940,7 @@
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
-    class ConnectionDB extends BaseDB {
+    class ConnectionDB$1 extends BaseDB {
         constructor(logger, options) {
             options.dbName = DB_NAME;
             super(logger, options);
@@ -926,16 +958,16 @@
 
             if (e.oldVersion < 2) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants.DB_ID_INDEX, ["id", "db_id"], {unique: true});
+                store.createIndex(Constants$1.DB_ID_INDEX, ["id", "db_id"], {unique: true});
             }
 
             if (e.oldVersion < 3) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
                 store.deleteIndex(CONNECTION_INDEX);
-                store.deleteIndex(Constants.DB_ID_INDEX);
+                store.deleteIndex(Constants$1.DB_ID_INDEX);
 
                 store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
-                store.createIndex(Constants.DB_ID_INDEX, ["db_id"], {unique: true});
+                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"], {unique: true});
             }
 
             if (e.oldVersion < 4) {
@@ -1025,19 +1057,19 @@
 
     //just a wrapper over connectiondb so we dont have to deal with from/to stuff in 
     //client
-    class ConnectionModel extends ConnectionDB {
+    class ConnectionModel extends ConnectionDB$1 {
         constructor(logger, options) {
             super(logger, options);
             this.keys = 
-                ConnectionDB.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default", "status"]);
+                ConnectionDB$1.toDbArray(["id", "name", "user", "pass", "host", "port", "db", "is-default", "status"]);
         }
 
         async getAll() {
-            let conns = ConnectionDB.fromDbArray(await super.getAll(this.keys));
+            let conns = ConnectionDB$1.fromDbArray(await super.getAll(this.keys));
             let recs = [];
 
             for (let i = 0; i < conns.length; i++) {
-                let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+                let isDeleted = ((conns[i].status ?? Constants$1.STATUS_ACTIVE) == Constants$1.STATUS_DELETED) ? true : false;
                 this.logger.log(TAG$2, `${conns[i].id}: ${conns[i].status}: ${isDeleted}`);
 
                 if (isDeleted) {
@@ -1053,13 +1085,13 @@
         }
 
         async get(id) {
-            let r = ConnectionDB.fromDb(await super.get(id, this.keys));
+            let r = ConnectionDB$1.fromDb(await super.get(id, this.keys));
             delete r.status;
             return r;
         }
 
         async save(conn) {
-            return await(super.save(ConnectionDB.toDb(conn)));
+            return await(super.save(ConnectionDB$1.toDb(conn)));
         }
     }
 
@@ -1093,17 +1125,17 @@
             this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
             this.connectionWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
+                    case Constants$1.DEBUG_LOG:
                         Logger.Log("connection-worker", e.data.payload);
                         break;
 
-                    case Constants.NEW_CONNECTIONS:
-                        PubSub.publish(Constants.NEW_CONNECTIONS, {});
+                    case Constants$1.NEW_CONNECTIONS:
+                        PubSub.publish(Constants$1.NEW_CONNECTIONS, {});
                         break;
 
-                    case Constants.SIGNIN_REQUIRED:
-                        Logger.Log(TAG$1, Constants.SIGNIN_REQUIRED);
-                        PubSub.publish(Constants.SIGNIN_REQUIRED, {});
+                    case Constants$1.SIGNIN_REQUIRED:
+                        Logger.Log(TAG$1, Constants$1.SIGNIN_REQUIRED);
+                        PubSub.publish(Constants$1.SIGNIN_REQUIRED, {});
                         break;
                 }
             };
@@ -1111,12 +1143,12 @@
             this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
             this.queryWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
+                    case Constants$1.DEBUG_LOG:
                         Logger.Log("query-worker", e.data.payload);
                         break;
 
-                    case Constants.NEW_QUERIES:
-                        PubSub.publish(Constants.NEW_QUERIES, {});
+                    case Constants$1.NEW_QUERIES:
+                        PubSub.publish(Constants$1.NEW_QUERIES, {});
                         break;
                 }
             };
@@ -1176,11 +1208,11 @@
         async init() {
     		this.initDom();
 
-            PubSub.subscribe(Constants.NEW_CONNECTIONS, async () => {
+            PubSub.subscribe(Constants$1.NEW_CONNECTIONS, async () => {
                 this.showConns();
             });
 
-            PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
+            PubSub.subscribe(Constants$1.SIGNIN_REQUIRED, async () => {
                 window.location = '/signin';
             });
 
@@ -1188,7 +1220,7 @@
             this.workers.init();
 
             Logger.Log(TAG, "Workers initialized");
-            this.connections = new ConnectionModel(new Logger(), {version: Constants.CONN_DB_VERSION});
+            this.connections = new ConnectionModel(new Logger(), {version: Constants$1.CONN_DB_VERSION});
             await this.connections.open();
 
             this.initHandlers();
@@ -1240,7 +1272,7 @@
 
                 //force sync up
                 this.workers.connectionWorker.port.postMessage({
-                    type: Constants.CONNECTION_DELETED
+                    type: Constants$1.CONNECTION_DELETED
                 });
 
                 this.showConns();
@@ -1362,17 +1394,17 @@
             }
 
             if (await this.ping(conn) == 'ok') {
-                Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
+                Utils.saveToSession(Constants$1.CREDS, JSON.stringify(conn));
                 let id = await this.connections.save(conn);
                 Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
 
                 //force sync up
                 this.workers.connectionWorker.port.postMessage({
-                    type: Constants.CONNECTION_SAVED
+                    type: Constants$1.CONNECTION_SAVED
                 });
 
                 //set agent version for the rest of web app
-                let response = await Utils.get(Constants.URL + '/about', false);
+                let response = await Utils.get(Constants$1.URL + '/about', false);
                 //todo: what happens if this is not OK?
                 if (response.status == "ok") {
                     let res = await Utils.post('/browser-api/version', {
@@ -1436,7 +1468,7 @@
         }
 
         async ping(conn) {
-            let json = await Utils.get(Constants.URL + '/ping?' + new URLSearchParams(conn), false);
+            let json = await Utils.get(Constants$1.URL + '/ping?' + new URLSearchParams(conn), false);
             if (json.status == "error") {
                 if (json.msg == Err.ERR_NO_AGENT) {
                     window.location = '/install';

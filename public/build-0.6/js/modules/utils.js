@@ -1,5 +1,9 @@
 import { Logger } from './logger.js'
 import { Err } from './error.js'
+import { QueryDB } from './modules/query-db.js'
+import { QueriesMetaDB } from './modules/queries-meta-db.js'
+import { ConnectionDB } from './modules/connection-db.js'
+import { ConnectionsMetaDB } from './modules/connections-meta-db.js'
 
 const TAG = "utils"
 class Utils {
@@ -252,6 +256,38 @@ class Utils {
             return false; 
         }
         return true;
+    }
+
+    static async resetAll() {
+        let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+        await connDb.open();
+        let conns = await connDb.getAll();
+        Logger.Log(TAG, "Resetting connections..");
+        for (let i = 0; i < conns.length; i++) {
+            await connDb.reset(conns[i]);
+        }
+        Logger.Log(TAG, "Done.");
+
+        let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+        await queryDb.open();
+        let queries = await queryDb.getAll();
+        Logger.Log(TAG, "Resetting queries..");
+        for (let i = 0; i < queries.length; i++) {
+            await queryDb.reset(queries[i]);
+        }
+        Logger.Log(TAG, "Done.");
+
+        Logger.Log(TAG, "Resetting QueriesMetaDB");
+        let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+        await queriesMetaDb.open();
+        await queriesMetaDb.destroy();
+        Logger.Log(TAG, "Done.");
+
+        Logger.Log(TAG, "Resetting connectionsMetaDb");
+        let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+        await connectionsMetaDb.open();
+        await connectionsMetaDb.destroy();
+        Logger.Log(TAG, "Done.");
     }
 }
 export { Utils }

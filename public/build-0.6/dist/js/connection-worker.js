@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    class Constants {
+    class Constants$1 {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -302,7 +302,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants.DEBUG_LOG,
+                    type: Constants$1.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -372,7 +372,7 @@
         }
     }
 
-    const TAG$5 = "utils";
+    const TAG$6 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -421,7 +421,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$5, response);
+                Logger.Log(TAG$6, response);
 
                 let json = await response.json();
 
@@ -431,7 +431,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$5, e);
+                Logger.Log(TAG$6, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -491,7 +491,7 @@
                     method: "post"
                 });
 
-                Logger.Log(TAG$5, response);
+                Logger.Log(TAG$6, response);
 
                 let json = await response.json();
 
@@ -501,7 +501,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$5, e);
+                Logger.Log(TAG$6, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -572,7 +572,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$5, "No data");
+            Logger.Log(TAG$6, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -624,9 +624,41 @@
             }
             return true;
         }
+
+        async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$6, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$6, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$6, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$6, "Done.");
+
+            Logger.Log(TAG$6, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$6, "Done.");
+
+            Logger.Log(TAG$6, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$6, "Done.");
+        }
     }
 
-    const TAG$4 = "base-db";
+    const TAG$5 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -638,13 +670,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$4, "open.onsuccess");
+                        this.logger.log(TAG$5, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$4, e.target.error);
+                        this.logger.log(TAG$5, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -665,7 +697,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$4, e.target.error);
+                    this.logger.log(TAG$5, e.target.error);
                     resolve(-1);
                 };
             })
@@ -683,7 +715,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$4, e.target.error);
+                    this.logger.log(TAG$5, e.target.error);
                     resolve(-1);
                 };
             })
@@ -715,7 +747,7 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o.status = Constants.STATUS_DELETED;
+                    o.status = Constants$1.STATUS_DELETED;
                     let requestUpdate = objectStore.put(o);
 
                     requestUpdate.onerror = (e) => {
@@ -751,7 +783,7 @@
                         result = request.result;
                     }
 
-                    this.logger.log(TAG$4, JSON.stringify(result));
+                    this.logger.log(TAG$5, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -800,7 +832,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = null;
-                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
+                    o['synced_at'] = new Date(Constants$1.EPOCH_TIMESTAMP);
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {
@@ -845,11 +877,11 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$4, "findByDbId");
+                this.logger.log(TAG$5, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(Constants.DB_ID_INDEX);
+                let index = objectStore.index(Constants$1.DB_ID_INDEX);
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
@@ -857,7 +889,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$4, "error");
+                    this.logger.log(TAG$5, "error");
                     resolve(e.target.error);
                 };
             })
@@ -904,11 +936,11 @@
         }
     }
 
-    const TAG$3 = "connection-db";
+    const TAG$4 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
-    class ConnectionDB extends BaseDB {
+    class ConnectionDB$1 extends BaseDB {
         constructor(logger, options) {
             options.dbName = DB_NAME;
             super(logger, options);
@@ -917,7 +949,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$3, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$4, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -926,16 +958,16 @@
 
             if (e.oldVersion < 2) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants.DB_ID_INDEX, ["id", "db_id"], {unique: true});
+                store.createIndex(Constants$1.DB_ID_INDEX, ["id", "db_id"], {unique: true});
             }
 
             if (e.oldVersion < 3) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
                 store.deleteIndex(CONNECTION_INDEX);
-                store.deleteIndex(Constants.DB_ID_INDEX);
+                store.deleteIndex(Constants$1.DB_ID_INDEX);
 
                 store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
-                store.createIndex(Constants.DB_ID_INDEX, ["db_id"], {unique: true});
+                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"], {unique: true});
             }
 
             if (e.oldVersion < 4) {
@@ -968,7 +1000,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$3, e.message);
+                this.logger.log(TAG$4, e.message);
             }
         }
 
@@ -1021,9 +1053,71 @@
         }
     }
 
+    const TAG$3 = "base-meta-db";
+    const ID = 1;
+
+    class BaseMetaDB extends BaseDB {
+        async getDbName() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return '';
+            }
+
+            return rec.db_name ?? '';
+        }
+
+        async setDbName(dbName) {
+            this.logger.log(TAG$3, "setDbName");
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await this.save(this.store, {
+                    id: parseInt(ID),
+                    db_name: dbName
+                });
+                return;
+            }
+
+            rec.db_name = dbName;
+            await this.put(this.store, rec);
+        }
+
+        async getLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return new Date(Constants$1.EPOCH_TIMESTAMP);
+            }
+
+            return rec.last_sync_ts ?? new Date(Constants$1.EPOCH_TIMESTAMP);
+        }
+
+        async setLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await super.save(this.store, {
+                    id: parseInt(ID),
+                    last_sync_ts: new Date()
+                });
+                return;
+            }
+
+            rec.last_sync_ts = new Date();
+            await super.put(this.store, rec);
+        }
+
+        async get() {
+            return await super.get(parseInt(ID));
+        }
+
+        async destroy() {
+            return await super.destroy(parseInt(ID));
+        }
+    }
+
     const TAG$2 = "connections-meta-db";
 
-    class ConnectionsMetaDB extends BaseDB {
+    class ConnectionsMetaDB$1 extends BaseMetaDB {
         constructor(logger, options) {
             options.dbName = "connections_meta";
             super(logger, options);
@@ -1037,18 +1131,6 @@
                 e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
             }
-        }
-
-        async save(rec) {
-            this.logger.log(TAG$2, "save");
-            let r = await super.get(rec.id);
-
-            if (r != null) {
-                await super.put(this.store, rec);
-                return
-            }
-
-            await super.save(this.store, rec);
         }
     }
 
@@ -1065,7 +1147,7 @@
         }
 
         async init() {
-            let res = await Utils.get(Constants.URL + '/about', false);
+            let res = await Utils.get(Constants$1.URL + '/about', false);
             if (res.status == "error") {
                 this.logger.log(TAG$1, JSON.stringify(res));
                 return
@@ -1096,58 +1178,10 @@
                 if (Utils.isEmpty(res.data.user)) {
                     this.logger.log(TAG$1, "Signin required");
                     this.port.postMessage({
-                        type: Constants.SIGNIN_REQUIRED
+                        type: Constants$1.SIGNIN_REQUIRED
                     });
                 }
             }
-        }
-
-    	async getLastSyncTs(db, id) {
-            let rec = await db.get(parseInt(id));
-            if (rec == null) {
-                return new Date(Constants.EPOCH_TIMESTAMP);
-            }
-
-            return rec.last_sync_ts ?? new Date(Constants.EPOCH_TIMESTAMP);
-        }
-
-        async setLastSyncTs(db, id) {
-            let rec = await db.get(parseInt(id));
-
-            if (rec == null) {
-                await db.save({
-                    id: parseInt(id),
-                    last_sync_ts: new Date()
-                });
-                return;
-            }
-
-            rec.last_sync_ts = new Date();
-            await db.put(rec);
-        }
-
-        async getDbName(db, id) {
-            let rec = await db.get(parseInt(id));
-            if (rec == null) {
-                return '';
-            }
-
-            return rec.db_name ?? '';
-        }
-
-        async setDbName(db, id, dbName) {
-            let rec = await db.get(parseInt(id));
-
-            if (rec == null) {
-                await db.save({
-                    id: parseInt(id),
-                    db_name: dbName
-                });
-                return;
-            }
-
-            rec.db_name = dbName;
-            await db.put(rec);
         }
     }
 
@@ -1158,8 +1192,8 @@
         async handleMessage(m) {
             this.logger.log(TAG, JSON.stringify(m.data));
             switch (m.data.type) {
-                case Constants.CONNECTION_SAVED:
-                case Constants.CONNECTION_DELETED:
+                case Constants$1.CONNECTION_SAVED:
+                case Constants$1.CONNECTION_DELETED:
                     this.syncUp();
                     break
             }
@@ -1169,11 +1203,12 @@
             await super.init();
             this.logger.log(TAG, "deviceid:" + this.deviceId);
 
-            this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
+            this.connectionDb = new ConnectionDB$1(this.logger, {version: Constants$1.CONN_DB_VERSION});
             await this.connectionDb.open();
 
-            this.metaDB = new ConnectionsMetaDB(this.logger, {version: Constants.CONNECTIONS_META_DB_VERSION});
+            this.metaDB = new ConnectionsMetaDB$1(this.logger, {version: Constants$1.CONNECTIONS_META_DB_VERSION});
             await this.metaDB.open();
+            this.logger.log(TAG, "metadb.get: " + await this.metaDB.get());
 
             this.syncDown();
             this.syncUp();
@@ -1182,7 +1217,7 @@
         async syncDown() {
             let conns = await this.connectionDb.getAll();
 
-            let after = await this.getLastSyncTs(this.metaDB, Constants.CONNECTIONS_META_KEY);
+            let after = await this.metaDB.getLastSyncTs();
             after = after.toISOString();
             this.logger.log(TAG, `after: ${after}`);
 
@@ -1220,7 +1255,6 @@
 
                 //this looks like a new connection
                 if (c == null) {
-                    this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`);
                     conns[i].db_id = conns[i].id;
                     delete conns[i].id;
 
@@ -1244,12 +1278,12 @@
 
             if (updateUI) {
                 this.port.postMessage({
-                    type: Constants.NEW_CONNECTIONS,
+                    type: Constants$1.NEW_CONNECTIONS,
                 });
             }
 
             this.logger.log(TAG, "Setting last_sync_ts");
-            await this.setLastSyncTs(this.metaDB, Constants.CONNECTIONS_META_KEY);
+            await this.metaDB.setLastSyncTs();
             this.logger.log(TAG, "Done last_sync_ts");
         }
 
@@ -1264,7 +1298,7 @@
             let deleted = [];
             for (let i = 0; i < conns.length; i++) {
                 //when we delete from UI, we just mark the status as deleted, then sync up later
-                let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+                let isDeleted = ((conns[i].status ?? Constants$1.STATUS_ACTIVE) == Constants$1.STATUS_DELETED) ? true : false;
 
                 if (isDeleted) {
                     this.logger.log(TAG, `Deleting ${conns[i].id}`);
@@ -1279,7 +1313,7 @@
                 }
 
                 //every record may or may not have updated_at
-                let updatedAt = conns[i].updated_at ?? new Date(Constants.EPOCH_TIMESTAMP);
+                let updatedAt = conns[i].updated_at ?? new Date(Constants$1.EPOCH_TIMESTAMP);
 
                 if (conns[i].db_id) {
                     //if it has a db_id , it is guaranteed to haved synced_at

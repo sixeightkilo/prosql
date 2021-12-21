@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    class Constants {
+    class Constants$1 {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -302,7 +302,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants.DEBUG_LOG,
+                    type: Constants$1.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -372,7 +372,7 @@
         }
     }
 
-    const TAG$5 = "utils";
+    const TAG$6 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -421,7 +421,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$5, response);
+                Logger.Log(TAG$6, response);
 
                 let json = await response.json();
 
@@ -431,7 +431,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$5, e);
+                Logger.Log(TAG$6, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -491,7 +491,7 @@
                     method: "post"
                 });
 
-                Logger.Log(TAG$5, response);
+                Logger.Log(TAG$6, response);
 
                 let json = await response.json();
 
@@ -501,7 +501,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$5, e);
+                Logger.Log(TAG$6, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -572,7 +572,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$5, "No data");
+            Logger.Log(TAG$6, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -624,9 +624,41 @@
             }
             return true;
         }
+
+        async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$6, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$6, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$6, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$6, "Done.");
+
+            Logger.Log(TAG$6, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$6, "Done.");
+
+            Logger.Log(TAG$6, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$6, "Done.");
+        }
     }
 
-    const TAG$4 = "base-db";
+    const TAG$5 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -638,13 +670,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$4, "open.onsuccess");
+                        this.logger.log(TAG$5, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$4, e.target.error);
+                        this.logger.log(TAG$5, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -665,7 +697,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$4, e.target.error);
+                    this.logger.log(TAG$5, e.target.error);
                     resolve(-1);
                 };
             })
@@ -683,7 +715,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$4, e.target.error);
+                    this.logger.log(TAG$5, e.target.error);
                     resolve(-1);
                 };
             })
@@ -715,7 +747,7 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o.status = Constants.STATUS_DELETED;
+                    o.status = Constants$1.STATUS_DELETED;
                     let requestUpdate = objectStore.put(o);
 
                     requestUpdate.onerror = (e) => {
@@ -751,7 +783,7 @@
                         result = request.result;
                     }
 
-                    this.logger.log(TAG$4, JSON.stringify(result));
+                    this.logger.log(TAG$5, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -800,7 +832,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = null;
-                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
+                    o['synced_at'] = new Date(Constants$1.EPOCH_TIMESTAMP);
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {
@@ -845,11 +877,11 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$4, "findByDbId");
+                this.logger.log(TAG$5, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(Constants.DB_ID_INDEX);
+                let index = objectStore.index(Constants$1.DB_ID_INDEX);
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
@@ -857,7 +889,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$4, "error");
+                    this.logger.log(TAG$5, "error");
                     resolve(e.target.error);
                 };
             })
@@ -904,13 +936,13 @@
         }
     }
 
-    const TAG$3 = "query-db";
+    const TAG$4 = "query-db";
     const CREATED_AT_INDEX = "created-at-index";
     const QUERY_INDEX = "query-index";
     const TERM_INDEX = "term-index";
     const TAG_INDEX = "tag-index";
 
-    class QueryDB extends BaseDB {
+    class QueryDB$1 extends BaseDB {
         constructor(logger, options) {
             options.dbName = "queries";
             super(logger, options);
@@ -921,7 +953,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$3, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$4, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 2) {
                 let store = e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -938,7 +970,7 @@
 
             if (e.oldVersion < 37) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"]);
             }
         }
 
@@ -954,7 +986,7 @@
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
                 terms = [...new Set(terms)];
 
-                this.logger.log(TAG$3, JSON.stringify(terms));
+                this.logger.log(TAG$4, JSON.stringify(terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -973,7 +1005,7 @@
 
                     resolve(id);
                 } catch (e) {
-                    this.logger.log(TAG$3, `error: ${JSON.stringify(e.message)}`);
+                    this.logger.log(TAG$4, `error: ${JSON.stringify(e.message)}`);
                     reject(e.message);
                 }
             })
@@ -1003,7 +1035,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$3, JSON.stringify(rec));
+                    this.logger.log(TAG$4, JSON.stringify(rec));
                     super.put(this.searchIndex, {
                         id: rec.id,
                         term: t,
@@ -1011,7 +1043,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$3, `error: e.message`);
+                    this.logger.log(TAG$4, `error: e.message`);
                 }
             }
         }
@@ -1026,7 +1058,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1060,7 +1092,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$3, JSON.stringify(rec));
+                    this.logger.log(TAG$4, JSON.stringify(rec));
                     super.put(this.tagIndex, {
                         id: rec.id,
                         tag: t,
@@ -1068,7 +1100,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$3, `error: e.message`);
+                    this.logger.log(TAG$4, `error: e.message`);
                 }
             }
         }
@@ -1083,7 +1115,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1103,7 +1135,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1136,7 +1168,7 @@
             //days supercedes everything
             //if days are provided get queries by days first
             //then filter by terms and tags if provided
-            this.logger.log(TAG$3, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+            this.logger.log(TAG$4, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
 
             let start, end;
             if (days.hasOwnProperty('start')) {
@@ -1156,7 +1188,7 @@
 
             let ids = [];
             if (start || end) {
-                this.logger.log(TAG$3, 'filtering');
+                this.logger.log(TAG$4, 'filtering');
                 ids = await this.searchByCreatedAt(start, end);
 
                 if (ids.length == 0) {
@@ -1187,7 +1219,7 @@
             }
 
             let results = [];
-            this.logger.log(TAG$3, `${ids}`);
+            this.logger.log(TAG$4, `${ids}`);
             for (let i = 0; i < ids.length; i++) {
                 results.push(await super.get(ids[i]));
             }
@@ -1302,7 +1334,7 @@
 
         searchByCreatedAt(s, e) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$3, `s: ${s} e: ${e}`);
+                this.logger.log(TAG$4, `s: ${s} e: ${e}`);
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -1325,7 +1357,7 @@
                 index.openCursor(key, "prev").onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$3, `id: ${cursor.value.created_at.toISOString()}`);
+                        this.logger.log(TAG$4, `id: ${cursor.value.created_at.toISOString()}`);
                         queries.push(cursor.value.id);
                         cursor.continue();
                     } else {
@@ -1336,9 +1368,71 @@
         }
     }
 
+    const TAG$3 = "base-meta-db";
+    const ID = 1;
+
+    class BaseMetaDB extends BaseDB {
+        async getDbName() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return '';
+            }
+
+            return rec.db_name ?? '';
+        }
+
+        async setDbName(dbName) {
+            this.logger.log(TAG$3, "setDbName");
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await this.save(this.store, {
+                    id: parseInt(ID),
+                    db_name: dbName
+                });
+                return;
+            }
+
+            rec.db_name = dbName;
+            await this.put(this.store, rec);
+        }
+
+        async getLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return new Date(Constants$1.EPOCH_TIMESTAMP);
+            }
+
+            return rec.last_sync_ts ?? new Date(Constants$1.EPOCH_TIMESTAMP);
+        }
+
+        async setLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await super.save(this.store, {
+                    id: parseInt(ID),
+                    last_sync_ts: new Date()
+                });
+                return;
+            }
+
+            rec.last_sync_ts = new Date();
+            await super.put(this.store, rec);
+        }
+
+        async get() {
+            return await super.get(parseInt(ID));
+        }
+
+        async destroy() {
+            return await super.destroy(parseInt(ID));
+        }
+    }
+
     const TAG$2 = "queries-meta-db";
 
-    class QueriesMetaDB extends BaseDB {
+    class QueriesMetaDB$1 extends BaseMetaDB {
         constructor(logger, options) {
             options.dbName = "queries_meta";
             super(logger, options);
@@ -1352,22 +1446,6 @@
                 e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
             }
-        }
-
-        async save(rec) {
-            this.logger.log(TAG$2, "save");
-            let r = await super.get(rec.id);
-
-            if (r != null) {
-                await super.put(this.store, rec);
-                return
-            }
-
-            await super.save(this.store, rec);
-        }
-
-        async put(rec) {
-            await super.put(this.store, rec);
         }
     }
 
@@ -1384,7 +1462,7 @@
         }
 
         async init() {
-            let res = await Utils.get(Constants.URL + '/about', false);
+            let res = await Utils.get(Constants$1.URL + '/about', false);
             if (res.status == "error") {
                 this.logger.log(TAG$1, JSON.stringify(res));
                 return
@@ -1415,58 +1493,10 @@
                 if (Utils.isEmpty(res.data.user)) {
                     this.logger.log(TAG$1, "Signin required");
                     this.port.postMessage({
-                        type: Constants.SIGNIN_REQUIRED
+                        type: Constants$1.SIGNIN_REQUIRED
                     });
                 }
             }
-        }
-
-    	async getLastSyncTs(db, id) {
-            let rec = await db.get(parseInt(id));
-            if (rec == null) {
-                return new Date(Constants.EPOCH_TIMESTAMP);
-            }
-
-            return rec.last_sync_ts ?? new Date(Constants.EPOCH_TIMESTAMP);
-        }
-
-        async setLastSyncTs(db, id) {
-            let rec = await db.get(parseInt(id));
-
-            if (rec == null) {
-                await db.save({
-                    id: parseInt(id),
-                    last_sync_ts: new Date()
-                });
-                return;
-            }
-
-            rec.last_sync_ts = new Date();
-            await db.put(rec);
-        }
-
-        async getDbName(db, id) {
-            let rec = await db.get(parseInt(id));
-            if (rec == null) {
-                return '';
-            }
-
-            return rec.db_name ?? '';
-        }
-
-        async setDbName(db, id, dbName) {
-            let rec = await db.get(parseInt(id));
-
-            if (rec == null) {
-                await db.save({
-                    id: parseInt(id),
-                    db_name: dbName
-                });
-                return;
-            }
-
-            rec.db_name = dbName;
-            await db.put(rec);
         }
     }
 
@@ -1478,8 +1508,8 @@
         async handleMessage(m) {
             this.logger.log(TAG, JSON.stringify(m.data));
             switch (m.data.type) {
-            case Constants.QUERY_SAVED:
-            case Constants.QUERY_UPDATED:
+            case Constants$1.QUERY_SAVED:
+            case Constants$1.QUERY_UPDATED:
                 this.syncUp();
                 break
             }
@@ -1491,14 +1521,12 @@
             this.logger.log(TAG, "sessionId:" + this.sessionId);
             this.logger.log(TAG, "dbName:" + this.dbName);
 
-            this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
+            this.queryDb = new QueryDB$1(this.logger, {version: Constants$1.QUERY_DB_VERSION});
             await this.queryDb.open();
 
-            this.metaDB = new QueriesMetaDB(this.logger, {version: Constants.QUERIES_META_DB_VERSION});
+            this.metaDB = new QueriesMetaDB$1(this.logger, {version: Constants$1.QUERIES_META_DB_VERSION});
             await this.metaDB.open();
-            await this.setDbName(this.metaDB, Constants.QUERIES_META_KEY, this.dbName);
-            //debug
-            this.logger.log(TAG, await this.metaDB.get(Constants.QUERIES_META_KEY));
+            await this.metaDB.setDbName(this.dbName);
 
             this.syncDown();
             this.syncUp();
@@ -1515,7 +1543,7 @@
             let deleted = [];
             for (let i = 0; i < queries.length; i++) {
                 //when we delete from UI, we just mark the status as deleted, then sync up later
-                let isDeleted = ((queries[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+                let isDeleted = ((queries[i].status ?? Constants$1.STATUS_ACTIVE) == Constants$1.STATUS_DELETED) ? true : false;
 
                 if (isDeleted) {
                     this.logger.log(TAG, `Deleting ${queries[i].id}`);
@@ -1531,7 +1559,7 @@
 
                 if (queries[i].db_id) {
                     //every record may or may not have updated_at
-                    let updatedAt = queries[i].updated_at ?? new Date(Constants.EPOCH_TIMESTAMP);
+                    let updatedAt = queries[i].updated_at ?? new Date(Constants$1.EPOCH_TIMESTAMP);
 
                     //if it has a db_id , it is guaranteed to haved synced_at
                     if (queries[i].synced_at > updatedAt) {
@@ -1562,7 +1590,7 @@
 
         async syncDown() {
             this.logger.log(TAG, "syncDown");
-            let after = await this.getLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
+            let after = await this.metaDB.getLastSyncTs();
             after = after.toISOString();
             this.logger.log(TAG, `after: ${after}`);
 
@@ -1613,12 +1641,12 @@
 
             if (updateUI) {
                 this.port.postMessage({
-                    type: Constants.NEW_QUERIES,
+                    type: Constants$1.NEW_QUERIES,
                 });
             }
 
             this.logger.log(TAG, `setLastSyncTs:start`);
-            this.setLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
+            await this.metaDB.setLastSyncTs();
             this.logger.log(TAG, `setLastSyncTs:done`);
         }
 

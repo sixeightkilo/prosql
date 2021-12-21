@@ -6,7 +6,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Gregwar\Captcha\CaptchaBuilder;
 use \Prosql\Interfaces\{EmailerInterface, SessionManagerInterface};
 use \Prosql\Utils\Validator as V;
-use \Prosql\Models\User;
+use \Prosql\Models\{User, Device};
 use \Pug\Pug as Pug;
 
 class LoginController extends BaseController {
@@ -24,16 +24,24 @@ class LoginController extends BaseController {
         ));
     }
 
-    public function setDownloadPath(string $path): void {
+    public function setDownloadPath(string $path): LoginController {
         $this->path = $path;
+        return $this;
     }
 
-    public function setEmailer(EmailerInterface $emailer): void {
+    public function setEmailer(EmailerInterface $emailer): LoginController {
         $this->emailer = $emailer;
+        return $this;
     }
 
-    public function setUser(User $u): void {
+    public function setUser(User $u): LoginController {
         $this->user = $u;
+        return $this;
+    }
+
+    public function setDevice(Device $d): LoginController {
+        $this->device = $d;
+        return $this;
     }
 
     public function handleGet(Request $req, Response $res, array $args): Mixed {
@@ -73,21 +81,22 @@ class LoginController extends BaseController {
 
         $user = $this->sm->getTempUser();
         $this->logger->debug("Signing up:" . print_r($user, true));
-        $this->user->save([
+        $userId = $this->user->save([
             'first_name' => $user['first-name'],
             'last_name' => $user['last-name'],
             'email' => $user['email']
         ]);
 
+        $this->device->setUserId($this->sm->getDeviceId(), $userId);
+
         $this->sm->setTempUser([]);
         $this->sm->setOtp('');
-        $this->sm->setDeviceId($user['email']);
         $this->sm->setUser($user);
         $this->sm->setDbName($user['email']);
         $this->sm->write();
     }
 
-    private function signin(Request $req): void {
+    private function signin(Request $req): array {
         $otp = $req->getParsedBody()['otp'];
         if ($this->sm->getOtp() != $otp) {
             throw new \Exception("Invalid otp");
@@ -104,6 +113,8 @@ class LoginController extends BaseController {
         $this->sm->setUser($user);
         $this->sm->setDbName($user['email']);
         $this->sm->write();
+
+        return ['db-name' => $user['email']];
     }
 
     private function setSignupOtp(Request $req): void {

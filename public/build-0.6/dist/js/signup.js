@@ -45,7 +45,7 @@
         }
     }
 
-    class Constants {
+    class Constants$1 {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -346,7 +346,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants.DEBUG_LOG,
+                    type: Constants$1.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -372,7 +372,7 @@
         }
     }
 
-    const TAG$6 = "utils";
+    const TAG$7 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -421,7 +421,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$6, response);
+                Logger.Log(TAG$7, response);
 
                 let json = await response.json();
 
@@ -431,7 +431,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$6, e);
+                Logger.Log(TAG$7, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -491,7 +491,7 @@
                     method: "post"
                 });
 
-                Logger.Log(TAG$6, response);
+                Logger.Log(TAG$7, response);
 
                 let json = await response.json();
 
@@ -501,7 +501,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$6, e);
+                Logger.Log(TAG$7, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -572,7 +572,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$6, "No data");
+            Logger.Log(TAG$7, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -624,9 +624,41 @@
             }
             return true;
         }
+
+        async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$7, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$7, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$7, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$7, "Done.");
+
+            Logger.Log(TAG$7, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$7, "Done.");
+
+            Logger.Log(TAG$7, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$7, "Done.");
+        }
     }
 
-    const TAG$5 = "base-db";
+    const TAG$6 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -638,13 +670,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$5, "open.onsuccess");
+                        this.logger.log(TAG$6, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$5, e.target.error);
+                        this.logger.log(TAG$6, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -665,7 +697,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$5, e.target.error);
+                    this.logger.log(TAG$6, e.target.error);
                     resolve(-1);
                 };
             })
@@ -683,7 +715,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$5, e.target.error);
+                    this.logger.log(TAG$6, e.target.error);
                     resolve(-1);
                 };
             })
@@ -715,7 +747,7 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o.status = Constants.STATUS_DELETED;
+                    o.status = Constants$1.STATUS_DELETED;
                     let requestUpdate = objectStore.put(o);
 
                     requestUpdate.onerror = (e) => {
@@ -751,7 +783,7 @@
                         result = request.result;
                     }
 
-                    this.logger.log(TAG$5, JSON.stringify(result));
+                    this.logger.log(TAG$6, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -800,7 +832,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = null;
-                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
+                    o['synced_at'] = new Date(Constants$1.EPOCH_TIMESTAMP);
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {
@@ -845,11 +877,11 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$5, "findByDbId");
+                this.logger.log(TAG$6, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(Constants.DB_ID_INDEX);
+                let index = objectStore.index(Constants$1.DB_ID_INDEX);
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
@@ -857,7 +889,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$5, "error");
+                    this.logger.log(TAG$6, "error");
                     resolve(e.target.error);
                 };
             })
@@ -904,11 +936,11 @@
         }
     }
 
-    const TAG$4 = "connection-db";
+    const TAG$5 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
-    class ConnectionDB extends BaseDB {
+    class ConnectionDB$1 extends BaseDB {
         constructor(logger, options) {
             options.dbName = DB_NAME;
             super(logger, options);
@@ -917,7 +949,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$4, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$5, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -926,16 +958,16 @@
 
             if (e.oldVersion < 2) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants.DB_ID_INDEX, ["id", "db_id"], {unique: true});
+                store.createIndex(Constants$1.DB_ID_INDEX, ["id", "db_id"], {unique: true});
             }
 
             if (e.oldVersion < 3) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
                 store.deleteIndex(CONNECTION_INDEX);
-                store.deleteIndex(Constants.DB_ID_INDEX);
+                store.deleteIndex(Constants$1.DB_ID_INDEX);
 
                 store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
-                store.createIndex(Constants.DB_ID_INDEX, ["db_id"], {unique: true});
+                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"], {unique: true});
             }
 
             if (e.oldVersion < 4) {
@@ -968,7 +1000,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$4, e.message);
+                this.logger.log(TAG$5, e.message);
             }
         }
 
@@ -1042,13 +1074,13 @@
         }
     }
 
-    const TAG$3 = "query-db";
+    const TAG$4 = "query-db";
     const CREATED_AT_INDEX = "created-at-index";
     const QUERY_INDEX = "query-index";
     const TERM_INDEX = "term-index";
     const TAG_INDEX = "tag-index";
 
-    class QueryDB extends BaseDB {
+    class QueryDB$1 extends BaseDB {
         constructor(logger, options) {
             options.dbName = "queries";
             super(logger, options);
@@ -1059,7 +1091,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$3, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$4, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 2) {
                 let store = e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -1076,7 +1108,7 @@
 
             if (e.oldVersion < 37) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"]);
             }
         }
 
@@ -1092,7 +1124,7 @@
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
                 terms = [...new Set(terms)];
 
-                this.logger.log(TAG$3, JSON.stringify(terms));
+                this.logger.log(TAG$4, JSON.stringify(terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -1111,7 +1143,7 @@
 
                     resolve(id);
                 } catch (e) {
-                    this.logger.log(TAG$3, `error: ${JSON.stringify(e.message)}`);
+                    this.logger.log(TAG$4, `error: ${JSON.stringify(e.message)}`);
                     reject(e.message);
                 }
             })
@@ -1141,7 +1173,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$3, JSON.stringify(rec));
+                    this.logger.log(TAG$4, JSON.stringify(rec));
                     super.put(this.searchIndex, {
                         id: rec.id,
                         term: t,
@@ -1149,7 +1181,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$3, `error: e.message`);
+                    this.logger.log(TAG$4, `error: e.message`);
                 }
             }
         }
@@ -1164,7 +1196,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1198,7 +1230,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$3, JSON.stringify(rec));
+                    this.logger.log(TAG$4, JSON.stringify(rec));
                     super.put(this.tagIndex, {
                         id: rec.id,
                         tag: t,
@@ -1206,7 +1238,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$3, `error: e.message`);
+                    this.logger.log(TAG$4, `error: e.message`);
                 }
             }
         }
@@ -1221,7 +1253,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1241,7 +1273,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$3, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$4, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -1274,7 +1306,7 @@
             //days supercedes everything
             //if days are provided get queries by days first
             //then filter by terms and tags if provided
-            this.logger.log(TAG$3, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+            this.logger.log(TAG$4, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
 
             let start, end;
             if (days.hasOwnProperty('start')) {
@@ -1294,7 +1326,7 @@
 
             let ids = [];
             if (start || end) {
-                this.logger.log(TAG$3, 'filtering');
+                this.logger.log(TAG$4, 'filtering');
                 ids = await this.searchByCreatedAt(start, end);
 
                 if (ids.length == 0) {
@@ -1325,7 +1357,7 @@
             }
 
             let results = [];
-            this.logger.log(TAG$3, `${ids}`);
+            this.logger.log(TAG$4, `${ids}`);
             for (let i = 0; i < ids.length; i++) {
                 results.push(await super.get(ids[i]));
             }
@@ -1440,7 +1472,7 @@
 
         searchByCreatedAt(s, e) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$3, `s: ${s} e: ${e}`);
+                this.logger.log(TAG$4, `s: ${s} e: ${e}`);
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -1463,7 +1495,7 @@
                 index.openCursor(key, "prev").onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$3, `id: ${cursor.value.created_at.toISOString()}`);
+                        this.logger.log(TAG$4, `id: ${cursor.value.created_at.toISOString()}`);
                         queries.push(cursor.value.id);
                         cursor.continue();
                     } else {
@@ -1474,9 +1506,71 @@
         }
     }
 
+    const TAG$3 = "base-meta-db";
+    const ID = 1;
+
+    class BaseMetaDB extends BaseDB {
+        async getDbName() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return '';
+            }
+
+            return rec.db_name ?? '';
+        }
+
+        async setDbName(dbName) {
+            this.logger.log(TAG$3, "setDbName");
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await this.save(this.store, {
+                    id: parseInt(ID),
+                    db_name: dbName
+                });
+                return;
+            }
+
+            rec.db_name = dbName;
+            await this.put(this.store, rec);
+        }
+
+        async getLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return new Date(Constants$1.EPOCH_TIMESTAMP);
+            }
+
+            return rec.last_sync_ts ?? new Date(Constants$1.EPOCH_TIMESTAMP);
+        }
+
+        async setLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await super.save(this.store, {
+                    id: parseInt(ID),
+                    last_sync_ts: new Date()
+                });
+                return;
+            }
+
+            rec.last_sync_ts = new Date();
+            await super.put(this.store, rec);
+        }
+
+        async get() {
+            return await super.get(parseInt(ID));
+        }
+
+        async destroy() {
+            return await super.destroy(parseInt(ID));
+        }
+    }
+
     const TAG$2 = "queries-meta-db";
 
-    class QueriesMetaDB extends BaseDB {
+    class QueriesMetaDB$1 extends BaseMetaDB {
         constructor(logger, options) {
             options.dbName = "queries_meta";
             super(logger, options);
@@ -1491,27 +1585,11 @@
                     this.store, { keyPath: 'id', autoIncrement: true });
             }
         }
-
-        async save(rec) {
-            this.logger.log(TAG$2, "save");
-            let r = await super.get(rec.id);
-
-            if (r != null) {
-                await super.put(this.store, rec);
-                return
-            }
-
-            await super.save(this.store, rec);
-        }
-
-        async put(rec) {
-            await super.put(this.store, rec);
-        }
     }
 
     const TAG$1 = "connections-meta-db";
 
-    class ConnectionsMetaDB extends BaseDB {
+    class ConnectionsMetaDB$1 extends BaseMetaDB {
         constructor(logger, options) {
             options.dbName = "connections_meta";
             super(logger, options);
@@ -1526,18 +1604,6 @@
                     this.store, { keyPath: 'id', autoIncrement: true });
             }
         }
-
-        async save(rec) {
-            this.logger.log(TAG$1, "save");
-            let r = await super.get(rec.id);
-
-            if (r != null) {
-                await super.put(this.store, rec);
-                return
-            }
-
-            await super.save(this.store, rec);
-        }
     }
 
     class ProgressBar {
@@ -1549,7 +1615,7 @@
     			this.hasButtons = false;
     		});
 
-            PubSub.subscribe(Constants.INIT_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.INIT_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -1568,7 +1634,7 @@
                 this.progressBar.classList.add('is-active');
             });
 
-            PubSub.subscribe(Constants.START_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.START_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -1578,7 +1644,7 @@
                 }
             });
 
-            PubSub.subscribe(Constants.STOP_PROGRESS, () => {
+            PubSub.subscribe(Constants$1.STOP_PROGRESS, () => {
                 clearInterval(this.timer);
 
                 //if we have buttons, wait till user clicks ok
@@ -1592,7 +1658,7 @@
                 this.progressBar.classList.remove('is-active');
             });
 
-            PubSub.subscribe(Constants.UPDATE_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.UPDATE_PROGRESS, (data) => {
                 this.message.innerHTML = data.message;
             });
         }
@@ -1674,21 +1740,21 @@
             if (json.status == "ok") {
                 //reset all saved indexeddb records so they can be synced again with the new db
                 progressBar.setOptions({});//no buttons
-                PubSub.publish(Constants.INIT_PROGRESS, {});
-                PubSub.publish(Constants.START_PROGRESS, {});
-                PubSub.publish(Constants.UPDATE_PROGRESS, {
+                PubSub.publish(Constants$1.INIT_PROGRESS, {});
+                PubSub.publish(Constants$1.START_PROGRESS, {});
+                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                     message: `Please wait`
                 });
 
                 await this.resetAll();
 
-                PubSub.publish(Constants.STOP_PROGRESS, {});
+                PubSub.publish(Constants$1.STOP_PROGRESS, {});
                 window.location = '/connections';
             }
         }
 
         async resetAll() {
-            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            let connDb = new ConnectionDB$1(new Logger(), {version: Constants$1.CONN_DB_VERSION});
             await connDb.open();
             let conns = await connDb.getAll();
             Logger.Log(TAG, "Resetting connections..");
@@ -1697,7 +1763,7 @@
             }
             Logger.Log(TAG, "Done.");
 
-            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            let queryDb = new QueryDB$1(new Logger(), {version: Constants$1.QUERY_DB_VERSION});
             await queryDb.open();
             let queries = await queryDb.getAll();
             Logger.Log(TAG, "Resetting queries..");
@@ -1707,15 +1773,15 @@
             Logger.Log(TAG, "Done.");
 
             Logger.Log(TAG, "Resetting QueriesMetaDB");
-            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            let queriesMetaDb = new QueriesMetaDB$1(new Logger(), {version: Constants$1.QUERIES_META_DB_VERSION});
             await queriesMetaDb.open();
-            await queriesMetaDb.destroy(Constants.QUERIES_META_KEY);
+            await queriesMetaDb.destroy();
             Logger.Log(TAG, "Done.");
 
             Logger.Log(TAG, "Resetting connectionsMetaDb");
-            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            let connectionsMetaDb = new ConnectionsMetaDB$1(new Logger(), {version: Constants$1.CONNECTIONS_META_DB_VERSION});
             await connectionsMetaDb.open();
-            await connectionsMetaDb.destroy(Constants.CONNECTIONS_META_KEY);
+            await connectionsMetaDb.destroy();
             Logger.Log(TAG, "Done.");
         }
 

@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    class Constants {
+    class Constants$1 {
         //hotkeys
         static get SHIFT_A() {
             return 'Alt+Shift+A'
@@ -302,7 +302,7 @@
 
             if (this.port) {
                 this.port.postMessage({
-                    type: Constants.DEBUG_LOG,
+                    type: Constants$1.DEBUG_LOG,
                     payload: `${tag}: ${str}`
                 });
                 return
@@ -624,6 +624,38 @@
             }
             return true;
         }
+
+        async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$k, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$k, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$k, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$k, "Done.");
+
+            Logger.Log(TAG$k, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$k, "Done.");
+
+            Logger.Log(TAG$k, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$k, "Done.");
+        }
     }
 
     const TAG$j = "stream";
@@ -697,7 +729,7 @@
     			this.hasButtons = false;
     		});
 
-            PubSub.subscribe(Constants.INIT_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.INIT_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -716,7 +748,7 @@
                 this.progressBar.classList.add('is-active');
             });
 
-            PubSub.subscribe(Constants.START_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.START_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -726,7 +758,7 @@
                 }
             });
 
-            PubSub.subscribe(Constants.STOP_PROGRESS, () => {
+            PubSub.subscribe(Constants$1.STOP_PROGRESS, () => {
                 clearInterval(this.timer);
 
                 //if we have buttons, wait till user clicks ok
@@ -740,7 +772,7 @@
                 this.progressBar.classList.remove('is-active');
             });
 
-            PubSub.subscribe(Constants.UPDATE_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.UPDATE_PROGRESS, (data) => {
                 this.message.innerHTML = data.message;
             });
         }
@@ -792,7 +824,7 @@
                 query: query
             };
 
-            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants$1.URL + '/query?' + new URLSearchParams(params));
             if (json.status == 'error') {
                 Logger.Log(TAG$i, JSON.stringify(json));
                 return []
@@ -803,14 +835,14 @@
             params = {
                 'session-id': sessionId,
                 'cursor-id': cursorId,
-                'num-of-rows': Constants.BATCH_SIZE
+                'num-of-rows': Constants$1.BATCH_SIZE
             };
 
             let eof = false;
             let rows = [];
 
             do {
-                json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
+                json = await Utils.get(Constants$1.URL + '/fetch?' + new URLSearchParams(params));
                 if (json.status == "error") {
                     Logger.Log(TAG$i, JSON.stringify(json));
                     return []
@@ -830,7 +862,7 @@
         }
 
         static async login(creds) {
-            let json = await Utils.get(Constants.URL + '/login?' + new URLSearchParams(creds));
+            let json = await Utils.get(Constants$1.URL + '/login?' + new URLSearchParams(creds));
             if (json.status == 'error') {
                 Logger.Log(TAG$i, JSON.stringify(json));
                 return ""
@@ -848,7 +880,7 @@
                 'num-of-rows': -1,//not used
             };
 
-            return await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
+            return await Utils.get(Constants$1.URL + '/fetch?' + new URLSearchParams(params));
         }
 
         static async cancel(sessionId, cursorId) {
@@ -857,7 +889,7 @@
                 'cursor-id': cursorId,
             };
 
-            await Utils.get(Constants.URL + '/cancel?' + new URLSearchParams(params));
+            await Utils.get(Constants$1.URL + '/cancel?' + new URLSearchParams(params));
         }
 
         static async fetchCursorId(sessionId, query, execute = false) {
@@ -868,11 +900,11 @@
             };
 
             if (execute) {
-                let json = await Utils.get(Constants.URL + '/execute?' + new URLSearchParams(params));
+                let json = await Utils.get(Constants$1.URL + '/execute?' + new URLSearchParams(params));
                 return json.data['cursor-id']
             }
 
-            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants$1.URL + '/query?' + new URLSearchParams(params));
             return json.data['cursor-id']
         }
 
@@ -887,7 +919,7 @@
                 'export': true
             };
 
-            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            let stream = new Stream(Constants$1.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
 
             progressBar.setOptions({
                 buttons: true,
@@ -897,7 +929,7 @@
                 }
             });
 
-            PubSub.publish(Constants.INIT_PROGRESS, {
+            PubSub.publish(Constants$1.INIT_PROGRESS, {
                 title: `Running query`,
                 message: `Please wait`
             });
@@ -910,7 +942,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub.publish(Constants.STREAM_ERROR, {
+                    PubSub.publish(Constants$1.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -924,14 +956,14 @@
                 if (row[0] == "header") {
                     fileName = row[2];
 
-                    PubSub.publish(Constants.START_PROGRESS, {
+                    PubSub.publish(Constants$1.START_PROGRESS, {
                         title: `Exporting to ${fileName}`
                     });
 
                     //If we are here query was OK, save to DB
-                    PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                         query: q,
-                        tags: [Constants.USER]
+                        tags: [Constants$1.USER]
                     });
                     continue;
                 }
@@ -939,27 +971,27 @@
                 if (row[0] == "current-row") {
                     n += row[1];
 
-                    PubSub.publish(Constants.UPDATE_PROGRESS, {
+                    PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                         message: `Processed ${row[1]} rows`
                     });
                 }
             }
 
             if (n > 0) {
-                PubSub.publish(Constants.UPDATE_PROGRESS, {
+                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                     message: `Export complete`
                 });
             } else {
-                PubSub.publish(Constants.START_PROGRESS, {
+                PubSub.publish(Constants$1.START_PROGRESS, {
                     title: `No data`
                 });
 
-                PubSub.publish(Constants.UPDATE_PROGRESS, {
+                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                     message: `Processed 0 rows`
                 });
             }
 
-            PubSub.publish(Constants.STOP_PROGRESS, {});
+            PubSub.publish(Constants$1.STOP_PROGRESS, {});
 
             if (err == Err.ERR_NONE) {
                 return {
@@ -1019,7 +1051,7 @@
         }
 
         static getLimit(page, delta) {
-            return `${(page + delta) * Constants.BATCH_SIZE_WS}, ${Constants.BATCH_SIZE_WS}`;
+            return `${(page + delta) * Constants$1.BATCH_SIZE_WS}, ${Constants$1.BATCH_SIZE_WS}`;
         }
 
         static getOrder(col, order) {
@@ -1040,11 +1072,11 @@
 
             this.$back = document.getElementById('back');
             this.$back.addEventListener('click', async () => {
-                this.handleCmd(Constants.CMD_BACK);
+                this.handleCmd(Constants$1.CMD_BACK);
             });
 
             [
-                Constants.CMD_BACK,
+                Constants$1.CMD_BACK,
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -1076,7 +1108,7 @@
 
         async handleCmd(cmd) {
             switch (cmd) {
-                case Constants.CMD_BACK:
+                case Constants$1.CMD_BACK:
                     this.handleBack();
                     break;
             }
@@ -1266,7 +1298,7 @@
         }
 
         onSortRequested(order, event) {
-            PubSub.publish(Constants.SORT_REQUESTED, {
+            PubSub.publish(Constants$1.SORT_REQUESTED, {
                 column: this.params.column.colDef.field,
                 order: order
             });
@@ -1349,7 +1381,7 @@
                 }
 
                 Logger.Log(TAG$e, "Cancel clicked");
-                PubSub.publish(Constants.QUERY_CANCELLED, {});
+                PubSub.publish(Constants$1.QUERY_CANCELLED, {});
             });
         }
 
@@ -1380,7 +1412,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub.publish(Constants.STREAM_ERROR, {
+                    PubSub.publish(Constants$1.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -1508,7 +1540,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub.publish(Constants.STREAM_ERROR, {
+                    PubSub.publish(Constants$1.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -1575,7 +1607,7 @@
             let colField = params.colDef.field;
             let colValue = params.data[`${colField}-${colId}`];
 
-            PubSub.publish(Constants.CELL_EDITED, {
+            PubSub.publish(Constants$1.CELL_EDITED, {
                 key: {
                     'name': key,
                     'value': keyValue,
@@ -2185,36 +2217,36 @@
 
     class Hotkeys {
         static init() {
-            hotkeys(Constants.SHIFT_R, () => {
-                PubSub.publish(Constants.CMD_RUN_QUERY, {});
+            hotkeys(Constants$1.SHIFT_R, () => {
+                PubSub.publish(Constants$1.CMD_RUN_QUERY, {});
             });
 
-            hotkeys(Constants.SHIFT_F, () => {
-                PubSub.publish(Constants.CMD_FORMAT_QUERY, {});
+            hotkeys(Constants$1.SHIFT_F, () => {
+                PubSub.publish(Constants$1.CMD_FORMAT_QUERY, {});
             });
 
-            hotkeys(Constants.SHIFT_N, () => {
-                PubSub.publish(Constants.CMD_NEXT_ROWS, {});
+            hotkeys(Constants$1.SHIFT_N, () => {
+                PubSub.publish(Constants$1.CMD_NEXT_ROWS, {});
             });
 
-            hotkeys(Constants.SHIFT_P, () => {
-                PubSub.publish(Constants.CMD_PREV_ROWS, {});
+            hotkeys(Constants$1.SHIFT_P, () => {
+                PubSub.publish(Constants$1.CMD_PREV_ROWS, {});
             });
 
-            hotkeys(Constants.SHIFT_E, () => {
-                PubSub.publish(Constants.CMD_EXPORT, {});
+            hotkeys(Constants$1.SHIFT_E, () => {
+                PubSub.publish(Constants$1.CMD_EXPORT, {});
             });
 
-            hotkeys(Constants.SHIFT_L, () => {
-                PubSub.publish(Constants.CMD_EXPORT_TABLE , {});
+            hotkeys(Constants$1.SHIFT_L, () => {
+                PubSub.publish(Constants$1.CMD_EXPORT_TABLE , {});
             });
 
-            hotkeys(Constants.SHIFT_S, () => {
-                PubSub.publish(Constants.CMD_SEARCH_TABLES , {});
+            hotkeys(Constants$1.SHIFT_S, () => {
+                PubSub.publish(Constants$1.CMD_SEARCH_TABLES , {});
             });
 
-            hotkeys(Constants.SHIFT_BACK, () => {
-                PubSub.publish(Constants.CMD_BACK , {});
+            hotkeys(Constants$1.SHIFT_BACK, () => {
+                PubSub.publish(Constants$1.CMD_BACK , {});
             });
         }
     }
@@ -2275,9 +2307,9 @@
                 let res = await dbUtils.execute.apply(this, [query]);
 
                 if (res.status == "ok") {
-                    PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                         query: query,
-                        tags: [Constants.USER]
+                        tags: [Constants$1.USER]
                     });
 
                     let rows = res.data[0][1];
@@ -2308,7 +2340,7 @@
 
     class ColumnSelector {
         constructor() {
-            let selections = Utils.getFromLocalStorage(Constants.COLUMN_SELECTIONS);
+            let selections = Utils.getFromLocalStorage(Constants$1.COLUMN_SELECTIONS);
             if (selections) {
                 this.selections = JSON.parse(selections);
             } else {
@@ -2388,12 +2420,12 @@
                 });
 
                 Logger.Log(TAG$c, JSON.stringify(selections));
-                PubSub.publish(Constants.COLUMNS_SELECTED, {
+                PubSub.publish(Constants$1.COLUMNS_SELECTED, {
                     cols: selection
                 });
 
                 this.selections[this.table] = selection;
-                Utils.saveToLocalStorage(Constants.COLUMN_SELECTIONS, JSON.stringify(this.selections));
+                Utils.saveToLocalStorage(Constants$1.COLUMN_SELECTIONS, JSON.stringify(this.selections));
 
                 this.$dialog.classList.remove('is-active');
             });
@@ -2446,12 +2478,12 @@
                 //this.$dialog.classList.remove('is-active');
             //});
 
-            PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
+            PubSub.subscribe(Constants$1.TABLE_CHANGED, (data) => {
                 this.table = data.table;
                 this.fetchQuery();
             });
 
-            PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
+            PubSub.subscribe(Constants$1.TABLE_SELECTED, (data) => {
                 this.table = data.table;
                 this.fetchQuery();
             });
@@ -2475,17 +2507,17 @@
                 this.$prev = document.getElementById('prev');
 
                 this.$next.addEventListener('click', async (e) => {
-                    this.handleCmd(Constants.CMD_NEXT_ROWS);
+                    this.handleCmd(Constants$1.CMD_NEXT_ROWS);
                 });
 
                 this.$prev.addEventListener('click', async (e) => {
-                    this.handleCmd(Constants.CMD_PREV_ROWS);
+                    this.handleCmd(Constants$1.CMD_PREV_ROWS);
                 });
             });
 
             [
-                Constants.CMD_NEXT_ROWS,
-                Constants.CMD_PREV_ROWS,
+                Constants$1.CMD_NEXT_ROWS,
+                Constants$1.CMD_PREV_ROWS,
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -2527,11 +2559,11 @@
 
         async handleCmd(cmd) {
             switch (cmd) {
-                case Constants.CMD_NEXT_ROWS:
+                case Constants$1.CMD_NEXT_ROWS:
                     this.handleNextRows();
                     break;
 
-                case Constants.CMD_PREV_ROWS:
+                case Constants$1.CMD_PREV_ROWS:
                     this.handlePrevNows();
                     break;
             }
@@ -2649,28 +2681,28 @@
         }
 
         initSubscribers() {
-            PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
-                Logger.Log(TAG$a, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
+            PubSub.subscribe(Constants$1.STREAM_ERROR, (err) => {
+                Logger.Log(TAG$a, `${Constants$1.STREAM_ERROR}: ${JSON.stringify(err)}`);
                 Err.handle(err);
             });
 
-            PubSub.subscribe(Constants.QUERY_CANCELLED, () => {
+            PubSub.subscribe(Constants$1.QUERY_CANCELLED, () => {
                 DbUtils.cancel(this.sessionId, this.cursorId);
             });
 
-            PubSub.subscribe(Constants.SORT_REQUESTED, (data) => {
+            PubSub.subscribe(Constants$1.SORT_REQUESTED, (data) => {
                 this.handleSort(data);
             });
 
-            PubSub.subscribe(Constants.COLUMNS_SELECTED, (data) => {
+            PubSub.subscribe(Constants$1.COLUMNS_SELECTED, (data) => {
                 this.handleSelectColumns(data);
             });
 
             //handle all keyboard shortcuts
             [
-                Constants.CMD_RUN_QUERY,
-                Constants.CMD_EXPORT,
-                Constants.CMD_FORMAT_QUERY,
+                Constants$1.CMD_RUN_QUERY,
+                Constants$1.CMD_EXPORT,
+                Constants$1.CMD_FORMAT_QUERY,
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -2679,8 +2711,8 @@
                 })(c);
             });
 
-            PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
-                Logger.Log(TAG$a, Constants.CELL_EDITED);
+            PubSub.subscribe(Constants$1.CELL_EDITED, async (data) => {
+                Logger.Log(TAG$a, Constants$1.CELL_EDITED);
                 await this.handleCellEdit(data);
             });
         }
@@ -2714,7 +2746,7 @@
                 let value = target.dataset.value;
 
                 Logger.Log(TAG$a, `${target.dataset.table}:${target.dataset.column}:${value}`);
-                PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
+                PubSub.publish(Constants$1.TABLE_CHANGED, {table: target.dataset.table});
                 await this.showFkRef(target.dataset.table, target.dataset.column, value);
                 this.stack.push(target.dataset.table, target.dataset.column, value);
             });
@@ -2728,11 +2760,11 @@
             });
 
             this.$exportFiltered.addEventListener('click', async (e) => {
-                this.handleCmd(Constants.CMD_EXPORT);
+                this.handleCmd(Constants$1.CMD_EXPORT);
             });
 
             this.$clearFilter.addEventListener('click', async (e) => {
-                this.handleCmd(Constants.CMD_CLEAR_FILTER);
+                this.handleCmd(Constants$1.CMD_CLEAR_FILTER);
             });
         }
 
@@ -2757,9 +2789,9 @@
             let res = await dbUtils.execute.apply(this, [query]);
 
             if (res.status == "ok") {
-                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                     query: query,
-                    tags: [Constants.USER]
+                    tags: [Constants$1.USER]
                 });
 
                 let rows = res.data[0][1];
@@ -2788,9 +2820,9 @@
                 let res = await this.showContents(query, this.fkMap);
 
                 if (res.status == "ok") {
-                    PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                         query: query,
-                        tags: [Constants.USER]
+                        tags: [Constants$1.USER]
                     });
 
                 }
@@ -2819,9 +2851,9 @@
                 let res = await this.showContents(query, this.fkMap);
 
                 if (res.status == "ok") {
-                    PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                         query: this.query,
-                        tags: [Constants.USER]
+                        tags: [Constants$1.USER]
                     });
                 }
 
@@ -2890,10 +2922,10 @@
                 'session-id': this.sessionId,
                 'cursor-id': this.cursorId,
                 'req-id': Utils.uuid(),
-                'num-of-rows': Constants.BATCH_SIZE_WS
+                'num-of-rows': Constants$1.BATCH_SIZE_WS
             };
 
-            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            let stream = new Stream(Constants$1.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
             let selection = this.colSelector.getSelection(this.table);
             let res =  await this.tableUtils.showContents(stream, fkMap, selection, true, true);
 
@@ -2906,20 +2938,20 @@
                 'session-id': this.sessionId,
                 'cursor-id': this.cursorId,
                 'req-id': Utils.uuid(),
-                'num-of-rows': Constants.BATCH_SIZE_WS
+                'num-of-rows': Constants$1.BATCH_SIZE_WS
             };
 
-            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            let stream = new Stream(Constants$1.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
             return this.tableUtils.update(stream);
         }
 
         async handleCmd(cmd) {
             switch (cmd) {
-            case Constants.CMD_EXPORT:
+            case Constants$1.CMD_EXPORT:
                 this.handleExport();
                 break;
 
-            case Constants.CMD_CLEAR_FILTER:
+            case Constants$1.CMD_CLEAR_FILTER:
                 this.handleClearFilter();
                 break;
             }
@@ -2952,16 +2984,16 @@
             let res = await dbUtils.exportResults.apply(this, [this.query]);
 
             if (res.status == "ok") {
-                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                     query: this.query,
-                    tags: [Constants.USER]
+                    tags: [Constants$1.USER]
                 });
             }
         }
 
         async navigate(e) {
             Logger.Log(TAG$a, JSON.stringify(e));
-            PubSub.publish(Constants.TABLE_CHANGED, {table: e.table});
+            PubSub.publish(Constants$1.TABLE_CHANGED, {table: e.table});
 
             switch (e.type) {
                 case 'table':
@@ -3001,7 +3033,7 @@
             });
 
             this.$exportTable.addEventListener('click', () => {
-                this.handleCmd(Constants.CMD_EXPORT_TABLE);
+                this.handleCmd(Constants$1.CMD_EXPORT_TABLE);
             });
 
             this.$tables.addEventListener('click', async (e) => {
@@ -3021,11 +3053,11 @@
 
                 this.table = target.innerHTML;
 
-                PubSub.publish(Constants.TABLE_SELECTED, {table: target.innerHTML});
+                PubSub.publish(Constants$1.TABLE_SELECTED, {table: target.innerHTML});
             });
 
             //update highlighted table if table is changed from elsewhere
-            PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
+            PubSub.subscribe(Constants$1.TABLE_CHANGED, (data) => {
                 //remove highlight on all element first
                 let list = this.$tables.querySelectorAll('.highlight');
                 list.forEach((e) => {
@@ -3046,8 +3078,8 @@
             Logger.Log(TAG$9, `sessionId: ${sessionId}`);
             //handle all keyboard shortcuts
             [
-                Constants.CMD_EXPORT_TABLE,
-                Constants.CMD_SEARCH_TABLES
+                Constants$1.CMD_EXPORT_TABLE,
+                Constants$1.CMD_SEARCH_TABLES
             ].forEach((c) => {
                 ((c) => {
                     PubSub.subscribe(c, () => {
@@ -3059,11 +3091,11 @@
 
         async handleCmd(cmd) {
             switch (cmd) {
-            case Constants.CMD_EXPORT_TABLE:
+            case Constants$1.CMD_EXPORT_TABLE:
                 this.handleExportTable();
                 break;
 
-            case Constants.CMD_SEARCH_TABLES:
+            case Constants$1.CMD_SEARCH_TABLES:
                 this.$tableFilter.focus();
                 break;
             }
@@ -3113,7 +3145,7 @@
                 'num-of-rows': -1 //get all table names
             };
 
-            let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
+            let stream = new Stream(Constants$1.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
 
             this.$tables.replaceChildren();
             let $t = document.getElementById('table-template');
@@ -3181,7 +3213,7 @@
                 this.isDragging = false;
                 Logger.Log(TAG$8, `mouseup: ${e.clientX}`);
                 e.preventDefault();
-                PubSub.publish(Constants.GRID_H_RESIZED, {});
+                PubSub.publish(Constants$1.GRID_H_RESIZED, {});
             });
         }
     }
@@ -3231,7 +3263,7 @@
             $databases.addEventListener('change', () => {
                 Logger.Log(TAG$6, "Db changed");
                 let db = $databases.value;
-                PubSub.publish(Constants.DB_CHANGED, {db: db});
+                PubSub.publish(Constants$1.DB_CHANGED, {db: db});
             });
         }
 
@@ -3332,7 +3364,7 @@
 
                 request.onsuccess = (e) => {
                     let o = e.target.result;
-                    o.status = Constants.STATUS_DELETED;
+                    o.status = Constants$1.STATUS_DELETED;
                     let requestUpdate = objectStore.put(o);
 
                     requestUpdate.onerror = (e) => {
@@ -3417,7 +3449,7 @@
                 request.onsuccess = (e) => {
                     let o = e.target.result;
                     o['db_id'] = null;
-                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
+                    o['synced_at'] = new Date(Constants$1.EPOCH_TIMESTAMP);
 
                     let requestUpdate = objectStore.put(o);
                     requestUpdate.onerror = (e) => {
@@ -3466,7 +3498,7 @@
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
-                let index = objectStore.index(Constants.DB_ID_INDEX);
+                let index = objectStore.index(Constants$1.DB_ID_INDEX);
 
                 let request = index.get(IDBKeyRange.only([id]));
                 request.onsuccess = (e) => {
@@ -3527,7 +3559,7 @@
     const TERM_INDEX = "term-index";
     const TAG_INDEX = "tag-index";
 
-    class QueryDB extends BaseDB {
+    class QueryDB$1 extends BaseDB {
         constructor(logger, options) {
             options.dbName = "queries";
             super(logger, options);
@@ -3555,7 +3587,7 @@
 
             if (e.oldVersion < 37) {
                 let store = e.currentTarget.transaction.objectStore(this.store);
-                store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+                store.createIndex(Constants$1.DB_ID_INDEX, ["db_id"]);
             }
         }
 
@@ -4024,7 +4056,7 @@
                     reader.addEventListener('load', () => {
                         try {
                             let result = JSON.parse(reader.result);
-                            PubSub.publish(Constants.FILE_UPLOADED, result);
+                            PubSub.publish(Constants$1.FILE_UPLOADED, result);
                         } catch (e) {
                             alert(e);
                             return;
@@ -4048,7 +4080,7 @@
 
     class QueryHistory {
         constructor() {
-            PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
+            PubSub.subscribe(Constants$1.QUERY_DISPATCHED, async (query) => {
                 Logger.Log(TAG$2, JSON.stringify(query));
 
                 if (!this.queryDb) {
@@ -4057,10 +4089,10 @@
 
                 let id = await this.queryDb.save(query); 
                 Logger.Log(TAG$2, `Saved to ${id}`);
-                PubSub.publish(Constants.QUERY_SAVED, {id: id});
+                PubSub.publish(Constants$1.QUERY_SAVED, {id: id});
             });
 
-            PubSub.subscribe(Constants.FILE_UPLOADED, async (data) => {
+            PubSub.subscribe(Constants$1.FILE_UPLOADED, async (data) => {
                 await this.handleUpload(data);
             });
 
@@ -4079,7 +4111,7 @@
         }
 
         async init() {
-            this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            this.queryDb = new QueryDB$1(new Logger(), {version: Constants$1.QUERY_DB_VERSION});
             await this.queryDb.open();
         }
 
@@ -4109,8 +4141,8 @@
 
         async handleUpload(data) {
             progressBar.setOptions({});//no buttons
-            PubSub.publish(Constants.INIT_PROGRESS, {});
-            PubSub.publish(Constants.START_PROGRESS, {});
+            PubSub.publish(Constants$1.INIT_PROGRESS, {});
+            PubSub.publish(Constants$1.START_PROGRESS, {});
 
             for (let i = 0; i < data.length; i++) {
                 let d = data[i];
@@ -4135,13 +4167,13 @@
                 d.created_at = createdAt;
                 let id = await this.queryDb.save(d);
 
-                PubSub.publish(Constants.UPDATE_PROGRESS, {
+                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                     message: `Imported ${i + 1} of ${data.length}`
                 });
 
                 Logger.Log(TAG$2, `Saved to ${id}`);
             }
-            PubSub.publish(Constants.STOP_PROGRESS, {});
+            PubSub.publish(Constants$1.STOP_PROGRESS, {});
         }
     }
 
@@ -4154,17 +4186,17 @@
             this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
             this.connectionWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
+                    case Constants$1.DEBUG_LOG:
                         Logger.Log("connection-worker", e.data.payload);
                         break;
 
-                    case Constants.NEW_CONNECTIONS:
-                        PubSub.publish(Constants.NEW_CONNECTIONS, {});
+                    case Constants$1.NEW_CONNECTIONS:
+                        PubSub.publish(Constants$1.NEW_CONNECTIONS, {});
                         break;
 
-                    case Constants.SIGNIN_REQUIRED:
-                        Logger.Log(TAG$1, Constants.SIGNIN_REQUIRED);
-                        PubSub.publish(Constants.SIGNIN_REQUIRED, {});
+                    case Constants$1.SIGNIN_REQUIRED:
+                        Logger.Log(TAG$1, Constants$1.SIGNIN_REQUIRED);
+                        PubSub.publish(Constants$1.SIGNIN_REQUIRED, {});
                         break;
                 }
             };
@@ -4172,12 +4204,12 @@
             this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
             this.queryWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
+                    case Constants$1.DEBUG_LOG:
                         Logger.Log("query-worker", e.data.payload);
                         break;
 
-                    case Constants.NEW_QUERIES:
-                        PubSub.publish(Constants.NEW_QUERIES, {});
+                    case Constants$1.NEW_QUERIES:
+                        PubSub.publish(Constants$1.NEW_QUERIES, {});
                         break;
                 }
             };
@@ -4194,10 +4226,10 @@
         }
 
         async initHandlers() {
-            PubSub.subscribe(Constants.DB_CHANGED, async (data) => {
+            PubSub.subscribe(Constants$1.DB_CHANGED, async (data) => {
                 Logger.Log(TAG, "Db changed");
                 this.creds.db = data.db;
-                Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds));
+                Utils.saveToSession(Constants$1.CREDS, JSON.stringify(this.creds));
 
                 //if db has changed we have to create new session
                 this.sessionId = await DbUtils.login(this.creds);
@@ -4211,7 +4243,7 @@
 
             this.$tables = document.getElementById('tables');
 
-            PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
+            PubSub.subscribe(Constants$1.TABLE_SELECTED, (data) => {
                 this.tableContents.reset();
                 this.tableContents.show(data.table);
             });
@@ -4221,7 +4253,7 @@
             MainMenu.init();
             this.history = new QueryHistory();
 
-            let creds = Utils.getFromSession(Constants.CREDS);
+            let creds = Utils.getFromSession(Constants$1.CREDS);
             if (!creds) {
                 window.location = '/connections';
                 return
@@ -4252,16 +4284,16 @@
             let $resizer = document.getElementById('app-content-resizer');
             new GridResizerH($g1, $e1, $resizer, $e2);
 
-            PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
+            PubSub.subscribe(Constants$1.SIGNIN_REQUIRED, async () => {
                 window.location = '/signin';
             });
 
             this.workers = new Workers();
             this.workers.init();
 
-            PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+            PubSub.subscribe(Constants$1.QUERY_SAVED, async () => {
                 this.workers.queryWorker.port.postMessage({
-                    type: Constants.QUERY_SAVED
+                    type: Constants$1.QUERY_SAVED
                 });
             });
         }

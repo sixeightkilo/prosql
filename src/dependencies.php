@@ -70,12 +70,14 @@ $container->set('LoginController', function() use ($container) {
     $logger = $container->get('logger');
     $sm = $container->get('session-manager');
     $loginController = new LoginController($logger, $sm);
-    $loginController->setDownloadPath($container->get('config')['download-path']);
 
     $emailer = new Emailer($logger, $container->get('config')['sendgrid-key']);
     $user = new User($logger, $container->get('db'));
+    $device = new Device($logger, $container->get('db'));
 
-    $loginController->setEmailer($emailer);
-    $loginController->setUser($user);
+    $loginController->setEmailer($emailer)
+        ->setDownloadPath($container->get('config')['download-path'])
+        ->setUser($user)
+        ->setDevice($device);
     return $loginController;
 });

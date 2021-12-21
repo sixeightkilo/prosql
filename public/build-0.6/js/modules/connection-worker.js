@@ -28,6 +28,7 @@ class ConnectionWorker extends BaseWorker {
 
         this.metaDB = new ConnectionsMetaDB(this.logger, {version: Constants.CONNECTIONS_META_DB_VERSION});
         await this.metaDB.open();
+        this.logger.log(TAG, "metadb.get: " + await this.metaDB.get());
 
         this.syncDown();
         this.syncUp();
@@ -36,7 +37,7 @@ class ConnectionWorker extends BaseWorker {
     async syncDown() {
         let conns = await this.connectionDb.getAll();
 
-        let after = await this.getLastSyncTs(this.metaDB, Constants.CONNECTIONS_META_KEY);
+        let after = await this.metaDB.getLastSyncTs();
         after = after.toISOString();
         this.logger.log(TAG, `after: ${after}`);
 
@@ -74,7 +75,6 @@ class ConnectionWorker extends BaseWorker {
 
             //this looks like a new connection
             if (c == null) {
-                this.logger.log(TAG, `inserting: ${JSON.stringify(c)}`)
                 conns[i].db_id = conns[i].id
                 delete conns[i].id;
 
@@ -103,7 +103,7 @@ class ConnectionWorker extends BaseWorker {
         }
 
         this.logger.log(TAG, "Setting last_sync_ts");
-        await this.setLastSyncTs(this.metaDB, Constants.CONNECTIONS_META_KEY);
+        await this.metaDB.setLastSyncTs();
         this.logger.log(TAG, "Done last_sync_ts");
     }
 

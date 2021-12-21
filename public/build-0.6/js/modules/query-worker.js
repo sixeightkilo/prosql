@@ -31,9 +31,7 @@ class QueryWorker extends BaseWorker {
 
         this.metaDB = new QueriesMetaDB(this.logger, {version: Constants.QUERIES_META_DB_VERSION});
         await this.metaDB.open();
-        await this.setDbName(this.metaDB, Constants.QUERIES_META_KEY, this.dbName);
-        //debug
-        this.logger.log(TAG, await this.metaDB.get(Constants.QUERIES_META_KEY));
+        await this.metaDB.setDbName(this.dbName);
 
         this.syncDown();
         this.syncUp();
@@ -97,7 +95,7 @@ class QueryWorker extends BaseWorker {
 
     async syncDown() {
         this.logger.log(TAG, "syncDown");
-        let after = await this.getLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
+        let after = await this.metaDB.getLastSyncTs();
         after = after.toISOString();
         this.logger.log(TAG, `after: ${after}`)
 
@@ -153,7 +151,7 @@ class QueryWorker extends BaseWorker {
         }
 
         this.logger.log(TAG, `setLastSyncTs:start`);
-        this.setLastSyncTs(this.metaDB, Constants.QUERIES_META_KEY);
+        await this.metaDB.setLastSyncTs();
         this.logger.log(TAG, `setLastSyncTs:done`);
     }
 

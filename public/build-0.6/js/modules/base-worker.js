@@ -54,53 +54,5 @@ class BaseWorker {
             }
         }
     }
-
-	async getLastSyncTs(db, id) {
-        let rec = await db.get(parseInt(id));
-        if (rec == null) {
-            return new Date(Constants.EPOCH_TIMESTAMP);
-        }
-
-        return rec.last_sync_ts ?? new Date(Constants.EPOCH_TIMESTAMP);
-    }
-
-    async setLastSyncTs(db, id) {
-        let rec = await db.get(parseInt(id));
-
-        if (rec == null) {
-            await db.save({
-                id: parseInt(id),
-                last_sync_ts: new Date()
-            })
-            return;
-        }
-
-        rec.last_sync_ts = new Date();
-        await db.put(rec)
-    }
-
-    async getDbName(db, id) {
-        let rec = await db.get(parseInt(id));
-        if (rec == null) {
-            return '';
-        }
-
-        return rec.db_name ?? '';
-    }
-
-    async setDbName(db, id, dbName) {
-        let rec = await db.get(parseInt(id));
-
-        if (rec == null) {
-            await db.save({
-                id: parseInt(id),
-                db_name: dbName
-            })
-            return;
-        }
-
-        rec.db_name = dbName;
-        await db.put(rec)
-    }
 }
 export { BaseWorker }
