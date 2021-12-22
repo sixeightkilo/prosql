@@ -11,6 +11,6 @@ html
         include table-info.pug
         include column-selector.pug
 
-        input#version(type=hidden value="#{version}")
+        input#version(type="hidden" value="#{version}")
 
         script(type='module' src='/#{root}/dist/js/tables.js?ver=#{version}')

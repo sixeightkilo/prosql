@@ -7,7 +7,6 @@ class SessionManager implements SessionManagerInterface {
     private ?Logger $logger;
     public function __construct(\Monolog\Logger $logger) {
         $this->logger = $logger;
-        $this->logger->debug('constructor');
         session_start();
     }
 

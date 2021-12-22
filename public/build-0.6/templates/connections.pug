@@ -68,7 +68,7 @@ html
                     #[br]
                     span Already registered? Please #[a(href="/signin") Signin.]
 
-        input#version(type=hidden value="#{version}")
+        input#version(type="hidden" value="#{version}")
 
         script(type='module' src='/#{root}/dist/js/connections.js?ver=#{version}')
         script(type='code' id='conn-template')

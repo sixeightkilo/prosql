@@ -63,7 +63,7 @@ html
                         button.button(id="signup") Signup 
                         button.button(id="login") Continue as guest
 
-        input#version(type=hidden value="#{version}")
+        input#version(type="hidden" value="#{version}")
 
         script(type='module' src='/#{root}/dist/js/connections.js?ver=#{version}')
         script(type='code' id='conn-template')

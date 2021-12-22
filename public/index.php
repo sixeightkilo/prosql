@@ -30,4 +30,6 @@ $app->map(['GET', 'POST'], '/browser-api/login/{action}', 'LoginController:handl
 $app->get('[/{params:.*}]','Renderer:handle')
     ->add('SessionAuthMiddleware:handle');
 
+require(__DIR__ . "/../src/error-handler.php");
+
 $app->run();

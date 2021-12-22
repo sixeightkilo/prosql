@@ -15,7 +15,25 @@ class SessionAuthMiddleware {
     }
 
     public function handle(Request $request, RequestHandler $handler): Response {
+        $uri = $request->getUri();
+        $path = $uri->getPath();
+        $this->logger->debug("Path: $path");
+
+        if ($path == "/signout") {
+            $this->sm->kill();
+            $res = new Response();
+            return $res->withStatus(302)->withHeader('Location', '/signin');
+        }
+
+        if (in_array($path, ['/', '/signin', '/signup', '/read-more', '/install'])) {
+            $this->sm->write();
+            $response = $handler->handle($request);
+            return $response;
+        }
+
         $email = $this->sm->getUser()['email'] ?? null;
+        $this->logger->debug("email: $email");
+
         if ($email) {
             //user is logged in, either as guest or registered user
             $this->sm->write();
@@ -23,18 +41,7 @@ class SessionAuthMiddleware {
             return $response;
         }
 
-        $uri = $request->getUri();
-        $path = $uri->getPath();
-
-        $this->logger->debug("Path: $path");
-
-        if (in_array($path, ['/signin', '/signup'])) {
-            //don't rediret for these routes
-            $this->sm->write();
-            $response = $handler->handle($request);
-            return $response;
-        }
-
+        //force signin
         $res = new Response();
         return $res->withStatus(302)->withHeader('Location', '/signin');
     }

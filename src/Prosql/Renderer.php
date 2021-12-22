@@ -57,10 +57,6 @@ class Renderer {
         case '':
             return $this->render($res, "index.pug", []);
 
-        case 'signout':
-            $this->sm->kill();
-            return $res->withStatus(302)->withHeader('Location', '/signin');
-
         case 'connections':
             return $this->renderConnections($res);
 
@@ -97,6 +93,9 @@ class Renderer {
     }
 
     private function renderApp(Response $res, string $path, array $data): Response {
+        $email = $this->sm->getUser()['email'] ?? null;
+        $this->logger->debug("email: $email");
+
         if (!in_array($path, ['tables', 'queries', 'help', 'about'])) {
             return $res->withStatus(404);
         }
