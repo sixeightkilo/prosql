@@ -1,5 +1,5 @@
 <?php
-namespace Prosql;
+namespace Prosql\Utils;
 use Prosql\Interfaces\SessionManagerInterface;
 use \Monolog\Logger;
 

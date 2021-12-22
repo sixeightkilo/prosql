@@ -1698,7 +1698,7 @@
         }
     }
 
-    let progressBar = new ProgressBar();
+    new ProgressBar();
 
     const TAG = 'signin';
     class Signin {
@@ -1728,22 +1728,6 @@
             let json = await Utils.post('/browser-api/login/signin', {'otp': this.$otp.value});
 
             if (json.status == "ok") {
-                //if db name has changed, reset all dbs
-                let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
-                await queriesMetaDb.open();
-
-                if (await queriesMetaDb.getDbName() != json.data['db-name']) {
-                    progressBar.setOptions({});//no buttons
-                    PubSub.publish(Constants.INIT_PROGRESS, {});
-                    PubSub.publish(Constants.START_PROGRESS, {});
-                    PubSub.publish(Constants.UPDATE_PROGRESS, {
-                        message: `Please wait`
-                    });
-
-                    await Utils.resetAll();
-                    PubSub.publish(Constants.STOP_PROGRESS, {});
-                }
-
                 window.location = '/connections';
             }
         }

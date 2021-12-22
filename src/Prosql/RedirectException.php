@@ -1,5 +1,5 @@
 <?php
-namespace Prosql\RedirectException;
+namespace Prosql;
 
 class RedirectException extends \Exception {
     private $url;

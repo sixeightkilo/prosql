@@ -1,12 +1,12 @@
 <?php
-namespace Prosql;
+namespace Prosql\Controllers\UI;
 use \Monolog\Logger;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Gregwar\Captcha\CaptchaBuilder;
 use \Prosql\Interfaces\{EmailerInterface, SessionManagerInterface};
 use \Prosql\Utils\Validator as V;
 use \Prosql\Models\{User, Device};
+use \Prosql\Controllers\BaseController;
 use \Pug\Pug as Pug;
 
 class LoginController extends BaseController {

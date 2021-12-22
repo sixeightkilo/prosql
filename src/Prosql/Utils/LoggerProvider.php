@@ -28,7 +28,7 @@ class LoggerProvider {
 
         if ($level = Logger::DEBUG) {
             //log debug only if requested
-            $logger->pushHandler(new StreamHandler($this->path, $level));
+            $logger->pushHandler(new StreamHandler("{$this->path}/prosql.log", $level));
         }
 
         //log errors unconditionally

@@ -18,14 +18,15 @@ class SessionAuthMiddleware {
         $uri = $request->getUri();
         $path = $uri->getPath();
         $this->logger->debug("Path: $path");
+        //$this->logger->debug("debug: $debug");
 
         if ($path == "/signout") {
             $this->sm->kill();
             $res = new Response();
-            return $res->withStatus(302)->withHeader('Location', '/signin');
+            return $res->withStatus(302)->withHeader('Location', '/connections');
         }
 
-        if (in_array($path, ['/', '/signin', '/signup', '/read-more', '/install'])) {
+        if (in_array($path, ['/', '/signin', '/signup', '/read-more', '/install', '/connections'])) {
             $this->sm->write();
             $response = $handler->handle($request);
             return $response;

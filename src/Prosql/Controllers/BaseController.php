@@ -1,5 +1,5 @@
 <?php
-namespace Prosql;
+namespace Prosql\Controllers;
 use \Monolog\Logger;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;

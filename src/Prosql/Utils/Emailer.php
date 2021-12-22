@@ -1,7 +1,8 @@
 <?php
-namespace Prosql;
+namespace Prosql\Utils;
+use \Prosql\Interfaces\EmailerInterface;
 
-class Emailer implements Interfaces\EmailerInterface {
+class Emailer implements EmailerInterface {
     private $logger;
     private $sendGrid;
 

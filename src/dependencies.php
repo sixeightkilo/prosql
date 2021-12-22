@@ -1,9 +1,10 @@
 <?php
 use DI\Container;
 use Monolog\Logger;
-use Prosql\{SessionManager, VersionController, DevicesController, SqlController, LoginController, Renderer, Emailer};
+use Prosql\{Renderer};
+use Prosql\Controllers\UI\{DevicesController, SqlController, LoginController};
 use Prosql\Models\{User, Device};
-use Prosql\Utils\{PDOUtils, LoggerProvider};
+use Prosql\Utils\{PDOUtils, LoggerProvider, Emailer, SessionManager};
 use Prosql\Middleware\{SessionAuthMiddleware};
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -11,7 +12,7 @@ require __DIR__ . '/../vendor/autoload.php';
 //dependencies
 $container = new Container();
 $container->set('lp', function() {
-    $lp = new LoggerProvider(__DIR__ . '/../logs/prosql.log', Logger::DEBUG);
+    $lp = new LoggerProvider(__DIR__ . '/../logs', Logger::DEBUG);
     return $lp;
 });
 
@@ -37,12 +38,6 @@ $container->set('DevicesController', function() use ($container) {
     $devicesController->setDevice($device);
 
     return $devicesController;
-});
-
-$container->set('VersionController', function() use ($container) {
-    $logger = $container->get('lp')->getLogger('VersionController');
-    $sm = $container->get('session-manager');
-    return new VersionController($logger, $sm);
 });
 
 $container->set('SqlController', function() use ($container) {

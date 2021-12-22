@@ -5,7 +5,7 @@ function errorHandler($errno, $errstr, $errfile, $errline)
     throw new Exception("$errfile:$errline:$errstr");
 }
 
-$logger = $container->get('lp')->getLogger("ErrorHandler");
+//$logger = $container->get('lp')->getLogger("ErrorHandler");
 $config = $container->get('config');
 
 if ($config['env'] == 'dev') {

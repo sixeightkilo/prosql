@@ -23,13 +23,15 @@ AppFactory::setContainer($container);
 $app = AppFactory::create();
 
 $app->post('/browser-api/devices/{action}', 'DevicesController:handle');
-$app->post('/browser-api/version', 'VersionController:handle');
 $app->get('/browser-api/sql/{action}', 'SqlController:handle');
 $app->map(['GET', 'POST'], '/browser-api/login/{action}', 'LoginController:handle');
 
 $app->get('[/{params:.*}]','Renderer:handle')
     ->add('SessionAuthMiddleware:handle');
 
-require(__DIR__ . "/../src/error-handler.php");
+// Add Error Middleware
+$logger = $container->get('lp')->getLogger("ErrorHandler");
+require __DIR__ . '/../src/error-handler.php';
+$errorMiddleware = $app->addErrorMiddleware(true, true, true, $logger);
 
 $app->run();

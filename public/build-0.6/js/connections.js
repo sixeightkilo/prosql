@@ -57,20 +57,15 @@ class Connections {
     }
 
     async init() {
+        this.workers = new Workers();
+        this.workers.init();
+
 		this.initDom();
 
         PubSub.subscribe(Constants.NEW_CONNECTIONS, async () => {
             this.showConns();
         });
 
-        PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
-            window.location = '/signin';
-        });
-
-        this.workers = new Workers();
-        this.workers.init();
-
-        Logger.Log(TAG, "Workers initialized");
         this.connections = new ConnectionModel(new Logger(), {version: Constants.CONN_DB_VERSION});
         await this.connections.open();
 
@@ -269,7 +264,6 @@ class Connections {
                 return;
             }
 
-            //this will be handled by backend anyway
             window.location = '/signin';
         }
     }

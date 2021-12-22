@@ -44,17 +44,6 @@ class Signup {
         let json = await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
 
         if (json.status == "ok") {
-            ProgressBar.setOptions({});//no buttons
-            PubSub.publish(Constants.INIT_PROGRESS, {});
-            PubSub.publish(Constants.START_PROGRESS, {});
-            PubSub.publish(Constants.UPDATE_PROGRESS, {
-                message: `Please wait`
-            });
-
-            //reset all saved indexeddb records so they can be synced again with the new db
-            await Utils.resetAll();
-
-            PubSub.publish(Constants.STOP_PROGRESS, {});
             window.location = '/connections';
         }
     }
