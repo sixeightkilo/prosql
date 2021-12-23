@@ -41,17 +41,11 @@ class DevicesController extends BaseController {
         }
 
         //continue as guest
-        $this->sm->setDbName($deviceId);
         $this->sm->setUser([
             'first-name' => User::GUEST_FIRST_NAME,
             'last-name' => User::GUEST_LAST_NAME,
             'email' => User::GUEST_EMAIL
         ]);
-
-        return [
-            'session-id' => $this->sm->getSessionId(),
-            'db-name' => $this->sm->getDbName(),
-        ];
     }
 
     private function signinRequired(array $device): bool {

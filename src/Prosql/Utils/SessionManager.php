@@ -54,14 +54,6 @@ class SessionManager implements SessionManagerInterface {
         return $_SESSION['user'] ?? [];
     }
 
-    public function setDbName(string $n): void {
-        $_SESSION['db-name'] = $n;
-    }
-
-    public function getDbName(): string {
-        return $_SESSION['db-name'] ?? '';
-    }
-
     public function setTempUser(array $u): void {
         $_SESSION['temp-user'] = $u;
     }
@@ -77,7 +69,6 @@ class SessionManager implements SessionManagerInterface {
         $this->setOtp('');
         $this->setUser([]);
         $this->setTempUser([]);
-        $this->setDbName('');
     }
 
     public function kill() {

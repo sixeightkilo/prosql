@@ -3,6 +3,8 @@ use DI\Container;
 use Monolog\Logger;
 use Prosql\{Renderer};
 use Prosql\Controllers\UI\{DevicesController, SqlController, LoginController};
+use Prosql\Controllers\UI\DevicesController as UIDevicesController;
+use Prosql\Controllers\Workers\DevicesController as WorkerDevicesController;
 use Prosql\Models\{User, Device};
 use Prosql\Utils\{PDOUtils, LoggerProvider, Emailer, SessionManager};
 use Prosql\Middleware\{SessionAuthMiddleware};
@@ -26,14 +28,28 @@ $container->set('session-manager', function() use ($container) {
     return new SessionManager($logger);
 });
 
-$container->set('DevicesController', function() use ($container) {
+$container->set('UIDevicesController', function() use ($container) {
     $sm = $container->get('session-manager');
 
     $logger = $container->get('lp')->getLogger('Device');
     $device = new Device($logger, $container->get('db'));
 
     $logger = $container->get('lp')->getLogger('DevicesController');
-    $devicesController = new DevicesController($logger, $sm);
+    $devicesController = new UIDevicesController($logger, $sm);
+
+    $devicesController->setDevice($device);
+
+    return $devicesController;
+});
+
+$container->set('WorkerDevicesController', function() use ($container) {
+    $sm = $container->get('session-manager');
+
+    $logger = $container->get('lp')->getLogger('Device');
+    $device = new Device($logger, $container->get('db'));
+
+    $logger = $container->get('lp')->getLogger('DevicesController');
+    $devicesController = new WorkerDevicesController($logger, $sm);
 
     $devicesController->setDevice($device);
 

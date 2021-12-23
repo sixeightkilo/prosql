@@ -22,7 +22,8 @@ require(__DIR__ . "/../src/dependencies.php");
 AppFactory::setContainer($container);
 $app = AppFactory::create();
 
-$app->post('/browser-api/devices/{action}', 'DevicesController:handle');
+$app->post('/worker-api/devices/{action}', 'WorkerDevicesController:handle');
+$app->post('/browser-api/devices/{action}', 'UIDevicesController:handle');
 $app->get('/browser-api/sql/{action}', 'SqlController:handle');
 $app->map(['GET', 'POST'], '/browser-api/login/{action}', 'LoginController:handle');
 

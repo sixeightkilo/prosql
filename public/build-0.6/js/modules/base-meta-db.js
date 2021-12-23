@@ -6,28 +6,28 @@ const TAG = "base-meta-db";
 const ID = 1;
 
 class BaseMetaDB extends BaseDB {
-    async getDbName() {
+    async getDb() {
         let rec = await super.get(parseInt(ID));
         if (rec == null) {
             return '';
         }
 
-        return rec.db_name ?? '';
+        return rec.db ?? '';
     }
 
-    async setDbName(dbName) {
-        this.logger.log(TAG, "setDbName");
+    async setDb(db) {
+        this.logger.log(TAG, "setDb");
         let rec = await super.get(parseInt(ID));
 
         if (rec == null) {
             await this.save(this.store, {
                 id: parseInt(ID),
-                db_name: dbName
+                db: db
             })
             return;
         }
 
-        rec.db_name = dbName;
+        rec.db = db;
         await this.put(this.store, rec)
     }
 

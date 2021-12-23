@@ -6,7 +6,7 @@ import { ConnectionsMetaDB } from './connections-meta-db.js'
 import { BaseWorker } from './base-worker.js'
 
 const TAG = "main"
-const URL = '/browser-api/sqlite'
+const URL = '/worker-api/sqlite'
 
 class ConnectionWorker extends BaseWorker {
     async handleMessage(m) {
@@ -21,7 +21,7 @@ class ConnectionWorker extends BaseWorker {
 
     async init() {
         await super.init();
-        this.logger.log(TAG, "deviceid:" + this.deviceId);
+        this.logger.log(TAG, "db:" + this.db);
 
         this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
         await this.connectionDb.open();
@@ -42,7 +42,7 @@ class ConnectionWorker extends BaseWorker {
         this.logger.log(TAG, `after: ${after}`);
 
         let res = await Utils.get(`${URL}/connections/updated`, false, {
-            db: this.deviceId,
+            db: this.db,
             after: after
         });
 
@@ -147,7 +147,7 @@ class ConnectionWorker extends BaseWorker {
                 body: JSON.stringify(conns[i]),
                 method: "POST",
                 headers: {
-                    db: this.deviceId,
+                    db: this.db,
                     'Content-Type': 'application/json',
                 }
             });
@@ -180,7 +180,7 @@ class ConnectionWorker extends BaseWorker {
             body: JSON.stringify(ids),
             method: "DELETE",
             headers: {
-                db: this.deviceId,
+                db: this.db,
                 'Content-Type': 'application/json',
             }
         });

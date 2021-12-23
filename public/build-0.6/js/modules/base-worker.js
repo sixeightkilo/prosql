@@ -5,7 +5,7 @@ import { QueryDB } from './query-db.js'
 import { MetaDB } from './meta-db.js'
 
 const TAG = "base"
-const URL = '/browser-api/sqlite'
+const URL = '/worker-api/sqlite'
 
 class BaseWorker {
     constructor(port) {
@@ -30,7 +30,7 @@ class BaseWorker {
         //If signin-required, force user to signin/signup
         //After user signs up clear all db_id, because we are moving to a new db
 
-        res = await Utils.post('/browser-api/devices/register', {
+        res = await Utils.post('/worker-api/devices/register', {
             'device-id': res.data['device-id'],
             'version': res.data['version'],
             'os': res.data['os'],
@@ -42,8 +42,7 @@ class BaseWorker {
             return;
         }
 
-        this.sessionId = res.data['session-id'];
-        this.dbName = res.data['db-name'];
+        this.db= res.data.db;
     }
 }
 export { BaseWorker }

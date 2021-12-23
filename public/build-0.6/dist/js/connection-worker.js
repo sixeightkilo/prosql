@@ -1086,28 +1086,28 @@
     const ID = 1;
 
     class BaseMetaDB extends BaseDB {
-        async getDbName() {
+        async getDb() {
             let rec = await super.get(parseInt(ID));
             if (rec == null) {
                 return '';
             }
 
-            return rec.db_name ?? '';
+            return rec.db ?? '';
         }
 
-        async setDbName(dbName) {
-            this.logger.log(TAG$6, "setDbName");
+        async setDb(db) {
+            this.logger.log(TAG$6, "setDb");
             let rec = await super.get(parseInt(ID));
 
             if (rec == null) {
                 await this.save(this.store, {
                     id: parseInt(ID),
-                    db_name: dbName
+                    db: db
                 });
                 return;
             }
 
-            rec.db_name = dbName;
+            rec.db = db;
             await this.put(this.store, rec);
         }
 
@@ -1610,7 +1610,7 @@
             //If signin-required, force user to signin/signup
             //After user signs up clear all db_id, because we are moving to a new db
 
-            res = await Utils.post('/browser-api/devices/register', {
+            res = await Utils.post('/worker-api/devices/register', {
                 'device-id': res.data['device-id'],
                 'version': res.data['version'],
                 'os': res.data['os'],
@@ -1622,13 +1622,12 @@
                 return;
             }
 
-            this.sessionId = res.data['session-id'];
-            this.dbName = res.data['db-name'];
+            this.db= res.data.db;
         }
     }
 
     const TAG = "main";
-    const URL = '/browser-api/sqlite';
+    const URL = '/worker-api/sqlite';
 
     class ConnectionWorker extends BaseWorker {
         async handleMessage(m) {
@@ -1643,7 +1642,7 @@
 
         async init() {
             await super.init();
-            this.logger.log(TAG, "deviceid:" + this.deviceId);
+            this.logger.log(TAG, "db:" + this.db);
 
             this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
             await this.connectionDb.open();
@@ -1664,7 +1663,7 @@
             this.logger.log(TAG, `after: ${after}`);
 
             let res = await Utils.get(`${URL}/connections/updated`, false, {
-                db: this.deviceId,
+                db: this.db,
                 after: after
             });
 
@@ -1769,7 +1768,7 @@
                     body: JSON.stringify(conns[i]),
                     method: "POST",
                     headers: {
-                        db: this.deviceId,
+                        db: this.db,
                         'Content-Type': 'application/json',
                     }
                 });
@@ -1802,7 +1801,7 @@
                 body: JSON.stringify(ids),
                 method: "DELETE",
                 headers: {
-                    db: this.deviceId,
+                    db: this.db,
                     'Content-Type': 'application/json',
                 }
             });

@@ -92,7 +92,6 @@ class LoginController extends BaseController {
         $this->sm->setTempUser([]);
         $this->sm->setOtp('');
         $this->sm->setUser($user);
-        $this->sm->setDbName($user['email']);
         $this->sm->write();
     }
 
@@ -111,10 +110,7 @@ class LoginController extends BaseController {
         $this->sm->setTempUser([]);
         $this->sm->setOtp('');
         $this->sm->setUser($user);
-        $this->sm->setDbName($user['email']);
         $this->sm->write();
-
-        return ['db-name' => $user['email']];
     }
 
     private function setSignupOtp(Request $req): void {

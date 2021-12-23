@@ -6,7 +6,7 @@ import { QueriesMetaDB } from './queries-meta-db.js'
 import { BaseWorker } from './base-worker.js'
 
 const TAG = "main"
-const URL = '/browser-api/sqlite'
+const URL = '/worker-api/sqlite'
 const LIMIT = 50;
 
 class QueryWorker extends BaseWorker {
@@ -23,11 +23,10 @@ class QueryWorker extends BaseWorker {
     async init() {
         await super.init();
         this.logger.log(TAG, "deviceid:" + this.deviceId);
-        this.logger.log(TAG, "sessionId:" + this.sessionId);
-        this.logger.log(TAG, "dbName:" + this.dbName);
+        this.logger.log(TAG, "db:" + this.db);
 
-        if (!this.sessionId) {
-            this.logger.log(TAG, "No session id");
+        if (!this.db) {
+            this.logger.log(TAG, "No db");
             return;
         }
 
@@ -36,7 +35,7 @@ class QueryWorker extends BaseWorker {
 
         this.metaDB = new QueriesMetaDB(this.logger, {version: Constants.QUERIES_META_DB_VERSION});
         await this.metaDB.open();
-        await this.metaDB.setDbName(this.dbName);
+        await this.metaDB.setDb(this.db);
 
         this.syncDown();
         this.syncUp();
@@ -82,7 +81,7 @@ class QueryWorker extends BaseWorker {
                 body: JSON.stringify(queries[i]),
                 method: "POST",
                 headers: {
-                    'session-id': this.sessionId,
+                    'db': this.db,
                     'Content-Type': 'application/json',
                 }
             });
@@ -162,7 +161,7 @@ class QueryWorker extends BaseWorker {
 
     async fetchRecs(after, limit, offset) {
         return await Utils.get(`${URL}/queries/updated`, false, {
-            'session-id': this.sessionId,
+            'db': this.db,
             after: after,
             limit: limit,
             offset: offset
