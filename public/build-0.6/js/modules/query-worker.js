@@ -35,7 +35,13 @@ class QueryWorker extends BaseWorker {
 
         this.metaDB = new QueriesMetaDB(this.logger, {version: Constants.QUERIES_META_DB_VERSION});
         await this.metaDB.open();
-        await this.metaDB.setDb(this.db);
+
+        if (await this.metaDB.getDb() != this.db) {
+            await this.reset(this.queryDb);
+            this.logger.log(TAG, "Reset queryDb");
+            await this.metaDB.destroy();
+            await this.metaDB.setDb(this.db);
+        }
 
         this.syncDown();
         this.syncUp();

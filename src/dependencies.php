@@ -34,7 +34,7 @@ $container->set('UIDevicesController', function() use ($container) {
     $logger = $container->get('lp')->getLogger('Device');
     $device = new Device($logger, $container->get('db'));
 
-    $logger = $container->get('lp')->getLogger('DevicesController');
+    $logger = $container->get('lp')->getLogger('UIDevicesController');
     $devicesController = new UIDevicesController($logger, $sm);
 
     $devicesController->setDevice($device);
@@ -48,7 +48,7 @@ $container->set('WorkerDevicesController', function() use ($container) {
     $logger = $container->get('lp')->getLogger('Device');
     $device = new Device($logger, $container->get('db'));
 
-    $logger = $container->get('lp')->getLogger('DevicesController');
+    $logger = $container->get('lp')->getLogger('WorkerDevicesController');
     $devicesController = new WorkerDevicesController($logger, $sm);
 
     $devicesController->setDevice($device);

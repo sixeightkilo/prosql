@@ -8,6 +8,8 @@ use \Prosql\RedirectException;
 use \Prosql\Controllers\BaseController;
 
 class DevicesController extends BaseController {
+    use \Prosql\Traits\SigninTrait;
+
     public function setDevice(Device $d): void {
         $this->device = $d;
     }
@@ -17,22 +19,22 @@ class DevicesController extends BaseController {
         $version = $req->getParsedBody()['version'];
         $os = $req->getParsedBody()['os'] ?? "unknown";
 
-        //save device info if not already saved
-        $id = $this->device->get(['id'], [
-            ['device_id', '=', $deviceId]
-        ])[0]['id'] ?? null;
+        //upsert
+        $id = $this->device->save([
+            'device_id' => $deviceId,
+            'version' => $version,
+            'os' => $os,
+        ]);
 
-        if (!$id) {
-            $id = $this->device->save([
-                'device_id' => $deviceId,
-                'version' => $version,
-                'os' => $os,
-            ]);
+        $device = $this->device->get(['user_id', 'created_at'], [
+            ['id', '=', $id]
+        ])[0];
+
+        if ($this->signinRequired($device)) {
+            throw new \Exception('signin required');
         }
 
-        $this->logger->debug("Saved $deviceId to $id");
-
-        //The workers should continue to work even if the user is not signed in (even as guest)
+        //Upto MAX_GUEST_DAYS the workers should continue to work even if the user is not signed in (even as guest)
         //This is especially important for connections page. Because user might visit connections
         //page in a different browser, having saved some connections in the current browser.
 

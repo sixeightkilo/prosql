@@ -95,7 +95,7 @@ class LoginController extends BaseController {
         $this->sm->write();
     }
 
-    private function signin(Request $req): array {
+    private function signin(Request $req): void {
         $otp = $req->getParsedBody()['otp'];
         if ($this->sm->getOtp() != $otp) {
             throw new \Exception("Invalid otp");
@@ -158,9 +158,9 @@ class LoginController extends BaseController {
         $params = $req->getParsedBody();
 
         //check if user registered
-        $user = $this->user->get(['first_name', 'last_name'], [
+        $user = $this->user->get(['first_name', 'last_name', 'email'], [
             ['email', '=', $params['email']]
-        ])[0] ?? null;
+        ])[0] ?? [];
 
         $this->logger->debug("user: " . print_r($user, true));
 
@@ -172,7 +172,9 @@ class LoginController extends BaseController {
 
         $this->sm->setOtp($otp);
         $this->sm->setTempUser([
-            'email' => $params['email'],
+            'first-name' => $user['first_name'],
+            'last-name' => $user['last_name'],
+            'email' => $user['email'],
         ]);
         $this->sm->write();
 

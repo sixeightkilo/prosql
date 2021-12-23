@@ -1622,7 +1622,14 @@
                 return;
             }
 
-            this.db= res.data.db;
+            this.db = res.data.db;
+        }
+
+        async reset(db) {
+            let recs = await db.getAll();
+            for (let i = 0; i < recs.length; i++) {
+                await db.reset(recs[i]);
+            }
         }
     }
 
@@ -1644,12 +1651,24 @@
             await super.init();
             this.logger.log(TAG, "db:" + this.db);
 
+            if (!this.db) {
+                this.logger.log(TAG, "No db");
+                return;
+            }
+
             this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
             await this.connectionDb.open();
 
             this.metaDB = new ConnectionsMetaDB(this.logger, {version: Constants.CONNECTIONS_META_DB_VERSION});
             await this.metaDB.open();
             this.logger.log(TAG, "metadb.get: " + await this.metaDB.get());
+
+            if (await this.metaDB.getDb() != this.db) {
+                await this.reset(this.connectionDb);
+                this.logger.log(TAG, "Reset connectionDb");
+                await this.metaDB.destroy();
+                await this.metaDB.setDb(this.db);
+            }
 
             this.syncDown();
             this.syncUp();

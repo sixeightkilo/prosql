@@ -42,7 +42,14 @@ class BaseWorker {
             return;
         }
 
-        this.db= res.data.db;
+        this.db = res.data.db;
+    }
+
+    async reset(db) {
+        let recs = await db.getAll();
+        for (let i = 0; i < recs.length; i++) {
+            await db.reset(recs[i]);
+        }
     }
 }
 export { BaseWorker }
