@@ -103,9 +103,11 @@ class LoginController extends BaseController {
 
         $user = $this->sm->getTempUser();
         $this->logger->debug("Signing in:" . print_r($user, true));
-        $user = $this->user->get(['first_name', 'last_name', 'email'], [
+        $user = $this->user->get(['id', 'first_name', 'last_name', 'email'], [
             ['email', '=', $user['email']]
         ])[0];
+
+        $this->device->setUserId($this->sm->getDeviceId(), $user['id']);
 
         $this->sm->setTempUser([]);
         $this->sm->setOtp('');
@@ -145,6 +147,10 @@ class LoginController extends BaseController {
             'email' => $params['email'],
         ]);
 
+        $this->sm->setDeviceId($params['device-id']);
+        $this->sm->setVersion($params['version']);
+        $this->sm->setOs($params['os']);
+
         $this->sm->write();
 
         $msg = $this->pug->render(__DIR__ . "/templates/signup-otp.pug", [
@@ -176,6 +182,11 @@ class LoginController extends BaseController {
             'last-name' => $user['last_name'],
             'email' => $user['email'],
         ]);
+
+        $this->sm->setDeviceId($params['device-id']);
+        $this->sm->setVersion($params['version']);
+        $this->sm->setOs($params['os']);
+
         $this->sm->write();
 
         $msg = $this->pug->render(__DIR__ . "/templates/signup-otp.pug", [

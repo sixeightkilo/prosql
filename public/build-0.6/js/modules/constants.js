@@ -223,10 +223,6 @@ class Constants {
         return 4
     }
 
-    static get SIGNIN_REQUIRED() {
-        return "signin-required";
-    }
-
     static get INIT_PROGRESS() {
         return "init-progress"
     }
@@ -245,6 +241,10 @@ class Constants {
 
     static get DEBUG_LOG() {
         return "worker.debug-log"
+    }
+
+    static get SIGNIN_REQUIRED() {
+        return "worker.signin-required"
     }
 
     static get NEW_CONNECTIONS() {

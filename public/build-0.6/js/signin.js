@@ -33,7 +33,9 @@ class Signin {
     }
 
     async signin() {
-        let json = await Utils.post('/browser-api/login/signin', {'otp': this.$otp.value});
+        let json = await Utils.post('/browser-api/login/signin', {
+            'otp': this.$otp.value,
+        });
 
         if (json.status == "ok") {
             window.location = '/connections';
@@ -41,8 +43,12 @@ class Signin {
     }
 
     async getOtp() {
+        let res = await Utils.get(Constants.URL + '/about');
         let params = {
             'email': this.$email.value,
+            'device-id': res.data['device-id'],
+            'version': res.data['version'],
+            'os': res.data['os'],
         }
 
         let json = await Utils.post('/browser-api/login/set-signin-otp', params, false);

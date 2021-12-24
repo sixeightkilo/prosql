@@ -270,10 +270,6 @@
             return 4
         }
 
-        static get SIGNIN_REQUIRED() {
-            return "signin-required";
-        }
-
         static get INIT_PROGRESS() {
             return "init-progress"
         }
@@ -292,6 +288,10 @@
 
         static get DEBUG_LOG() {
             return "worker.debug-log"
+        }
+
+        static get SIGNIN_REQUIRED() {
+            return "worker.signin-required"
         }
 
         static get NEW_CONNECTIONS() {
@@ -1725,7 +1725,9 @@
         }
 
         async signin() {
-            let json = await Utils.post('/browser-api/login/signin', {'otp': this.$otp.value});
+            let json = await Utils.post('/browser-api/login/signin', {
+                'otp': this.$otp.value,
+            });
 
             if (json.status == "ok") {
                 window.location = '/connections';
@@ -1733,8 +1735,12 @@
         }
 
         async getOtp() {
+            let res = await Utils.get(Constants.URL + '/about');
             let params = {
                 'email': this.$email.value,
+                'device-id': res.data['device-id'],
+                'version': res.data['version'],
+                'os': res.data['os'],
             };
 
             let json = await Utils.post('/browser-api/login/set-signin-otp', params, false);

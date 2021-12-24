@@ -226,10 +226,6 @@
             return 4
         }
 
-        static get SIGNIN_REQUIRED() {
-            return "signin-required";
-        }
-
         static get INIT_PROGRESS() {
             return "init-progress"
         }
@@ -248,6 +244,10 @@
 
         static get DEBUG_LOG() {
             return "worker.debug-log"
+        }
+
+        static get SIGNIN_REQUIRED() {
+            return "worker.signin-required"
         }
 
         static get NEW_CONNECTIONS() {
@@ -4396,10 +4396,13 @@
 
     const TAG$1 = "workers";
     class Workers {
-        init() {
-            //init must be called after dom is loaded
+        constructor() {
             this.$version = document.getElementById('version');
             Logger.Log(TAG$1, `ver: ${this.$version.value}`);
+        }
+
+        initConnectionWorker() {
+            //init must be called after dom is loaded
             this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
             this.connectionWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
@@ -4410,14 +4413,11 @@
                     case Constants.NEW_CONNECTIONS:
                         PubSub.publish(Constants.NEW_CONNECTIONS, {});
                         break;
-
-                    case Constants.SIGNIN_REQUIRED:
-                        Logger.Log(TAG$1, Constants.SIGNIN_REQUIRED);
-                        PubSub.publish(Constants.SIGNIN_REQUIRED, {});
-                        break;
                 }
             };
+        }
 
+        initQueryWorker() {
             this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
             this.queryWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
@@ -4506,7 +4506,7 @@
             });
 
             this.workers = new Workers();
-            this.workers.init();
+            this.workers.initQueryWorker();
 
             PubSub.subscribe(Constants.QUERY_SAVED, async () => {
                 this.workers.queryWorker.port.postMessage({

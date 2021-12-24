@@ -29,6 +29,11 @@ trait SigninTrait {
             if ($device['user_id'] && !$userEmail) {
                 $signinRequired = true;
             }
+
+            //todo: why do we reach here?
+            if ($device['user_id'] && $userEmail == User::GUEST_EMAIL) {
+                $signinRequired = true;
+            }
         }
 
         $this->logger->debug(

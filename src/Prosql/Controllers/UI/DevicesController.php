@@ -31,9 +31,13 @@ class DevicesController extends BaseController {
             ['id', '=', $id]
         ])[0];
 
+        $this->sm->setDeviceId($deviceId);
+        $this->sm->setVersion($version);
+        $this->sm->setOs($os);
+
         $signinRequired = $this->signinRequired($device);
         //debug
-        $signinRequired = true;
+        //$signinRequired = true;
 
         if ($signinRequired) {
             //kill sessions if any
@@ -41,6 +45,10 @@ class DevicesController extends BaseController {
             throw new RedirectException("/signin");
         }
 
+        if ($this->sm->getUser()['email'] ?? null) {
+            //logged in
+            return;
+        }
 
         //continue as guest
         $this->sm->setUser([

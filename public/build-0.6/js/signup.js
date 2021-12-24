@@ -59,12 +59,16 @@ class Signup {
     }
 
     async getOtp() {
+        let res = await Utils.get(Constants.URL + '/about');
         let params = {
             'first-name': this.$firstName.value,
             'last-name': this.$lastName.value,
             'email': this.$email.value,
             'captcha-id': this.$image.dataset.id,
-            'captcha-value': this.$captcha.value
+            'captcha-value': this.$captcha.value,
+            'device-id': res.data['device-id'],
+            'version': res.data['version'],
+            'os': res.data['os'],
         }
 
         let json = await Utils.post('/browser-api/login/set-signup-otp', params, false);

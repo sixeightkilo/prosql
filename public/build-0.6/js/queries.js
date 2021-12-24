@@ -34,12 +34,8 @@ class Query {
             this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
         })
 
-        PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
-            window.location = '/signin';
-        });
-
         this.workers = new Workers();
-        this.workers.init();
+        this.workers.initQueryWorker();
 
         PubSub.subscribe(Constants.QUERY_SAVED, async () => {
             this.workers.queryWorker.port.postMessage({

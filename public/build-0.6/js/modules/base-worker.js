@@ -39,6 +39,9 @@ class BaseWorker {
         this.logger.log(TAG, JSON.stringify(res));
 
         if (res.status == "error") {
+            this.port.postMessage({
+                type: Constants.SIGNIN_REQUIRED
+            })
             return;
         }
 
