@@ -117,9 +117,9 @@ class LoginController extends BaseController {
 
     private function setSignupOtp(Request $req): void {
         $params = $req->getParsedBody();
-        //$id = $params['captcha-id'];
-        //$value = $params['captcha-value'];
-        //$this->verifyCaptcha($id, $value);
+        $id = $params['captcha-id'];
+        $value = $params['captcha-value'];
+        $this->verifyCaptcha($id, $value);
 
         V::validate([
             ['field' => $params['first-name'], 'alias' => 'First name', 'rules' => [V::NOT_EMPTY]],
