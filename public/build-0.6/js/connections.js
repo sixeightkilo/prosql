@@ -58,6 +58,7 @@ class Connections {
 
     async init() {
         this.workers = new Workers();
+        this.workers.initQueryWorker();
         this.workers.initConnectionWorker();
 
 		this.initDom();
@@ -255,7 +256,7 @@ class Connections {
                 'device-id': res.data['device-id'],
                 'version': res.data['version'],
                 'os': res.data['os'],
-            }, false);
+            });
 
             Logger.Log(TAG, JSON.stringify(res));
 
@@ -264,7 +265,7 @@ class Connections {
                 return;
             }
 
-            window.location = '/signin';
+            alert(res.msg);
         }
     }
 

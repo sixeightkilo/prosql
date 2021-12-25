@@ -18,6 +18,10 @@
             return 'invalid-session-id'
         }
 
+        static get ERR_SIGNIN_REQUIRED() {
+            return 'signin-required'
+        }
+
         static get ERR_INVALID_CURSOR_ID() {
             return 'invalid-cursor-id'
         }
@@ -1445,9 +1449,8 @@
                 }
 
                 res.msg = e.msg;
-                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
-                    //user must login
-                    window.location = '/connections';
+                if (res.msg == Err.ERR_SIGNIN_REQUIRED) {
+                    window.location = '/signin';
                     return;
                 }
 
@@ -1739,6 +1742,7 @@
 
         async init() {
             this.workers = new Workers();
+            this.workers.initQueryWorker();
             this.workers.initConnectionWorker();
 
     		this.initDom();
@@ -1931,7 +1935,7 @@
                     'device-id': res.data['device-id'],
                     'version': res.data['version'],
                     'os': res.data['os'],
-                }, false);
+                });
 
                 Logger.Log(TAG, JSON.stringify(res));
 
@@ -1940,7 +1944,7 @@
                     return;
                 }
 
-                window.location = '/signin';
+                alert(res.msg);
             }
         }
 

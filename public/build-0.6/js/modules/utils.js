@@ -152,9 +152,8 @@ class Utils {
             }
 
             res.msg = e.msg;
-            if (res.msg == Err.ERR_INVALID_SESSION_ID) {
-                //user must login
-                window.location = '/connections';
+            if (res.msg == Err.ERR_SIGNIN_REQUIRED) {
+                window.location = '/signin';
                 return;
             }
 

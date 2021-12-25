@@ -86,6 +86,7 @@ class Content {
 
         this.workers = new Workers();
         this.workers.initQueryWorker();
+        this.workers.initConnectionWorker();
 
         PubSub.subscribe(Constants.QUERY_SAVED, async () => {
             this.workers.queryWorker.port.postMessage({

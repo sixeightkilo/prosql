@@ -42,7 +42,7 @@ class DevicesController extends BaseController {
         if ($signinRequired) {
             //kill sessions if any
             $this->sm->kill();
-            throw new RedirectException("/signin");
+            throw new \Exception('signin-required');
         }
 
         if ($this->sm->getUser()['email'] ?? null) {
