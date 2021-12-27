@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { Utils } from './utils.js'
 import { PubSub } from './pubsub.js'
@@ -16,7 +16,7 @@ class FileUploader {
         
         document.querySelector('body').append(n);
         document.querySelector('[type=file]').addEventListener("change", (e) => {
-            Log(TAG, 'changed');
+            Logger.Log(TAG, 'changed');
 	
             if (e.target.files.length > 0) {
                 let reader = new FileReader();
@@ -39,7 +39,7 @@ class FileUploader {
     }
 
     show() {
-        Log(TAG, "Showing " + this.mID);
+        Logger.Log(TAG, "Showing " + this.mID);
         document.querySelector('[type=file]').click();
     }
 }

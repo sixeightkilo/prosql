@@ -135,6 +135,18 @@ class Constants {
         return 'query-saved'
     }
 
+    static get CONNECTION_SAVED() {
+        return 'connection-saved'
+    }
+
+    static get CONNECTION_DELETED() {
+        return 'connection-deleted'
+    }
+
+    static get QUERY_UPDATED() {
+        return 'query-updated'
+    }
+
     static get SESSION_ID() {
         return 'session-id'
     }
@@ -183,8 +195,32 @@ class Constants {
         return 'user'
     }
 
+    static get DB_ID_INDEX() {
+        return "db-id-index";
+    }
+
+    static get CONNECTIONS_META_KEY() {
+        return 1;
+    }
+
+    static get QUERIES_META_KEY() {
+        return 2;
+    }
+
+    static get CONNECTIONS_META_DB_VERSION() {
+        return 1;
+    }
+
+    static get QUERIES_META_DB_VERSION() {
+        return 1;
+    }
+
     static get QUERY_DB_VERSION() {
-        return 2
+        return 39;
+    }
+
+    static get CONN_DB_VERSION() {
+        return 4
     }
 
     static get INIT_PROGRESS() {
@@ -203,5 +239,36 @@ class Constants {
         return "update-progress"
     }
 
+    static get DEBUG_LOG() {
+        return "worker.debug-log"
+    }
+
+    static get SIGNIN_REQUIRED() {
+        return "worker.signin-required"
+    }
+
+    static get NEW_CONNECTIONS() {
+        return "worker.new-connection"
+    }
+
+    static get NEW_QUERIES() {
+        return "worker.new-queries"
+    }
+
+    static get STATUS_ACTIVE() {
+        return "active"
+    }
+
+    static get STATUS_DELETED() {
+        return "deleted"
+    }
+
+    static get EPOCH_TIMESTAMP() {
+        return '2021-01-01T00:00:00Z';
+    }
+
+    static get LAST_SYNC_TS() {
+        return 'last-sync-ts';
+    }
 }
 export { Constants }

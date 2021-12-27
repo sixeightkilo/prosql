@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { PubSub } from './pubsub.js'
 import { Constants } from './constants.js'
 import { Utils } from './utils.js'

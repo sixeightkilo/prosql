@@ -2,65 +2,70 @@ doctype html
 html
     head
         include head.pug
-        link(rel="stylesheet" href="/#{root}/css/login.css?ver=#{version}")
+        link(rel="stylesheet" href="/#{root}/css/connections.css?ver=#{version}")
     body
         include navbar.pug
-        div#login-container.content
-            div#login-left-container
-                #login-recents-title Recent Connections
+        div#container.content
+            div#left-container
+                button.button#debug-add-conns(type="button") Add conns
+                #recents-title Recent Connections
                     #conn-list
-            div#login-right-container
-                div#login-form-container.control
+            div#right-container
+                div#form-container.control
                     i#add-new.fas.fa-plus-circle(title="New connection")
-                    div#login-name-container.field.is-horizontal
+                    div#name-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="name") Connection Name
                         .field-body
                             .field
                                 input(type="text" id="name" value="" placeholder="")
 
-                    div#login-user-container.field.is-horizontal
+                    div#user-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="user") Username
                         .field-body
                             .field
                                 input(type="text" id="user" value="" placeholder="")
-                    div#login-pass-container.field.is-horizontal
+                    div#pass-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="pass") Password
                         .field-body
                             input(type="password" id="pass" value="" placeholder="")
-                    div#login-host-container.field.is-horizontal
+                    div#host-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="host") Host
                         .field-body
                             input(type="text" id="host" value="" placeholder="")
-                    div#login-port-container.field.is-horizontal
+                    div#port-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="port") Port
                         .field-body
                             input(type="text" id="port" value="" placeholder="")
-                    div#login-db-container.field.is-horizontal
+                    div#db-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="db") Database
                         .field-body
                             input(type="text" id="db" value="" placeholder="optional")
 
-                    div#login-default-container.field.is-horizontal
+                    div#default-container.field.is-horizontal
                         .field-label.is-normal
                             label.label(for="default") Default
                         .field-body
                             input(type="checkbox" id="is-default")
 
-                div#login-btn-container
+                div#btn-container
                     button.button(id="test")
                         span Test connection
                         span.icon.is-small
                             i.test-icon.fas
 
-                    button.button(id="login") Login 
+                    div#login-btn-container
+                        button.button(id="signup") Signup 
+                        button.button(id="login") Continue as guest
 
-        script(type='module' src='/#{root}/dist/js/login.js?ver=#{version}')
+        input#version(type="hidden" value="#{version}")
+
+        script(type='module' src='/#{root}/dist/js/connections.js?ver=#{version}')
         script(type='code' id='conn-template')
             .conn-container
                 div

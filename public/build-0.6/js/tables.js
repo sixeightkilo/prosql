@@ -1,4 +1,4 @@
-import { Log } from './modules/logger.js'
+import { Logger } from './modules/logger.js'
 import { Err } from './modules/error.js'
 import { Utils } from './modules/utils.js'
 import { DbUtils } from './modules/dbutils.js'
@@ -10,8 +10,9 @@ import { PubSub } from './modules/pubsub.js'
 import { MainMenu } from './modules/main-menu.js'
 import { AppBar } from './modules/appbar.js'
 import { QueryHistory } from './modules/query-history.js'
+import { Workers } from './modules/workers.js'
 
-const TAG = "content"
+const TAG = "tables"
 class Content {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
@@ -22,7 +23,7 @@ class Content {
 
     async initHandlers() {
         PubSub.subscribe(Constants.DB_CHANGED, async (data) => {
-            Log(TAG, "Db changed");
+            Logger.Log(TAG, "Db changed");
             this.creds.db = data.db
             Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds))
 
@@ -50,15 +51,15 @@ class Content {
 
         let creds = Utils.getFromSession(Constants.CREDS)
         if (!creds) {
-            window.location = '/login';
+            window.location = '/connections';
             return
         }
 
-        Log(TAG, JSON.stringify(creds));
+        Logger.Log(TAG, JSON.stringify(creds));
 
         this.creds = JSON.parse(creds)
         this.sessionId = await DbUtils.login(this.creds)
-        Log(TAG, this.sessionId)
+        Logger.Log(TAG, this.sessionId)
 
         this.tableContents = new TableContents(this.sessionId)
         this.tables = new Tables(this.sessionId)
@@ -78,6 +79,20 @@ class Content {
         let $e2 = document.getElementById('app-right-panel');
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
+
+        PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
+            window.location = '/signin';
+        });
+
+        this.workers = new Workers();
+        this.workers.initQueryWorker();
+        this.workers.initConnectionWorker();
+
+        PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+            this.workers.queryWorker.port.postMessage({
+                type: Constants.QUERY_SAVED
+            });
+        });
     }
 
     adjustView() {

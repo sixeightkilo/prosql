@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 
 const TAG = "grid-resizer"
 class GridResizer {
@@ -12,12 +12,12 @@ class GridResizer {
             this.d2 = $e2.getBoundingClientRect().height;
         }
 
-        Log(TAG, `${this.d1} ${this.d2}`);
+        Logger.Log(TAG, `${this.d1} ${this.d2}`);
 
         $resizer.addEventListener('mousedown', (e) => {
             this.isDragging = true;
             this.startx = e.clientX;
-            Log(TAG, `mousedown: ${e.clientX}`);
+            Logger.Log(TAG, `mousedown: ${e.clientX}`);
             e.preventDefault();
         })
 
@@ -25,11 +25,11 @@ class GridResizer {
             if (!this.isDragging) {
                 return;
             }
-            Log(TAG, `mousemove: ${e.clientX}`);
+            Logger.Log(TAG, `mousemove: ${e.clientX}`);
             let delta = e.clientX - this.startx;
             this.d1 += delta;
             this.d2 += -1 * delta;
-            Log(TAG, `${delta} ${this.d1} ${this.d2}`);
+            Logger.Log(TAG, `${delta} ${this.d1} ${this.d2}`);
 
             $grid.style.gridTemplateColumns = `${this.d1}px 2px ${this.d2}px`;
             this.startx = e.clientX;
@@ -38,7 +38,7 @@ class GridResizer {
 
         document.addEventListener('mouseup', (e) => {
             this.isDragging = false;
-            Log(TAG, `mouseup: ${e.clientX}`);
+            Logger.Log(TAG, `mouseup: ${e.clientX}`);
             e.preventDefault();
         })
     }

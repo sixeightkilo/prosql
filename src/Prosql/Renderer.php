@@ -27,11 +27,11 @@ class Renderer {
         //we render different files for different agent versions
         $agentVersion = $sm->getVersion();
         if (!$agentVersion) {
-            //we agent version is not known, just use current agent version
+            //the agent version is not known, just use current agent version
             $agentVersion = $config['version'];
         }
 
-        //strip off minor versio
+        //strip off minor version
         $parts = explode(".", $agentVersion);
         $root = "build-{$parts[0]}.{$parts[1]}";
 
@@ -49,14 +49,53 @@ class Renderer {
         $this->path = __DIR__ . "/../../public/$root/templates";
     }
 
-    public function render(Response $response, string $file, array $data): Response {
+    public function handle(Request $req, Response $res, array $args): Response {
+
+        $params = explode('/', $req->getAttribute('params'));
+
+        switch ($params[0]) {
+        case '':
+            return $this->render($res, "index.pug", []);
+
+        case 'connections':
+            return $this->renderConnections($res);
+
+        case 'read-more':
+        case 'signup':
+        case 'signin':
+        case 'install':
+            return $this->render($res, "{$params[0]}.pug", []);
+
+        case 'app':
+            return $this->renderApp($res, $params[1], []);
+        }
+    }
+
+    private function renderConnections(Response $response): Response {
+        $email = $this->sm->getUser()['email'] ?? null;
+
+        if ($email) {
+            $filepath = $this->path . "/connections-user.pug";
+        } else {
+            $filepath = $this->path . "/connections.pug";
+        }
+
+        $body = $response->getBody();
+        $body->write($this->pug->render($filepath, $this->config));
+        return $response;
+    }
+
+    private function render(Response $response, string $file, array $data): Response {
         $filepath = $this->path . "/" . $file;
         $body = $response->getBody();
         $body->write($this->pug->render($filepath, $this->config));
         return $response;
     }
 
-    public function renderApp(Response $res, string $path, array $data): Response {
+    private function renderApp(Response $res, string $path, array $data): Response {
+        $email = $this->sm->getUser()['email'] ?? null;
+        $this->logger->debug("email: $email");
+
         if (!in_array($path, ['tables', 'queries', 'help', 'about'])) {
             return $res->withStatus(404);
         }

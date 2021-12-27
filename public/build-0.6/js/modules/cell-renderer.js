@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Utils } from './utils.js'
 const TAG = 'cell-renderer';
 
@@ -10,7 +10,7 @@ class CellRenderer {
     }
 
     render(params) {
-        Log(TAG, `${params.colDef.field}`);
+        Logger.Log(TAG, `${params.colDef.field}`);
         let id = params.colDef.colId;
         let c = params.colDef.field;
         let v = params.data[`${c}-${id}`];

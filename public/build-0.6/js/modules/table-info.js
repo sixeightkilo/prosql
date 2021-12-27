@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { PubSub } from './pubsub.js'
 import { Utils } from './utils.js'
@@ -25,7 +25,7 @@ class TableInfo {
             this.$title.innerHTML = `${this.table}`;
             this.$body.replaceChildren();
             this.$body.innerHTML = this.createQuery;
-            Log(TAG, this.columns);
+            Logger.Log(TAG, this.columns);
             this.$dialog.classList.add('is-active');
         });
 
@@ -50,7 +50,7 @@ class TableInfo {
 
     async fetchQuery() {
         let res = await DbUtils.fetchAll(this.sessionId, `show create table \`${this.table}\``);
-        Log(TAG, JSON.stringify(res));
+        Logger.Log(TAG, JSON.stringify(res));
         this.createQuery = `<pre> ${res[0][3]} </pre>`;
     }
 

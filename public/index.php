@@ -9,6 +9,10 @@ use Monolog\Handler\StreamHandler;
 use Prosql\Renderer;
 use Prosql\SessionManager;
 
+//all the database timestamps and time related
+//logic will operate on UTC
+date_default_timezone_set('UTC');
+
 require __DIR__ . '/../vendor/autoload.php';
 
 //create dependency container
@@ -17,70 +21,18 @@ require(__DIR__ . "/../src/dependencies.php");
 //app
 AppFactory::setContainer($container);
 $app = AppFactory::create();
-$app->post('/api/set-version', function($req, $res, $args) {
-    $logger = $this->get('logger');
-    $sm = $this->get('session-manager');
 
-    $version = $req->getParsedBody()['version'];
-    $deviceId = $req->getParsedBody()['device-id'];
-    $os = $req->getParsedBody()['os'] ?? "unknown";
+$app->post('/worker-api/devices/{action}', 'WorkerDevicesController:handle');
+$app->post('/browser-api/devices/{action}', 'UIDevicesController:handle');
+$app->get('/browser-api/sql/{action}', 'SqlController:handle');
+$app->map(['GET', 'POST'], '/browser-api/login/{action}', 'LoginController:handle');
 
-    $sm->setVersion($version);
-    $sm->setDeviceId($deviceId);
-    $sm->setOs($os);
+$app->get('[/{params:.*}]','Renderer:handle')
+    ->add('SessionAuthMiddleware:handle');
 
-    $sm->write();
-
-    $res->getBody()->write(json_encode(['status' => 'ok', 'data' => null]));
-    return $res;
-});
-
-$app->get('[/{params:.*}]', function($req, $res, $args) {
-	$params = explode('/', $req->getAttribute('params'));
-
-    $sm = $this->get('session-manager');
-    $logger = $this->get('logger');
-
-    $renderer = new Renderer($logger, $sm, $this->get('config'));
-
-	switch ($params[0]) {
-	case '':
-        return $renderer->render($res, "index.pug", []);
-
-	case 'read-more':
-        return $renderer->render($res, "read-more.pug", []);
-
-	case 'login':
-        return $renderer->render($res, "login.pug", []);
-
-	case 'install':
-        return $renderer->render($res, "install.pug", []);
-
-	case 'app':
-        return $renderer->renderApp($res, $params[1], []);
-
-	case 'prettify':
-        $query = $req->getQueryParams()['q'];
-        $query = SqlFormatter::format($query, false);
-
-        $res->getBody()->write(json_encode(['status' => 'ok', 'data' => $query]));
-
-        return $res;
-
-    case 'split':
-        $query = $req->getQueryParams()['q'];
-        $queries = SqlFormatter::splitQuery($query, false);
-        $res->getBody()->write(json_encode(['status' => 'ok', 'data' => $queries]));
-
-        return $res;
-    }
-})->add(function(Request $request, RequestHandler $handler) {
-    //no changes exepcted in session when rendering pages so write close it
-    $sm = $this->get('session-manager');
-    $sm->write();
-
-    $response = $handler->handle($request);
-    return $response;
-});
+// Add Error Middleware
+$logger = $container->get('lp')->getLogger("ErrorHandler");
+require __DIR__ . '/../src/error-handler.php';
+$errorMiddleware = $app->addErrorMiddleware(true, true, true, $logger);
 
 $app->run();

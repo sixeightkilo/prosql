@@ -1,11 +1,13 @@
 import { Err } from './modules/error.js'
-import { Log } from './modules/logger.js'
+import { Logger } from './modules/logger.js'
 import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
-import { ConnectionDB } from './modules/connection-db.js'
+import { ConnectionModel } from './modules/connections.js'
+import { PubSub } from './modules/pubsub.js'
+import { Workers } from './modules/workers.js'
 
-const TAG = 'login'
-class Login {
+const TAG = 'connections'
+class Connections {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             await this.init()
@@ -17,7 +19,7 @@ class Login {
             this.$login.addEventListener('click', async () => {
                 this.login()
             })
-        })
+        });
     }
 
     initDom() {
@@ -32,25 +34,52 @@ class Login {
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
         this.$isDefault = document.getElementById('is-default')
+
+        //debug only
+        document.getElementById('debug-add-conns').addEventListener('click', async () => {
+            let conns = [
+                {
+                    'name': Utils.uuid(),
+                    'user': 'server',
+                    'pass': 'dev-server',
+                    'host': '127.0.0.1',
+                    'port': '3308',
+                    'db': 'test-generico',
+                    'is-default': true
+                },
+            ];
+
+            for (let i = 0; i < conns.length; i++) {
+                let id = await this.connections.save(conns[i]);
+                Logger.Log(`saved to ${id}`);
+            }
+        });
     }
 
     async init() {
-        this.initDom();
+        this.workers = new Workers();
+        this.workers.initQueryWorker();
+        this.workers.initConnectionWorker();
 
-        this.connectionDb = new ConnectionDB({version: 1});
-        await this.connectionDb.open();
+		this.initDom();
+
+        PubSub.subscribe(Constants.NEW_CONNECTIONS, async () => {
+            this.showConns();
+        });
+
+        this.connections = new ConnectionModel(new Logger(), {version: Constants.CONN_DB_VERSION});
+        await this.connections.open();
 
         this.initHandlers();
-        
-        let conns = await this.connectionDb.getAll();
-        if (conns.length == 0) {
-            return;
-        }
+        this.showConns();
+    }
 
+    async showConns() {
+        let conns = await this.connections.getAll();
+        Logger.Log(TAG, JSON.stringify(conns));
         this.showRecents(conns);
         let conn = this.getDefault(conns);
         this.setConn(conn);
-        this.testConn();
     }
 
     initHandlers() {
@@ -70,11 +99,11 @@ class Login {
             let parent = target.parentElement;
             parent.classList.add('highlight');
 
-            Log(TAG, `${target.dataset.id}`);
+            Logger.Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
-            let conn = await this.connectionDb.get(connId);
+            let conn = await this.connections.get(connId);
+            Logger.Log(TAG, "setconn: " + JSON.stringify(conn));
             this.setConn(conn);
-            Log(TAG, JSON.stringify(conn));
             this.testConn();
         });
 
@@ -84,10 +113,16 @@ class Login {
                 return
             }
 
-            Log(TAG, `${target.dataset.id}`);
+            Logger.Log(TAG, `${target.dataset.id}`);
             let connId = parseInt(target.dataset.id);
-            await this.connectionDb.del(connId);
-            this.initConns();
+            await this.connections.del(connId);
+
+            //force sync up
+            this.workers.connectionWorker.port.postMessage({
+                type: Constants.CONNECTION_DELETED
+            });
+
+            this.showConns();
         });
 
         this.$addNew.addEventListener('click', () => {
@@ -100,23 +135,11 @@ class Login {
         })
     }
 
-    async initConns() {
-        document.querySelector('#conn-list').replaceChildren();
-        let conns = await this.connectionDb.getAll();
-        if (conns.length == 0) {
-            return;
-        }
-
-        this.showRecents(conns);
-        let conn = this.getDefault(conns);
-        this.setConn(conn);
-        this.testConn();
-    }
-
     getDefault(conns) {
         //if there is a default set, use it otherwise
         //arbitrarily choose the first connection as current
         for (let i = 0; i < conns.length; i++) {
+            Logger.Log(TAG, "c:" + JSON.stringify(conns[i]));
             if (conns[i]['is-default'] == true) {
                 return conns[i];
             }
@@ -126,8 +149,9 @@ class Login {
     }
 
     async showRecents(conns) {
-        let list = document.getElementById('conn-list');
+        let $list = document.getElementById('conn-list');
         let templ = document.getElementById('conn-template').innerHTML;
+        $list.replaceChildren();
 
         conns.forEach((c) => {
             let item = "No name";
@@ -143,11 +167,13 @@ class Login {
             if (c['is-default'] == true) {
                 n.querySelector('.conn-container').classList.add('highlight');
             }
-            list.appendChild(n);
+            $list.appendChild(n);
         })
     }
 
     setConn(conn) {
+        this.reset();
+
         for (let k in conn) {
             if (k == "id") {
                 continue;
@@ -162,9 +188,23 @@ class Login {
                 continue;
             }
 
+            Logger.Log(TAG, `key: ${k}`);
             let $elem = document.getElementById(k);
-            $elem.value = conn[k];
+            //sometimes password can be undefined
+            if (conn[k]) {
+                $elem.value = conn[k];
+            }
         }
+    }
+
+    reset() {
+        this.$name.value = '';
+        this.$user.value = '';
+        this.$pass.value = '';
+        this.$host.value = '';
+        this.$port.value = '';
+        this.$db.value = '';
+        this.$isDefault.checked = false;
     }
 
     validate(conn) {
@@ -207,33 +247,25 @@ class Login {
 
         if (await this.ping(conn) == 'ok') {
             Utils.saveToSession(Constants.CREDS, JSON.stringify(conn));
-            let id = await this.connectionDb.save(conn);
-            Log(TAG, `saved to ${id}`);
+            let id = await this.connections.save(conn);
+            Logger.Log(TAG, `${JSON.stringify(conn)} saved to ${id}`);
 
             //set agent version for the rest of web app
-            let response = await Utils.fetch(Constants.URL + '/about', false);
-            //todo: what happens if this is not OK?
-            if (response.status == "ok") {
-                let formData = new FormData();
-                formData.append('device-id', response.data['device-id']);
-                formData.append('version', response.data['version']);
-                formData.append('os', response.data['os']);
+            let res = await Utils.get(Constants.URL + '/about');
+            res = await Utils.post('/browser-api/devices/register', {
+                'device-id': res.data['device-id'],
+                'version': res.data['version'],
+                'os': res.data['os'],
+            });
 
-                let res = await fetch("/api/set-version", {
-                    body: formData,
-                    method: "post"
-                });
+            Logger.Log(TAG, JSON.stringify(res));
 
-                res = await res.json();
-
-                Log(TAG, JSON.stringify(res));
-
-                //todo: what happens if this is not OK?
-                if (res.status == "ok") {
-                    window.location = '/app/tables';
-                }
+            if (res.status == "ok") {
+                window.location = '/app/tables';
                 return;
             }
+
+            alert(res.msg);
         }
     }
 
@@ -252,7 +284,7 @@ class Login {
         }
 
         let s = await this.ping(conn);
-        Log(TAG, s);
+        Logger.Log(TAG, s);
 
         if (s == 'ok') {
             this.showSuccess();
@@ -281,7 +313,7 @@ class Login {
     }
 
     async ping(conn) {
-        let json = await Utils.fetch(Constants.URL + '/ping?' + new URLSearchParams(conn), false)
+        let json = await Utils.get(Constants.URL + '/ping?' + new URLSearchParams(conn), false)
         if (json.status == "error") {
             if (json.msg == Err.ERR_NO_AGENT) {
                 window.location = '/install';
@@ -308,4 +340,4 @@ class Login {
     }
 }
 
-new Login()
+new Connections()

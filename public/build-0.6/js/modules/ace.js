@@ -1,6 +1,6 @@
 import { PubSub } from './pubsub.js'
 import { Constants } from './constants.js'
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 
 const TAG = 'ace';
 const MAX_COL = 100000;
@@ -29,12 +29,12 @@ class Ace {
                 })
 
                 this.editor.on('dblclick', (e) => {
-                    Log(TAG, 'dblclick');
+                    Logger.Log(TAG, 'dblclick');
                     this.onKeyup();
                 });
 
                 this.editor.on('mousedown', (e) => {
-                    Log(TAG, 'mousedown');
+                    Logger.Log(TAG, 'mousedown');
                     setTimeout(() => {
                         this.onKeyup();
                     }, 5);
@@ -113,7 +113,7 @@ class Ace {
         }
 
         let cursor = this.editor.selection.getCursor();
-        Log(TAG, JSON.stringify(cursor));
+        Logger.Log(TAG, JSON.stringify(cursor));
 
         this.updateSelRange(cursor);
         if (this.selRange) {
@@ -136,7 +136,7 @@ class Ace {
 
         let ranges = this.editor.$search.findAll(this.editor.session);
 
-        Log(TAG, JSON.stringify(ranges));
+        Logger.Log(TAG, JSON.stringify(ranges));
         if (ranges.length == 0) {
             this.selRange = null;
             return;
@@ -198,7 +198,7 @@ class Ace {
             }
         }
 
-        Log(TAG, `sr ${startRow} sc ${startColumn} er ${endRow} ec ${endColumn}`);
+        Logger.Log(TAG, `sr ${startRow} sc ${startColumn} er ${endRow} ec ${endColumn}`);
         this.selRange = new this.range(startRow, startColumn, endRow, endColumn);
     }
 
@@ -258,7 +258,7 @@ class Ace {
                 mac: Constants.SHIFT_T
             },
             exec: (editor) => {
-                Log(TAG, "format");
+                Logger.Log(TAG, "format");
                 PubSub.publish(Constants.CMD_FORMAT_QUERY, {});
             },
             readOnly: true // false if this command should not apply in readOnly mode
@@ -271,7 +271,7 @@ class Ace {
                 mac: Constants.SHIFT_A
             },
             exec: (editor) => {
-                Log(TAG, "runall");
+                Logger.Log(TAG, "runall");
                 PubSub.publish(Constants.CMD_RUN_ALL, {});
             },
             readOnly: true // false if this command should not apply in readOnly mode

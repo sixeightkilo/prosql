@@ -1,0 +1,41 @@
+#container {
+	display:grid;
+	grid-template-columns: 2fr 8fr 2fr;
+	height:100%;
+}
+
+#form-container {
+	margin:auto;
+	display:grid;
+	padding:0.5em;
+	background-color:#eee;
+	margin-top:2em;
+	border-radius:5px;
+	row-gap:0.25em;
+	position:relative;
+}
+
+#form-container input {
+	border-radius:5px;
+	border:1px solid #ddd;
+	font-size:larger;
+}
+
+#email-container,
+#get-otp-container,
+#signin-container,
+#otp-container {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+}
+
+#image-container {
+	position:relative;
+}
+
+#reset {
+	position:absolute;
+	bottom: 0;
+	right: 2em;
+	cursor:pointer;
+}

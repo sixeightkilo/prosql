@@ -1,5 +1,5 @@
 import { Err } from './error.js'
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { Utils } from './utils.js'
 import { PubSub } from './pubsub.js'
@@ -22,7 +22,7 @@ class TableUtils {
                 return;
             }
 
-            Log(TAG, "Cancel clicked");
+            Logger.Log(TAG, "Cancel clicked");
             PubSub.publish(Constants.QUERY_CANCELLED, {});
         })
     }
@@ -91,13 +91,13 @@ class TableUtils {
                         },
                         cellEditor: CellEditor,
                         valueGetter: params => {
-                            Log(TAG, "valueGetter");
+                            Logger.Log(TAG, "valueGetter");
                             let id = params.colDef.colId;
                             let c = params.colDef.field;
                             return params.data[`${c}-${id}`];
                         },
                         valueSetter: params => {
-                            Log(TAG, "valueSetter");
+                            Logger.Log(TAG, "valueSetter");
                             let id = params.colDef.colId;
                             let c = params.colDef.field;
                             params.data[`${c}-${id}`] = params.newValue;
@@ -239,7 +239,7 @@ class TableUtils {
             this.undoStarted = false;
             return;
         }
-        Log(TAG, "handleCellValueChanged");
+        Logger.Log(TAG, "handleCellValueChanged");
         let key = fkMap['primary-key'];
 
         let keyId = fkMap['primary-key-id'];

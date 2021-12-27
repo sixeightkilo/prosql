@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 
 const TAG = "main-menu"
 class MainMenu {
@@ -7,7 +7,7 @@ class MainMenu {
 
         elementsArray.forEach((elem) => {
             elem.addEventListener("click", (e) => {
-                Log(TAG, `${e.currentTarget.id} clicked `)
+                Logger.Log(TAG, `${e.currentTarget.id} clicked `)
                 MainMenu.handleMenu(e.currentTarget.id)
             });
         });

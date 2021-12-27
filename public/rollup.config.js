@@ -14,23 +14,37 @@ export default [
         },
 	},
 	{
-		'input': 'build-0.6/js/login.js',
+		'input': 'build-0.6/js/connections.js',
 		'output': {
-            'file': 'build-0.6/dist/js/login.js',
+            'file': 'build-0.6/dist/js/connections.js',
             'format': 'iife'
         },
 	},
     {
-        'input': 'build-0.6/js/content.js',
+		'input': 'build-0.6/js/signup.js',
+		'output': {
+            'file': 'build-0.6/dist/js/signup.js',
+            'format': 'iife'
+        },
+	},
+    {
+		'input': 'build-0.6/js/signin.js',
+		'output': {
+            'file': 'build-0.6/dist/js/signin.js',
+            'format': 'iife'
+        },
+	},
+    {
+        'input': 'build-0.6/js/tables.js',
         'output': {
-            'file': 'build-0.6/dist/js/content.js',
+            'file': 'build-0.6/dist/js/tables.js',
             'format': 'iife'
         },
     },
     {
-        'input': 'build-0.6/js/query.js',
+        'input': 'build-0.6/js/queries.js',
         'output': {
-            'file': 'build-0.6/dist/js/query.js',
+            'file': 'build-0.6/dist/js/queries.js',
             'format': 'iife'
         },
     },
@@ -45,6 +59,20 @@ export default [
         'input': 'build-0.6/js/help.js',
         'output': {
             'file': 'build-0.6/dist/js/help.js',
+            'format': 'iife'
+        },
+    },
+    {
+        'input': 'build-0.6/js/connection-worker.js',
+        'output': {
+            'file': 'build-0.6/dist/js/connection-worker.js',
+            'format': 'iife'
+        },
+    },
+    {
+        'input': 'build-0.6/js/query-worker.js',
+        'output': {
+            'file': 'build-0.6/dist/js/query-worker.js',
             'format': 'iife'
         },
     },

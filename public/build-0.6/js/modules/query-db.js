@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Constants } from './constants.js'
 import { BaseDB } from './base-db.js'
 
@@ -9,27 +9,35 @@ const TERM_INDEX = "term-index";
 const TAG_INDEX = "tag-index";
 
 class QueryDB extends BaseDB {
-    constructor(options) {
+    constructor(logger, options) {
         options.dbName = "queries";
-        super(options);
+        super(logger, options);
+        this.logger = logger;
         this.store = "queries";
         this.searchIndex = "search-index";
         this.tagIndex = "tag-index";
     }
 
-    onUpgrade(evt) {
-        Log(TAG, "open.onupgradeneeded");
-        let store = evt.target.result.createObjectStore(
-            this.store, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+    onUpgrade(e) {
+        this.logger.log(TAG, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+        if (e.oldVersion < 2) {
+            let store = e.target.result.createObjectStore(
+                this.store, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
 
-        store = evt.target.result.createObjectStore(
-            this.searchIndex, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(TERM_INDEX, "term", { unique : true });
+            store = e.target.result.createObjectStore(
+                this.searchIndex, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(TERM_INDEX, "term", { unique : true });
 
-        store = evt.target.result.createObjectStore(
-            this.tagIndex, { keyPath: 'id', autoIncrement: true });
-        store.createIndex(TAG_INDEX, "tag", { unique : true });
+            store = e.target.result.createObjectStore(
+                this.tagIndex, { keyPath: 'id', autoIncrement: true });
+            store.createIndex(TAG_INDEX, "tag", { unique : true });
+        }
+
+        if (e.oldVersion < 37) {
+            let store = e.currentTarget.transaction.objectStore(this.store);
+            store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+        }
     }
 
     async save(rec) {
@@ -44,7 +52,7 @@ class QueryDB extends BaseDB {
             //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
             terms = [...new Set(terms)];
 
-            Log(TAG, JSON.stringify(terms));
+            this.logger.log(TAG, JSON.stringify(terms));
             let id = -1;
             try {
                 //apppend timestamp if required
@@ -63,7 +71,7 @@ class QueryDB extends BaseDB {
 
                 resolve(id);
             } catch (e) {
-                Log(TAG, `error: ${JSON.stringify(e.message)}`);
+                this.logger.log(TAG, `error: ${JSON.stringify(e.message)}`);
                 reject(e.message);
             }
         })
@@ -93,7 +101,7 @@ class QueryDB extends BaseDB {
 
                 //update tag
                 rec['queries'].push(id);
-                Log(TAG, JSON.stringify(rec));
+                this.logger.log(TAG, JSON.stringify(rec));
                 super.put(this.searchIndex, {
                     id: rec.id,
                     term: t,
@@ -101,7 +109,7 @@ class QueryDB extends BaseDB {
                 });
 
             } catch (e) {
-                Log(TAG, `error: e.message`);
+                this.logger.log(TAG, `error: e.message`);
             }
         }
     }
@@ -116,7 +124,7 @@ class QueryDB extends BaseDB {
             index.openCursor(key).onsuccess = (ev) => {
                 let cursor = ev.target.result;
                 if (cursor) {
-                    Log(TAG, JSON.stringify(cursor.value));
+                    this.logger.log(TAG, JSON.stringify(cursor.value));
                     resolve(cursor.value);
                     return;
                 }
@@ -150,7 +158,7 @@ class QueryDB extends BaseDB {
 
                 //update tag
                 rec['queries'].push(id);
-                Log(TAG, JSON.stringify(rec));
+                this.logger.log(TAG, JSON.stringify(rec));
                 super.put(this.tagIndex, {
                     id: rec.id,
                     tag: t,
@@ -158,7 +166,7 @@ class QueryDB extends BaseDB {
                 });
 
             } catch (e) {
-                Log(TAG, `error: e.message`);
+                this.logger.log(TAG, `error: e.message`);
             }
         }
     }
@@ -173,7 +181,7 @@ class QueryDB extends BaseDB {
             index.openCursor(key).onsuccess = (ev) => {
                 let cursor = ev.target.result;
                 if (cursor) {
-                    Log(TAG, JSON.stringify(cursor.value));
+                    this.logger.log(TAG, JSON.stringify(cursor.value));
                     resolve(cursor.value);
                     return;
                 }
@@ -193,7 +201,7 @@ class QueryDB extends BaseDB {
             index.openCursor(key).onsuccess = (ev) => {
                 let cursor = ev.target.result;
                 if (cursor) {
-                    Log(TAG, JSON.stringify(cursor.value));
+                    this.logger.log(TAG, JSON.stringify(cursor.value));
                     resolve(cursor.value);
                     return;
                 }
@@ -226,6 +234,8 @@ class QueryDB extends BaseDB {
         //days supercedes everything
         //if days are provided get queries by days first
         //then filter by terms and tags if provided
+        this.logger.log(TAG, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+
         let start, end;
         if (days.hasOwnProperty('start')) {
             start = new Date(Date.now() - (days.start * 24 * 60 * 60 * 1000));
@@ -241,12 +251,13 @@ class QueryDB extends BaseDB {
             end.setSeconds(59);
         }
 
-        let result = [];
-        if (start || end) {
-            Log(TAG, 'filtering');
-            result = await this.searchByCreatedAt(start, end);
 
-            if (result.length == 0) {
+        let ids = [];
+        if (start || end) {
+            this.logger.log(TAG, 'filtering');
+            ids = await this.searchByCreatedAt(start, end);
+
+            if (ids.length == 0) {
                 //if days were provided and we did not find anything
                 //no need to process further
                 return [];
@@ -256,8 +267,8 @@ class QueryDB extends BaseDB {
         if (tags.length > 0) {
             let idsByTag = await this.searchByTags(tags);
 
-            result = result.filter(x => idsByTag.includes(x));
-            if (result.length == 0) {
+            ids = ids.filter(x => idsByTag.includes(x));
+            if (ids.length == 0) {
                 //no need to process further
                 return [];
             }
@@ -266,17 +277,23 @@ class QueryDB extends BaseDB {
         if (terms.length > 0) {
             let idsByTerm = await this.searchByTerms(terms);
 
-            result = result.filter(x => idsByTerm.includes(x));
-            if (result.length == 0) {
+            ids = ids.filter(x => idsByTerm.includes(x));
+            if (ids.length == 0) {
                 //no need to process further
                 return [];
             }
         }
 
-        return await this.findByIds(result);
+        let results = []
+        this.logger.log(TAG, `${ids}`);
+        for (let i = 0; i < ids.length; i++) {
+            results.push(await super.get(ids[i]));
+        }
+
+        return results;
     }
 
-    findByIds(ids) {
+    async findByIds(ids) {
         return new Promise((resolve, reject) => {
             let transaction = this.db.transaction(this.store);
             let objectStore = transaction.objectStore(this.store);
@@ -383,6 +400,8 @@ class QueryDB extends BaseDB {
 
     searchByCreatedAt(s, e) {
         return new Promise((resolve, reject) => {
+            this.logger.log(TAG, `s: ${s} e: ${e}`);
+
             let transaction = this.db.transaction(this.store);
             let objectStore = transaction.objectStore(this.store);
             let index = objectStore.index(CREATED_AT_INDEX);
@@ -401,9 +420,10 @@ class QueryDB extends BaseDB {
             }
 
             let queries = []
-            index.openCursor(key).onsuccess = (ev) => {
+            index.openCursor(key, "prev").onsuccess = (ev) => {
                 let cursor = ev.target.result;
                 if (cursor) {
+                    this.logger.log(TAG, `id: ${cursor.value.created_at.toISOString()}`);
                     queries.push(cursor.value.id);
                     cursor.continue();
                 } else {

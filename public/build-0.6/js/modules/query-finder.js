@@ -1,4 +1,4 @@
-import { Log } from './logger.js'
+import { Logger } from './logger.js'
 import { Err } from './error.js'
 import { Utils } from './utils.js'
 import { Constants } from './constants.js'
@@ -18,17 +18,19 @@ class QueryFinder {
     }
 
     async init() {
-        this.queryDb = new QueryDB({version: Constants.QUERY_DB_VERSION});
+        this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
         await this.queryDb.open();
 
         let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
         this.showQueries(queries);
-        Log(TAG, JSON.stringify(queries));
+        Logger.Log(TAG, JSON.stringify(queries));
 
-        PubSub.subscribe(Constants.QUERY_SAVED, async (query) => {
-            let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
-            this.showQueries(queries);
-            Log(TAG, JSON.stringify(queries));
+        PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+            this.reload();
+        });
+
+        PubSub.subscribe(Constants.NEW_QUERIES, async () => {
+            this.reload();
         });
 
         this.initTermInput();
@@ -37,13 +39,19 @@ class QueryFinder {
         this.initTooltip();
     }
 
+    async reload() {
+        let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
+        this.showQueries(queries);
+        Logger.Log(TAG, JSON.stringify(queries));
+    }
+
     initTooltip() {
         //show tootip on clicking the query
         this.$queries.addEventListener('click', async (e) => {
             if (!e.target.classList.contains('query-text')) {
                 return;
             }
-            Log(TAG, e.target.classList);
+            Logger.Log(TAG, e.target.classList);
             let id = parseInt(e.target.dataset.id);
 
             //todo: why just get does not work ??
@@ -51,12 +59,12 @@ class QueryFinder {
             let q = recs[0];
             let t = tippy(document.querySelector(`.query[data-id="${id}"]`), {
                 onHidden(instance) {
-                    Log(TAG, "destroying");
+                    Logger.Log(TAG, "destroying");
                     instance.destroy()
                 }
             });
 
-            let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+            let json = await Utils.get('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
 
             t.setProps({
                 content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
@@ -76,10 +84,10 @@ class QueryFinder {
             }
 
             let id = parseInt(e.target.dataset.id);
-            Log(TAG, `Copying ${id}`);
+            Logger.Log(TAG, `Copying ${id}`);
             let recs = await this.queryDb.findByIds([id]);
             let q = recs[0];
-            let json = await Utils.fetch('/prettify?' + new URLSearchParams({q: q.query}));
+            let json = await Utils.get('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
             await navigator.clipboard.writeText(json.data);
             e.target.nextElementSibling.innerHTML = "&nbsp;&nbsp;&nbsp;Copied.";
         });
@@ -97,7 +105,7 @@ class QueryFinder {
 			tagify.loading(true).dropdown.hide()
 
             let terms = await this.queryDb.listTerms(value);
-            Log(TAG, terms);
+            Logger.Log(TAG, terms);
 
             tagify.whitelist = terms;
 			tagify.loading(false).dropdown.show(value) // render the suggestions dropdown
@@ -112,13 +120,13 @@ class QueryFinder {
                 return;
             }
 
-            Log(TAG, e.target.value);
+            Logger.Log(TAG, e.target.value);
             let json = JSON.parse(e.target.value);
 
             for (let i = 0; i < json.length; i++) {
                 terms.push(json[i].value);
             }
-            Log(TAG, terms);
+            Logger.Log(TAG, terms);
 
             let queries = await this.queryDb.filter({start: MAX_DAYS, end: 0}, [], terms);
             this.showQueries(queries);
@@ -137,7 +145,7 @@ class QueryFinder {
 			tagify.loading(true).dropdown.hide()
 
             let tags = await this.queryDb.listTags(value);
-            Log(TAG, tags);
+            Logger.Log(TAG, tags);
 
             tagify.whitelist = tags;
 			tagify.loading(false).dropdown.show(value) // render the suggestions dropdown
@@ -152,13 +160,13 @@ class QueryFinder {
                 return;
             }
 
-            Log(TAG, e.target.value);
+            Logger.Log(TAG, e.target.value);
             let json = JSON.parse(e.target.value);
 
             for (let i = 0; i < json.length; i++) {
                 tags.push(json[i].value);
             }
-            Log(TAG, tags);
+            Logger.Log(TAG, tags);
 
             let queries = await this.queryDb.filter({start: MAX_DAYS, end: 0}, tags, []);
             this.showQueries(queries);
@@ -201,11 +209,11 @@ class QueryFinder {
 
     initTagEditor() {
         document.addEventListener('mouseover', (e) => {
-            Log(TAG, "mouseover:" + e.classList);
+            Logger.Log(TAG, "mouseover:" + e.classList);
 
             if (e.target.classList.contains('tags')) {
                 //this is just hover actually
-                Log(TAG, "on query");
+                Logger.Log(TAG, "on query");
                 let $el = e.target;
                 let $tags = $el;
 
@@ -231,16 +239,17 @@ class QueryFinder {
                                 return;
                             }
 
-                            Log(TAG, `Setting tag ${tag} on id ${id}`);
+                            Logger.Log(TAG, `Setting tag ${tag} on id ${id}`);
                             $newTag.classList.remove('new-tag');
                             $newTag.blur();
                             //get the record, update tags and save. Probably not very efficient
                             let recs = await this.queryDb.findByIds([id]);
                             let newRec = recs[0];
                             newRec.tags.push(tag);
-                            Log(TAG, newRec);
+                            Logger.Log(TAG, newRec);
 
                             await this.queryDb.updateTags(newRec);
+                            PubSub.publish(Constants.QUERY_UPDATED, {id: id});
                         }
 
                         if (e.key == "Escape") {
@@ -258,7 +267,7 @@ class QueryFinder {
                 //delete new tag if user leaves card without editing
                 (($el) => {
                     $el.addEventListener('mouseleave', () => {
-                        Log(TAG, "outside query");
+                        Logger.Log(TAG, "outside query");
                         let $tag = $el.querySelector('.new-tag'); 
                         if ($tag) {
                             $tag.remove();

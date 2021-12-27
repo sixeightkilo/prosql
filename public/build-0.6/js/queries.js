@@ -1,4 +1,4 @@
-import { Log } from './modules/logger.js'
+import { Logger } from './modules/logger.js'
 import { Err } from './modules/error.js'
 import { Utils } from './modules/utils.js'
 import { DbUtils } from './modules/dbutils.js'
@@ -10,8 +10,9 @@ import { QueryFinder } from './modules/query-finder.js'
 import { QueryHistory } from './modules/query-history.js'
 import { MainMenu } from './modules/main-menu.js'
 import { AppBar } from './modules/appbar.js'
+import { Workers } from './modules/workers.js'
 
-const TAG = "query"
+const TAG = "queries"
 class Query {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
@@ -22,7 +23,7 @@ class Query {
 
     async initHandlers() {
         PubSub.subscribe(Constants.DB_CHANGED, async (data) => {
-            Log(TAG, "Db changed");
+            Logger.Log(TAG, "Db changed");
             this.creds.db = data.db;
             Utils.saveToSession(Constants.CREDS, JSON.stringify(this.creds));
 
@@ -32,6 +33,22 @@ class Query {
             //update session id in modules
             this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
         })
+
+        this.workers = new Workers();
+        this.workers.initQueryWorker();
+        this.workers.initConnectionWorker();
+
+        PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+            this.workers.queryWorker.port.postMessage({
+                type: Constants.QUERY_SAVED
+            });
+        });
+
+        PubSub.subscribe(Constants.QUERY_UPDATED, async () => {
+            this.workers.queryWorker.port.postMessage({
+                type: Constants.QUERY_UPDATED
+            });
+        });
     }
 
     async init() {
@@ -39,13 +56,13 @@ class Query {
 
         let creds = Utils.getFromSession(Constants.CREDS);
         if (!creds) {
-            window.location = '/login';
+            window.location = '/connections';
             return;
         }
 
         this.creds = JSON.parse(creds);
         this.sessionId = await DbUtils.login(this.creds);
-        Log(TAG, this.sessionId);
+        Logger.Log(TAG, this.sessionId);
 
         this.queryRunner = new QueryRunner(this.sessionId);
         this.history = new QueryHistory();
@@ -82,7 +99,7 @@ class Query {
 
         let h = rpDims.height - sbDims.height - edDims.height;
         h -= 50;
-        Log(TAG, `h: ${h}`);
+        Logger.Log(TAG, `h: ${h}`);
         let queryContainer = document.querySelector('#query-container');
         queryContainer.style.gridTemplateRows = `200px 2px ${h}px`;
     }

@@ -19,7 +19,7 @@ class Index {
 
     async getStarted() {
         if (await Monitor.isAgentInstalled()) {
-            window.location = '/login';
+            window.location = '/connections';
             return;
         }
 

@@ -15,6 +15,10 @@ class Err {
         return 'invalid-session-id'
     }
 
+    static get ERR_SIGNIN_REQUIRED() {
+        return 'signin-required'
+    }
+
     static get ERR_INVALID_CURSOR_ID() {
         return 'invalid-cursor-id'
     }
@@ -34,7 +38,7 @@ class Err {
         }
 
         if (err.error == Err.ERR_INVALID_SESSION_ID) {
-            window.location = '/login';
+            window.location = '/connections';
             return;
         }
 
