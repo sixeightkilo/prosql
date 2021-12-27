@@ -78,7 +78,11 @@ class ConnectionDB extends BaseDB {
 
             request.onsuccess = (e) => {
                 let o = e.target.result;
-                o.pass = password;
+
+                if (password) {
+                    o.pass = password;
+                }
+
                 if (o.is_default != isDefault) {
                     //we set updated at only if is_default has changed. We don't
                     //care about password change
