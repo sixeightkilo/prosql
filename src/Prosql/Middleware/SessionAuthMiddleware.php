@@ -44,6 +44,6 @@ class SessionAuthMiddleware {
 
         //force signin
         $res = new Response();
-        return $res->withStatus(302)->withHeader('Location', '/signin');
+        return $res->withStatus(302)->withHeader('Location', '/connections');
     }
 }
