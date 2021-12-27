@@ -5,7 +5,8 @@
 		"pug-php/pug": "^2.6",
 		"jdorn/sql-formatter": "^1.2",
 		"monolog/monolog": "^2.2",
-		"php-di/slim-bridge": "^3.1"
+		"php-di/slim-bridge": "^3.1",
+		"vanilla/garden-cli": "^3.1"
 	},
 	"autoload": {
 		"psr-4": {
