@@ -34,26 +34,6 @@ class Connections {
         this.$port = document.getElementById('port')
         this.$db = document.getElementById('db')
         this.$isDefault = document.getElementById('is-default')
-
-        //debug only
-        document.getElementById('debug-add-conns').addEventListener('click', async () => {
-            let conns = [
-                {
-                    'name': Utils.uuid(),
-                    'user': 'server',
-                    'pass': 'dev-server',
-                    'host': '127.0.0.1',
-                    'port': '3308',
-                    'db': 'test-generico',
-                    'is-default': true
-                },
-            ];
-
-            for (let i = 0; i < conns.length; i++) {
-                let id = await this.connections.save(conns[i]);
-                Logger.Log(`saved to ${id}`);
-            }
-        });
     }
 
     async init() {
