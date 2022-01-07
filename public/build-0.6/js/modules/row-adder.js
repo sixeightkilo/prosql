@@ -26,7 +26,7 @@ class RowAdder {
             this.$title.innerHTML = `Add new row to ${this.table}`;
             this.$body.replaceChildren();
             Logger.Log(TAG, this.columns);
-            this.$dialog.classList.add('is-active');
+            this.openDialog();
             this.columns.forEach((c) => {
                 let n = Utils.generateNode(this.templ, {
                     col: c
@@ -48,6 +48,11 @@ class RowAdder {
                 }
             });
 
+            if (vals.length == 0) {
+                this.closeDialog();
+                return;
+            }
+
             Logger.Log(TAG, `cols: ${cols}`);
             Logger.Log(TAG, `vals: ${vals}`);
             cols = cols.map(e => `\`${e}\``).join(",");
@@ -67,7 +72,7 @@ class RowAdder {
 
                 let rows = res.data[0][1];
                 Utils.showAlert(`Inserted ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
-                this.$dialog.classList.remove('is-active');
+                this.closeDialog();
                 return;
             }
 
@@ -75,8 +80,16 @@ class RowAdder {
         });
 
         this.$cancel.addEventListener('click', () => {
-            this.$dialog.classList.remove('is-active');
+            this.closeDialog();
         });
+    }
+
+    openDialog() {
+        this.$dialog.classList.add('is-active');
+    }
+
+    closeDialog() {
+        this.$dialog.classList.remove('is-active');
     }
 
     setSessionId(sessionId) {

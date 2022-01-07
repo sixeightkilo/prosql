@@ -7,7 +7,7 @@ import { Stream } from './stream.js'
 import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
 
-const TAG = "tables"
+const TAG = "modules-tables"
 
 class Tables {
     constructor(sessionId) {

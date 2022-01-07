@@ -3207,7 +3207,7 @@
                 this.$title.innerHTML = `Add new row to ${this.table}`;
                 this.$body.replaceChildren();
                 Logger.Log(TAG$b, this.columns);
-                this.$dialog.classList.add('is-active');
+                this.openDialog();
                 this.columns.forEach((c) => {
                     let n = Utils.generateNode(this.templ, {
                         col: c
@@ -3229,6 +3229,11 @@
                     }
                 });
 
+                if (vals.length == 0) {
+                    this.closeDialog();
+                    return;
+                }
+
                 Logger.Log(TAG$b, `cols: ${cols}`);
                 Logger.Log(TAG$b, `vals: ${vals}`);
                 cols = cols.map(e => `\`${e}\``).join(",");
@@ -3248,7 +3253,7 @@
 
                     let rows = res.data[0][1];
                     Utils.showAlert(`Inserted ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
-                    this.$dialog.classList.remove('is-active');
+                    this.closeDialog();
                     return;
                 }
 
@@ -3256,8 +3261,16 @@
             });
 
             this.$cancel.addEventListener('click', () => {
-                this.$dialog.classList.remove('is-active');
+                this.closeDialog();
             });
+        }
+
+        openDialog() {
+            this.$dialog.classList.add('is-active');
+        }
+
+        closeDialog() {
+            this.$dialog.classList.remove('is-active');
         }
 
         setSessionId(sessionId) {
@@ -3953,7 +3966,7 @@
         }
     }
 
-    const TAG$7 = "tables";
+    const TAG$7 = "modules-tables";
 
     class Tables {
         constructor(sessionId) {
