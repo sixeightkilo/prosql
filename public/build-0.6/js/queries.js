@@ -92,16 +92,8 @@ class Query {
         let appLeftPanel = document.querySelector('#app-left-panel');
         appLeftPanel.style.height = (bodyDims.height - appbarDims.height) + 'px';
 
-        //right panel
-        let rpDims = document.getElementById('app-right-panel').getBoundingClientRect();
-        let sbDims = document.getElementById('query-sub-menu').getBoundingClientRect();
-        let edDims = document.getElementById('query-editor').getBoundingClientRect();
-
-        let h = rpDims.height - sbDims.height - edDims.height;
-        h -= 50;
-        Logger.Log(TAG, `h: ${h}`);
-        let queryContainer = document.querySelector('#query-container');
-        queryContainer.style.gridTemplateRows = `200px 2px ${h}px`;
+        let appRightPanel = document.getElementById('app-right-panel');
+        appRightPanel.style.height = (bodyDims.height - appbarDims.height) + 'px';
     }
 }
 

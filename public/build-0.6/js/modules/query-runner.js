@@ -62,6 +62,8 @@ class QueryRunner {
     async init() {
         this.$root = document.getElementById('app-right-panel')
         this.$footer = document.getElementById('footer-right-panel')
+        this.$timeTaken = document.getElementById('time-taken')
+        this.$rowsAffected = document.getElementById('rows-affected')
 
         let $g1 = document.getElementById('query-container');
         let $e1 = document.getElementById('query-editor');
@@ -155,11 +157,13 @@ class QueryRunner {
             }
         }
 
-        let s = new Date()
+        this.clearInfo();
 
         q = q.trim();
 
         if (!/^select|show/i.test(q)) {
+            let s = Date.now();
+
             this.tableUtils.showLoader();
             let dbUtils = new DbUtils();
             let res = await dbUtils.execute.apply(this, [q]);
@@ -175,6 +179,8 @@ class QueryRunner {
                 })
             }
 
+            let e = Date.now();
+            this.showInfo((e - s), res.data[0][1]);
             this.tableUtils.hideLoader();
             return {
                 'status': 'ok',
@@ -197,7 +203,10 @@ class QueryRunner {
 
         let res = await this.tableUtils.showContents(stream, {}, {}, true);
 
-        if (res.status == "ok" && save) {
+        //if (res.status == "ok" && save) {
+        if (res.status == "ok") {
+            this.showInfo(res['time-taken'], res['rows-affected']);
+
             PubSub.publish(Constants.QUERY_DISPATCHED, {
                 query: q,
                 tags: [Constants.USER]
@@ -205,6 +214,17 @@ class QueryRunner {
         }
 
         return res;
+    }
+
+    clearInfo() {
+        this.$timeTaken.innerText = '';
+        this.$rowsAffected.innerText = '';
+    }
+
+    showInfo(t, n) {
+        let rows = (n == 1) ? 'row' : 'rows';
+        this.$timeTaken.innerText = `${t} ms`;
+        this.$rowsAffected.innerText = `${n} ${rows} affected`;
     }
 
     async runAll() {
