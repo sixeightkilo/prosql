@@ -1799,6 +1799,7 @@
                 this.$host.value = '';
                 this.$port.value = '';
                 this.$db.value = '';
+                this.$isDefault.checked = false;
             });
         }
 
