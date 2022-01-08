@@ -68,11 +68,12 @@
 
     script(type='code' id='query-template')
         div.query.card(data-id="{id}")
-            div 
-                div.query-text(data-id="{id}") {query}
-            div.timestamp {timestamp}
-            div.tags(data-id="{id}")
-
+            div.query-text(data-id="{id}") {query}
+            div.query-tags(data-id="{id}")
+            div.info
+                span.t {time} 
+                span.n {rows} 
+                span.timestamp {timestamp} 
     script(type="code" id="file-upload-template")
         .modal(id='{fu-id}')
             form(enctype='multipart/form-data' method='POST')

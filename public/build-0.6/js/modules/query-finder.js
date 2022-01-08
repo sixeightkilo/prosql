@@ -14,7 +14,6 @@ class QueryFinder {
         this.$queries = document.getElementById('queries');
         this.queryTemplate = document.getElementById('query-template').innerHTML;
         this.tootipTemplate = document.getElementById('tooltip-template').innerHTML;
-        this.tippies = {};
     }
 
     async init() {
@@ -174,36 +173,21 @@ class QueryFinder {
     }
 
     async showQueries(queries) {
-        this.tippies = {};
         this.$queries.replaceChildren();
         queries.forEach((q) => {
             let n = Utils.generateNode(this.queryTemplate, {
                 id: q.id,
                 query: Utils.truncate(q.query, 50),
                 timestamp: q.created_at.toLocaleString(),
+                time: q.time ?? '',
+                rows: q.rows ?? '',
             });
 
             q.tags.forEach((t) => {
                 let tag = Utils.generateNode(`<span class=tag>${t}</span>`, {});
-                n.querySelector('.tags').append(tag);
+                n.querySelector('.query-tags').append(tag);
             });
             this.$queries.append(n);
-
-            //add tooltip
-            //let selector = `.query[data-id="${q.id}"]`;
-            //let t = tippy(document.querySelector(selector));
-            //t.setProps({
-                //content: Utils.processTemplate(this.tootipTemplate, {query: q.query}),
-                //placement: 'right',
-                //delay: 0,
-                //allowHTML: true,
-                //theme: 'prosql',
-                //interactive: true,
-                //trigger: 'click'
-            //});
-            //t.hide();
-
-            //this.tippies[q.id] = t;
         });
     }
 
@@ -211,7 +195,7 @@ class QueryFinder {
         document.addEventListener('mouseover', (e) => {
             Logger.Log(TAG, "mouseover:" + e.classList);
 
-            if (e.target.classList.contains('tags')) {
+            if (e.target.classList.contains('query-tags')) {
                 //this is just hover actually
                 Logger.Log(TAG, "on query");
                 let $el = e.target;

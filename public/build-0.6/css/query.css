@@ -39,10 +39,15 @@
 }
 
 .timestamp {
-	position:absolute;
-	right:0;
-	bottom:0.7em;
 	font-size:x-small;
+	opacity:0.4;
+	text-align:right;
+}
+
+.info {
+	font-size:x-small;
+	display:grid;
+	grid-template-columns: 2fr 2fr 8fr;
 }
 
 .query {
@@ -180,4 +185,8 @@ i#back {
 
 #grid {
 	height:100%;
+}
+
+.tag {
+	margin-left:0.25em;
 }
