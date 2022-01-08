@@ -208,7 +208,7 @@ class QueryRunner {
     }
 
     async runAll() {
-        let json = await Utils.get('/browser-api/sql/split?' + new URLSearchParams({q: this.editor.getAll()}));
+        let json = await Utils.post('/browser-api/sql/split', {q: this.editor.getAll()});
         Logger.Log(TAG, JSON.stringify(json));
         for (let i = 0; i < json.data.length; i++) {
             let q = json.data[i];
@@ -227,7 +227,7 @@ class QueryRunner {
     async formatQuery() {
         let q = this.editor.getValue();
         Logger.Log(TAG, q);
-        let json = await Utils.get('/browser-api/sql/prettify?' + new URLSearchParams({q: q}));
+        let json = await Utils.post('/browser-api/sql/prettify', {q: q});
         this.editor.setValue(json.data);
         this.editor.clearSelection();
         this.editor.focus();

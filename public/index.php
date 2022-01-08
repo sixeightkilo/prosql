@@ -24,7 +24,8 @@ $app = AppFactory::create();
 
 $app->post('/worker-api/devices/{action}', 'WorkerDevicesController:handle');
 $app->post('/browser-api/devices/{action}', 'UIDevicesController:handle');
-$app->get('/browser-api/sql/{action}', 'SqlController:handle');
+$app->post('/browser-api/sql/{action}', 'SqlController:handle')
+    ->add('SessionAuthMiddleware:handle');
 $app->map(['GET', 'POST'], '/browser-api/login/{action}', 'LoginController:handle');
 
 $app->get('[/{params:.*}]','Renderer:handle')

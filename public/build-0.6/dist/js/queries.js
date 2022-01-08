@@ -1426,9 +1426,8 @@
                     method: "post"
                 });
 
-                Logger.Log(TAG$g, response);
-
                 let json = await response.json();
+                Logger.Log(TAG$g, JSON.stringify(json));
 
                 if (json.status == 'error') {
                     throw json
@@ -1436,7 +1435,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$g, e);
+                Logger.Log(TAG$g, JSON.stringify(e));
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -3076,7 +3075,7 @@
         }
 
         async runAll() {
-            let json = await Utils.get('/browser-api/sql/split?' + new URLSearchParams({q: this.editor.getAll()}));
+            let json = await Utils.post('/browser-api/sql/split', {q: this.editor.getAll()});
             Logger.Log(TAG$7, JSON.stringify(json));
             for (let i = 0; i < json.data.length; i++) {
                 let q = json.data[i];
@@ -3095,7 +3094,7 @@
         async formatQuery() {
             let q = this.editor.getValue();
             Logger.Log(TAG$7, q);
-            let json = await Utils.get('/browser-api/sql/prettify?' + new URLSearchParams({q: q}));
+            let json = await Utils.post('/browser-api/sql/prettify', {q: q});
             this.editor.setValue(json.data);
             this.editor.clearSelection();
             this.editor.focus();
@@ -3175,7 +3174,7 @@
                     }
                 });
 
-                let json = await Utils.get('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
+                let json = await Utils.post('/browser-api/sql/prettify', {q: q.query});
 
                 t.setProps({
                     content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
@@ -3198,7 +3197,7 @@
                 Logger.Log(TAG$6, `Copying ${id}`);
                 let recs = await this.queryDb.findByIds([id]);
                 let q = recs[0];
-                let json = await Utils.get('/browser-api/sql/prettify?' + new URLSearchParams({q: q.query}));
+                let json = await Utils.post('/browser-api/sql/prettify', {q: q.query});
                 await navigator.clipboard.writeText(json.data);
                 e.target.nextElementSibling.innerHTML = "&nbsp;&nbsp;&nbsp;Copied.";
             });

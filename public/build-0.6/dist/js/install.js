@@ -1426,9 +1426,8 @@
                     method: "post"
                 });
 
-                Logger.Log(TAG$2, response);
-
                 let json = await response.json();
+                Logger.Log(TAG$2, JSON.stringify(json));
 
                 if (json.status == 'error') {
                     throw json
@@ -1436,7 +1435,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$2, e);
+                Logger.Log(TAG$2, JSON.stringify(e));
                 let res = {
                     'status' : 'error',
                     'data': null,
