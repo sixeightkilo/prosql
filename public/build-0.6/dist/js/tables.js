@@ -2324,20 +2324,9 @@
 
         async showContents(stream, fkMap, selection = {}, editable = false, sortable = false) {
             this.fkMap = fkMap;
-            let grid = this.$root.querySelector('#grid');
-            //clear existing grid if any
-            if (grid != null) {
-                grid.remove();
-            }
-
-            let n = Utils.generateNode('<div id="grid" class="ag-theme-alpine"></div>', {});
-            this.$root.append(n);
-            grid = this.$root.querySelector('#grid');
-
             this.showLoader();
 
             let i = 0;
-            let cellRenderer = new CellRenderer(fkMap);
             let err = Err.ERR_NONE;
 
             while (true) {
@@ -2357,61 +2346,7 @@
                 }
 
                 if (i == 0) {
-                    let cols = [];
-                    //using colId makes it possible to display multiple columns with 
-                    //same name
-                    let k = 0;
-                    for (let j = 0; j < row.length; j += 2) {
-
-                        let show = selection[k] ?? true;
-                        if (row[j] == fkMap['primary-key']) {
-                            fkMap['primary-key-id'] = k;
-                        }
-                        cols.push({
-                            field: row[j],
-                            colId: k++,
-                            hide: !show,
-                            resizable: true,
-                            editable: editable,
-                            sortable: true,
-                            onCellValueChanged: (params) => {
-                                this.handleCellValueChanged(fkMap, params);
-                            },
-                            cellRenderer: (params) => {
-                                return cellRenderer.render(params)
-                            },
-                            cellEditor: CellEditor,
-                            valueGetter: params => {
-                                Logger.Log(TAG$c, "valueGetter");
-                                let id = params.colDef.colId;
-                                let c = params.colDef.field;
-                                return params.data[`${c}-${id}`];
-                            },
-                            valueSetter: params => {
-                                Logger.Log(TAG$c, "valueSetter");
-                                let id = params.colDef.colId;
-                                let c = params.colDef.field;
-                                params.data[`${c}-${id}`] = params.newValue;
-                                return true;
-                            }
-                        });
-                    }
-
-    				let gridOptions = {
-    					columnDefs: cols,
-    					undoRedoCellEditing: true,
-                    };
-
-                    if (sortable) {
-                        gridOptions.components = {
-                            agColumnHeader: CellHeader,
-                        };
-                    }
-
-                    new agGrid.Grid(grid, gridOptions);
-                    this.gridOptions = gridOptions;
-                    this.api = gridOptions.api;
-                    this.api.hideOverlay();
+                    this.setupGrid(row, fkMap, selection, editable, sortable);
                 }
 
                 let item = {};
@@ -2450,6 +2385,81 @@
                 'status': "error",
                 'msg': err
             }
+        }
+
+        setupGrid(row, fkMap, selection, editable, sortable) {
+            //add grid div
+            let grid = this.$root.querySelector('#grid');
+            //clear existing grid if any
+            if (grid != null) {
+                grid.remove();
+            }
+
+            let n = Utils.generateNode('<div id="grid" class="ag-theme-alpine"></div>', {});
+            this.$root.append(n);
+            grid = this.$root.querySelector('#grid');
+
+            let cols = this.setupColumns(row, fkMap, selection, editable);
+            let gridOptions = {
+                columnDefs: cols,
+                undoRedoCellEditing: true,
+            };
+
+            if (sortable) {
+                gridOptions.components = {
+                    agColumnHeader: CellHeader,
+                };
+            }
+
+            new agGrid.Grid(grid, gridOptions);
+            this.gridOptions = gridOptions;
+            this.api = gridOptions.api;
+            this.api.hideOverlay();
+        }
+
+        setupColumns(row, fkMap, selection, editable ) {
+            let cols = [];
+            let cellRenderer = new CellRenderer(fkMap);
+            //using colId makes it possible to display multiple columns with 
+            //same name
+            let k = 0;
+            for (let j = 0; j < row.length; j += 2) {
+
+                let show = selection[k] ?? true;
+                if (row[j] == fkMap['primary-key']) {
+                    fkMap['primary-key-id'] = k;
+                }
+                cols.push({
+                    field: row[j],
+                    colId: k++,
+                    hide: !show,
+                    resizable: true,
+                    editable: editable,
+                    sortable: true,
+                    onCellValueChanged: (params) => {
+                        this.handleCellValueChanged(fkMap, params);
+                    },
+                    cellRenderer: (params) => {
+                        return cellRenderer.render(params)
+                    },
+                    cellEditor: CellEditor,
+                    valueGetter: params => {
+                        Logger.Log(TAG$c, "valueGetter");
+                        let id = params.colDef.colId;
+                        let c = params.colDef.field;
+                        return params.data[`${c}-${id}`];
+                    },
+                    valueSetter: params => {
+                        Logger.Log(TAG$c, "valueSetter");
+                        let id = params.colDef.colId;
+                        let c = params.colDef.field;
+                        params.data[`${c}-${id}`] = params.newValue;
+                        return true;
+                    }
+                });
+            }
+
+            return cols;
         }
 
         async update(stream) {

@@ -74,8 +74,12 @@
 
 /* app right panel */
 #app-right-panel {
-	display:flex;
-	flex-direction:column;
+	display:grid;
+	grid-template-rows:auto 1fr 1em;
+}
+
+#info {
+	border-top:1px solid #aaa;
 }
 
 #table-contents {
