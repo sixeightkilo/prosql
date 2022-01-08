@@ -315,7 +315,7 @@ class TableContents {
     }
 
     async showContents(query, fkMap, sel = true) {
-        this.clearInfo();
+        this.tableUtils.clearInfo.apply(this);
         this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
 
         let params = {
@@ -331,25 +331,14 @@ class TableContents {
 
         Logger.Log(TAG, JSON.stringify(res));
         if (res.status == "ok") {
-            this.showInfo(res['time-taken'], res['rows-affected']);
+            this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
         }
 
         return res;
     }
 
-    clearInfo() {
-        this.$timeTaken.innerText = '';
-        this.$rowsAffected.innerText = '';
-    }
-
-    showInfo(t, n) {
-        let rows = (n == 1) ? 'row' : 'rows';
-        this.$timeTaken.innerText = `${t} ms`;
-        this.$rowsAffected.innerText = `${n} ${rows} affected`;
-    }
-
     async updateContents(query) {
-        this.clearInfo();
+        this.tableUtils.clearInfo.apply(this);
         this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
         let params = {
             'session-id': this.sessionId,
@@ -362,7 +351,7 @@ class TableContents {
         let res = await this.tableUtils.update(stream);
 
         if (res.status == "ok") {
-            this.showInfo(res['time-taken'], res['rows-affected']);
+            this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
         }
 
         return res;

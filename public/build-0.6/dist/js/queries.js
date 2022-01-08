@@ -2533,6 +2533,17 @@
             let loader = document.querySelector('.table-loader');
             loader.remove();
         }
+
+        clearInfo() {
+            this.$timeTaken.innerText = '';
+            this.$rowsAffected.innerText = '';
+        }
+
+        showInfo(t, n) {
+            let rows = (n == 1) ? 'row' : 'rows';
+            this.$timeTaken.innerText = `${t} ms`;
+            this.$rowsAffected.innerText = `${n} ${rows} affected`;
+        }
     }
 
     const TAG$9 = "grid-resizer";
@@ -2964,8 +2975,6 @@
             this.$table = this.$queryResults.querySelector('table');
             this.tableUtils = new TableUtils(this.$queryResults);
 
-            //this.adjustView()
-
             this.editor = new Ace('query-editor');
             await this.editor.init();
 
@@ -3046,7 +3055,7 @@
                 }
             }
 
-            this.clearInfo();
+            this.tableUtils.clearInfo.apply(this);
 
             q = q.trim();
 
@@ -3069,7 +3078,7 @@
                 }
 
                 let e = Date.now();
-                this.showInfo((e - s), res.data[0][1]);
+                this.tableUtils.showInfo.apply(this, [(e - s), res.data[0][1]]);
                 this.tableUtils.hideLoader();
                 return {
                     'status': 'ok',
@@ -3094,7 +3103,7 @@
 
             //if (res.status == "ok" && save) {
             if (res.status == "ok") {
-                this.showInfo(res['time-taken'], res['rows-affected']);
+                this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
 
                 PubSub.publish(Constants.QUERY_DISPATCHED, {
                     query: q,
@@ -3103,17 +3112,6 @@
             }
 
             return res;
-        }
-
-        clearInfo() {
-            this.$timeTaken.innerText = '';
-            this.$rowsAffected.innerText = '';
-        }
-
-        showInfo(t, n) {
-            let rows = (n == 1) ? 'row' : 'rows';
-            this.$timeTaken.innerText = `${t} ms`;
-            this.$rowsAffected.innerText = `${n} ${rows} affected`;
         }
 
         async runAll() {
@@ -3140,20 +3138,6 @@
             this.editor.setValue(json.data);
             this.editor.clearSelection();
             this.editor.focus();
-        }
-
-        async adjustView() {
-            //fix height of query editor and results div
-            let rpDims = document.getElementById('app-right-panel').getBoundingClientRect();
-            let sbDims = document.getElementById('query-sub-menu').getBoundingClientRect();
-            let footerDims = document.getElementById('footer').getBoundingClientRect();
-            let editor = document.getElementById('query-editor');
-            let results = document.getElementById('query-results');
-
-            let h = (rpDims.height - sbDims.height - footerDims.height) / 2;
-
-            editor.style.height = h + 'px';
-            results.style.height = h + 'px';
         }
     }
 

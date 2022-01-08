@@ -305,6 +305,17 @@ class TableUtils {
         let loader = document.querySelector('.table-loader');
         loader.remove();
     }
+
+    clearInfo() {
+        this.$timeTaken.innerText = '';
+        this.$rowsAffected.innerText = '';
+    }
+
+    showInfo(t, n) {
+        let rows = (n == 1) ? 'row' : 'rows';
+        this.$timeTaken.innerText = `${t} ms`;
+        this.$rowsAffected.innerText = `${n} ${rows} affected`;
+    }
 }
 
 export { TableUtils }
