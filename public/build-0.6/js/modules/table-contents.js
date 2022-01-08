@@ -74,6 +74,9 @@ class TableContents {
         this.$contents = document.getElementById('table-contents')
         this.$exportFiltered = document.getElementById('export-filtered-results')
         this.$clearFilter = document.getElementById('clear-filter')
+        this.$clearFilter = document.getElementById('clear-filter')
+        this.$timeTaken = document.getElementById('time-taken')
+        this.$rowsAffected = document.getElementById('rows-affected')
     }
 
     initSubscribers() {
@@ -312,6 +315,7 @@ class TableContents {
     }
 
     async showContents(query, fkMap, sel = true) {
+        this.clearInfo();
         this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
 
         let params = {
@@ -325,10 +329,27 @@ class TableContents {
         let selection = this.colSelector.getSelection(this.table);
         let res =  await this.tableUtils.showContents(stream, fkMap, selection, true, true)
 
+        Logger.Log(TAG, JSON.stringify(res));
+        if (res.status == "ok") {
+            this.showInfo(res['time-taken'], res['rows-affected']);
+        }
+
         return res;
     }
 
+    clearInfo() {
+        this.$timeTaken.innerText = '';
+        this.$rowsAffected.innerText = '';
+    }
+
+    showInfo(t, n) {
+        let rows = (n == 1) ? 'row' : 'rows';
+        this.$timeTaken.innerText = `${t} ms`;
+        this.$rowsAffected.innerText = `${n} ${rows} affected`;
+    }
+
     async updateContents(query) {
+        this.clearInfo();
         this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
         let params = {
             'session-id': this.sessionId,
@@ -338,7 +359,13 @@ class TableContents {
         }
 
         let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params))
-        return this.tableUtils.update(stream);
+        let res = await this.tableUtils.update(stream);
+
+        if (res.status == "ok") {
+            this.showInfo(res['time-taken'], res['rows-affected']);
+        }
+
+        return res;
     }
 
     async handleCmd(cmd) {

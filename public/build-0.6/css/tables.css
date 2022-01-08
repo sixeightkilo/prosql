@@ -80,6 +80,8 @@
 
 #info {
 	border-top:1px solid #aaa;
+	font-size:x-small;
+	padding:0.2em;
 }
 
 #table-contents {

@@ -33,10 +33,13 @@ class TableUtils {
 
     async showContents(stream, fkMap, selection = {}, editable = false, sortable = false) {
         this.fkMap = fkMap;
+        let grid = this.createGrid();
         this.showLoader();
 
         let i = 0;
         let err = Err.ERR_NONE
+        let s = Date.now();
+        let e;
 
         while (true) {
             let row
@@ -55,7 +58,8 @@ class TableUtils {
             }
 
             if (i == 0) {
-                this.setupGrid(row, fkMap, selection, editable, sortable);
+                //measure time to receive first row
+                this.setupGrid(grid, row, fkMap, selection, editable, sortable);
             }
 
             let item = {};
@@ -84,9 +88,11 @@ class TableUtils {
         this.numOfRows = i
 
         if (err == Err.ERR_NONE) {
+            let e = Date.now();
             return {
                 'status': "ok",
-                'rows-affected': this.numOfRows
+                'rows-affected': this.numOfRows,
+                'time-taken': (e - s)
             }
         }
 
@@ -96,7 +102,7 @@ class TableUtils {
         }
     }
 
-    setupGrid(row, fkMap, selection, editable, sortable) {
+    createGrid() {
         //add grid div
         let grid = this.$root.querySelector('#grid');
         //clear existing grid if any
@@ -106,8 +112,10 @@ class TableUtils {
 
         let n = Utils.generateNode('<div id="grid" class="ag-theme-alpine"></div>', {});
         this.$root.append(n);
-        grid = this.$root.querySelector('#grid');
+        return this.$root.querySelector('#grid');
+    }
 
+    setupGrid(grid, row, fkMap, selection, editable, sortable) {
         let cols = this.setupColumns(row, fkMap, selection, editable);
         let gridOptions = {
             columnDefs: cols,
@@ -172,6 +180,7 @@ class TableUtils {
     }
 
     async update(stream) {
+        let s = Date.now();
         //remove existing rows
         let rows = [];
         for (let i = 0; i < this.numOfRows; i++) {
@@ -219,9 +228,11 @@ class TableUtils {
         this.hideLoader();
 
         if (err == Err.ERR_NONE) {
+            let e = Date.now();
             return {
                 'status': "ok",
-                'rows-affected': this.numOfRows
+                'rows-affected': this.numOfRows,
+                'time-taken': (e - s)
             }
         }
 

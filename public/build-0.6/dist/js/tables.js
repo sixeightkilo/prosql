@@ -2324,10 +2324,12 @@
 
         async showContents(stream, fkMap, selection = {}, editable = false, sortable = false) {
             this.fkMap = fkMap;
+            let grid = this.createGrid();
             this.showLoader();
 
             let i = 0;
             let err = Err.ERR_NONE;
+            let s = Date.now();
 
             while (true) {
                 let row;
@@ -2346,7 +2348,8 @@
                 }
 
                 if (i == 0) {
-                    this.setupGrid(row, fkMap, selection, editable, sortable);
+                    //measure time to receive first row
+                    this.setupGrid(grid, row, fkMap, selection, editable, sortable);
                 }
 
                 let item = {};
@@ -2375,9 +2378,11 @@
             this.numOfRows = i;
 
             if (err == Err.ERR_NONE) {
+                let e = Date.now();
                 return {
                     'status': "ok",
-                    'rows-affected': this.numOfRows
+                    'rows-affected': this.numOfRows,
+                    'time-taken': (e - s)
                 }
             }
 
@@ -2387,7 +2392,7 @@
             }
         }
 
-        setupGrid(row, fkMap, selection, editable, sortable) {
+        createGrid() {
             //add grid div
             let grid = this.$root.querySelector('#grid');
             //clear existing grid if any
@@ -2397,8 +2402,10 @@
 
             let n = Utils.generateNode('<div id="grid" class="ag-theme-alpine"></div>', {});
             this.$root.append(n);
-            grid = this.$root.querySelector('#grid');
+            return this.$root.querySelector('#grid');
+        }
 
+        setupGrid(grid, row, fkMap, selection, editable, sortable) {
             let cols = this.setupColumns(row, fkMap, selection, editable);
             let gridOptions = {
                 columnDefs: cols,
@@ -2463,6 +2470,7 @@
         }
 
         async update(stream) {
+            let s = Date.now();
             //remove existing rows
             let rows = [];
             for (let i = 0; i < this.numOfRows; i++) {
@@ -2510,9 +2518,11 @@
             this.hideLoader();
 
             if (err == Err.ERR_NONE) {
+                let e = Date.now();
                 return {
                     'status': "ok",
-                    'rows-affected': this.numOfRows
+                    'rows-affected': this.numOfRows,
+                    'time-taken': (e - s)
                 }
             }
 
@@ -3634,6 +3644,9 @@
             this.$contents = document.getElementById('table-contents');
             this.$exportFiltered = document.getElementById('export-filtered-results');
             this.$clearFilter = document.getElementById('clear-filter');
+            this.$clearFilter = document.getElementById('clear-filter');
+            this.$timeTaken = document.getElementById('time-taken');
+            this.$rowsAffected = document.getElementById('rows-affected');
         }
 
         initSubscribers() {
@@ -3872,6 +3885,7 @@
         }
 
         async showContents(query, fkMap, sel = true) {
+            this.clearInfo();
             this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
 
             let params = {
@@ -3885,10 +3899,27 @@
             let selection = this.colSelector.getSelection(this.table);
             let res =  await this.tableUtils.showContents(stream, fkMap, selection, true, true);
 
+            Logger.Log(TAG$8, JSON.stringify(res));
+            if (res.status == "ok") {
+                this.showInfo(res['time-taken'], res['rows-affected']);
+            }
+
             return res;
         }
 
+        clearInfo() {
+            this.$timeTaken.innerText = '';
+            this.$rowsAffected.innerText = '';
+        }
+
+        showInfo(t, n) {
+            let rows = (n == 1) ? 'row' : 'rows';
+            this.$timeTaken.innerText = `${t} ms`;
+            this.$rowsAffected.innerText = `${n} ${rows} affected`;
+        }
+
         async updateContents(query) {
+            this.clearInfo();
             this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
             let params = {
                 'session-id': this.sessionId,
@@ -3898,7 +3929,13 @@
             };
 
             let stream = new Stream(Constants.WS_URL + '/fetch_ws?' + new URLSearchParams(params));
-            return this.tableUtils.update(stream);
+            let res = await this.tableUtils.update(stream);
+
+            if (res.status == "ok") {
+                this.showInfo(res['time-taken'], res['rows-affected']);
+            }
+
+            return res;
         }
 
         async handleCmd(cmd) {
