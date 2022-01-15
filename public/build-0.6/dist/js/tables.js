@@ -1940,7 +1940,13 @@
         }
 
         static createFKMap(constraints) {
+            Logger.Log(TAG$g, JSON.stringify(constraints));
             let fkMap = {};
+
+            if (constraints.length == 0) {
+                return fkMap;
+            }
+
             let colIndex, refTblIndex, refColIndex, constraintNameIndex;
 
             //first get indexes of columns of interest
