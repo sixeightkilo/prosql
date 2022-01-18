@@ -9,6 +9,7 @@ import { TableUtils } from './table-utils.js'
 import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
 import { RowAdder } from './row-adder.js'
+import { RowDeleter } from './row-deleter.js'
 import { ColumnSelector } from './column-selector.js'
 import { TableInfo } from './table-info.js'
 import Pager from './pager.js'
@@ -42,6 +43,7 @@ class TableContents {
         this.sessionId = sessionId
         this.db = db
         this.rowAdder.setSessionId(this.sessionId);
+        this.rowDeleter.setSessionId(this.sessionId);
         this.tableInfo.setSessionId(this.sessionId);
 
         Logger.Log(TAG, `sessionId: ${sessionId} db: ${db}`)
@@ -50,6 +52,7 @@ class TableContents {
     async init() {
         Hotkeys.init();
         this.rowAdder = new RowAdder(this.sessionId);
+        this.rowDeleter = new RowDeleter(this.sessionId);
         this.tableInfo = new TableInfo(this.sessionId);
         this.colSelector = new ColumnSelector();
 
@@ -97,6 +100,10 @@ class TableContents {
             this.handleSelectColumns(data);
         });
 
+        PubSub.subscribe(Constants.ROW_DELETED, () => {
+            this.handleRowDeleted();
+        });
+
         //handle all keyboard shortcuts
         [
             Constants.CMD_RUN_QUERY,
@@ -114,6 +121,14 @@ class TableContents {
             Logger.Log(TAG, Constants.CELL_EDITED);
             await this.handleCellEdit(data);
         });
+    }
+
+    handleRowDeleted() {
+        const f = async (query) => {
+            return await this.updateContents(query);
+        }
+
+        Pager.init(this.query, f, this.sortColumn, this.sortOrder);
     }
 
     async initHandlers() {
@@ -277,6 +292,7 @@ class TableContents {
 
         await this.initTable(this.table);
         this.rowAdder.init(this.table, this.columns);
+        this.rowDeleter.init(this.table);
         this.colSelector.init(this.table, this.columns);
 
         //the base query currently in operation

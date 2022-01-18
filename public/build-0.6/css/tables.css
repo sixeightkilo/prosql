@@ -115,7 +115,8 @@
 
 #table-info,
 #select-cols,
-#add-row {
+#add-row,
+#del-row {
 	cursor:pointer;
 	margin-left:5px;
 }
