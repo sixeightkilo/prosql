@@ -36,6 +36,9 @@ class RowAdder {
         });
 
         this.$ok.addEventListener('click', async () => {
+            this.$ok.setAttribute('disabled', 'disabled');
+            this.$title.innerHTML = 'Inserting row ..';
+
             let cols = []
             let vals = []
             let $inputs = this.$dialog.querySelectorAll('input');
@@ -73,13 +76,17 @@ class RowAdder {
                 let rows = res.data[0][1];
                 Utils.showAlert(`Inserted ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
                 this.closeDialog();
+
+                this.$ok.removeAttribute('disabled');
                 return;
             }
 
-            alert(res.msg);
+            this.$title.innerHTML = `Add new row to ${this.table}`;
+            this.$ok.removeAttribute('disabled');
         });
 
         this.$cancel.addEventListener('click', () => {
+            DbUtils.cancel(this.sessionId, this.cursorId);
             this.closeDialog();
         });
     }

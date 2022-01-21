@@ -47,8 +47,6 @@ class RowDeleter {
             let dbUtils = new DbUtils();
             let res = await dbUtils.execute.apply(this, [query]);
 
-            await Utils.delay(5000);
-
             if (res.status == "ok") {
                 PubSub.publish(Constants.QUERY_DISPATCHED, {
                     query: query,
