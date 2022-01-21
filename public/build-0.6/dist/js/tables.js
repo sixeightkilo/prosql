@@ -3359,6 +3359,7 @@
     }
 
     const TAG$b = "row-deleter";
+    const TITLE = 'Confirm row delete';
 
     class RowDeleter {
         constructor(sessionId) {
@@ -3384,18 +3385,23 @@
                     return;
                 }
 
-                this.$title.innerHTML = `Confirm row delete`;
+                this.$title.innerHTML = TITLE;
                 this.$body.replaceChildren();
                 this.$body.append(`Delete row with primary key ${this.value} ?`);
                 this.openDialog();
             });
 
             this.$ok.addEventListener('click', async () => {
+                this.$ok.setAttribute('disabled', 'disabled');
+                this.$title.innerHTML = 'Deleting ..';
+
                 let query = `delete from \`${this.table}\` where \`${this.key}\` = \'${this.value}\'`;
                 Logger.Log(TAG$b, query);
 
                 let dbUtils = new DbUtils();
                 let res = await dbUtils.execute.apply(this, [query]);
+
+                await Utils.delay(5000);
 
                 if (res.status == "ok") {
                     PubSub.publish(Constants.QUERY_DISPATCHED, {
@@ -3409,11 +3415,16 @@
                     this.closeDialog();
 
                     PubSub.publish(Constants.ROW_DELETED, {});
+                    this.$ok.removeAttribute('disabled');
                     return;
                 }
+                this.$title.innerHTML = TITLE;
+                this.$ok.removeAttribute('disabled');
             });
 
             this.$cancel.addEventListener('click', () => {
+                //if no query in progress this will be ignored
+                DbUtils.cancel(this.sessionId, this.cursorId);
                 this.closeDialog();
             });
         }
