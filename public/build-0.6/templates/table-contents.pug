@@ -4,6 +4,22 @@
             div#tables-title
                 div Tables and Views
                 div 
+                    //i.fas.fa-tools#table-operations(title="Table operations")
+
+                    .dropdown
+                        .dropdown-trigger
+                            i.fas.fa-tools#table-operations(title="Table operations")
+                        #dropdown-menu.dropdown-menu(role='menu')
+                            .dropdown-content
+                                a.dropdown-item#rename-table
+                                    | Rename table
+                                a.dropdown-item
+                                    | Truncate table
+                                a.dropdown-item
+                                    | Delete table
+
+
+
                     i.fas.fa-file-export#export-table(title="Export selected table contents(Alt+Shift+L)")
             div#tables-search-container.field
                 p.control.has-icons-left

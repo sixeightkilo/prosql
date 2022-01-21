@@ -211,8 +211,10 @@ i#back {
 	grid-template-columns: 9fr 1fr;
 }
 
+#table-operations,
 #export-table {
-	cursor:pointer
+	cursor:pointer;
+	margin-left:5px;
 }
 
 #grid {

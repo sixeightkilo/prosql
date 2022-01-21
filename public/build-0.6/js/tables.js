@@ -11,6 +11,7 @@ import { MainMenu } from './modules/main-menu.js'
 import { AppBar } from './modules/appbar.js'
 import { QueryHistory } from './modules/query-history.js'
 import { Workers } from './modules/workers.js'
+import { OpsMenu } from './modules/ops-menu/main.js'
 
 const TAG = "tables"
 class Content {
@@ -33,6 +34,7 @@ class Content {
             //update session id in all modules
             this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
             this.tables.setSessionInfo(this.sessionId, this.creds.db)
+            this.opsMenu.setSessionInfo(this.sessionId, this.creds.db)
 
             this.tables.show(this.creds.db)
         })
@@ -43,6 +45,8 @@ class Content {
             this.tableContents.reset();
             this.tableContents.show(data.table);
         });
+
+		//operations drop down menu
     }
 
     async init() {
@@ -57,20 +61,23 @@ class Content {
 
         Logger.Log(TAG, JSON.stringify(creds));
 
-        this.creds = JSON.parse(creds)
-        this.sessionId = await DbUtils.login(this.creds)
-        Logger.Log(TAG, this.sessionId)
+        this.creds = JSON.parse(creds);
+        this.sessionId = await DbUtils.login(this.creds);
+        Logger.Log(TAG, this.sessionId);
 
-        this.tableContents = new TableContents(this.sessionId)
-        this.tables = new Tables(this.sessionId)
+        this.tableContents = new TableContents(this.sessionId);
+        this.tables = new Tables(this.sessionId);
+        this.opsMenu = new OpsMenu(this.sessionId);
 
-        this.initHandlers()
+        this.initHandlers();
 
         AppBar.init(this.creds.name, this.sessionId, this.creds.db);
 
         if (this.creds.db) {
             this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
             this.tables.setSessionInfo(this.sessionId, this.creds.db)
+            this.opsMenu.setSessionInfo(this.sessionId, this.creds.db)
+
             this.tables.show(this.creds.db);
         }
 
