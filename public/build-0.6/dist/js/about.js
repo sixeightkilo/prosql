@@ -1597,6 +1597,14 @@
             await connectionsMetaDb.destroy();
             Logger.Log(TAG$1, "Done.");
         }
+
+        static async delay(t) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve();
+                }, t);
+            });
+        }
     }
 
     const TAG = "tabs";

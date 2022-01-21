@@ -201,6 +201,7 @@ class TableContents {
                     where \`${data.key.name}\` = '${data.key.value}'`;
         let dbUtils = new DbUtils();
         let res = await dbUtils.execute.apply(this, [query]);
+        this.tableUtils.showLoader();
 
         if (res.status == "ok") {
             PubSub.publish(Constants.QUERY_DISPATCHED, {
@@ -214,9 +215,11 @@ class TableContents {
             if (rows == 0) {
                 this.tableUtils.undo();
             }
+            this.tableUtils.hideLoader();
             return;
         }
 
+        this.tableUtils.hideLoader();
         this.tableUtils.undo();
     }
 

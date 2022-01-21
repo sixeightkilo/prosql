@@ -1597,6 +1597,14 @@
             await connectionsMetaDb.destroy();
             Logger.Log(TAG$j, "Done.");
         }
+
+        static async delay(t) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve();
+                }, t);
+            });
+        }
     }
 
     const TAG$i = "stream";
@@ -3909,6 +3917,7 @@
                     where \`${data.key.name}\` = '${data.key.value}'`;
             let dbUtils = new DbUtils();
             let res = await dbUtils.execute.apply(this, [query]);
+            this.tableUtils.showLoader();
 
             if (res.status == "ok") {
                 PubSub.publish(Constants.QUERY_DISPATCHED, {
@@ -3922,9 +3931,11 @@
                 if (rows == 0) {
                     this.tableUtils.undo();
                 }
+                this.tableUtils.hideLoader();
                 return;
             }
 
+            this.tableUtils.hideLoader();
             this.tableUtils.undo();
         }
 

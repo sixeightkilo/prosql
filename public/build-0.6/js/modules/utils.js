@@ -288,5 +288,13 @@ class Utils {
         await connectionsMetaDb.destroy();
         Logger.Log(TAG, "Done.");
     }
+
+    static async delay(t) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                resolve();
+            }, t);
+        });
+    }
 }
 export { Utils }
