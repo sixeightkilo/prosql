@@ -167,3 +167,8 @@ sup {
 .copy-status {
 	color: hsl(0, 0%, 96%);
 }
+
+.fa-disabled {
+	opacity: 0.6;
+	cursor: not-allowed !important;
+}

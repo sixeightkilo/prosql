@@ -90,6 +90,14 @@
         }
 
         //events
+        static get ROW_SELECTED() {
+            return 'table-utils.row-selected'
+        }
+
+        static get ROW_DELETED() {
+            return 'row-deleter.row-deleted'
+        }
+
         static get COLUMNS_SELECTED() {
             return 'cmd.columns-selected'
         }

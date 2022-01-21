@@ -90,6 +90,14 @@
         }
 
         //events
+        static get ROW_SELECTED() {
+            return 'table-utils.row-selected'
+        }
+
+        static get ROW_DELETED() {
+            return 'row-deleter.row-deleted'
+        }
+
         static get COLUMNS_SELECTED() {
             return 'cmd.columns-selected'
         }
@@ -2354,6 +2362,10 @@
             let gridOptions = {
                 columnDefs: cols,
                 undoRedoCellEditing: true,
+                rowSelection: 'single',
+                onSelectionChanged: () => {
+                    this.onSelectionChanged(fkMap);
+                }
             };
 
             if (sortable) {
@@ -2366,6 +2378,25 @@
             this.gridOptions = gridOptions;
             this.api = gridOptions.api;
             this.api.hideOverlay();
+        }
+
+        onSelectionChanged(fkMap) {
+            if (Utils.isEmpty(fkMap)) {
+                return;
+            }
+
+            const selectedRows = this.gridOptions.api.getSelectedRows();
+            Logger.Log(TAG$a, "fkMap:" + JSON.stringify(fkMap));
+            Logger.Log(TAG$a, "onSelectionChanged:" + JSON.stringify(selectedRows));
+            for (let k in selectedRows[0]) {
+                if (k == fkMap['primary-key'] + '-' + fkMap['primary-key-id']) {
+                    PubSub.publish(Constants.ROW_SELECTED, {
+                        'key': fkMap['primary-key'],
+                        'value': selectedRows[0][k]
+                    });
+                    break;
+                }
+            }
         }
 
         setupColumns(row, fkMap, selection, editable ) {
