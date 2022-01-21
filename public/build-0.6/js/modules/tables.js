@@ -63,6 +63,10 @@ class Tables {
             }
         });
 
+        PubSub.subscribe(Constants.TABLE_RENAMED, () => {
+            this.show();
+        });
+
         Logger.Log(TAG, `sessionId: ${sessionId}`);
         //handle all keyboard shortcuts
         [
@@ -121,8 +125,9 @@ class Tables {
         this.render(tables)
     }
 
-    async show(db) {
+    async show(db = null) {
         Logger.Log(TAG, "show")
+        db = db ?? this.db;
         let q = `show tables from \`${db}\``
         let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
 

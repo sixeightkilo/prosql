@@ -45,8 +45,6 @@ class Content {
             this.tableContents.reset();
             this.tableContents.show(data.table);
         });
-
-		//operations drop down menu
     }
 
     async init() {

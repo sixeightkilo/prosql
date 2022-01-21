@@ -90,6 +90,10 @@
         }
 
         //events
+        static get TABLE_RENAMED() {
+            return 'ops-menu.table-renamed'
+        }
+
         static get ROW_SELECTED() {
             return 'table-utils.row-selected'
         }
@@ -3366,7 +3370,7 @@
     }
 
     const TAG$d = "row-deleter";
-    const TITLE$1 = 'Confirm row delete';
+    const TITLE = 'Confirm row delete';
 
     class RowDeleter {
         constructor(sessionId) {
@@ -3392,7 +3396,7 @@
                     return;
                 }
 
-                this.$title.innerHTML = TITLE$1;
+                this.$title.innerHTML = TITLE;
                 this.$body.replaceChildren();
                 this.$body.append(`Delete row with primary key ${this.value} ?`);
                 this.openDialog();
@@ -3418,12 +3422,12 @@
                     Utils.showAlert(`Deleted ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
                     this.reset();
                     this.closeDialog();
+                    this.$ok.removeAttribute('disabled');
 
                     PubSub.publish(Constants.ROW_DELETED, {});
-                    this.$ok.removeAttribute('disabled');
                     return;
                 }
-                this.$title.innerHTML = TITLE$1;
+                this.$title.innerHTML = TITLE;
                 this.$ok.removeAttribute('disabled');
             });
 
@@ -4238,6 +4242,10 @@
                 }
             });
 
+            PubSub.subscribe(Constants.TABLE_RENAMED, () => {
+                this.show();
+            });
+
             Logger.Log(TAG$9, `sessionId: ${sessionId}`);
             //handle all keyboard shortcuts
             [
@@ -4296,8 +4304,9 @@
             this.render(tables);
         }
 
-        async show(db) {
+        async show(db = null) {
             Logger.Log(TAG$9, "show");
+            db = db ?? this.db;
             let q = `show tables from \`${db}\``;
             let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
 
@@ -4670,7 +4679,6 @@
     }
 
     const TAG$2 = "table-renamer";
-    const TITLE = 'Confirm row delete';
 
     class TableRenamer {
         constructor(sessionId) {
@@ -4681,12 +4689,13 @@
             this.$ok = this.$dialog.querySelector('.ok');
             this.$body = this.$dialog.querySelector('.modal-card-body');
             this.$title = this.$dialog.querySelector('.modal-card-title');
+            this.$name = this.$dialog.querySelector('#new-table-name');
 
             this.$ok.addEventListener('click', async () => {
                 this.$ok.setAttribute('disabled', 'disabled');
-                this.$title.innerHTML = 'Deleting ..';
+                this.$title.innerHTML = 'Renaming ..';
 
-                let query = `delete from \`${this.table}\` where \`${this.key}\` = \'${this.value}\'`;
+                let query = `rename table \`${this.table}\` to \`${this.$name.value}\``;
                 Logger.Log(TAG$2, query);
 
                 let dbUtils = new DbUtils();
@@ -4698,16 +4707,17 @@
                         tags: [Constants.USER]
                     });
 
-                    let rows = res.data[0][1];
-                    Utils.showAlert(`Deleted ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
+                    res.data[0][1];
+                    Utils.showAlert(`Renamed table`, 2000);
                     this.reset();
                     this.closeDialog();
-
-                    PubSub.publish(Constants.ROW_DELETED, {});
                     this.$ok.removeAttribute('disabled');
+
+                    PubSub.publish(Constants.TABLE_RENAMED, {});
                     return;
                 }
-                this.$title.innerHTML = TITLE;
+
+                this.$title.innerHTML = this.title;
                 this.$ok.removeAttribute('disabled');
             });
 
@@ -4732,7 +4742,9 @@
 
         init(table) {
             this.table = table;
-            this.$title.innerHTML = `Rename ${this.table} to:`;
+            this.title = `Rename ${this.table} to:`;
+            this.$title.innerHTML = this.title;
+            this.$name.value = '';
             this.openDialog();
         }
 
@@ -4832,8 +4844,6 @@
                 this.tableContents.reset();
                 this.tableContents.show(data.table);
             });
-
-    		//operations drop down menu
         }
 
         async init() {

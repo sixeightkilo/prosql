@@ -5,7 +5,6 @@ import { Utils } from './../utils.js'
 import { DbUtils } from './../dbutils.js'
 
 const TAG = "table-renamer"
-const TITLE = 'Confirm row delete';
 
 class TableRenamer {
     constructor(sessionId) {
@@ -20,9 +19,9 @@ class TableRenamer {
 
         this.$ok.addEventListener('click', async () => {
             this.$ok.setAttribute('disabled', 'disabled');
-            this.$title.innerHTML = 'Deleting ..';
+            this.$title.innerHTML = 'Renaming ..';
 
-            let query = `delete from \`${this.table}\` where \`${this.key}\` = \'${this.value}\'`;
+            let query = `rename table \`${this.table}\` to \`${this.$name.value}\``;
             Logger.Log(TAG, query);
 
             let dbUtils = new DbUtils();
@@ -35,15 +34,16 @@ class TableRenamer {
                 });
 
                 let rows = res.data[0][1];
-                Utils.showAlert(`Deleted ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
+                Utils.showAlert(`Renamed table`, 2000);
                 this.reset();
                 this.closeDialog();
-
-                PubSub.publish(Constants.ROW_DELETED, {});
                 this.$ok.removeAttribute('disabled');
+
+                PubSub.publish(Constants.TABLE_RENAMED, {});
                 return;
             }
-            this.$title.innerHTML = TITLE;
+
+            this.$title.innerHTML = this.title;
             this.$ok.removeAttribute('disabled');
         });
 
@@ -68,7 +68,8 @@ class TableRenamer {
 
     init(table) {
         this.table = table;
-        this.$title.innerHTML = `Rename ${this.table} to:`;
+        this.title = `Rename ${this.table} to:`;
+        this.$title.innerHTML = this.title;
         this.$name.value = '';
         this.openDialog();
     }

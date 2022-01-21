@@ -57,9 +57,9 @@ class RowDeleter {
                 Utils.showAlert(`Deleted ${rows} ${rows == "1" ? "row" : "rows"}`, 2000);
                 this.reset();
                 this.closeDialog();
+                this.$ok.removeAttribute('disabled');
 
                 PubSub.publish(Constants.ROW_DELETED, {});
-                this.$ok.removeAttribute('disabled');
                 return;
             }
             this.$title.innerHTML = TITLE;

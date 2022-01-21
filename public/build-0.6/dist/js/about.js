@@ -90,6 +90,10 @@
         }
 
         //events
+        static get TABLE_RENAMED() {
+            return 'ops-menu.table-renamed'
+        }
+
         static get ROW_SELECTED() {
             return 'table-utils.row-selected'
         }
