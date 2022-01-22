@@ -32,9 +32,7 @@ class Content {
             this.sessionId = await DbUtils.login(this.creds)
 
             //update session id in all modules
-            this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
-            this.tables.setSessionInfo(this.sessionId, this.creds.db)
-            this.opsMenu.setSessionInfo(this.sessionId, this.creds.db)
+            this.setSessionInfo();
 
             this.tables.show(this.creds.db)
         })
@@ -45,6 +43,12 @@ class Content {
             this.tableContents.reset();
             this.tableContents.show(data.table);
         });
+    }
+
+    setSessionInfo() {
+        this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
+        this.tables.setSessionInfo(this.sessionId, this.creds.db)
+        this.opsMenu.setSessionInfo(this.sessionId, this.creds.db)
     }
 
     async init() {
@@ -72,9 +76,7 @@ class Content {
         AppBar.init(this.creds.name, this.sessionId, this.creds.db);
 
         if (this.creds.db) {
-            this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
-            this.tables.setSessionInfo(this.sessionId, this.creds.db)
-            this.opsMenu.setSessionInfo(this.sessionId, this.creds.db)
+            this.setSessionInfo();
 
             this.tables.show(this.creds.db);
         }

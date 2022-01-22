@@ -7,6 +7,7 @@ import { Constants } from './../constants.js'
 import { PubSub } from './../pubsub.js'
 import { Hotkeys } from './../hotkeys.js'
 import { TableRenamer } from './table-renamer.js'
+import { TableTruncater } from './table-truncater.js'
 
 const TAG = "ops-menu"
 
@@ -23,6 +24,10 @@ class OpsMenu {
     setSessionInfo(sessionId, db) {
         this.sessionId = sessionId
         this.db = db
+
+        this.renamer.setSessionId(this.sessionId);
+        this.truncater.setSessionId(this.sessionId);
+
         Logger.Log(TAG, `sessionId: ${sessionId} db: ${db}`)
     }
 
@@ -33,6 +38,7 @@ class OpsMenu {
 
         //dropdown handlers
         this.renamer = new TableRenamer(this.sessionId);
+        this.truncater = new TableTruncater(this.sessionId);
     }
 
     initDom() {
@@ -50,15 +56,27 @@ class OpsMenu {
             $container.classList.toggle('is-active');
         });
 
-        this.$renameTable.addEventListener('click', () => {
-            let $container = this.$opsMenu.parentNode.parentNode;	
-            $container.classList.toggle('is-active');
-            this.renameTable();
+        let elementsArray = document.querySelectorAll('[class="dropdown-item"]');
+
+        elementsArray.forEach((elem) => {
+            elem.addEventListener("click", (e) => {
+                let $container = this.$opsMenu.parentNode.parentNode;	
+                $container.classList.toggle('is-active');
+                this.handleMenu(e.currentTarget.id)
+            });
         });
     }
 
-    renameTable() {
-        this.renamer.init(this.table);
+    handleMenu(id) {
+		switch (id) {
+        case 'rename-table':
+            this.renamer.init(this.table);
+            break;
+
+        case 'truncate-table':
+            this.truncater.init(this.table);
+            break;
+        }
     }
 
     initSubscribers() {
