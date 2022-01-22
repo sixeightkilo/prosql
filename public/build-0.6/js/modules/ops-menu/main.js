@@ -8,6 +8,7 @@ import { PubSub } from './../pubsub.js'
 import { Hotkeys } from './../hotkeys.js'
 import { TableRenamer } from './table-renamer.js'
 import { TableTruncater } from './table-truncater.js'
+import { TableDeleter } from './table-deleter.js'
 
 const TAG = "ops-menu"
 
@@ -27,6 +28,7 @@ class OpsMenu {
 
         this.renamer.setSessionId(this.sessionId);
         this.truncater.setSessionId(this.sessionId);
+        this.deleter.setSessionId(this.sessionId);
 
         Logger.Log(TAG, `sessionId: ${sessionId} db: ${db}`)
     }
@@ -39,6 +41,7 @@ class OpsMenu {
         //dropdown handlers
         this.renamer = new TableRenamer(this.sessionId);
         this.truncater = new TableTruncater(this.sessionId);
+        this.deleter = new TableDeleter(this.sessionId);
     }
 
     initDom() {
@@ -75,6 +78,10 @@ class OpsMenu {
 
         case 'truncate-table':
             this.truncater.init(this.table);
+            break;
+
+        case 'delete-table':
+            this.deleter.init(this.table);
             break;
         }
     }

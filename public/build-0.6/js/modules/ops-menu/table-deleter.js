@@ -4,24 +4,24 @@ import { PubSub } from './../pubsub.js'
 import { Utils } from './../utils.js'
 import { DbUtils } from './../dbutils.js'
 
-const TAG = "table-truncater"
+const TAG = "table-deleter"
 
-class TableTruncater {
+class TableDeleter {
     constructor(sessionId) {
         this.sessionId = sessionId;
 
-        this.$dialog = document.getElementById('table-truncater-dialog');
+        this.$dialog = document.getElementById('table-deleter-dialog');
         this.$cancel = this.$dialog.querySelector('.cancel');
         this.$ok = this.$dialog.querySelector('.ok');
         this.$body = this.$dialog.querySelector('.modal-card-body');
-        this.$body.innerHTML = "This operation will delete all rows from the table. Are you sure?";
+        this.$body.innerHTML = "This operation will delete the table. Are you sure?";
         this.$title = this.$dialog.querySelector('.modal-card-title');
 
         this.$ok.addEventListener('click', async () => {
             this.$ok.setAttribute('disabled', 'disabled');
-            this.$title.innerHTML = 'Truncating ..';
+            this.$title.innerHTML = `Deleting ${this.table}..`;
 
-            let query = `truncate table \`${this.table}\``;
+            let query = `drop table \`${this.table}\``;
             Logger.Log(TAG, query);
 
             let dbUtils = new DbUtils();
@@ -34,11 +34,11 @@ class TableTruncater {
                 });
 
                 let rows = res.data[0][1];
-                Utils.showAlert(`Truncated table`, 2000);
+                Utils.showAlert(`Deleted table ${this.table}`, 2000);
                 this.closeDialog();
                 this.$ok.removeAttribute('disabled');
 
-                PubSub.publish(Constants.TABLE_TRUNCATED, {});
+                PubSub.publish(Constants.TABLE_RENAMED, {});
                 return;
             }
 
@@ -67,10 +67,10 @@ class TableTruncater {
 
     init(table) {
         this.table = table;
-        this.title = `Truncate ${this.table}?`;
+        this.title = `Delete ${this.table}?`;
         this.$title.innerHTML = this.title;
         this.openDialog();
     }
 }
 
-export { TableTruncater }
+export { TableDeleter }

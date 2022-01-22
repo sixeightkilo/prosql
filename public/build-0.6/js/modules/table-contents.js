@@ -100,8 +100,15 @@ class TableContents {
             this.handleSelectColumns(data);
         });
 
-        PubSub.subscribe(Constants.ROW_DELETED, () => {
-            this.handleRowDeleted();
+        [
+            Constants.ROW_DELETED, 
+            Constants.TABLE_TRUNCATED, 
+        ].forEach((c) => {
+            ((c) => {
+                PubSub.subscribe(c, () => {
+                    this.refresh();
+                });
+            })(c)
         });
 
         //handle all keyboard shortcuts
@@ -123,7 +130,7 @@ class TableContents {
         });
     }
 
-    handleRowDeleted() {
+    refresh() {
         const f = async (query) => {
             return await this.updateContents(query);
         }

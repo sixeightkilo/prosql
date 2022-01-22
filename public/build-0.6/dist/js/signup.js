@@ -142,6 +142,10 @@
             return 'ops-menu.table-renamed'
         }
 
+        static get TABLE_TRUNCATED() {
+            return 'ops-menu.table-truncated'
+        }
+
         static get ROW_SELECTED() {
             return 'table-utils.row-selected'
         }
@@ -149,6 +153,7 @@
         static get ROW_DELETED() {
             return 'row-deleter.row-deleted'
         }
+
 
         static get COLUMNS_SELECTED() {
             return 'cmd.columns-selected'

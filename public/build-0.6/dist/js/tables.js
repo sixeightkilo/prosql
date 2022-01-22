@@ -94,6 +94,10 @@
             return 'ops-menu.table-renamed'
         }
 
+        static get TABLE_TRUNCATED() {
+            return 'ops-menu.table-truncated'
+        }
+
         static get ROW_SELECTED() {
             return 'table-utils.row-selected'
         }
@@ -101,6 +105,7 @@
         static get ROW_DELETED() {
             return 'row-deleter.row-deleted'
         }
+
 
         static get COLUMNS_SELECTED() {
             return 'cmd.columns-selected'
@@ -388,7 +393,7 @@
         }
     }
 
-    const TAG$s = "base-db";
+    const TAG$t = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -400,13 +405,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$s, "open.onsuccess");
+                        this.logger.log(TAG$t, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$s, e.target.error);
+                        this.logger.log(TAG$t, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -427,7 +432,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$s, e.target.error);
+                    this.logger.log(TAG$t, e.target.error);
                     resolve(-1);
                 };
             })
@@ -445,7 +450,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$s, e.target.error);
+                    this.logger.log(TAG$t, e.target.error);
                     resolve(-1);
                 };
             })
@@ -513,7 +518,7 @@
                         result = request.result;
                     }
 
-                    this.logger.log(TAG$s, JSON.stringify(result));
+                    this.logger.log(TAG$t, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -607,7 +612,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$s, "findByDbId");
+                this.logger.log(TAG$t, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -619,7 +624,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$s, "error");
+                    this.logger.log(TAG$t, "error");
                     resolve(e.target.error);
                 };
             })
@@ -666,7 +671,7 @@
         }
     }
 
-    const TAG$r = "query-db";
+    const TAG$s = "query-db";
     const CREATED_AT_INDEX = "created-at-index";
     const QUERY_INDEX = "query-index";
     const TERM_INDEX = "term-index";
@@ -683,7 +688,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$r, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$s, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 2) {
                 let store = e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -716,7 +721,7 @@
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
                 terms = [...new Set(terms)];
 
-                this.logger.log(TAG$r, JSON.stringify(terms));
+                this.logger.log(TAG$s, JSON.stringify(terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -735,7 +740,7 @@
 
                     resolve(id);
                 } catch (e) {
-                    this.logger.log(TAG$r, `error: ${JSON.stringify(e.message)}`);
+                    this.logger.log(TAG$s, `error: ${JSON.stringify(e.message)}`);
                     reject(e.message);
                 }
             })
@@ -765,7 +770,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$r, JSON.stringify(rec));
+                    this.logger.log(TAG$s, JSON.stringify(rec));
                     super.put(this.searchIndex, {
                         id: rec.id,
                         term: t,
@@ -773,7 +778,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$r, `error: e.message`);
+                    this.logger.log(TAG$s, `error: e.message`);
                 }
             }
         }
@@ -788,7 +793,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$r, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$s, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -822,7 +827,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$r, JSON.stringify(rec));
+                    this.logger.log(TAG$s, JSON.stringify(rec));
                     super.put(this.tagIndex, {
                         id: rec.id,
                         tag: t,
@@ -830,7 +835,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$r, `error: e.message`);
+                    this.logger.log(TAG$s, `error: e.message`);
                 }
             }
         }
@@ -845,7 +850,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$r, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$s, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -865,7 +870,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$r, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$s, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -898,7 +903,7 @@
             //days supercedes everything
             //if days are provided get queries by days first
             //then filter by terms and tags if provided
-            this.logger.log(TAG$r, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+            this.logger.log(TAG$s, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
 
             let start, end;
             if (days.hasOwnProperty('start')) {
@@ -918,7 +923,7 @@
 
             let ids = [];
             if (start || end) {
-                this.logger.log(TAG$r, 'filtering');
+                this.logger.log(TAG$s, 'filtering');
                 ids = await this.searchByCreatedAt(start, end);
 
                 if (ids.length == 0) {
@@ -949,7 +954,7 @@
             }
 
             let results = [];
-            this.logger.log(TAG$r, `${ids}`);
+            this.logger.log(TAG$s, `${ids}`);
             for (let i = 0; i < ids.length; i++) {
                 results.push(await super.get(ids[i]));
             }
@@ -1064,7 +1069,7 @@
 
         searchByCreatedAt(s, e) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$r, `s: ${s} e: ${e}`);
+                this.logger.log(TAG$s, `s: ${s} e: ${e}`);
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -1087,7 +1092,7 @@
                 index.openCursor(key, "prev").onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$r, `id: ${cursor.value.created_at.toISOString()}`);
+                        this.logger.log(TAG$s, `id: ${cursor.value.created_at.toISOString()}`);
                         queries.push(cursor.value.id);
                         cursor.continue();
                     } else {
@@ -1098,7 +1103,7 @@
         }
     }
 
-    const TAG$q = "base-meta-db";
+    const TAG$r = "base-meta-db";
     const ID = 1;
 
     class BaseMetaDB extends BaseDB {
@@ -1112,7 +1117,7 @@
         }
 
         async setDb(db) {
-            this.logger.log(TAG$q, "setDb");
+            this.logger.log(TAG$r, "setDb");
             let rec = await super.get(parseInt(ID));
 
             if (rec == null) {
@@ -1160,7 +1165,7 @@
         }
     }
 
-    const TAG$p = "queries-meta-db";
+    const TAG$q = "queries-meta-db";
 
     class QueriesMetaDB extends BaseMetaDB {
         constructor(logger, options) {
@@ -1171,7 +1176,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$p, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$q, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 1) {
                 e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -1179,7 +1184,7 @@
         }
     }
 
-    const TAG$o = "connection-db";
+    const TAG$p = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
@@ -1192,7 +1197,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$o, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$p, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -1243,7 +1248,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$o, e.message);
+                this.logger.log(TAG$p, e.message);
             }
         }
 
@@ -1300,7 +1305,7 @@
         }
     }
 
-    const TAG$n = "connections-meta-db";
+    const TAG$o = "connections-meta-db";
 
     class ConnectionsMetaDB extends BaseMetaDB {
         constructor(logger, options) {
@@ -1311,7 +1316,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$n, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$o, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 1) {
                 e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -1319,7 +1324,7 @@
         }
     }
 
-    const TAG$m = "utils";
+    const TAG$n = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -1368,7 +1373,7 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$m, response);
+                Logger.Log(TAG$n, response);
 
                 let json = await response.json();
 
@@ -1378,7 +1383,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$m, e);
+                Logger.Log(TAG$n, e);
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -1439,7 +1444,7 @@
                 });
 
                 let json = await response.json();
-                Logger.Log(TAG$m, JSON.stringify(json));
+                Logger.Log(TAG$n, JSON.stringify(json));
 
                 if (json.status == 'error') {
                     throw json
@@ -1447,7 +1452,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$m, JSON.stringify(e));
+                Logger.Log(TAG$n, JSON.stringify(e));
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -1517,7 +1522,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$m, "No data");
+            Logger.Log(TAG$n, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -1574,32 +1579,32 @@
             let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
             await connDb.open();
             let conns = await connDb.getAll();
-            Logger.Log(TAG$m, "Resetting connections..");
+            Logger.Log(TAG$n, "Resetting connections..");
             for (let i = 0; i < conns.length; i++) {
                 await connDb.reset(conns[i]);
             }
-            Logger.Log(TAG$m, "Done.");
+            Logger.Log(TAG$n, "Done.");
 
             let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
             await queryDb.open();
             let queries = await queryDb.getAll();
-            Logger.Log(TAG$m, "Resetting queries..");
+            Logger.Log(TAG$n, "Resetting queries..");
             for (let i = 0; i < queries.length; i++) {
                 await queryDb.reset(queries[i]);
             }
-            Logger.Log(TAG$m, "Done.");
+            Logger.Log(TAG$n, "Done.");
 
-            Logger.Log(TAG$m, "Resetting QueriesMetaDB");
+            Logger.Log(TAG$n, "Resetting QueriesMetaDB");
             let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
             await queriesMetaDb.open();
             await queriesMetaDb.destroy();
-            Logger.Log(TAG$m, "Done.");
+            Logger.Log(TAG$n, "Done.");
 
-            Logger.Log(TAG$m, "Resetting connectionsMetaDb");
+            Logger.Log(TAG$n, "Resetting connectionsMetaDb");
             let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
             await connectionsMetaDb.open();
             await connectionsMetaDb.destroy();
-            Logger.Log(TAG$m, "Done.");
+            Logger.Log(TAG$n, "Done.");
         }
 
         static async delay(t) {
@@ -1611,7 +1616,7 @@
         }
     }
 
-    const TAG$l = "stream";
+    const TAG$m = "stream";
 
     class Stream {
         constructor(url) {
@@ -1621,12 +1626,12 @@
             this.ws = new WebSocket(url);
 
             this.ws.onerror = (evt) => {
-                Logger.Log(TAG$l, "onerror:" + evt);
+                Logger.Log(TAG$m, "onerror:" + evt);
                 this.rej(Err.ERR_NO_AGENT);
             };
 
             this.ws.onclose = (evt) => {
-                Logger.Log(TAG$l, "onclose");
+                Logger.Log(TAG$m, "onclose");
                 this.ws = null;
             };
         }
@@ -1767,7 +1772,7 @@
 
     let progressBar = new ProgressBar();
 
-    const TAG$k = "dbutils";
+    const TAG$l = "dbutils";
     class DbUtils {
 
         //todo: use WS in fetchall and get rid of fetch route from agent
@@ -1779,7 +1784,7 @@
 
             let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
             if (json.status == 'error') {
-                Logger.Log(TAG$k, JSON.stringify(json));
+                Logger.Log(TAG$l, JSON.stringify(json));
                 return []
             }
 
@@ -1797,11 +1802,11 @@
             do {
                 json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
                 if (json.status == "error") {
-                    Logger.Log(TAG$k, JSON.stringify(json));
+                    Logger.Log(TAG$l, JSON.stringify(json));
                     return []
                 }
 
-                Logger.Log(TAG$k, JSON.stringify(json));
+                Logger.Log(TAG$l, JSON.stringify(json));
                 if (!json.data) {
                     //if batch size == num of rows in query result, then we might get json.data = null
                     //but we should still return results fetched till this point
@@ -1817,7 +1822,7 @@
         static async login(creds) {
             let json = await Utils.get(Constants.URL + '/login?' + new URLSearchParams(creds));
             if (json.status == 'error') {
-                Logger.Log(TAG$k, JSON.stringify(json));
+                Logger.Log(TAG$l, JSON.stringify(json));
                 return ""
             }
 
@@ -1863,7 +1868,7 @@
 
         async exportResults(q) {
             let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
-            Logger.Log(TAG$k, `cursorId: ${cursorId}`);
+            Logger.Log(TAG$l, `cursorId: ${cursorId}`);
             let params = {
                 'session-id': this.sessionId,
                 'cursor-id': cursorId,
@@ -1878,7 +1883,7 @@
                 buttons: true,
                 cancel: () => {
                     DbUtils.cancel(this.sessionId, cursorId);
-                    Logger.Log(TAG$k, `Cancelled ${cursorId}`);
+                    Logger.Log(TAG$l, `Cancelled ${cursorId}`);
                 }
             });
 
@@ -1960,7 +1965,7 @@
         }
 
         static createFKMap(constraints) {
-            Logger.Log(TAG$k, JSON.stringify(constraints));
+            Logger.Log(TAG$l, JSON.stringify(constraints));
             let fkMap = {};
 
             if (constraints.length == 0) {
@@ -2021,7 +2026,7 @@
         }
     }
 
-    const TAG$j = "stack";
+    const TAG$k = "stack";
 
     class Stack {
         constructor(cb) {
@@ -2046,7 +2051,7 @@
         }
 
         async handleBack() {
-            Logger.Log(TAG$j, `${this.stack.length}: ${this.curr}`);
+            Logger.Log(TAG$k, `${this.stack.length}: ${this.curr}`);
 
             if (this.stack.length == 0) {
                 return
@@ -2059,7 +2064,7 @@
             this.curr--;
             this.stack.pop();
             await this.cb(this.stack[this.curr]);
-            Logger.Log(TAG$j, "Done back");
+            Logger.Log(TAG$k, "Done back");
             if (this.curr == 0) {
                 this.$back.classList.add('stack-disable');
             }
@@ -2080,13 +2085,13 @@
         }
 
         push(...args) {
-            Logger.Log(TAG$j, JSON.stringify(args));
+            Logger.Log(TAG$k, JSON.stringify(args));
             if (args.length == 1) {
                 this.stack.push({
                     'type': 'table',
                     'table': args[0]
                 });
-                Logger.Log(TAG$j, "table:" + JSON.stringify(this.stack));
+                Logger.Log(TAG$k, "table:" + JSON.stringify(this.stack));
                 return
             }
 
@@ -2100,7 +2105,7 @@
 
                 this.curr++;
                 this.$back.classList.remove('stack-disable');
-                Logger.Log(TAG$j, "fk-ref:" + JSON.stringify(this.stack));
+                Logger.Log(TAG$k, "fk-ref:" + JSON.stringify(this.stack));
 
                 return
             }
@@ -2116,7 +2121,7 @@
 
                 this.curr++;
                 this.$back.classList.remove('stack-disable');
-                Logger.Log(TAG$j, "search:" + JSON.stringify(this.stack));
+                Logger.Log(TAG$k, "search:" + JSON.stringify(this.stack));
 
                 return
             }
@@ -2149,7 +2154,7 @@
     	}
     }
 
-    const TAG$i = 'cell-renderer';
+    const TAG$j = 'cell-renderer';
 
     class CellRenderer {
     	constructor(fkMap) {
@@ -2159,7 +2164,7 @@
         }
 
         render(params) {
-            Logger.Log(TAG$i, `${params.colDef.field}`);
+            Logger.Log(TAG$j, `${params.colDef.field}`);
             let id = params.colDef.colId;
             let c = params.colDef.field;
             let v = params.data[`${c}-${id}`];
@@ -2274,7 +2279,7 @@
         } 
     }
 
-    const TAG$h = 'cell-editor';
+    const TAG$i = 'cell-editor';
 
     class CellEditor {
        init(params) {
@@ -2289,7 +2294,7 @@
 
            this.input.addEventListener('input', (event) => {
                this.value = event.target.value;
-               Logger.Log(TAG$h, "listener:" + this.value);
+               Logger.Log(TAG$i, "listener:" + this.value);
            });
        }
 
@@ -2302,7 +2307,7 @@
        // the final value to send to the grid, on completion of editing
        getValue() {
            // this simple editor doubles any value entered into the input
-           Logger.Log(TAG$h, "getvalue:" + this.value);
+           Logger.Log(TAG$i, "getvalue:" + this.value);
            return this.input.value;
        }
 
@@ -2325,7 +2330,7 @@
        }
     }
 
-    const TAG$g = "table-utils";
+    const TAG$h = "table-utils";
 
     class TableUtils {
         constructor($root) {
@@ -2339,7 +2344,7 @@
                     return;
                 }
 
-                Logger.Log(TAG$g, "Cancel clicked");
+                Logger.Log(TAG$h, "Cancel clicked");
                 PubSub.publish(Constants.QUERY_CANCELLED, {});
             });
         }
@@ -2460,8 +2465,8 @@
             }
 
             const selectedRows = this.gridOptions.api.getSelectedRows();
-            Logger.Log(TAG$g, "fkMap:" + JSON.stringify(fkMap));
-            Logger.Log(TAG$g, "onSelectionChanged:" + JSON.stringify(selectedRows));
+            Logger.Log(TAG$h, "fkMap:" + JSON.stringify(fkMap));
+            Logger.Log(TAG$h, "onSelectionChanged:" + JSON.stringify(selectedRows));
             for (let k in selectedRows[0]) {
                 if (k == fkMap['primary-key'] + '-' + fkMap['primary-key-id']) {
                     PubSub.publish(Constants.ROW_SELECTED, {
@@ -2500,13 +2505,13 @@
                     },
                     cellEditor: CellEditor,
                     valueGetter: params => {
-                        Logger.Log(TAG$g, "valueGetter");
+                        Logger.Log(TAG$h, "valueGetter");
                         let id = params.colDef.colId;
                         let c = params.colDef.field;
                         return params.data[`${c}-${id}`];
                     },
                     valueSetter: params => {
-                        Logger.Log(TAG$g, "valueSetter");
+                        Logger.Log(TAG$h, "valueSetter");
                         let id = params.colDef.colId;
                         let c = params.colDef.field;
                         params.data[`${c}-${id}`] = params.newValue;
@@ -2599,7 +2604,7 @@
                 this.undoStarted = false;
                 return;
             }
-            Logger.Log(TAG$g, "handleCellValueChanged");
+            Logger.Log(TAG$h, "handleCellValueChanged");
             let key = fkMap['primary-key'];
 
             let keyId = fkMap['primary-key-id'];
@@ -3264,7 +3269,7 @@
         }
     }
 
-    const TAG$f = "row-adder";
+    const TAG$g = "row-adder";
 
     class RowAdder {
         constructor(sessionId) {
@@ -3285,7 +3290,7 @@
 
                 this.$title.innerHTML = `Add new row to ${this.table}`;
                 this.$body.replaceChildren();
-                Logger.Log(TAG$f, this.columns);
+                Logger.Log(TAG$g, this.columns);
                 this.openDialog();
                 this.columns.forEach((c) => {
                     let n = Utils.generateNode(this.templ, {
@@ -3316,13 +3321,13 @@
                     return;
                 }
 
-                Logger.Log(TAG$f, `cols: ${cols}`);
-                Logger.Log(TAG$f, `vals: ${vals}`);
+                Logger.Log(TAG$g, `cols: ${cols}`);
+                Logger.Log(TAG$g, `vals: ${vals}`);
                 cols = cols.map(e => `\`${e}\``).join(",");
                 vals = vals.map(e => `'${e}'`).join(",");
 
                 let query = `insert into \`${this.table}\` (${cols}) values (${vals})`;
-                Logger.Log(TAG$f, query);
+                Logger.Log(TAG$g, query);
 
                 let dbUtils = new DbUtils();
                 let res = await dbUtils.execute.apply(this, [query]);
@@ -3369,7 +3374,7 @@
         }
     }
 
-    const TAG$e = "row-deleter";
+    const TAG$f = "row-deleter";
     const TITLE = 'Confirm row delete';
 
     class RowDeleter {
@@ -3407,7 +3412,7 @@
                 this.$title.innerHTML = 'Deleting ..';
 
                 let query = `delete from \`${this.table}\` where \`${this.key}\` = \'${this.value}\'`;
-                Logger.Log(TAG$e, query);
+                Logger.Log(TAG$f, query);
 
                 let dbUtils = new DbUtils();
                 let res = await dbUtils.execute.apply(this, [query]);
@@ -3439,7 +3444,7 @@
         }
 
         handleRowSelected(data) {
-            Logger.Log(TAG$e, JSON.stringify(data));
+            Logger.Log(TAG$f, JSON.stringify(data));
             this.$del.classList.remove('fa-disabled');
             this.key = data['key'];
             this.value = data['value'];
@@ -3469,7 +3474,7 @@
         }
     }
 
-    const TAG$d = "col-selector";
+    const TAG$e = "col-selector";
 
     class ColumnSelector {
         constructor() {
@@ -3497,7 +3502,7 @@
 
                 this.$title.innerHTML = `Select columns from ${this.table} to display`;
                 this.$body.replaceChildren();
-                Logger.Log(TAG$d, this.columns);
+                Logger.Log(TAG$e, this.columns);
 
                 let selection = this.selections[this.table] ?? {};
 
@@ -3552,7 +3557,7 @@
                     id++;
                 });
 
-                Logger.Log(TAG$d, JSON.stringify(selections));
+                Logger.Log(TAG$e, JSON.stringify(selections));
                 PubSub.publish(Constants.COLUMNS_SELECTED, {
                     cols: selection
                 });
@@ -3578,7 +3583,7 @@
         }
     }
 
-    const TAG$c = "table-info";
+    const TAG$d = "table-info";
 
     class TableInfo {
         constructor(sessionId) {
@@ -3599,7 +3604,7 @@
                 this.$title.innerHTML = `${this.table}`;
                 this.$body.replaceChildren();
                 this.$body.innerHTML = this.createQuery;
-                Logger.Log(TAG$c, this.columns);
+                Logger.Log(TAG$d, this.columns);
                 this.$dialog.classList.add('is-active');
             });
 
@@ -3624,7 +3629,7 @@
 
         async fetchQuery() {
             let res = await DbUtils.fetchAll(this.sessionId, `show create table \`${this.table}\``);
-            Logger.Log(TAG$c, JSON.stringify(res));
+            Logger.Log(TAG$d, JSON.stringify(res));
             this.createQuery = `<pre> ${res[0][3]} </pre>`;
         }
 
@@ -3764,11 +3769,11 @@
         'IS NOT NULL',
     ];
 
-    const TAG$b = "table-contents";
+    const TAG$c = "table-contents";
 
     class TableContents {
         constructor(sessionId) {
-            Logger.Log(TAG$b, `sessionId: ${sessionId}`);
+            Logger.Log(TAG$c, `sessionId: ${sessionId}`);
 
             this.sessionId = sessionId;
             this.init();
@@ -3782,7 +3787,7 @@
             this.rowDeleter.setSessionId(this.sessionId);
             this.tableInfo.setSessionId(this.sessionId);
 
-            Logger.Log(TAG$b, `sessionId: ${sessionId} db: ${db}`);
+            Logger.Log(TAG$c, `sessionId: ${sessionId} db: ${db}`);
         }
 
         async init() {
@@ -3820,7 +3825,7 @@
 
         initSubscribers() {
             PubSub.subscribe(Constants.STREAM_ERROR, (err) => {
-                Logger.Log(TAG$b, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
+                Logger.Log(TAG$c, `${Constants.STREAM_ERROR}: ${JSON.stringify(err)}`);
                 Err.handle(err);
             });
 
@@ -3836,8 +3841,15 @@
                 this.handleSelectColumns(data);
             });
 
-            PubSub.subscribe(Constants.ROW_DELETED, () => {
-                this.handleRowDeleted();
+            [
+                Constants.ROW_DELETED, 
+                Constants.TABLE_TRUNCATED, 
+            ].forEach((c) => {
+                ((c) => {
+                    PubSub.subscribe(c, () => {
+                        this.refresh();
+                    });
+                })(c);
             });
 
             //handle all keyboard shortcuts
@@ -3854,12 +3866,12 @@
             });
 
             PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
-                Logger.Log(TAG$b, Constants.CELL_EDITED);
+                Logger.Log(TAG$c, Constants.CELL_EDITED);
                 await this.handleCellEdit(data);
             });
         }
 
-        handleRowDeleted() {
+        refresh() {
             const f = async (query) => {
                 return await this.updateContents(query);
             };
@@ -3887,7 +3899,7 @@
             });
 
             this.$tableContents.addEventListener('click', async (e) => {
-                Logger.Log(TAG$b, "clicked");
+                Logger.Log(TAG$c, "clicked");
                 let target = event.target;
                 if (!target.classList.contains('fk-icon')) {
                     return
@@ -3895,7 +3907,7 @@
 
                 let value = target.dataset.value;
 
-                Logger.Log(TAG$b, `${target.dataset.table}:${target.dataset.column}:${value}`);
+                Logger.Log(TAG$c, `${target.dataset.table}:${target.dataset.column}:${value}`);
                 PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
                 await this.showFkRef(target.dataset.table, target.dataset.column, value);
                 this.stack.push(target.dataset.table, target.dataset.column, value);
@@ -3919,7 +3931,7 @@
         }
 
         async handleSort(data) {
-            Logger.Log(TAG$b, JSON.stringify(data));
+            Logger.Log(TAG$c, JSON.stringify(data));
             this.sortColumn = data.column;
             this.sortOrder = data.order;
 
@@ -3931,7 +3943,7 @@
         }
 
         async handleCellEdit(data) {
-            Logger.Log(TAG$b, JSON.stringify(data));
+            Logger.Log(TAG$c, JSON.stringify(data));
             let query = `update \`${this.table}\`
                     set \`${data.col.name}\` = '${data.col.value}' 
                     where \`${data.key.name}\` = '${data.key.value}'`;
@@ -3998,7 +4010,7 @@
                              '${this.$searchText.value}'`;
             }
 
-            Logger.Log(TAG$b, this.query);
+            Logger.Log(TAG$c, this.query);
 
             const f = async (query) => {
                 let res = await this.showContents(query, this.fkMap);
@@ -4024,7 +4036,7 @@
         async show(table) {
             this.table = table;
 
-            Logger.Log(TAG$b, `Displaying ${table}`);
+            Logger.Log(TAG$c, `Displaying ${table}`);
 
             this.stack.reset();
             this.stack.push(this.table);
@@ -4042,7 +4054,7 @@
                 return res;
             };
 
-            Logger.Log(TAG$b, `${this.sortColumn}:${this.sortOrder}`);
+            Logger.Log(TAG$c, `${this.sortColumn}:${this.sortOrder}`);
             pager.init(this.query, f, this.sortColumn, this.sortOrder);
         }
 
@@ -4084,7 +4096,7 @@
             let selection = this.colSelector.getSelection(this.table);
             let res =  await this.tableUtils.showContents(stream, fkMap, selection, true, true);
 
-            Logger.Log(TAG$b, JSON.stringify(res));
+            Logger.Log(TAG$c, JSON.stringify(res));
             if (res.status == "ok") {
                 this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
             }
@@ -4159,7 +4171,7 @@
         }
 
         async navigate(e) {
-            Logger.Log(TAG$b, JSON.stringify(e));
+            Logger.Log(TAG$c, JSON.stringify(e));
             PubSub.publish(Constants.TABLE_CHANGED, {table: e.table});
 
             switch (e.type) {
@@ -4182,11 +4194,11 @@
                     await this.search();
                     break
             }
-            Logger.Log(TAG$b, "Done navigate");
+            Logger.Log(TAG$c, "Done navigate");
         }
     }
 
-    const TAG$a = "modules-tables";
+    const TAG$b = "modules-tables";
 
     class Tables {
         constructor(sessionId) {
@@ -4246,7 +4258,7 @@
                 this.show();
             });
 
-            Logger.Log(TAG$a, `sessionId: ${sessionId}`);
+            Logger.Log(TAG$b, `sessionId: ${sessionId}`);
             //handle all keyboard shortcuts
             [
                 Constants.CMD_EXPORT_TABLE,
@@ -4286,7 +4298,7 @@
         setSessionInfo(sessionId, db) {
             this.sessionId = sessionId;
             this.db = db;
-            Logger.Log(TAG$a, `sessionId: ${sessionId} db: ${db}`);
+            Logger.Log(TAG$b, `sessionId: ${sessionId} db: ${db}`);
         }
 
         filter() {
@@ -4297,7 +4309,7 @@
                 return
             }
 
-            Logger.Log(TAG$a, `Filtering ${f}`);
+            Logger.Log(TAG$b, `Filtering ${f}`);
 
             let regex = new RegExp(`${f}`);
             let tables = this.tables.filter(t => regex.test(t));
@@ -4305,7 +4317,7 @@
         }
 
         async show(db = null) {
-            Logger.Log(TAG$a, "show");
+            Logger.Log(TAG$b, "show");
             db = db ?? this.db;
             let q = `show tables from \`${db}\``;
             let cursorId = await DbUtils.fetchCursorId(this.sessionId, q);
@@ -4350,19 +4362,19 @@
         }
     }
 
-    const TAG$9 = "grid-resizer";
+    const TAG$a = "grid-resizer";
     class GridResizerH {
         //resize two elements contained in grid horizontal direction
         constructor($grid, $e1, $resizer, $e2) {
             this.d1 = $e1.getBoundingClientRect().width;
             this.d2 = $e2.getBoundingClientRect().width;
 
-            Logger.Log(TAG$9, `${this.d1} ${this.d2}`);
+            Logger.Log(TAG$a, `${this.d1} ${this.d2}`);
 
             $resizer.addEventListener('mousedown', (e) => {
                 this.isDragging = true;
                 this.startx = e.clientX;
-                Logger.Log(TAG$9, `mousedown: ${e.clientX}`);
+                Logger.Log(TAG$a, `mousedown: ${e.clientX}`);
                 e.preventDefault();
             });
 
@@ -4370,11 +4382,11 @@
                 if (!this.isDragging) {
                     return;
                 }
-                Logger.Log(TAG$9, `mousemove: ${e.clientX}`);
+                Logger.Log(TAG$a, `mousemove: ${e.clientX}`);
                 let delta = e.clientX - this.startx;
                 this.d1 += delta;
                 this.d2 += -1 * delta;
-                Logger.Log(TAG$9, `${delta} ${this.d1} ${this.d2}`);
+                Logger.Log(TAG$a, `${delta} ${this.d1} ${this.d2}`);
 
                 $grid.style.gridTemplateColumns = `${this.d1}px 2px ${this.d2}px`;
                 this.startx = e.clientX;
@@ -4383,21 +4395,21 @@
 
             document.addEventListener('mouseup', (e) => {
                 this.isDragging = false;
-                Logger.Log(TAG$9, `mouseup: ${e.clientX}`);
+                Logger.Log(TAG$a, `mouseup: ${e.clientX}`);
                 e.preventDefault();
                 PubSub.publish(Constants.GRID_H_RESIZED, {});
             });
         }
     }
 
-    const TAG$8 = "main-menu";
+    const TAG$9 = "main-menu";
     class MainMenu {
         static init() {
     		let elementsArray = document.querySelectorAll('[id$="-menu"]');
 
             elementsArray.forEach((elem) => {
                 elem.addEventListener("click", (e) => {
-                    Logger.Log(TAG$8, `${e.currentTarget.id} clicked `);
+                    Logger.Log(TAG$9, `${e.currentTarget.id} clicked `);
                     MainMenu.handleMenu(e.currentTarget.id);
                 });
             });
@@ -4424,7 +4436,7 @@
     	}
     }
 
-    const TAG$7 = "appbar";
+    const TAG$8 = "appbar";
     class AppBar {
         static init(name, sessionId, db) {
             let $databases = document.getElementById('databases');
@@ -4433,7 +4445,7 @@
             AppBar.showDatabases($databases, sessionId, db);
 
             $databases.addEventListener('change', () => {
-                Logger.Log(TAG$7, "Db changed");
+                Logger.Log(TAG$8, "Db changed");
                 let db = $databases.value;
                 PubSub.publish(Constants.DB_CHANGED, {db: db});
             });
@@ -4495,7 +4507,7 @@
     	}
     }
 
-    const TAG$6 = "file-uploader";
+    const TAG$7 = "file-uploader";
 
     class FileUploader {
         constructor() {
@@ -4509,7 +4521,7 @@
             
             document.querySelector('body').append(n);
             document.querySelector('[type=file]').addEventListener("change", (e) => {
-                Logger.Log(TAG$6, 'changed');
+                Logger.Log(TAG$7, 'changed');
     	
                 if (e.target.files.length > 0) {
                     let reader = new FileReader();
@@ -4532,25 +4544,25 @@
         }
 
         show() {
-            Logger.Log(TAG$6, "Showing " + this.mID);
+            Logger.Log(TAG$7, "Showing " + this.mID);
             document.querySelector('[type=file]').click();
         }
     }
 
-    const TAG$5 = "query-history";
+    const TAG$6 = "query-history";
     const MAX_DAYS = 10000;
 
     class QueryHistory {
         constructor() {
             PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
-                Logger.Log(TAG$5, JSON.stringify(query));
+                Logger.Log(TAG$6, JSON.stringify(query));
 
                 if (!this.queryDb) {
                     await this.init();
                 }
 
                 let id = await this.queryDb.save(query); 
-                Logger.Log(TAG$5, `Saved to ${id}`);
+                Logger.Log(TAG$6, `Saved to ${id}`);
                 PubSub.publish(Constants.QUERY_SAVED, {id: id});
             });
 
@@ -4633,17 +4645,17 @@
                     message: `Imported ${i + 1} of ${data.length}`
                 });
 
-                Logger.Log(TAG$5, `Saved to ${id}`);
+                Logger.Log(TAG$6, `Saved to ${id}`);
             }
             PubSub.publish(Constants.STOP_PROGRESS, {});
         }
     }
 
-    const TAG$4 = "workers";
+    const TAG$5 = "workers";
     class Workers {
         constructor() {
             this.$version = document.getElementById('version');
-            Logger.Log(TAG$4, `ver: ${this.$version.value}`);
+            Logger.Log(TAG$5, `ver: ${this.$version.value}`);
         }
 
         initConnectionWorker() {
@@ -4678,7 +4690,7 @@
         }
     }
 
-    const TAG$3 = "table-renamer";
+    const TAG$4 = "table-renamer";
 
     class TableRenamer {
         constructor(sessionId) {
@@ -4696,7 +4708,7 @@
                 this.$title.innerHTML = 'Renaming ..';
 
                 let query = `rename table \`${this.table}\` to \`${this.$name.value}\``;
-                Logger.Log(TAG$3, query);
+                Logger.Log(TAG$4, query);
 
                 let dbUtils = new DbUtils();
                 let res = await dbUtils.execute.apply(this, [query]);
@@ -4752,7 +4764,7 @@
         }
     }
 
-    const TAG$2 = "table-truncater";
+    const TAG$3 = "table-truncater";
 
     class TableTruncater {
         constructor(sessionId) {
@@ -4770,7 +4782,7 @@
                 this.$title.innerHTML = 'Truncating ..';
 
                 let query = `truncate table \`${this.table}\``;
-                Logger.Log(TAG$2, query);
+                Logger.Log(TAG$3, query);
 
                 let dbUtils = new DbUtils();
                 let res = await dbUtils.execute.apply(this, [query]);
@@ -4783,11 +4795,10 @@
 
                     res.data[0][1];
                     Utils.showAlert(`Truncated table`, 2000);
-                    this.reset();
                     this.closeDialog();
                     this.$ok.removeAttribute('disabled');
 
-                    PubSub.publish(Constants.TABLE_RENAMED, {});
+                    PubSub.publish(Constants.TABLE_TRUNCATED, {});
                     return;
                 }
 
@@ -4820,8 +4831,74 @@
             this.$title.innerHTML = this.title;
             this.openDialog();
         }
+    }
 
-        reset() {
+    const TAG$2 = "table-deleter";
+
+    class TableDeleter {
+        constructor(sessionId) {
+            this.sessionId = sessionId;
+
+            this.$dialog = document.getElementById('table-deleter-dialog');
+            this.$cancel = this.$dialog.querySelector('.cancel');
+            this.$ok = this.$dialog.querySelector('.ok');
+            this.$body = this.$dialog.querySelector('.modal-card-body');
+            this.$body.innerHTML = "This operation will delete the table. Are you sure?";
+            this.$title = this.$dialog.querySelector('.modal-card-title');
+
+            this.$ok.addEventListener('click', async () => {
+                this.$ok.setAttribute('disabled', 'disabled');
+                this.$title.innerHTML = `Deleting ${this.table}..`;
+
+                let query = `drop table \`${this.table}\``;
+                Logger.Log(TAG$2, query);
+
+                let dbUtils = new DbUtils();
+                let res = await dbUtils.execute.apply(this, [query]);
+
+                if (res.status == "ok") {
+                    PubSub.publish(Constants.QUERY_DISPATCHED, {
+                        query: query,
+                        tags: [Constants.USER]
+                    });
+
+                    res.data[0][1];
+                    Utils.showAlert(`Deleted table ${this.table}`, 2000);
+                    this.closeDialog();
+                    this.$ok.removeAttribute('disabled');
+
+                    PubSub.publish(Constants.TABLE_RENAMED, {});
+                    return;
+                }
+
+                this.$title.innerHTML = this.title;
+                this.$ok.removeAttribute('disabled');
+            });
+
+            this.$cancel.addEventListener('click', () => {
+                //if no query in progress this will be ignored
+                DbUtils.cancel(this.sessionId, this.cursorId);
+                this.closeDialog();
+            });
+        }
+
+        openDialog() {
+            this.$dialog.classList.add('is-active');
+        }
+
+        closeDialog() {
+            this.$dialog.classList.remove('is-active');
+        }
+
+        setSessionId(sessionId) {
+            this.sessionId = sessionId;
+        }
+
+        init(table) {
+            this.table = table;
+            this.title = `Delete ${this.table}?`;
+            this.$title.innerHTML = this.title;
+            this.openDialog();
         }
     }
 
@@ -4843,6 +4920,7 @@
 
             this.renamer.setSessionId(this.sessionId);
             this.truncater.setSessionId(this.sessionId);
+            this.deleter.setSessionId(this.sessionId);
 
             Logger.Log(TAG$1, `sessionId: ${sessionId} db: ${db}`);
         }
@@ -4855,6 +4933,7 @@
             //dropdown handlers
             this.renamer = new TableRenamer(this.sessionId);
             this.truncater = new TableTruncater(this.sessionId);
+            this.deleter = new TableDeleter(this.sessionId);
         }
 
         initDom() {
@@ -4891,6 +4970,10 @@
 
             case 'truncate-table':
                 this.truncater.init(this.table);
+                break;
+
+            case 'delete-table':
+                this.deleter.init(this.table);
                 break;
             }
         }
