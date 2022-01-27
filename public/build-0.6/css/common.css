@@ -34,7 +34,16 @@ body, html {
 
 #appbar-left-panel {
 	display:grid;
-	grid-template-columns: 2fr 8fr;
+	grid-template-columns: 2fr 8fr 2fr;
+}
+
+#appbar-left-panel .dropdown {
+	padding-left:5px;
+	padding-top:10px;
+	margin-left:-26px;
+	z-index:1000;
+	color:#fff;
+	cursor:pointer;
 }
 
 #appbar-right-panel {
@@ -171,4 +180,8 @@ sup {
 .fa-disabled {
 	opacity: 0.6;
 	cursor: not-allowed !important;
+}
+
+#connection-container {
+	margin-left:10px;
 }

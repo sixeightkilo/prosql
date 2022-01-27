@@ -31,7 +31,7 @@ class Query {
             this.sessionId = await DbUtils.login(this.creds);
 
             //update session id in modules
-            this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
+            this.setSessionInfo();
         })
 
         this.workers = new Workers();
@@ -73,10 +73,10 @@ class Query {
 
         this.initHandlers();
 
-        AppBar.init(this.creds.name, this.sessionId, this.creds.db);
+        this.appbar = new AppBar(this.creds.name, this.sessionId, this.creds.db);
 
         if (this.creds.db) {
-            this.queryRunner.setSessionInfo(this.sessionId, this.creds.db);
+            this.setSessionInfo();
         }
 
         let $g1 = document.getElementById('app-content');
@@ -84,6 +84,11 @@ class Query {
         let $e2 = document.getElementById('app-right-panel');
         let $resizer = document.getElementById('app-content-resizer');
         new GridResizerH($g1, $e1, $resizer, $e2);
+    }
+
+    setSessionInfo() {
+        this.queryRunner.setSessionInfo(this.sessionId, this.creds.db)
+        this.appbar.setSessionInfo(this.sessionId);
     }
 
     adjustView() {

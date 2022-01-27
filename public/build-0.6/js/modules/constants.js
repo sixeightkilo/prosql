@@ -81,12 +81,19 @@ class Constants {
         return 'cmd.search-tables'
     }
 
-
     static get CMD_BACK() {
         return 'cmd.back'
     }
 
     //events
+    static get DB_RENAMED() {
+        return 'db-menu.db-renamed'
+    }
+
+    static get DB_DELETED() {
+        return 'db-menu.db-deleted'
+    }
+
     static get TABLE_RENAMED() {
         return 'ops-menu.table-renamed'
     }

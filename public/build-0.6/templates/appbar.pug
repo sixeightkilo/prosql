@@ -3,9 +3,24 @@
         div
             a(href='/connections')
                 i.fas.fa-home
-        div
-            .select.is-small
-                select#databases
+        div#connection-container
+            button.button.is-info
+                span#conn-name
+                .select.is-small
+                    select#databases
+                span &nbsp;&nbsp;&nbsp;&nbsp;
+
+        .dropdown
+            .dropdown-trigger
+                i.fas.fa-tools#db-operations(title="Database operations")
+            #db-dropdown-menu.dropdown-menu(role='menu')
+                .dropdown-content
+                    a.db-dropdown-item.dropdown-item#rename-db
+                        | Rename database
+                    a.db-dropdown-item.dropdown-item#delete-db
+                        | Delete database
+
+                
     #appbar-right-panel
         div#content-menu
             div
@@ -24,11 +39,11 @@
 
         div#about-menu
             div
-                i.fas.fa-tools
+                i.fas.fa-cog
             div About
 
         div#dummy
         div#conn
-            span.tag.is-medium.is-info#conn-name
+            //span.tag.is-medium.is-info#conn-name
         div#nav
             i.fas.fa-arrow-circle-left.stack-disable#back(title="Back to previous view(Alt+Shift+<")

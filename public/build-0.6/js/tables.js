@@ -49,6 +49,7 @@ class Content {
         this.tableContents.setSessionInfo(this.sessionId, this.creds.db)
         this.tables.setSessionInfo(this.sessionId, this.creds.db)
         this.opsMenu.setSessionInfo(this.sessionId, this.creds.db)
+        this.appbar.setSessionInfo(this.sessionId);
     }
 
     async init() {
@@ -70,10 +71,10 @@ class Content {
         this.tableContents = new TableContents(this.sessionId);
         this.tables = new Tables(this.sessionId);
         this.opsMenu = new OpsMenu(this.sessionId);
+        this.appbar = new AppBar(this.creds.name, this.sessionId, this.creds.db);
 
         this.initHandlers();
 
-        AppBar.init(this.creds.name, this.sessionId, this.creds.db);
 
         if (this.creds.db) {
             this.setSessionInfo();

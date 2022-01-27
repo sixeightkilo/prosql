@@ -13,6 +13,7 @@ class ProgressBar {
 			this.hasButtons = false;
 		});
 
+        //todo: why can't we have simple function calls?
         PubSub.subscribe(Constants.INIT_PROGRESS, (data) => {
             this.time.innerHTML = '';
             this.message.innerHTML = '';
