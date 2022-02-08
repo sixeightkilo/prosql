@@ -43,7 +43,7 @@ class QueryDB extends BaseDB {
     async save(rec) {
         return new Promise(async (resolve, reject) => {
             //remove all new lines
-            rec.query = rec.query.replace(/\r?\n|\r/g, " ");
+            //rec.query = rec.query.replace(/\r?\n|\r/g, " ");
             //remove extra white spaces
             rec.query = rec.query.replace(/[ ]{2,}/g, " ");
             let terms = rec.query.split(' ');
@@ -221,10 +221,10 @@ class QueryDB extends BaseDB {
         let start = 0, 
             end = str.length;
 
-        while(start < end && chars.indexOf(str[start]) >= 0)
+        while (start < end && chars.indexOf(str[start]) >= 0)
             ++start;
 
-        while(end > start && chars.indexOf(str[end - 1]) >= 0)
+        while (end > start && chars.indexOf(str[end - 1]) >= 0)
             --end;
 
         return (start > 0 || end < str.length) ? str.substring(start, end) : str;
