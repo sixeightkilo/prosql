@@ -352,6 +352,7 @@
         }
     }
 
+    const TAG$q = "error";
     class Err {
         static get ERR_NONE () {
             return 'none'
@@ -387,7 +388,8 @@
 
         static handle(err) {
             if (err.error == Err.ERR_NO_AGENT) {
-                window.location = '/install';
+                Logger.Log(TAG$q, Err.ERR_NO_AGENT);
+                //window.location = '/install';
                 return;
             }
 
@@ -1402,7 +1404,8 @@
                         return res;
                     }
                     //user must install agent
-                    window.location = '/install';
+                    Logger.Log(TAG$j, "get: " + Err.ERR_NO_AGENT);
+                    //window.location = '/install';
                     return;
                 }
 
@@ -1471,7 +1474,8 @@
                         return res;
                     }
                     //user must install agent
-                    window.location = '/install';
+                    Logger.Log(TAG$j, "post: " + Err.ERR_NO_AGENT);
+                    //window.location = '/install';
                     return;
                 }
 

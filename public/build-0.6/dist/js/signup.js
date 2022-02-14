@@ -1,54 +1,6 @@
 (function () {
     'use strict';
 
-    class Err {
-        static get ERR_NONE () {
-            return 'none'
-        }
-
-        static get ERR_NO_AGENT () {
-            return 'no-agent'
-        }
-
-        static get ERR_INVALID_USER_INPUT() {
-            return 'invalid-user-input'
-        }
-
-        static get ERR_INVALID_SESSION_ID() {
-            return 'invalid-session-id'
-        }
-
-        static get ERR_SIGNIN_REQUIRED() {
-            return 'signin-required'
-        }
-
-        static get ERR_INVALID_CURSOR_ID() {
-            return 'invalid-cursor-id'
-        }
-
-        static get ERR_DB_ERROR() {
-            return 'db-error'
-        }
-
-        static get ERR_UNRECOVERABLE() {
-            return 'unrecoverable-error'
-        }
-
-        static handle(err) {
-            if (err.error == Err.ERR_NO_AGENT) {
-                window.location = '/install';
-                return;
-            }
-
-            if (err.error == Err.ERR_INVALID_SESSION_ID) {
-                window.location = '/connections';
-                return;
-            }
-
-            alert(err.error);
-        }
-    }
-
     class Constants {
         //hotkeys
         static get SHIFT_A() {
@@ -397,6 +349,56 @@
 
             let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
             console.log(o);
+        }
+    }
+
+    const TAG$8 = "error";
+    class Err {
+        static get ERR_NONE () {
+            return 'none'
+        }
+
+        static get ERR_NO_AGENT () {
+            return 'no-agent'
+        }
+
+        static get ERR_INVALID_USER_INPUT() {
+            return 'invalid-user-input'
+        }
+
+        static get ERR_INVALID_SESSION_ID() {
+            return 'invalid-session-id'
+        }
+
+        static get ERR_SIGNIN_REQUIRED() {
+            return 'signin-required'
+        }
+
+        static get ERR_INVALID_CURSOR_ID() {
+            return 'invalid-cursor-id'
+        }
+
+        static get ERR_DB_ERROR() {
+            return 'db-error'
+        }
+
+        static get ERR_UNRECOVERABLE() {
+            return 'unrecoverable-error'
+        }
+
+        static handle(err) {
+            if (err.error == Err.ERR_NO_AGENT) {
+                Logger.Log(TAG$8, Err.ERR_NO_AGENT);
+                //window.location = '/install';
+                return;
+            }
+
+            if (err.error == Err.ERR_INVALID_SESSION_ID) {
+                window.location = '/connections';
+                return;
+            }
+
+            alert(err.error);
         }
     }
 
@@ -1402,7 +1404,8 @@
                         return res;
                     }
                     //user must install agent
-                    window.location = '/install';
+                    Logger.Log(TAG$1, "get: " + Err.ERR_NO_AGENT);
+                    //window.location = '/install';
                     return;
                 }
 
@@ -1471,7 +1474,8 @@
                         return res;
                     }
                     //user must install agent
-                    window.location = '/install';
+                    Logger.Log(TAG$1, "post: " + Err.ERR_NO_AGENT);
+                    //window.location = '/install';
                     return;
                 }
 
