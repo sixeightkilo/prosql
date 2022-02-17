@@ -2,7 +2,6 @@ import { Utils } from './modules/utils.js'
 import { Constants } from './modules/constants.js'
 import { Monitor } from './modules/monitor.js'
 
-const TAG = "index";
 class Index {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
@@ -24,8 +23,7 @@ class Index {
             return;
         }
 
-        Logger.Log(TAG, "install");
-        //window.location = '/install';
+        window.location = '/install';
     }
 }
 

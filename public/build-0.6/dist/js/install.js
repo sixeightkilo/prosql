@@ -352,7 +352,6 @@
         }
     }
 
-    const TAG$9 = "error";
     class Err {
         static get ERR_NONE () {
             return 'none'
@@ -388,8 +387,7 @@
 
         static handle(err) {
             if (err.error == Err.ERR_NO_AGENT) {
-                Logger.Log(TAG$9, Err.ERR_NO_AGENT);
-                //window.location = '/install';
+                window.location = '/install';
                 return;
             }
 
@@ -1404,8 +1402,7 @@
                         return res;
                     }
                     //user must install agent
-                    Logger.Log(TAG$2, "get: " + Err.ERR_NO_AGENT);
-                    //window.location = '/install';
+                    window.location = '/install';
                     return;
                 }
 
@@ -1474,8 +1471,7 @@
                         return res;
                     }
                     //user must install agent
-                    Logger.Log(TAG$2, "post: " + Err.ERR_NO_AGENT);
-                    //window.location = '/install';
+                    window.location = '/install';
                     return;
                 }
 
@@ -1682,8 +1678,7 @@
     }
 
     const TAG = "install";
-    const MONITOR_INTERVAL = 5000;
-    const REDIRECT_DELAY = 2000;
+    const MONITOR_INTERVAL = 50;
 
     class Install {
         constructor() {
@@ -1700,9 +1695,7 @@
                     this.updateCard();
                     this.updateInstructions();
                     clearInterval(timerId);
-                    setTimeout(() => {
-                        window.location = '/connections';
-                    }, REDIRECT_DELAY);
+                    window.location = '/connections';
                 }
             }, MONITOR_INTERVAL);
 

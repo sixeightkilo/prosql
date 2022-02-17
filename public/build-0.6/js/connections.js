@@ -297,8 +297,7 @@ class Connections {
         let json = await Utils.get(Constants.URL + '/ping?' + new URLSearchParams(conn), false)
         if (json.status == "error") {
             if (json.msg == Err.ERR_NO_AGENT) {
-                Logger.Log(TAG, Err.ERR_NO_AGENT);
-                //window.location = '/install';
+                window.location = '/install';
                 return "error";
             }
 

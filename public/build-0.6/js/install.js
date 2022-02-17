@@ -5,8 +5,7 @@ import { Logger } from './modules/logger.js'
 import { Tabs } from './modules/tabs.js'
 
 const TAG = "install"
-const MONITOR_INTERVAL = 5000;
-const REDIRECT_DELAY = 2000;
+const MONITOR_INTERVAL = 50;
 
 class Install {
     constructor() {
@@ -23,9 +22,7 @@ class Install {
                 this.updateCard();
                 this.updateInstructions();
                 clearInterval(timerId);
-                setTimeout(() => {
-                    window.location = '/connections';
-                }, REDIRECT_DELAY);
+                window.location = '/connections';
             }
         }, MONITOR_INTERVAL);
 

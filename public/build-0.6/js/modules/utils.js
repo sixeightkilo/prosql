@@ -77,8 +77,7 @@ class Utils {
                     return res;
                 }
                 //user must install agent
-                Logger.Log(TAG, "get: " + Err.ERR_NO_AGENT);
-                //window.location = '/install';
+                window.location = '/install';
                 return;
             }
 
@@ -147,8 +146,7 @@ class Utils {
                     return res;
                 }
                 //user must install agent
-                Logger.Log(TAG, "post: " + Err.ERR_NO_AGENT);
-                //window.location = '/install';
+                window.location = '/install';
                 return;
             }
 

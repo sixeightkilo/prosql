@@ -1,6 +1,3 @@
-import { Logger } from './logger.js'
-
-const TAG = "error"
 class Err {
     static get ERR_NONE () {
         return 'none'
@@ -36,8 +33,7 @@ class Err {
 
     static handle(err) {
         if (err.error == Err.ERR_NO_AGENT) {
-            Logger.Log(TAG, Err.ERR_NO_AGENT);
-            //window.location = '/install';
+            window.location = '/install';
             return;
         }
 
