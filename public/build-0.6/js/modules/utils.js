@@ -55,9 +55,8 @@ class Utils {
                 headers: hdrs
             })
 
-            Logger.Log(TAG, response)
-
             let json = await response.json()
+            Logger.Log(TAG, JSON.stringify(json));
 
             if (json.status == 'error') {
                 throw json
@@ -65,7 +64,7 @@ class Utils {
 
             return json
         } catch (e) {
-            Logger.Log(TAG, e)
+            Logger.Log(TAG, JSON.stringify(e));
             let res = {
                 'status' : 'error',
                 'data': null,

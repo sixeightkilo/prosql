@@ -1380,9 +1380,8 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$j, response);
-
                 let json = await response.json();
+                Logger.Log(TAG$j, JSON.stringify(json));
 
                 if (json.status == 'error') {
                     throw json
@@ -1390,7 +1389,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$j, e);
+                Logger.Log(TAG$j, JSON.stringify(e));
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -1784,16 +1783,17 @@
     class DbUtils {
 
         //todo: use WS in fetchall and get rid of fetch route from agent
-        static async fetchAll(sessionId, query) {
+        static async fetchAll(sessionId, query, handleError = false) {
             let params = {
                 'session-id': sessionId,
                 query: query
             };
 
-            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params), handleError);
+            Logger.Log(TAG$h, JSON.stringify(json));
             if (json.status == 'error') {
                 Logger.Log(TAG$h, JSON.stringify(json));
-                return []
+                throw json.msg
             }
 
             let cursorId = json.data['cursor-id'];
@@ -1808,10 +1808,10 @@
             let rows = [];
 
             do {
-                json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
+                json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params), handleError);
                 if (json.status == "error") {
                     Logger.Log(TAG$h, JSON.stringify(json));
-                    return []
+                    throw json.msg
                 }
 
                 Logger.Log(TAG$h, JSON.stringify(json));

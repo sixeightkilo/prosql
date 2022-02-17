@@ -1380,9 +1380,8 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$3, response);
-
                 let json = await response.json();
+                Logger.Log(TAG$3, JSON.stringify(json));
 
                 if (json.status == 'error') {
                     throw json
@@ -1390,7 +1389,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$3, e);
+                Logger.Log(TAG$3, JSON.stringify(e));
                 let res = {
                     'status' : 'error',
                     'data': null,

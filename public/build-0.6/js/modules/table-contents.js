@@ -167,8 +167,8 @@ class TableContents {
             let value = target.dataset.value;
 
             Logger.Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
-            PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
             await this.showFkRef(target.dataset.table, target.dataset.column, value)
+            PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
             this.stack.push(target.dataset.table, target.dataset.column, value)
         })
 
@@ -231,9 +231,8 @@ class TableContents {
     }
 
     async showFkRef(table, col, val) {
+        await this.initTable(table);
         this.table = table
-
-        await this.initTable(this.table);
         this.rowAdder.init(this.table, this.columns);
         this.colSelector.init(this.table, this.columns);
 
@@ -293,17 +292,16 @@ class TableContents {
     }
 
     async show(table) {
-        this.table = table
-
+        await this.initTable(table);
         Logger.Log(TAG, `Displaying ${table}`)
 
-        this.stack.reset()
-        this.stack.push(this.table)
-
-        await this.initTable(this.table);
+        this.table = table
         this.rowAdder.init(this.table, this.columns);
         this.rowDeleter.init(this.table);
         this.colSelector.init(this.table, this.columns);
+
+        this.stack.reset()
+        this.stack.push(this.table)
 
         //the base query currently in operation
         this.query = `select * from \`${this.table}\``;
@@ -330,7 +328,15 @@ class TableContents {
                 TABLE_SCHEMA = '${this.db}\' and
                 TABLE_NAME = '${table}\'`)
 
-        let values = await Promise.all([columns, contraints])
+        let values;
+        try {
+            values = await Promise.all([columns, contraints])
+        } catch (e) {
+            Logger.Log(TAG, `Error: ${e}`);
+            throw e
+        }
+
+        Logger.Log(TAG, JSON.stringify(values[1]));
         this.fkMap = DbUtils.createFKMap(values[1])
         this.columns = Utils.extractColumns(values[0])
 
@@ -443,8 +449,8 @@ class TableContents {
                 break
 
             case 'search':
+                await this.initTable(e.table);
                 this.table = e.table;
-                await this.initTable(this.table);
 
                 this.$columNames.value = e.column;
                 this.$operators.value = e.operator;

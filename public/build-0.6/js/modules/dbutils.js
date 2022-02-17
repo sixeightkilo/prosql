@@ -10,16 +10,17 @@ const TAG = "dbutils"
 class DbUtils {
 
     //todo: use WS in fetchall and get rid of fetch route from agent
-    static async fetchAll(sessionId, query) {
+    static async fetchAll(sessionId, query, handleError = false) {
         let params = {
             'session-id': sessionId,
             query: query
         }
 
-        let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params))
+        let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params), handleError)
+        Logger.Log(TAG, JSON.stringify(json))
         if (json.status == 'error') {
             Logger.Log(TAG, JSON.stringify(json))
-            return []
+            throw json.msg
         }
 
         let cursorId = json.data['cursor-id']
@@ -34,10 +35,10 @@ class DbUtils {
         let rows = []
 
         do {
-            json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params))
+            json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params), handleError)
             if (json.status == "error") {
                 Logger.Log(TAG, JSON.stringify(json))
-                return []
+                throw json.msg
             }
 
             Logger.Log(TAG, JSON.stringify(json))

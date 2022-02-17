@@ -1380,9 +1380,8 @@
                     headers: hdrs
                 });
 
-                Logger.Log(TAG$q, response);
-
                 let json = await response.json();
+                Logger.Log(TAG$q, JSON.stringify(json));
 
                 if (json.status == 'error') {
                     throw json
@@ -1390,7 +1389,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$q, e);
+                Logger.Log(TAG$q, JSON.stringify(e));
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -1784,16 +1783,17 @@
     class DbUtils {
 
         //todo: use WS in fetchall and get rid of fetch route from agent
-        static async fetchAll(sessionId, query) {
+        static async fetchAll(sessionId, query, handleError = false) {
             let params = {
                 'session-id': sessionId,
                 query: query
             };
 
-            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params));
+            let json = await Utils.get(Constants.URL + '/query?' + new URLSearchParams(params), handleError);
+            Logger.Log(TAG$o, JSON.stringify(json));
             if (json.status == 'error') {
                 Logger.Log(TAG$o, JSON.stringify(json));
-                return []
+                throw json.msg
             }
 
             let cursorId = json.data['cursor-id'];
@@ -1808,10 +1808,10 @@
             let rows = [];
 
             do {
-                json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params));
+                json = await Utils.get(Constants.URL + '/fetch?' + new URLSearchParams(params), handleError);
                 if (json.status == "error") {
                     Logger.Log(TAG$o, JSON.stringify(json));
-                    return []
+                    throw json.msg
                 }
 
                 Logger.Log(TAG$o, JSON.stringify(json));
@@ -3916,8 +3916,8 @@
                 let value = target.dataset.value;
 
                 Logger.Log(TAG$f, `${target.dataset.table}:${target.dataset.column}:${value}`);
-                PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
                 await this.showFkRef(target.dataset.table, target.dataset.column, value);
+                PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
                 this.stack.push(target.dataset.table, target.dataset.column, value);
             });
 
@@ -3980,9 +3980,8 @@
         }
 
         async showFkRef(table, col, val) {
+            await this.initTable(table);
             this.table = table;
-
-            await this.initTable(this.table);
             this.rowAdder.init(this.table, this.columns);
             this.colSelector.init(this.table, this.columns);
 
@@ -4042,17 +4041,16 @@
         }
 
         async show(table) {
-            this.table = table;
-
+            await this.initTable(table);
             Logger.Log(TAG$f, `Displaying ${table}`);
 
-            this.stack.reset();
-            this.stack.push(this.table);
-
-            await this.initTable(this.table);
+            this.table = table;
             this.rowAdder.init(this.table, this.columns);
             this.rowDeleter.init(this.table);
             this.colSelector.init(this.table, this.columns);
+
+            this.stack.reset();
+            this.stack.push(this.table);
 
             //the base query currently in operation
             this.query = `select * from \`${this.table}\``;
@@ -4079,7 +4077,15 @@
                 TABLE_SCHEMA = '${this.db}\' and
                 TABLE_NAME = '${table}\'`);
 
-            let values = await Promise.all([columns, contraints]);
+            let values;
+            try {
+                values = await Promise.all([columns, contraints]);
+            } catch (e) {
+                Logger.Log(TAG$f, `Error: ${e}`);
+                throw e
+            }
+
+            Logger.Log(TAG$f, JSON.stringify(values[1]));
             this.fkMap = DbUtils.createFKMap(values[1]);
             this.columns = Utils.extractColumns(values[0]);
 
@@ -4192,8 +4198,8 @@
                     break
 
                 case 'search':
+                    await this.initTable(e.table);
                     this.table = e.table;
-                    await this.initTable(this.table);
 
                     this.$columNames.value = e.column;
                     this.$operators.value = e.operator;

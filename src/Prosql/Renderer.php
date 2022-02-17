@@ -31,6 +31,8 @@ class Renderer {
             $agentVersion = $config['version'];
         }
 
+        $agentVersion = "0.6.2";
+
         //strip off minor version
         $parts = explode(".", $agentVersion);
         $root = "build-{$parts[0]}.{$parts[1]}";
