@@ -734,13 +734,13 @@
                 //rec.query = rec.query.replace(/\r?\n|\r/g, " ");
                 //remove extra white spaces
                 rec.query = rec.query.replace(/[ ]{2,}/g, " ");
-                let terms = rec.query.split(' ');
+                //let terms = rec.query.split(' ');
 
                 //get all unique terms
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
-                terms = [...new Set(terms)];
+                //terms = [...new Set(terms)];
 
-                this.logger.log(TAG$7, JSON.stringify(terms));
+                this.logger.log(TAG$7, JSON.stringify(rec.terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -754,7 +754,7 @@
                         return;
                     }
 
-                    await this.updateSearchIndex(id, terms);
+                    await this.updateSearchIndex(id, rec.terms);
                     await this.updateTagIndex(id, rec.tags);
 
                     resolve(id);
@@ -1632,6 +1632,29 @@
                 }, t);
             });
         }
+
+        static getTerms(query) {
+            let terms = [];
+            let tokens = sqlFormatter.format(query, {language: "mysql"}).tokens;
+            //select only reserved*, string and number
+            tokens.forEach((t) => {
+                if (t.type == "string") {
+                    terms.push(t.value);
+                    return;
+                }
+
+                if (t.type == "number") {
+                    terms.push(t.value);
+                    return;
+                }
+
+                if (/^reserved/.test(t.type)) {
+                    terms.push(t.value);
+                    return;
+                }
+            });
+            return terms;
+        }
     }
 
     const TAG$1 = "base";
@@ -1727,15 +1750,6 @@
 
         async init() {
             await super.init();
-            //debug: 
-            this.logger.log(TAG, "Sending executeRequest");
-            let p = this.executeRequest(Constants.EXECUTE_SAVE_REC);
-            try {
-                let execResponse = await p;
-                this.logger.log(TAG, `execSuccess: ${execResponse}`);
-            } catch (e) {
-                this.logger.log(TAG, `execError: ${e}`);
-            }
 
             this.logger.log(TAG, "deviceid:" + this.deviceId);
             this.logger.log(TAG, "db:" + this.db);
@@ -1898,9 +1912,17 @@
             rec.created_at = new Date(rec.created_at);//convert string to date object.
             rec.updated_at = new Date(rec.updated_at);
 
-            let id = await this.queryDb.save(rec);
-            this.logger.log(TAG, `saved to : ${id}`);
-            return id
+            //let id = await this.queryDb.save(rec);
+            let p = this.executeRequest(Constants.EXECUTE_SAVE_REC, rec);
+            let id = 0;
+            try {
+                id = await p;
+                this.logger.log(TAG, `execSuccess: ${id}`);
+            } catch (e) {
+                this.logger.log(TAG, `execError: ${e}`);
+            } finally {
+                return id;
+            }
         }
 
         async updateRec(q, tags) {

@@ -20,6 +20,8 @@ class QueryHistory {
                 await this.init();
             }
 
+            //generate terms for saving to db
+            q.terms = Utils.getTerms(q.query);
             let id = await this.queryDb.save(q); 
             Logger.Log(TAG, `Saved to ${id}`);
             PubSub.publish(Constants.QUERY_SAVED, {id: id});
@@ -98,6 +100,7 @@ class QueryHistory {
             delete(d.minutes);
             delete(d.seconds);
             d.created_at = createdAt;
+            d.terms = Utils.getTerms(d.query);
             let id = await this.queryDb.save(d);
 
             PubSub.publish(Constants.UPDATE_PROGRESS, {

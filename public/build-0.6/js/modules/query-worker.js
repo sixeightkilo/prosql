@@ -45,15 +45,6 @@ class QueryWorker extends BaseWorker {
 
     async init() {
         await super.init();
-        //debug: 
-        this.logger.log(TAG, "Sending executeRequest");
-        let p = this.executeRequest(Constants.EXECUTE_SAVE_REC);
-        try {
-            let execResponse = await p;
-            this.logger.log(TAG, `execSuccess: ${execResponse}`);
-        } catch (e) {
-            this.logger.log(TAG, `execError: ${e}`);
-        }
 
         this.logger.log(TAG, "deviceid:" + this.deviceId);
         this.logger.log(TAG, "db:" + this.db);
@@ -216,9 +207,17 @@ class QueryWorker extends BaseWorker {
         rec.created_at = new Date(rec.created_at);//convert string to date object.
         rec.updated_at = new Date(rec.updated_at);
 
-        let id = await this.queryDb.save(rec);
-        this.logger.log(TAG, `saved to : ${id}`);
-        return id
+        //let id = await this.queryDb.save(rec);
+        let p = this.executeRequest(Constants.EXECUTE_SAVE_REC, rec);
+        let id = 0;
+        try {
+            id = await p;
+            this.logger.log(TAG, `execSuccess: ${id}`);
+        } catch (e) {
+            this.logger.log(TAG, `execError: ${e}`);
+        } finally {
+            return id;
+        }
     }
 
     async updateRec(q, tags) {

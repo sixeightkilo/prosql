@@ -295,5 +295,28 @@ class Utils {
             }, t);
         });
     }
+
+    static getTerms(query) {
+        let terms = [];
+        let tokens = sqlFormatter.format(query, {language: "mysql"}).tokens;
+        //select only reserved*, string and number
+        tokens.forEach((t) => {
+            if (t.type == "string") {
+                terms.push(t.value);
+                return;
+            }
+
+            if (t.type == "number") {
+                terms.push(t.value);
+                return;
+            }
+
+            if (/^reserved/.test(t.type)) {
+                terms.push(t.value);
+                return;
+            }
+        });
+        return terms;
+    }
 }
 export { Utils }

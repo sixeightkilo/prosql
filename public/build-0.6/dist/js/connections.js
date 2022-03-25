@@ -734,13 +734,13 @@
                 //rec.query = rec.query.replace(/\r?\n|\r/g, " ");
                 //remove extra white spaces
                 rec.query = rec.query.replace(/[ ]{2,}/g, " ");
-                let terms = rec.query.split(' ');
+                //let terms = rec.query.split(' ');
 
                 //get all unique terms
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
-                terms = [...new Set(terms)];
+                //terms = [...new Set(terms)];
 
-                this.logger.log(TAG$8, JSON.stringify(terms));
+                this.logger.log(TAG$8, JSON.stringify(rec.terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -754,7 +754,7 @@
                         return;
                     }
 
-                    await this.updateSearchIndex(id, terms);
+                    await this.updateSearchIndex(id, rec.terms);
                     await this.updateTagIndex(id, rec.tags);
 
                     resolve(id);
@@ -1632,6 +1632,29 @@
                 }, t);
             });
         }
+
+        static getTerms(query) {
+            let terms = [];
+            let tokens = sqlFormatter.format(query, {language: "mysql"}).tokens;
+            //select only reserved*, string and number
+            tokens.forEach((t) => {
+                if (t.type == "string") {
+                    terms.push(t.value);
+                    return;
+                }
+
+                if (t.type == "number") {
+                    terms.push(t.value);
+                    return;
+                }
+
+                if (/^reserved/.test(t.type)) {
+                    terms.push(t.value);
+                    return;
+                }
+            });
+            return terms;
+        }
     }
 
     const TAG$2 = "connection-model";
@@ -1704,6 +1727,11 @@
             Logger.Log(TAG$1, `ver: ${this.$version.value}`);
         }
 
+        async initDb() {
+            this.queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await this.queryDb.open();
+        }
+
         initConnectionWorker() {
             //init must be called after dom is loaded
             this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
@@ -1720,9 +1748,11 @@
             };
         }
 
-        initQueryWorker() {
+        async initQueryWorker() {
+            await this.initDb();
+
             this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
-            this.queryWorker.port.onmessage = (e) => {
+            this.queryWorker.port.onmessage = async (e) => {
                 switch (e.data.type) {
                 case Constants.DEBUG_LOG:
                     Logger.Log("query-worker", e.data.payload);
@@ -1734,9 +1764,13 @@
 
                 case Constants.EXECUTE_SAVE_REC:
                     Logger.Log("query-worker", Constants.EXECUTE_SAVE_REC);
+                    let rec = e.data.data;
+                    rec.terms = Utils.getTerms(rec.query);
+                    let id = await this.queryDb.save(rec); 
+
                     this.queryWorker.port.postMessage({
                         type: Constants.EXECUTE_SUCCESS,
-                        data: "Done"
+                        data: id
                     });
                     break;
                 }

@@ -46,13 +46,13 @@ class QueryDB extends BaseDB {
             //rec.query = rec.query.replace(/\r?\n|\r/g, " ");
             //remove extra white spaces
             rec.query = rec.query.replace(/[ ]{2,}/g, " ");
-            let terms = rec.query.split(' ');
+            //let terms = rec.query.split(' ');
 
             //get all unique terms
             //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
-            terms = [...new Set(terms)];
+            //terms = [...new Set(terms)];
 
-            this.logger.log(TAG, JSON.stringify(terms));
+            this.logger.log(TAG, JSON.stringify(rec.terms));
             let id = -1;
             try {
                 //apppend timestamp if required
@@ -66,7 +66,7 @@ class QueryDB extends BaseDB {
                     return;
                 }
 
-                await this.updateSearchIndex(id, terms);
+                await this.updateSearchIndex(id, rec.terms);
                 await this.updateTagIndex(id, rec.tags);
 
                 resolve(id);
