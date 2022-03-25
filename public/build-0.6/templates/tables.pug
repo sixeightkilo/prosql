@@ -2,7 +2,7 @@ doctype html
 html
     head
         include head.pug
-        script(src="/node_modules/sql-formatter/dist/sql-formatter.js")
+        script(src="/#{root}/dist/js/sql-formatter.js")
         link(rel="stylesheet" href="/#{root}/css/tables.css?ver=#{version}")
     body
         include common.pug
