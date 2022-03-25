@@ -3177,10 +3177,24 @@
         }
 
         async runAll() {
-            let json = await Utils.post('/browser-api/sql/split', {q: this.editor.getAll()});
-            Logger.Log(TAG$a, JSON.stringify(json));
-            for (let i = 0; i < json.data.length; i++) {
-                let q = json.data[i];
+            //let json = await Utils.post('/browser-api/sql/split', {q: this.editor.getAll()});
+            //Logger.Log(TAG, JSON.stringify(json));
+            //for (let i = 0; i < json.data.length; i++) {
+                //let q = json.data[i];
+                //this.cursorId = null;
+                //let res = await this.runQuery(q);
+    //
+                //if (res.status == "error") {
+                    //Logger.Log(TAG, `runall breaking: ${res.msg}`);
+                    //break;
+                //}
+    //
+                //Logger.Log(TAG, `${res['rows-affected']}`);
+            //}
+            let queries = this.split(this.editor.getAll());
+            for (let i = 0; i < queries.length; i++) {
+                let q = queries[i];
+                Logger.Log(TAG$a, `running: ${q}`);
                 this.cursorId = null;
                 let res = await this.runQuery(q);
 
@@ -3193,11 +3207,39 @@
             }
         }
 
+        split(str) {
+            let queries = [];
+            let tokens = sqlFormatter.format(str, {
+                language: 'mysql'
+            }).tokens;
+
+            let q = '';
+            tokens.forEach((t) => {
+                if (t.type == 'operator' && t.value == ';') {
+                    queries.push(q);
+                    q = '';
+                    return;
+                }
+
+                q += t.whitespaceBefore + t.value;
+            });
+
+            q.trim();
+            if (q != '') {
+                queries.push(q);
+            }
+            return queries;
+        }
+
         async formatQuery() {
             let q = this.editor.getValue();
-            Logger.Log(TAG$a, q);
-            let json = await Utils.post('/browser-api/sql/prettify', {q: q});
-            this.editor.setValue(json.data);
+            q = sqlFormatter.format(q, {
+                language: 'mysql'
+            });
+
+            Logger.Log(TAG$a, JSON.stringify(q.tokens));
+
+            this.editor.setValue(q.query);
             this.editor.clearSelection();
             this.editor.focus();
         }
@@ -3253,7 +3295,7 @@
 
                 //todo: why just get does not work ??
                 let recs = await this.queryDb.findByIds([id]);
-                let q = recs[0];
+                let r = recs[0];
                 let t = tippy(document.querySelector(`.query[data-id="${id}"]`), {
                     onHidden(instance) {
                         Logger.Log(TAG$9, "destroying");
@@ -3261,10 +3303,10 @@
                     }
                 });
 
-                let json = await Utils.post('/browser-api/sql/prettify', {q: q.query});
+                let q = sqlFormatter.format(r.query, {language: 'mysql'});
 
                 t.setProps({
-                    content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
+                    content: Utils.processTemplate(this.tootipTemplate, {id: id, query: q.query}),
                     placement: 'right',
                     delay: 0,
                     allowHTML: true,
@@ -3283,9 +3325,9 @@
                 let id = parseInt(e.target.dataset.id);
                 Logger.Log(TAG$9, `Copying ${id}`);
                 let recs = await this.queryDb.findByIds([id]);
-                let q = recs[0];
-                let json = await Utils.post('/browser-api/sql/prettify', {q: q.query});
-                await navigator.clipboard.writeText(json.data);
+                let r = recs[0];
+                let q = sqlFormatter.format(r.query, {language: 'mysql'});
+                await navigator.clipboard.writeText(q.query);
                 e.target.nextElementSibling.innerHTML = "&nbsp;&nbsp;&nbsp;Copied.";
             });
         }

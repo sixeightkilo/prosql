@@ -215,10 +215,24 @@ class QueryRunner {
     }
 
     async runAll() {
-        let json = await Utils.post('/browser-api/sql/split', {q: this.editor.getAll()});
-        Logger.Log(TAG, JSON.stringify(json));
-        for (let i = 0; i < json.data.length; i++) {
-            let q = json.data[i];
+        //let json = await Utils.post('/browser-api/sql/split', {q: this.editor.getAll()});
+        //Logger.Log(TAG, JSON.stringify(json));
+        //for (let i = 0; i < json.data.length; i++) {
+            //let q = json.data[i];
+            //this.cursorId = null;
+            //let res = await this.runQuery(q);
+//
+            //if (res.status == "error") {
+                //Logger.Log(TAG, `runall breaking: ${res.msg}`);
+                //break;
+            //}
+//
+            //Logger.Log(TAG, `${res['rows-affected']}`);
+        //}
+        let queries = this.split(this.editor.getAll());
+        for (let i = 0; i < queries.length; i++) {
+            let q = queries[i];
+            Logger.Log(TAG, `running: ${q}`);
             this.cursorId = null;
             let res = await this.runQuery(q);
 
@@ -231,11 +245,39 @@ class QueryRunner {
         }
     }
 
+    split(str) {
+        let queries = [];
+        let tokens = sqlFormatter.format(str, {
+            language: 'mysql'
+        }).tokens;
+
+        let q = '';
+        tokens.forEach((t) => {
+            if (t.type == 'operator' && t.value == ';') {
+                queries.push(q);
+                q = '';
+                return;
+            }
+
+            q += t.whitespaceBefore + t.value;
+        });
+
+        q.trim();
+        if (q != '') {
+            queries.push(q);
+        }
+        return queries;
+    }
+
     async formatQuery() {
         let q = this.editor.getValue();
-        Logger.Log(TAG, q);
-        let json = await Utils.post('/browser-api/sql/prettify', {q: q});
-        this.editor.setValue(json.data);
+        q = sqlFormatter.format(q, {
+            language: 'mysql'
+        });
+
+        Logger.Log(TAG, JSON.stringify(q.tokens));
+
+        this.editor.setValue(q.query);
         this.editor.clearSelection();
         this.editor.focus();
     }

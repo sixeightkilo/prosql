@@ -55,7 +55,7 @@ class QueryFinder {
 
             //todo: why just get does not work ??
             let recs = await this.queryDb.findByIds([id]);
-            let q = recs[0];
+            let r = recs[0];
             let t = tippy(document.querySelector(`.query[data-id="${id}"]`), {
                 onHidden(instance) {
                     Logger.Log(TAG, "destroying");
@@ -63,10 +63,10 @@ class QueryFinder {
                 }
             });
 
-            let json = await Utils.post('/browser-api/sql/prettify', {q: q.query});
+            let q = sqlFormatter.format(r.query, {language: 'mysql'});
 
             t.setProps({
-                content: Utils.processTemplate(this.tootipTemplate, {id: id, query: json.data}),
+                content: Utils.processTemplate(this.tootipTemplate, {id: id, query: q.query}),
                 placement: 'right',
                 delay: 0,
                 allowHTML: true,
@@ -85,9 +85,9 @@ class QueryFinder {
             let id = parseInt(e.target.dataset.id);
             Logger.Log(TAG, `Copying ${id}`);
             let recs = await this.queryDb.findByIds([id]);
-            let q = recs[0];
-            let json = await Utils.post('/browser-api/sql/prettify', {q: q.query});
-            await navigator.clipboard.writeText(json.data);
+            let r = recs[0];
+            let q = sqlFormatter.format(r.query, {language: 'mysql'});
+            await navigator.clipboard.writeText(q.query);
             e.target.nextElementSibling.innerHTML = "&nbsp;&nbsp;&nbsp;Copied.";
         });
     }
