@@ -330,6 +330,18 @@
             return "worker.new-queries"
         }
 
+        static get EXECUTE_SAVE_REC() {
+            return "worker.execute-save-rec"
+        }
+
+        static get EXECUTE_SUCCESS() {
+            return "app.execute-success"
+        }
+
+        static get EXECUTE_ERROR() {
+            return "app.execute-error"
+        }
+
         static get STATUS_ACTIVE() {
             return "active"
         }
@@ -1712,13 +1724,21 @@
             this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
             this.queryWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
-                        Logger.Log("query-worker", e.data.payload);
-                        break;
+                case Constants.DEBUG_LOG:
+                    Logger.Log("query-worker", e.data.payload);
+                    break;
 
-                    case Constants.NEW_QUERIES:
-                        PubSub.publish(Constants.NEW_QUERIES, {});
-                        break;
+                case Constants.NEW_QUERIES:
+                    PubSub.publish(Constants.NEW_QUERIES, {});
+                    break;
+
+                case Constants.EXECUTE_SAVE_REC:
+                    Logger.Log("query-worker", Constants.EXECUTE_SAVE_REC);
+                    this.queryWorker.port.postMessage({
+                        type: Constants.EXECUTE_SUCCESS,
+                        data: "Done"
+                    });
+                    break;
                 }
             };
         }

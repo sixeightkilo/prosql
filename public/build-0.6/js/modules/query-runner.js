@@ -215,20 +215,6 @@ class QueryRunner {
     }
 
     async runAll() {
-        //let json = await Utils.post('/browser-api/sql/split', {q: this.editor.getAll()});
-        //Logger.Log(TAG, JSON.stringify(json));
-        //for (let i = 0; i < json.data.length; i++) {
-            //let q = json.data[i];
-            //this.cursorId = null;
-            //let res = await this.runQuery(q);
-//
-            //if (res.status == "error") {
-                //Logger.Log(TAG, `runall breaking: ${res.msg}`);
-                //break;
-            //}
-//
-            //Logger.Log(TAG, `${res['rows-affected']}`);
-        //}
         let queries = this.split(this.editor.getAll());
         for (let i = 0; i < queries.length; i++) {
             let q = queries[i];

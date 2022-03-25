@@ -15,6 +15,8 @@ class BaseWorker {
         this.port.onmessage = (m) => {
             this.handleMessage(m);
         }
+
+        //this.logger.log(TAG, self.sqlFormatter.format("select * from table"));
     }
 
     async init() {

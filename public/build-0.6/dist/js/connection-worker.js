@@ -282,6 +282,18 @@
             return "worker.new-queries"
         }
 
+        static get EXECUTE_SAVE_REC() {
+            return "worker.execute-save-rec"
+        }
+
+        static get EXECUTE_SUCCESS() {
+            return "app.execute-success"
+        }
+
+        static get EXECUTE_ERROR() {
+            return "app.execute-error"
+        }
+
         static get STATUS_ACTIVE() {
             return "active"
         }
@@ -1632,6 +1644,8 @@
             this.port.onmessage = (m) => {
                 this.handleMessage(m);
             };
+
+            //this.logger.log(TAG, self.sqlFormatter.format("select * from table"));
         }
 
         async init() {

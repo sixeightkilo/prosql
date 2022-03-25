@@ -282,6 +282,18 @@
             return "worker.new-queries"
         }
 
+        static get EXECUTE_SAVE_REC() {
+            return "worker.execute-save-rec"
+        }
+
+        static get EXECUTE_SUCCESS() {
+            return "app.execute-success"
+        }
+
+        static get EXECUTE_ERROR() {
+            return "app.execute-error"
+        }
+
         static get STATUS_ACTIVE() {
             return "active"
         }
@@ -3177,20 +3189,6 @@
         }
 
         async runAll() {
-            //let json = await Utils.post('/browser-api/sql/split', {q: this.editor.getAll()});
-            //Logger.Log(TAG, JSON.stringify(json));
-            //for (let i = 0; i < json.data.length; i++) {
-                //let q = json.data[i];
-                //this.cursorId = null;
-                //let res = await this.runQuery(q);
-    //
-                //if (res.status == "error") {
-                    //Logger.Log(TAG, `runall breaking: ${res.msg}`);
-                    //break;
-                //}
-    //
-                //Logger.Log(TAG, `${res['rows-affected']}`);
-            //}
             let queries = this.split(this.editor.getAll());
             for (let i = 0; i < queries.length; i++) {
                 let q = queries[i];
@@ -3550,14 +3548,14 @@
 
     class QueryHistory {
         constructor() {
-            PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
-                Logger.Log(TAG$7, JSON.stringify(query));
+            PubSub.subscribe(Constants.QUERY_DISPATCHED, async (q) => {
+                Logger.Log(TAG$7, JSON.stringify(q));
 
                 if (!this.queryDb) {
                     await this.init();
                 }
 
-                let id = await this.queryDb.save(query); 
+                let id = await this.queryDb.save(q); 
                 Logger.Log(TAG$7, `Saved to ${id}`);
                 PubSub.publish(Constants.QUERY_SAVED, {id: id});
             });
@@ -4027,13 +4025,21 @@
             this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
             this.queryWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
-                    case Constants.DEBUG_LOG:
-                        Logger.Log("query-worker", e.data.payload);
-                        break;
+                case Constants.DEBUG_LOG:
+                    Logger.Log("query-worker", e.data.payload);
+                    break;
 
-                    case Constants.NEW_QUERIES:
-                        PubSub.publish(Constants.NEW_QUERIES, {});
-                        break;
+                case Constants.NEW_QUERIES:
+                    PubSub.publish(Constants.NEW_QUERIES, {});
+                    break;
+
+                case Constants.EXECUTE_SAVE_REC:
+                    Logger.Log("query-worker", Constants.EXECUTE_SAVE_REC);
+                    this.queryWorker.port.postMessage({
+                        type: Constants.EXECUTE_SUCCESS,
+                        data: "Done"
+                    });
+                    break;
                 }
             };
         }

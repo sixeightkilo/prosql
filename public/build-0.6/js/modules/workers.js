@@ -30,13 +30,21 @@ class Workers {
         this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
         this.queryWorker.port.onmessage = (e) => {
             switch (e.data.type) {
-                case Constants.DEBUG_LOG:
-                    Logger.Log("query-worker", e.data.payload);
-                    break;
+            case Constants.DEBUG_LOG:
+                Logger.Log("query-worker", e.data.payload);
+                break;
 
-                case Constants.NEW_QUERIES:
-                    PubSub.publish(Constants.NEW_QUERIES, {});
-                    break;
+            case Constants.NEW_QUERIES:
+                PubSub.publish(Constants.NEW_QUERIES, {});
+                break;
+
+            case Constants.EXECUTE_SAVE_REC:
+                Logger.Log("query-worker", Constants.EXECUTE_SAVE_REC);
+                this.queryWorker.port.postMessage({
+                    type: Constants.EXECUTE_SUCCESS,
+                    data: "Done"
+                });
+                break;
             }
         }
     }

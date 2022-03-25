@@ -13,14 +13,14 @@ const MAX_DAYS = 10000;
 
 class QueryHistory {
     constructor() {
-        PubSub.subscribe(Constants.QUERY_DISPATCHED, async (query) => {
-            Logger.Log(TAG, JSON.stringify(query));
+        PubSub.subscribe(Constants.QUERY_DISPATCHED, async (q) => {
+            Logger.Log(TAG, JSON.stringify(q));
 
             if (!this.queryDb) {
                 await this.init();
             }
 
-            let id = await this.queryDb.save(query); 
+            let id = await this.queryDb.save(q); 
             Logger.Log(TAG, `Saved to ${id}`);
             PubSub.publish(Constants.QUERY_SAVED, {id: id});
         });

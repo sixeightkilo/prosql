@@ -282,6 +282,18 @@
             return "worker.new-queries"
         }
 
+        static get EXECUTE_SAVE_REC() {
+            return "worker.execute-save-rec"
+        }
+
+        static get EXECUTE_SUCCESS() {
+            return "app.execute-success"
+        }
+
+        static get EXECUTE_ERROR() {
+            return "app.execute-error"
+        }
+
         static get STATUS_ACTIVE() {
             return "active"
         }
@@ -1632,6 +1644,8 @@
             this.port.onmessage = (m) => {
                 this.handleMessage(m);
             };
+
+            //this.logger.log(TAG, self.sqlFormatter.format("select * from table"));
         }
 
         async init() {
@@ -1685,11 +1699,44 @@
             case Constants.QUERY_UPDATED:
                 this.syncUp();
                 break
+
+            case Constants.EXECUTE_SUCCESS:
+                if (this.execResolve) {
+                    this.execResolve(m.data.data);
+                }
+                break;
+
+            case Constants.EXECUTE_ERROR:
+                if (this.execReject) {
+                    this.execReject(m.data.data);
+                }
             }
+        }
+
+        executeRequest(msg, data) {
+            return new Promise((resolve, reject) => {
+                this.port.postMessage({
+                    type: msg,
+                    data: data
+                });
+
+                this.execResolve = resolve;
+                this.execReject = reject;
+            });
         }
 
         async init() {
             await super.init();
+            //debug: 
+            this.logger.log(TAG, "Sending executeRequest");
+            let p = this.executeRequest(Constants.EXECUTE_SAVE_REC);
+            try {
+                let execResponse = await p;
+                this.logger.log(TAG, `execSuccess: ${execResponse}`);
+            } catch (e) {
+                this.logger.log(TAG, `execError: ${e}`);
+            }
+
             this.logger.log(TAG, "deviceid:" + this.deviceId);
             this.logger.log(TAG, "db:" + this.db);
 
