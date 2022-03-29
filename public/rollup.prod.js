@@ -88,4 +88,12 @@ export default [
             'plugins': [terser()]
         },
     },
+    {
+        'input': 'build-0.6/js/sql-formatter.js',
+        'output': {
+            'file': 'build-0.6/dist/js/sql-formatter.js',
+            'format': 'iife',
+            'plugins': [terser()]
+        },
+    },
 ]
