@@ -1,18 +1,19 @@
 #app-content {
 	display:grid;
-	grid-template-columns: 2fr 2px 8fr;
+	grid-template-columns: 2fr 1px 8fr;
 	height:100%;
 }
 
 #app-content-resizer {
 	cursor:col-resize;
-	background-color:#ddd;
+	background-color:var(--grey-light);
 }
 
 #app-left-panel {
-	padding-top:0.25em;
+	padding:0.25em;
 	display:flex;
 	flex-direction:column;
+	font-family:'Open Sans', sans-serif;
 }
 
 #tables-title {
@@ -41,6 +42,7 @@
 
 #tables {
 	overflow-y:scroll;
+	padding-left:0.5em;
 }
 
 #tables div {
@@ -79,9 +81,11 @@
 }
 
 #info {
-	border-top:1px solid #aaa;
+	border-top:1px solid var(--grey-light);
 	font-size:x-small;
 	padding:0.2em;
+	color:var(--dark-blue);
+	font-weight:bold;
 }
 
 #table-contents {
@@ -112,6 +116,7 @@
 	column-gap:0.25em;
 	background-color:var(--grey-lightest);
 	font-family: 'Open Sans', sans-serif;
+	color:var(--dark-blue);
 }
 
 #table-info,
@@ -205,6 +210,7 @@ i#back {
 	margin-left:2px;
 	font-size:larger;
 	cursor:pointer;
+	color:var(--dark-grey);
 }
 
 #tables-list {
@@ -255,4 +261,27 @@ i#back {
 
 #content-menu {
 	color:orange;
+}
+
+#search-text {
+	border-radius:4px !important;
+}
+
+#search {
+	font-weight: bold !important;
+}
+
+#tables-title > div:nth-child(1) {
+	font-weight:bold;
+	color:var(--dark-blue);
+}
+
+#export-table,
+#table-operations {
+	font-weight:bold;
+	color:var(--dark-blue);
+}
+
+#search-bar > div:nth-child(2) {
+	font-weight:bold;
 }

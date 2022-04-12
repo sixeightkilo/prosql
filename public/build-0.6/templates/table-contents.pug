@@ -4,7 +4,6 @@
             div#tables-title
                 div Tables and Views
                 div 
-                    //i.fas.fa-tools#table-operations(title="Table operations")
                     .dropdown
                         .dropdown-trigger
                             i.fas.fa-bars#table-operations(title="Table operations")
@@ -40,12 +39,12 @@
                 select#column-names
             div.select.is-small
                 select#operators
-            div#search-text-container
+            div#search-text-container.field
                 input.input.is-small#search-text(type="text")
-                div#clear-filter
+                div#clear-filter.has-text-danger
                     i.fas.fa-times-circle
             div
-                button.button.is-small#search Filter
+                button.button.is-small.is-primary#search Filter
             div
                 i.fas.fa-file-export#export-filtered-results(title="Export filtered results(Alt+Shift+E)")
                 i.fas.fa-backward.pager-disable#prev(title="Previous rows(Alt+Shift+P)")

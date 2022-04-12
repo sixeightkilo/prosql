@@ -26,7 +26,7 @@ class GridResizerV {
             this.d2 += -1 * delta;
             Logger.Log(TAG, `${delta} ${this.d1} ${this.d2}`);
 
-            $grid.style.gridTemplateRows = `${this.d1}px 2px ${this.d2}px`;
+            $grid.style.gridTemplateRows = `${this.d1}px 1px ${this.d2}px`;
             this.starty = e.clientY;
             e.preventDefault();
         });

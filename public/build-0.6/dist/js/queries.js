@@ -2095,7 +2095,7 @@
                 this.d2 += -1 * delta;
                 Logger.Log(TAG$g, `${delta} ${this.d1} ${this.d2}`);
 
-                $grid.style.gridTemplateColumns = `${this.d1}px 2px ${this.d2}px`;
+                $grid.style.gridTemplateColumns = `${this.d1}px 1px ${this.d2}px`;
                 this.startx = e.clientX;
                 e.preventDefault();
             });
@@ -2669,7 +2669,7 @@
                 this.d2 += -1 * delta;
                 Logger.Log(TAG$c, `${delta} ${this.d1} ${this.d2}`);
 
-                $grid.style.gridTemplateRows = `${this.d1}px 2px ${this.d2}px`;
+                $grid.style.gridTemplateRows = `${this.d1}px 1px ${this.d2}px`;
                 this.starty = e.clientY;
                 e.preventDefault();
             });
