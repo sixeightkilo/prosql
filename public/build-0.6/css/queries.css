@@ -1,16 +1,16 @@
 #app-content {
 	display:grid;
-	grid-template-columns: 3fr 2px 8fr;
+	grid-template-columns: 3fr 1px 8fr;
 	height:100%;
 }
 
 #app-content-resizer {
 	cursor:col-resize;
-	background-color:#ddd;
+	background-color:var(--grey-light);
 }
 
 #app-left-panel {
-	padding-top:0.25em;
+	padding:0.25em;
 	display:flex;
 	flex-direction:column;
 }
@@ -102,9 +102,10 @@ i#back {
 }
 
 #query-sub-menu {
-	background:#ebebeb;
+	background-color:var(--grey-lightest);
 	padding:0.25em;
 	padding-left:1em;
+	color:var(--dark-blue);
 }
 
 #query-editor {
@@ -195,4 +196,21 @@ i#back {
 
 .tag {
 	margin-left:0.25em;
+}
+
+#query-menu {
+	color:orange;
+}
+
+#nav {
+	display:none;
+}
+
+#query-history {
+	font-weight:bold;
+	color:var(--dark-blue);
+}
+
+.ace_gutter {
+	background-color:var(--grey-lightest) !important;
 }

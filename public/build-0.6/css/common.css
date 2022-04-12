@@ -239,3 +239,13 @@ sup {
 	display: flex;
 	align-items: center; /* align vertical */
 }
+
+#info {
+	border-top:1px solid var(--grey-light);
+	font-size:x-small;
+	padding:0.2em;
+	color:var(--dark-blue);
+	font-weight:bold;
+}
+
+
