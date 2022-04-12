@@ -4,11 +4,13 @@
             a(href="/connections")
                 img(src='/#{root}/images/icon.png', width="60", height="43.35")
         div#connection-container
-            button.button.is-info#conn-btn
-                span#conn-name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                select.select.form-control.is-small#databases
-                span &nbsp;&nbsp;&nbsp;&nbsp;
-
+            #conn-name
+            #select-container
+                .field
+                    .control
+                        .select.is-small
+                            select#databases
+            #dropdown-container
                 .dropdown
                     .dropdown-trigger
                         i.fas.fa-tools#db-operations(title="Database operations")
@@ -25,23 +27,27 @@
         div
         div#content-menu
             div
-                i.fas.fa-table
-            div Tables
+                div
+                    i.fas.fa-table
+                div Tables
 
         div#query-menu
             div
-                i.fas.fa-edit
-            div Queries
+                div
+                    i.fas.fa-edit
+                div Queries
 
         div#help-menu
             div
-                i.fas.fa-question
-            div Help
+                div
+                    i.fas.fa-question
+                div Help
 
         div#about-menu
             div
-                i.fas.fa-cog
-            div About
+                div
+                    i.fas.fa-cog
+                div About
 
         div#dummy
         div#conn
