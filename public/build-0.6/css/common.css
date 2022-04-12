@@ -39,6 +39,22 @@ body, html {
 	font-weight:bold;
 }
 
+#navbar {
+	padding-left:1em;
+	padding-top:0.25em;
+	padding-bottom:0.25em;
+	display:grid;
+	grid-template-columns: 3.5fr 8fr;
+}
+
+.contact {
+	color:var(--main);
+}
+
+.email {
+	padding-right:1em;
+}
+
 #appbar {
 	padding-left:1em;
 	padding-top:0.25em;

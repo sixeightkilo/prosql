@@ -1,11 +1,9 @@
-nav.navbar(role='navigation' aria-label='main navigation')
-    .navbar-brand
-        .logo
-            a(href="/")
-                img(src='/#{root}/images/icon.png', width="60", height="43.35")
-    .navbar-end
-        .navbar-item
-            button.button.is-hidden.contact
-                span.icon
-                    i.fas.fa-envelope
-                span kargirwar@protonmail.com
+#navbar
+    .logo
+        a(href="/")
+            img(src='/#{root}/images/icon.png', width="60", height="43.35")
+    .email.is-hidden
+        button.button.contact.is-pulled-right
+            i.fas.fa-envelope
+            span &nbsp;&nbsp;
+            span kargirwar@protonmail.com

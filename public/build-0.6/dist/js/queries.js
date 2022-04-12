@@ -3695,11 +3695,11 @@
     			break;
 
     		case 'help-menu':
-    			window.location = '/app/help';
+    			window.open('/app/help', "_blank");
     			break;
 
     		case 'about-menu':
-    			window.location = '/app/about';
+    			window.open('/app/about', "_blank");
     			break;
     		}
     	}

@@ -13,3 +13,7 @@ a {
 section {
 	font-family: 'Open Sans', sans-serif;
 }
+
+#get-started {
+	font-weight:bold;
+}
