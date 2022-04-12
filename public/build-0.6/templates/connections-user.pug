@@ -70,8 +70,8 @@ html
         script(type='module' src='/#{root}/dist/js/connections.js?ver=#{version}')
         script(type='code' id='conn-template')
             .conn-container
-                div
-                    i.fas.fa-server
+                div.conn
+                    i.fas.fa-server.server-icon
                 div.conn.has-text-left(data-id="{id}") &nbsp;&nbsp;{item}
                 div
                     i.fas.fa-trash.del-conn(data-id="{id}")

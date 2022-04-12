@@ -1,23 +1,23 @@
 #appbar
     #appbar-left-panel
-        div
-            a(href='/connections')
-                i.fas.fa-home
+        .logo
+            a(href="/connections")
+                img(src='/#{root}/images/icon.png', width="60", height="43.35")
         div#connection-container
             button.button.is-info#conn-btn
                 span#conn-name
-                select.select.is-small#databases
+                select.select.form-control.is-small#databases
                 span &nbsp;&nbsp;&nbsp;&nbsp;
 
-        .dropdown
-            .dropdown-trigger
-                i.fas.fa-tools#db-operations(title="Database operations")
-            #db-dropdown-menu.dropdown-menu(role='menu')
-                .dropdown-content
-                    a.db-dropdown-item.dropdown-item#rename-db
-                        | Rename database
-                    a.db-dropdown-item.dropdown-item#delete-db
-                        | Delete database
+                .dropdown
+                    .dropdown-trigger
+                        i.fas.fa-tools#db-operations(title="Database operations")
+                    #db-dropdown-menu.dropdown-menu(role='menu')
+                        .dropdown-content
+                            a.db-dropdown-item.dropdown-item#rename-db
+                                | Rename database
+                            a.db-dropdown-item.dropdown-item#delete-db
+                                | Delete database
 
                 
     #appbar-right-panel

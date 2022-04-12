@@ -1,3 +1,19 @@
+:root {
+	--light-blue: #C8E0FA;
+	--dark-blue: #5D8ABA;
+	--light-grey: #8B9BAD;
+	--main: #268BFA;
+	--dark-grey: #626E7A;
+
+	--grey-darker: #141618;
+	--grey-dark: #31373d;
+	--grey: var(--dark-grey);
+	--grey-light: var(--light-grey);
+	--grey-lighter: #919aa2;
+	--grey-lightest: #eff1f2;
+	--blue: var(--main);
+}
+
 html, body {
 	padding:0;
 	margin:0;
@@ -26,7 +42,6 @@ body, html {
 	padding-left:1em;
 	padding-top:0.25em;
 	padding-bottom:0.25em;
-	background-color:#eee;
 	display:grid;
 	grid-template-columns: 2fr 8fr;
 	border-bottom:1px solid #aaa;
@@ -34,7 +49,7 @@ body, html {
 
 #appbar-left-panel {
 	display:grid;
-	grid-template-columns: 2fr 8fr 2fr;
+	grid-template-columns: 2fr 8fr;
 }
 
 #appbar-left-panel .dropdown {
@@ -44,6 +59,18 @@ body, html {
 	z-index:1000;
 	color:#fff;
 	cursor:pointer;
+}
+
+#connection-container {
+	position:relative;
+	max-width:100px;
+	min-width:100px;
+}
+
+.dropdown {
+	position: absolute;
+	right: 5px;
+	top:0px;
 }
 
 #appbar-right-panel {
@@ -184,4 +211,11 @@ sup {
 
 #connection-container {
 	margin-left:10px;
+}
+
+.superscript {
+	position:relative;
+	top: -55.6px;
+	left: 290px;
+	font-size:xx-small;
 }
