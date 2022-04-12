@@ -41,15 +41,14 @@ body, html {
 #appbar {
 	padding-left:1em;
 	padding-top:0.25em;
-	padding-bottom:0.25em;
 	display:grid;
-	grid-template-columns: 2fr 8fr;
+	grid-template-columns: 4fr 8fr;
 	border-bottom:1px solid #aaa;
 }
 
 #appbar-left-panel {
 	display:grid;
-	grid-template-columns: 2fr 8fr;
+	grid-template-columns: 1.75fr 8fr;
 }
 
 #appbar-left-panel .dropdown {
@@ -59,23 +58,18 @@ body, html {
 	z-index:1000;
 	color:#fff;
 	cursor:pointer;
-}
-
-#connection-container {
-	position:relative;
-	max-width:100px;
-	min-width:100px;
-}
-
-.dropdown {
 	position: absolute;
 	right: 5px;
 	top:0px;
 }
 
+#connection-container {
+	position:relative;
+}
+
 #appbar-right-panel {
 	display:grid;
-	grid-template-columns: 1fr 1fr 1fr 1fr 5fr 3fr 2fr;
+	grid-template-columns: 0.01fr 1.25fr 1.25fr 1.25fr 1.25fr 5fr 3fr 2fr;
 	column-gap:0.25em;
 	text-align:center;
 	font-size:smaller;
@@ -87,6 +81,9 @@ body, html {
 
 [id$="-menu"] {
 	cursor:pointer;
+	color: var(--dark-blue);
+	font-weight:bold;
+	font-family:'Open Sans', sans-serif;
 }
 
 #databases {
@@ -211,6 +208,7 @@ sup {
 
 #connection-container {
 	margin-left:10px;
+	font-family: 'Open Sans', sans-serif;
 }
 
 .superscript {
