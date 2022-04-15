@@ -2127,47 +2127,14 @@
             this.$back.classList.add('stack-disable');
         }
 
-        push(...args) {
-            Logger.Log(TAG$n, JSON.stringify(args));
-            if (args.length == 1) {
-                this.stack.push({
-                    'type': 'table',
-                    'table': args[0]
-                });
-                Logger.Log(TAG$n, "table:" + JSON.stringify(this.stack));
-                return
+        push(o) {
+            this.stack.push(o);
+            if (o.type == 'table') {
+                return;
             }
 
-            if (args.length == 3) {
-                this.stack.push({
-                    'type': 'fk-ref',
-                    'table': args[0],
-                    'column': args[1],
-                    'value': args[2]
-                });
-
-                this.curr++;
-                this.$back.classList.remove('stack-disable');
-                Logger.Log(TAG$n, "fk-ref:" + JSON.stringify(this.stack));
-
-                return
-            }
-
-            if (args.length == 4) {
-                this.stack.push({
-                    'type': 'search',
-                    'table': args[0],
-                    'column': args[1],
-                    'operator': args[2],
-                    'value': args[3]
-                });
-
-                this.curr++;
-                this.$back.classList.remove('stack-disable');
-                Logger.Log(TAG$n, "search:" + JSON.stringify(this.stack));
-
-                return
-            }
+            this.curr++;
+            this.$back.classList.remove('stack-disable');
         }
     }
 
@@ -2380,6 +2347,7 @@
             this.$root = $root;
             this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
             this.init();
+            this.firstDisplayedRow = 0;
 
             document.addEventListener('click', (e) => {
                 let p = e.target.parentElement;
@@ -2487,6 +2455,9 @@
                 rowSelection: 'single',
                 onSelectionChanged: () => {
                     this.onSelectionChanged(fkMap);
+                },
+                onBodyScrollEnd: (e) => {
+                    this.firstDisplayedRow = e.api.getFirstDisplayedRow();
                 }
             };
 
@@ -2559,6 +2530,10 @@
                         let c = params.colDef.field;
                         params.data[`${c}-${id}`] = params.newValue;
                         return true;
+                    },
+                    headerValueGetter: params => {
+                        Logger.Log(TAG$k, "headerValueGetter:" + JSON.stringify(params.colDef));
+                        return params.colDef.field;
                     }
                 });
             }
@@ -2702,6 +2677,10 @@
             let rows = (n == 1) ? 'row' : 'rows';
             this.$timeTaken.innerText = `${t} ms`;
             this.$rowsAffected.innerText = `${n} ${rows} affected`;
+        }
+
+        getFirstDisplayedRow() {
+            return this.firstDisplayedRow;
         }
     }
 
@@ -3925,7 +3904,13 @@
         async initHandlers() {
             this.$search.addEventListener('click', async () => {
                 this.search();
-                this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value);
+                this.stack.push({
+                    'type': 'search',
+                    'table': this.table,
+                    'column': this.$columNames.value,
+                    'operator': this.$operators.value,
+                    'value': this.$searchText.value,
+                });
             });
 
             this.$searchText.addEventListener('keyup', async (e) => {
@@ -3937,7 +3922,13 @@
 
                 if (e.key == "Enter") {
                     this.search();
-                    this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value);
+                    this.stack.push({
+                        'type': 'search',
+                        'table': this.table,
+                        'column': this.$columNames.value,
+                        'operator': this.$operators.value,
+                        'value': this.$searchText.value,
+                    });
                 }
             });
 
@@ -3953,7 +3944,12 @@
                 Logger.Log(TAG$f, `${target.dataset.table}:${target.dataset.column}:${value}`);
                 await this.showFkRef(target.dataset.table, target.dataset.column, value);
                 PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
-                this.stack.push(target.dataset.table, target.dataset.column, value);
+                this.stack.push({
+                    'type': 'fk-ref',
+                    'table': target.dataset.table,
+                    'column': target.dataset.column,
+                    'value': value,
+                });
             });
 
             this.$operators.addEventListener('change', () => {
@@ -4085,7 +4081,10 @@
             this.colSelector.init(this.table, this.columns);
 
             this.stack.reset();
-            this.stack.push(this.table);
+            this.stack.push({
+                'type': 'table',
+                'table': this.table
+            });
 
             //the base query currently in operation
             this.query = `select * from \`${this.table}\``;
@@ -4226,11 +4225,11 @@
             switch (e.type) {
                 case 'table':
                     await this.show(e.table);
-                    break
+                    break;
 
                 case 'fk-ref':
                     await this.showFkRef(e.table, e.column, e.value);
-                    break
+                    break;
 
                 case 'search':
                     await this.initTable(e.table);
@@ -4241,13 +4240,14 @@
                     this.$searchText.value = e.value;
 
                     await this.search();
-                    break
+                    break;
             }
             Logger.Log(TAG$f, "Done navigate");
         }
     }
 
     const TAG$e = "modules-tables";
+    const SCROLL_OFFSET = 200;
 
     class Tables {
         constructor(sessionId) {
@@ -4286,20 +4286,34 @@
 
             //update highlighted table if table is changed from elsewhere
             PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
+                //restore table list as per user's filter
+                this.filter();
                 //remove highlight on all element first
                 let list = this.$tables.querySelectorAll('.highlight');
                 list.forEach((e) => {
                     e.classList.remove('highlight');
                 });
 
-                //highlight new table
+                //highlight new table if it exists in the list
+                let found = false;
                 list = this.$tables.querySelectorAll('.table-name');
                 for (let i = 0; i < list.length; i++) {
                     if (list[i].innerHTML == data.table) {
                         let parent = list[i].parentElement;
                         parent.classList.add('highlight');
+
+                        //make this list item visible to user
+                        this.$tables.scrollTop = list[i].offsetTop + SCROLL_OFFSET;
+                        found = true;
                         break;
                     }
+                }
+
+                //if not present in the list, the user must be doing filtering. Override the 
+                //filter and insert the table name in the displayed list
+                Logger.Log(TAG$e, `found ${found}`);
+                if (!found) {
+                    this.addToList(data.table);
                 }
             });
 
@@ -4319,6 +4333,17 @@
                     });
                 })(c);
             });
+        }
+
+        addToList(table) {
+            let $t = document.getElementById('table-template');
+            let t = $t.innerHTML;
+
+            let h = Utils.generateNode(t, {
+                table: table,
+                highlight: 'highlight',
+            });
+            this.$tables.append(h);
         }
 
         async handleCmd(cmd) {

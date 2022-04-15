@@ -60,47 +60,14 @@ class Stack {
         this.$back.classList.add('stack-disable')
     }
 
-    push(...args) {
-        Logger.Log(TAG, JSON.stringify(args))
-        if (args.length == 1) {
-            this.stack.push({
-                'type': 'table',
-                'table': args[0]
-            })
-            Logger.Log(TAG, "table:" + JSON.stringify(this.stack));
-            return
+    push(o) {
+        this.stack.push(o);
+        if (o.type == 'table') {
+            return;
         }
 
-        if (args.length == 3) {
-            this.stack.push({
-                'type': 'fk-ref',
-                'table': args[0],
-                'column': args[1],
-                'value': args[2]
-            })
-
-            this.curr++
-            this.$back.classList.remove('stack-disable')
-            Logger.Log(TAG, "fk-ref:" + JSON.stringify(this.stack));
-
-            return
-        }
-
-        if (args.length == 4) {
-            this.stack.push({
-                'type': 'search',
-                'table': args[0],
-                'column': args[1],
-                'operator': args[2],
-                'value': args[3]
-            })
-
-            this.curr++
-            this.$back.classList.remove('stack-disable')
-            Logger.Log(TAG, "search:" + JSON.stringify(this.stack));
-
-            return
-        }
+        this.curr++
+        this.$back.classList.remove('stack-disable')
     }
 }
 

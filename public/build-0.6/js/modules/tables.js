@@ -8,6 +8,7 @@ import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
 
 const TAG = "modules-tables"
+const SCROLL_OFFSET = 200;
 
 class Tables {
     constructor(sessionId) {
@@ -46,20 +47,34 @@ class Tables {
 
         //update highlighted table if table is changed from elsewhere
         PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
+            //restore table list as per user's filter
+            this.filter();
             //remove highlight on all element first
             let list = this.$tables.querySelectorAll('.highlight');
             list.forEach((e) => {
                 e.classList.remove('highlight');
             });
 
-            //highlight new table
+            //highlight new table if it exists in the list
+            let found = false;
             list = this.$tables.querySelectorAll('.table-name');
             for (let i = 0; i < list.length; i++) {
                 if (list[i].innerHTML == data.table) {
                     let parent = list[i].parentElement;
                     parent.classList.add('highlight');
+
+                    //make this list item visible to user
+                    this.$tables.scrollTop = list[i].offsetTop + SCROLL_OFFSET;
+                    found = true;
                     break;
                 }
+            }
+
+            //if not present in the list, the user must be doing filtering. Override the 
+            //filter and insert the table name in the displayed list
+            Logger.Log(TAG, `found ${found}`);
+            if (!found) {
+                this.addToList(data.table);
             }
         });
 
@@ -79,6 +94,17 @@ class Tables {
                 });
             })(c)
         });
+    }
+
+    addToList(table) {
+        let $t = document.getElementById('table-template')
+        let t = $t.innerHTML
+
+        let h = Utils.generateNode(t, {
+            table: table,
+            highlight: 'highlight',
+        })
+        this.$tables.append(h)
     }
 
     async handleCmd(cmd) {

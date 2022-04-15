@@ -141,7 +141,13 @@ class TableContents {
     async initHandlers() {
         this.$search.addEventListener('click', async () => {
             this.search()
-            this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
+            this.stack.push({
+                'type': 'search',
+                'table': this.table,
+                'column': this.$columNames.value,
+                'operator': this.$operators.value,
+                'value': this.$searchText.value,
+            });
         })
 
         this.$searchText.addEventListener('keyup', async (e) => {
@@ -153,7 +159,13 @@ class TableContents {
 
             if (e.key == "Enter") {
                 this.search()
-                this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
+                this.stack.push({
+                    'type': 'search',
+                    'table': this.table,
+                    'column': this.$columNames.value,
+                    'operator': this.$operators.value,
+                    'value': this.$searchText.value,
+                });
             }
         })
 
@@ -169,7 +181,12 @@ class TableContents {
             Logger.Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
             await this.showFkRef(target.dataset.table, target.dataset.column, value)
             PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
-            this.stack.push(target.dataset.table, target.dataset.column, value)
+            this.stack.push({
+                'type': 'fk-ref',
+                'table': target.dataset.table,
+                'column': target.dataset.column,
+                'value': value,
+            });
         })
 
         this.$operators.addEventListener('change', () => {
@@ -301,7 +318,10 @@ class TableContents {
         this.colSelector.init(this.table, this.columns);
 
         this.stack.reset()
-        this.stack.push(this.table)
+        this.stack.push({
+            'type': 'table',
+            'table': this.table
+        });
 
         //the base query currently in operation
         this.query = `select * from \`${this.table}\``;
@@ -436,17 +456,17 @@ class TableContents {
     }
 
     async navigate(e) {
-        Logger.Log(TAG, JSON.stringify(e))
+        Logger.Log(TAG, JSON.stringify(e));
         PubSub.publish(Constants.TABLE_CHANGED, {table: e.table});
 
         switch (e.type) {
             case 'table':
-                await this.show(e.table)
-                break
+                await this.show(e.table);
+                break;
 
             case 'fk-ref':
-                await this.showFkRef(e.table, e.column, e.value)
-                break
+                await this.showFkRef(e.table, e.column, e.value);
+                break;
 
             case 'search':
                 await this.initTable(e.table);
@@ -456,10 +476,10 @@ class TableContents {
                 this.$operators.value = e.operator;
                 this.$searchText.value = e.value;
 
-                await this.search()
-                break
+                await this.search();
+                break;
         }
-        Logger.Log(TAG, "Done navigate")
+        Logger.Log(TAG, "Done navigate");
     }
 }
 

@@ -15,6 +15,7 @@ class TableUtils {
         this.$root = $root;
         this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
         this.init();
+        this.firstDisplayedRow = 0;
 
         document.addEventListener('click', (e) => {
             let p = e.target.parentElement;
@@ -123,6 +124,9 @@ class TableUtils {
             rowSelection: 'single',
             onSelectionChanged: () => {
                 this.onSelectionChanged(fkMap);
+            },
+            onBodyScrollEnd: (e) => {
+                this.firstDisplayedRow = e.api.getFirstDisplayedRow();
             }
         };
 
@@ -195,6 +199,10 @@ class TableUtils {
                     let c = params.colDef.field;
                     params.data[`${c}-${id}`] = params.newValue;
                     return true;
+                },
+                headerValueGetter: params => {
+                    Logger.Log(TAG, "headerValueGetter:" + JSON.stringify(params.colDef));
+                    return params.colDef.field;
                 }
             })
         }
@@ -338,6 +346,10 @@ class TableUtils {
         let rows = (n == 1) ? 'row' : 'rows';
         this.$timeTaken.innerText = `${t} ms`;
         this.$rowsAffected.innerText = `${n} ${rows} affected`;
+    }
+
+    getFirstDisplayedRow() {
+        return this.firstDisplayedRow;
     }
 }
 
