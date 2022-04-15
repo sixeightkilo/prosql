@@ -8,7 +8,7 @@
 	margin:auto;
 	display:grid;
 	padding:0.5em;
-	background-color:#eee;
+	background-color: var(--grey-lightest);
 	margin-top:2em;
 	border-radius:5px;
 	row-gap:0.25em;
@@ -38,4 +38,9 @@
 	bottom: 0;
 	right: 2em;
 	cursor:pointer;
+}
+
+#signin,
+#get-otp {
+	font-weight:bold;
 }

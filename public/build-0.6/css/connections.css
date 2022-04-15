@@ -49,6 +49,7 @@
 	left: 5px;
 	top: 5px;
 	cursor:pointer;
+	color:var(--dark-blue);
 }
 
 #form-container input {
