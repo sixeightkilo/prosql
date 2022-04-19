@@ -40,6 +40,14 @@ class Constants {
         return 'Alt+Shift+,'
     }
 
+    static get UP_ARROW() {
+        return 38;
+    }
+
+    static get DOWN_ARROW() {
+        return 40;
+    }
+
     //commands triggered by user
     static get CMD_RUN_QUERY() {
         return 'cmd.run-query'
@@ -86,6 +94,14 @@ class Constants {
     }
 
     //events
+    static get GRID_HAS_FOCUS() {
+        return 'grid-has-focus'
+    }
+
+    static get SEARCH_BAR_HAS_FOCUS() {
+        return 'search-bar-has-focus'
+    }
+
     static get DB_RENAMED() {
         return 'db-menu.db-renamed'
     }
@@ -110,7 +126,6 @@ class Constants {
         return 'row-deleter.row-deleted'
     }
 
-
     static get COLUMNS_SELECTED() {
         return 'cmd.columns-selected'
     }
@@ -129,6 +144,10 @@ class Constants {
 
     static get TABLE_SELECTED() {
         return 'tables.table-selected'
+    }
+
+    static get TABLE_UNSELECTED() {
+        return 'tables.table-unselected'
     }
 
     static get CELL_EDITED() {

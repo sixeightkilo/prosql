@@ -140,6 +140,19 @@ class TableContents {
     }
 
     async initHandlers() {
+        //focus events
+        this.$operators.addEventListener('focus', () => {
+            PubSub.publish(Constants.SEARCH_BAR_HAS_FOCUS, {});
+        });
+
+        this.$columNames.addEventListener('focus', () => {
+            PubSub.publish(Constants.SEARCH_BAR_HAS_FOCUS, {});
+        });
+
+        this.$searchText.addEventListener('focus', () => {
+            PubSub.publish(Constants.SEARCH_BAR_HAS_FOCUS, {});
+        });
+
         this.$search.addEventListener('click', async () => {
             this.search()
             this.stack.push({
@@ -387,7 +400,11 @@ class TableContents {
 
     async showContents(query, fkMap, sel = true) {
         this.tableUtils.clearInfo.apply(this);
-        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
+        try {
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
+        } catch (e) {
+            return;
+        }
 
         let params = {
             'session-id': this.sessionId,

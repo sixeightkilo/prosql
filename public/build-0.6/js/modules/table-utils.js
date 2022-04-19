@@ -124,6 +124,10 @@ class TableUtils {
             onSelectionChanged: () => {
                 this.onSelectionChanged(fkMap);
             },
+            onCellClicked: () => {
+                Logger.Log(TAG, "onCellClicked");
+                PubSub.publish(Constants.GRID_HAS_FOCUS, {});
+            }
         };
 
         if (sortable) {
