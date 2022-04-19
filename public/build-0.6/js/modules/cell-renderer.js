@@ -30,6 +30,9 @@ class CellRenderer {
                 'value': v,
                 'table': refTable,
                 'column': refColumn,
+                'source-col': c,
+                'source-id': id,
+                'row-index': params.rowIndex
             });
         }
 

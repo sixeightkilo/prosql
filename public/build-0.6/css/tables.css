@@ -43,6 +43,7 @@
 #tables {
 	overflow-y:scroll;
 	padding-left:0.5em;
+	position:relative;
 }
 
 #tables div {

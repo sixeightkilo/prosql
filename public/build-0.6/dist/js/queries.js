@@ -2165,6 +2165,9 @@
                     'value': v,
                     'table': refTable,
                     'column': refColumn,
+                    'source-col': c,
+                    'source-id': id,
+                    'row-index': params.rowIndex
                 });
             }
 
@@ -2318,7 +2321,6 @@
             this.$root = $root;
             this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
             this.init();
-            this.firstDisplayedRow = 0;
 
             document.addEventListener('click', (e) => {
                 let p = e.target.parentElement;
@@ -2427,9 +2429,6 @@
                 onSelectionChanged: () => {
                     this.onSelectionChanged(fkMap);
                 },
-                onBodyScrollEnd: (e) => {
-                    this.firstDisplayedRow = e.api.getFirstDisplayedRow();
-                }
             };
 
             if (sortable) {
@@ -2650,8 +2649,9 @@
             this.$rowsAffected.innerText = `${n} ${rows} affected`;
         }
 
-        getFirstDisplayedRow() {
-            return this.firstDisplayedRow;
+        scrollTo(t) {
+            this.api.ensureIndexVisible(parseInt(t), "middle");
+            this.api.getRowNode(t).setSelected(true);
         }
     }
 

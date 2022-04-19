@@ -36,6 +36,7 @@ class TableContents {
 
         this.sessionId = sessionId
         this.init()
+        this.scrollPositions = {};
     }
 
     //public method
@@ -178,7 +179,12 @@ class TableContents {
 
             let value = target.dataset.value;
 
+            //save scroll position of currently displayed table so that when we 
+            //come back we can restore it
+            this.saveScrollPos(target.dataset.rowIndex);
+
             Logger.Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
+
             await this.showFkRef(target.dataset.table, target.dataset.column, value)
             PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
             this.stack.push({
@@ -204,6 +210,19 @@ class TableContents {
         this.$clearFilter.addEventListener('click', async (e) => {
             this.handleCmd(Constants.CMD_CLEAR_FILTER);
         })
+    }
+
+    saveScrollPos(rowIndex) {
+        this.scrollPositions[this.table] = rowIndex;
+    }
+
+    restoreScrollPos() {
+        let n = this.scrollPositions[this.table] ?? null;
+        if (!n) {
+            return;
+        }
+        
+        this.tableUtils.scrollTo(n);
     }
 
     async handleSort(data) {
@@ -386,6 +405,7 @@ class TableContents {
             this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
         }
 
+        this.restoreScrollPos();
         return res;
     }
 

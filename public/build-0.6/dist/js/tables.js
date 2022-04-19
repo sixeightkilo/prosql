@@ -2194,6 +2194,9 @@
                     'value': v,
                     'table': refTable,
                     'column': refColumn,
+                    'source-col': c,
+                    'source-id': id,
+                    'row-index': params.rowIndex
                 });
             }
 
@@ -2347,7 +2350,6 @@
             this.$root = $root;
             this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
             this.init();
-            this.firstDisplayedRow = 0;
 
             document.addEventListener('click', (e) => {
                 let p = e.target.parentElement;
@@ -2456,9 +2458,6 @@
                 onSelectionChanged: () => {
                     this.onSelectionChanged(fkMap);
                 },
-                onBodyScrollEnd: (e) => {
-                    this.firstDisplayedRow = e.api.getFirstDisplayedRow();
-                }
             };
 
             if (sortable) {
@@ -2679,8 +2678,9 @@
             this.$rowsAffected.innerText = `${n} ${rows} affected`;
         }
 
-        getFirstDisplayedRow() {
-            return this.firstDisplayedRow;
+        scrollTo(t) {
+            this.api.ensureIndexVisible(parseInt(t), "middle");
+            this.api.getRowNode(t).setSelected(true);
         }
     }
 
@@ -3799,6 +3799,7 @@
 
             this.sessionId = sessionId;
             this.init();
+            this.scrollPositions = {};
         }
 
         //public method
@@ -3941,7 +3942,12 @@
 
                 let value = target.dataset.value;
 
+                //save scroll position of currently displayed table so that when we 
+                //come back we can restore it
+                this.saveScrollPos(target.dataset.rowIndex);
+
                 Logger.Log(TAG$f, `${target.dataset.table}:${target.dataset.column}:${value}`);
+
                 await this.showFkRef(target.dataset.table, target.dataset.column, value);
                 PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
                 this.stack.push({
@@ -3967,6 +3973,19 @@
             this.$clearFilter.addEventListener('click', async (e) => {
                 this.handleCmd(Constants.CMD_CLEAR_FILTER);
             });
+        }
+
+        saveScrollPos(rowIndex) {
+            this.scrollPositions[this.table] = rowIndex;
+        }
+
+        restoreScrollPos() {
+            let n = this.scrollPositions[this.table] ?? null;
+            if (!n) {
+                return;
+            }
+            
+            this.tableUtils.scrollTo(n);
         }
 
         async handleSort(data) {
@@ -4149,6 +4168,7 @@
                 this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
             }
 
+            this.restoreScrollPos();
             return res;
         }
 
@@ -4247,7 +4267,7 @@
     }
 
     const TAG$e = "modules-tables";
-    const SCROLL_OFFSET = 200;
+    const SCROLL_OFFSET = -50;
 
     class Tables {
         constructor(sessionId) {

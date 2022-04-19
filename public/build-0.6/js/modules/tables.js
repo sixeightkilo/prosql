@@ -8,7 +8,7 @@ import { PubSub } from './pubsub.js'
 import { Hotkeys } from './hotkeys.js'
 
 const TAG = "modules-tables"
-const SCROLL_OFFSET = 200;
+const SCROLL_OFFSET = -50;
 
 class Tables {
     constructor(sessionId) {

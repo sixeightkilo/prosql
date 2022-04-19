@@ -15,7 +15,6 @@ class TableUtils {
         this.$root = $root;
         this.$loaderTemplate = document.getElementById('table-loader-template').innerHTML;
         this.init();
-        this.firstDisplayedRow = 0;
 
         document.addEventListener('click', (e) => {
             let p = e.target.parentElement;
@@ -125,9 +124,6 @@ class TableUtils {
             onSelectionChanged: () => {
                 this.onSelectionChanged(fkMap);
             },
-            onBodyScrollEnd: (e) => {
-                this.firstDisplayedRow = e.api.getFirstDisplayedRow();
-            }
         };
 
         if (sortable) {
@@ -348,8 +344,9 @@ class TableUtils {
         this.$rowsAffected.innerText = `${n} ${rows} affected`;
     }
 
-    getFirstDisplayedRow() {
-        return this.firstDisplayedRow;
+    scrollTo(t) {
+        this.api.ensureIndexVisible(parseInt(t), "middle");
+        this.api.getRowNode(t).setSelected(true);
     }
 }
 
