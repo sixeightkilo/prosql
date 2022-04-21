@@ -50,7 +50,13 @@ class Tables {
 
         //update highlighted table if table is changed from elsewhere
         PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
-            this.handleTableChange(data.table);
+            let toObserve = this.handleTableChange(data.table);
+            if (this.observed) {
+                this.observer.unobserve(this.observed);
+            }
+
+            this.observer.observe(toObserve);
+            this.observed = toObserve;
         });
 
         PubSub.subscribe(Constants.TABLE_RENAMED, () => {
@@ -76,7 +82,18 @@ class Tables {
                 });
             })(c)
         });
-	}
+
+        this.observer = new IntersectionObserver((entries, opts) => {
+            entries.forEach(entry =>  
+                this.$tables.scrollTop = entry.target.offsetTop + SCROLL_OFFSET
+            )
+        }, {
+            root: this.$tables,
+            threshold: .5
+        });
+
+        this.observed = null;
+    }
 
 	debounce(table) {
 		((table) => {
@@ -135,6 +152,11 @@ class Tables {
     }
 
     setFocusState(list = true, searchBar = false, grid = false) {
+        if (list) {
+            if (this.observed) {
+                this.observer.unobserve(this.observed);
+            }
+        }
         this.listHasFocus = list;
         this.searchBarHasFocus = searchBar;;
         this.gridHasFocus = grid;;
@@ -223,30 +245,35 @@ class Tables {
         for (let i = 0; i < list.length; i++) {
             if (list[i].classList.contains('highlight')) {
                 list[i].classList.remove('highlight');
-                unobserve(list[i]);
+                //this.observer.unobserve(list[i]);
                 break;
             }
         }
 
         this.table = table;
         //highlight new table if it exists in the list
-        let found = false;
+        let found = null;
         list = this.$tables.querySelectorAll('.table-name');
         for (let i = 0; i < list.length; i++) {
             if (list[i].innerHTML == table) {
-                let parent = list[i].parentElement;
-                parent.classList.add('highlight');
+                let p = list[i].parentElement;
+                p.classList.add('highlight');
+                //this.observer.observe(p);
 
-                found = true;
+                found = p;
                 break;
             }
+        }
+
+        if (found) {
+            return found;
         }
 
         //if not present in the list, the user must be doing filtering. Override the 
         //filter and insert the table name in the displayed list
         Logger.Log(TAG, `found ${found}`);
         if (!found) {
-            this.addToList(table);
+            return this.addToList(table);
         }
     }
 
@@ -259,6 +286,7 @@ class Tables {
             highlight: 'highlight',
         })
         this.$tables.append(h)
+        return this.$tables.querySelector('.highlight');
     }
 
     async handleCmd(cmd) {
