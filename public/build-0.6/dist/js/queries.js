@@ -4020,6 +4020,7 @@
         constructor(name, sessionId, db) {
             this.sessionId = sessionId;
             this.db = db;
+            document.title = this.db;
             this.dbMenu = new DbMenu(this.sessionId, this.db);
 
             this.$databases = document.getElementById('databases');
@@ -4032,6 +4033,7 @@
                 Logger.Log(TAG$2, "Db changed to " + this.db);
 
                 this.dbMenu.setSessionInfo(this.sessionId, this.db);
+                document.title = this.db;
                 PubSub.publish(Constants.DB_CHANGED, {db: this.db});
             });
 

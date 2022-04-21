@@ -4384,6 +4384,8 @@
                 })(c);
             });
 
+            //from the tables list if a table is selected which is not is view (due to scroll) 
+            //then observer helps to get that table into view by changing scoll position
             this.observer = new IntersectionObserver((entries, opts) => {
                 entries.forEach(entry =>  
                     this.$tables.scrollTop = entry.target.offsetTop + SCROLL_OFFSET
@@ -4397,6 +4399,8 @@
         }
 
     	debounce(table) {
+            //when user is rapidly scrolling the tables list we don't want to keep loading 
+            //new tables. Wait until user stops for a while
     		((table) => {
     			setTimeout(() => {
                         let n = this.getCurrentSelected();
@@ -5032,6 +5036,7 @@
         constructor(name, sessionId, db) {
             this.sessionId = sessionId;
             this.db = db;
+            document.title = this.db;
             this.dbMenu = new DbMenu(this.sessionId, this.db);
 
             this.$databases = document.getElementById('databases');
@@ -5044,6 +5049,7 @@
                 Logger.Log(TAG$8, "Db changed to " + this.db);
 
                 this.dbMenu.setSessionInfo(this.sessionId, this.db);
+                document.title = this.db;
                 PubSub.publish(Constants.DB_CHANGED, {db: this.db});
             });
 
