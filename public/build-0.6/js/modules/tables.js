@@ -11,30 +11,57 @@ const TAG = "modules-tables"
 const SCROLL_OFFSET = -50;
 const DEBOUNCE_DELAY = 500;
 
+//for saving state to local storage
+const MODULES_TABLES_FILTER_TEXT = "modules-tables-filter-text";
+
 class Tables {
     constructor(sessionId) {
-        this.$root = document.getElementById('app-left-panel')
         this.sessionId = sessionId
+
+        this.initDom();
+        this.initHandlers();
+        this.initSubscribers();
+        
+        this.$tableFilter.focus();
+        this.setFocusState(true, false, false);
+        this.observed = null;
+    }
+
+    restoreState() {
+        let v = Utils.getFromLocalStorage(MODULES_TABLES_FILTER_TEXT);
+        if (v) {
+            this.$tableFilter.value = v;
+            this.$tableFilter.dispatchEvent(new KeyboardEvent('keyup'));
+        }
+    }
+
+    initDom() {
+        this.$root = document.getElementById('app-left-panel')
         this.$tables = document.getElementById('tables')
         this.$tableFilter = document.getElementById('field1')
         this.$exportTable = document.getElementById('export-table')
+    }
+
+    initHandlers() {
         this.$tableFilter.addEventListener('keyup', (e) => {
             if (e.which == Constants.UP_ARROW || e.which == Constants.DOWN_ARROW) {
                 //these are used for list navigation. Not required for filtering
-                //this.$tableFilter.blur();
                 return;
             }
 
             this.filter();
+            let v = this.$tableFilter.value;
+            if (v != '') {
+                Utils.saveToLocalStorage(MODULES_TABLES_FILTER_TEXT, v);
+                return;
+            }
+            Utils.removeFromLocalStorage(MODULES_TABLES_FILTER_TEXT);
         });
-
-        this.$tableFilter.focus();
 
         this.$tableFilter.addEventListener('focus', (e) => {
             this.setFocusState(false, false, false);
         });
 
-        this.setFocusState(true, false, false);
         this.$exportTable.addEventListener('click', () => {
             this.handleCmd(Constants.CMD_EXPORT_TABLE);
         });
@@ -48,6 +75,19 @@ class Tables {
             this.handleTableClick(e);
         })
 
+        //from the tables list if a table is selected which is not is view (due to scroll) 
+        //then observer helps to get that table into view by changing scroll position
+        this.observer = new IntersectionObserver((entries, opts) => {
+            entries.forEach(entry =>  
+                this.$tables.scrollTop = entry.target.offsetTop + SCROLL_OFFSET
+            )
+        }, {
+            root: this.$tables,
+            threshold: 0.5
+        });
+    }
+
+    initSubscribers() {
         //update highlighted table if table is changed from elsewhere
         PubSub.subscribe(Constants.TABLE_CHANGED, (data) => {
             let toObserve = this.handleTableChange(data.table);
@@ -71,7 +111,6 @@ class Tables {
             this.setFocusState(false, true, false);
         });
 
-        Logger.Log(TAG, `sessionId: ${sessionId}`);
         //handle all keyboard shortcuts
         [
             Constants.CMD_EXPORT_TABLE,
@@ -82,35 +121,22 @@ class Tables {
                 });
             })(c)
         });
-
-        //from the tables list if a table is selected which is not is view (due to scroll) 
-        //then observer helps to get that table into view by changing scoll position
-        this.observer = new IntersectionObserver((entries, opts) => {
-            entries.forEach(entry =>  
-                this.$tables.scrollTop = entry.target.offsetTop + SCROLL_OFFSET
-            )
-        }, {
-            root: this.$tables,
-            threshold: .5
-        });
-
-        this.observed = null;
     }
 
-	debounce(table) {
+    debounce(table) {
         //when user is rapidly scrolling the tables list we don't want to keep loading 
         //new tables. Wait until user stops for a while
-		((table) => {
-			setTimeout(() => {
-                    let n = this.getCurrentSelected();
-                    if (n == null) {
-                        return;
-                    }
+        ((table) => {
+            setTimeout(() => {
+                let n = this.getCurrentSelected();
+                if (n == null) {
+                    return;
+                }
 
-                    if (this.filtered[n] == table) {
-                        PubSub.publish(Constants.TABLE_SELECTED, {table: table});
-                    }
-                }, DEBOUNCE_DELAY);
+                if (this.filtered[n] == table) {
+                    PubSub.publish(Constants.TABLE_SELECTED, {table: table});
+                }
+            }, DEBOUNCE_DELAY);
         })(table);
     }
 
@@ -157,6 +183,8 @@ class Tables {
 
     setFocusState(list = true, searchBar = false, grid = false) {
         if (list) {
+            //when list has focus, we do NOT want to observe anything, mainly because
+            //it does not work properly :-(. Let user manage the scroll position
             if (this.observed) {
                 this.observer.unobserve(this.observed);
             }
@@ -327,6 +355,7 @@ class Tables {
         let f = this.$tableFilter.value
 
         if (f == '') {
+            this.filtered = this.tables;
             this.render(this.tables)
             return
         }
@@ -371,6 +400,8 @@ class Tables {
 
         this.filtered = this.tables;
         this.render(this.tables);
+
+        this.restoreState();
     }
 
     render(tables) {

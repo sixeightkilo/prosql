@@ -16,13 +16,16 @@ class Utils {
         return window.sessionStorage.getItem(key)
     }
 
-
     static saveToLocalStorage(key, value) {
         window.localStorage.setItem(key, value);
     }
 
     static getFromLocalStorage(key) {
         return window.localStorage.getItem(key) ?? null;
+    }
+
+    static removeFromLocalStorage(key) {
+        return window.localStorage.removeItem(key);
     }
 
 	static processTemplate(templ, data) {
