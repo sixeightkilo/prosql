@@ -1,6 +1,5 @@
 #app-content {
 	display:grid;
-	grid-template-columns: 2fr 1px 8fr;
 	height:100%;
 }
 
@@ -105,7 +104,7 @@
 	width:100%;
 	padding:0.25em;
 	display:grid;
-	grid-template-columns: 0.8fr 0.5fr 2fr 2fr 3.0fr 0.5fr 1fr;
+	grid-template-columns: 1.0fr 0.5fr 2fr 2fr 3.0fr 0.5fr 1fr;
 	column-gap:0.25em;
 	background-color:var(--grey-lightest);
 	font-family: 'Open Sans', sans-serif;

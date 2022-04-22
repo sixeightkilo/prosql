@@ -2,7 +2,7 @@ import { Logger } from './logger.js'
 
 const TAG = "grid-resizer"
 class GridResizerV {
-    //resize two elements contained in grid horizontal direction
+    //resize two elements contained in grid vertical direction
     constructor($grid, $e1, $resizer, $e2) {
         this.d1 = $e1.getBoundingClientRect().height;
         this.d2 = $e2.getBoundingClientRect().height;
@@ -35,6 +35,10 @@ class GridResizerV {
             this.isDragging = false;
             Logger.Log(TAG, `mouseup: ${e.clientY}`);
             e.preventDefault();
+            PubSub.publish(Constants.GRID_V_RESIZED, {
+                d1: this.d1,
+                d2: this.d2,
+            });
         })
     }
 }
