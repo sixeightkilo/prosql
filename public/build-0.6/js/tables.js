@@ -103,9 +103,11 @@ class Content {
         let $e1 = document.getElementById('app-left-panel-container');
         let $e2 = document.getElementById('app-right-panel');
         let $resizer = document.getElementById('app-content-resizer');
-        let grid = new GridResizerH($g1, $e1, $resizer, $e2);
+
+        let grid = new GridResizerH($g1, $e1, $resizer, $e2, /*this is in fr*/{d1: 2, d2: 8});
         let dims = Utils.getFromSession(TABLES_GRID_DIMENTIONS);
         if (dims != null) {
+            /*this is in px*/
             grid.set(JSON.parse(dims));
         }
 

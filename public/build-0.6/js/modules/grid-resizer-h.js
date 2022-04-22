@@ -5,9 +5,9 @@ import { Constants } from './constants.js'
 const TAG = "grid-resizer"
 class GridResizerH {
     //resize two elements contained in grid horizontal direction
-    constructor($grid, $e1, $resizer, $e2) {
+    constructor($grid, $e1, $resizer, $e2, dims) {
         this.$grid = $grid;
-        this.$grid.style.gridTemplateColumns = '2fr 1px 8fr';
+        this.$grid.style.gridTemplateColumns = `${dims.d1}fr 1px ${dims.d2}fr`;
         this.d1 = $e1.getBoundingClientRect().width;
         this.d2 = $e2.getBoundingClientRect().width;
 

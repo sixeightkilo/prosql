@@ -1739,7 +1739,7 @@
 
     let subscribers = {};
 
-    class PubSub$1 {
+    class PubSub {
         static subscribe(evt, cb) {
             if (!subscribers[evt]) {
                 subscribers[evt] = new Set();
@@ -1768,7 +1768,7 @@
     		});
 
             //todo: why can't we have simple function calls?
-            PubSub$1.subscribe(Constants$1.INIT_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.INIT_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -1787,7 +1787,7 @@
                 this.progressBar.classList.add('is-active');
             });
 
-            PubSub$1.subscribe(Constants$1.START_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.START_PROGRESS, (data) => {
                 this.time.innerHTML = '';
                 this.message.innerHTML = '';
                 this.elapsed = 0;
@@ -1797,7 +1797,7 @@
                 }
             });
 
-            PubSub$1.subscribe(Constants$1.STOP_PROGRESS, () => {
+            PubSub.subscribe(Constants$1.STOP_PROGRESS, () => {
                 clearInterval(this.timer);
 
                 //if we have buttons, wait till user clicks ok
@@ -1811,7 +1811,7 @@
                 this.progressBar.classList.remove('is-active');
             });
 
-            PubSub$1.subscribe(Constants$1.UPDATE_PROGRESS, (data) => {
+            PubSub.subscribe(Constants$1.UPDATE_PROGRESS, (data) => {
                 this.message.innerHTML = data.message;
             });
         }
@@ -1969,7 +1969,7 @@
                 }
             });
 
-            PubSub$1.publish(Constants$1.INIT_PROGRESS, {
+            PubSub.publish(Constants$1.INIT_PROGRESS, {
                 title: `Running query`,
                 message: `Please wait`
             });
@@ -1982,7 +1982,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub$1.publish(Constants$1.STREAM_ERROR, {
+                    PubSub.publish(Constants$1.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -1996,12 +1996,12 @@
                 if (row[0] == "header") {
                     fileName = row[2];
 
-                    PubSub$1.publish(Constants$1.START_PROGRESS, {
+                    PubSub.publish(Constants$1.START_PROGRESS, {
                         title: `Exporting to ${fileName}`
                     });
 
                     //If we are here query was OK, save to DB
-                    PubSub$1.publish(Constants$1.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                         query: q,
                         tags: [Constants$1.USER]
                     });
@@ -2011,27 +2011,27 @@
                 if (row[0] == "current-row") {
                     n += row[1];
 
-                    PubSub$1.publish(Constants$1.UPDATE_PROGRESS, {
+                    PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                         message: `Processed ${row[1]} rows`
                     });
                 }
             }
 
             if (n > 0) {
-                PubSub$1.publish(Constants$1.UPDATE_PROGRESS, {
+                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                     message: `Export complete`
                 });
             } else {
-                PubSub$1.publish(Constants$1.START_PROGRESS, {
+                PubSub.publish(Constants$1.START_PROGRESS, {
                     title: `No data`
                 });
 
-                PubSub$1.publish(Constants$1.UPDATE_PROGRESS, {
+                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                     message: `Processed 0 rows`
                 });
             }
 
-            PubSub$1.publish(Constants$1.STOP_PROGRESS, {});
+            PubSub.publish(Constants$1.STOP_PROGRESS, {});
 
             if (err == Err.ERR_NONE) {
                 return {
@@ -2111,9 +2111,9 @@
     const TAG$g = "grid-resizer";
     class GridResizerH {
         //resize two elements contained in grid horizontal direction
-        constructor($grid, $e1, $resizer, $e2) {
+        constructor($grid, $e1, $resizer, $e2, dims) {
             this.$grid = $grid;
-            this.$grid.style.gridTemplateColumns = '2fr 1px 8fr';
+            this.$grid.style.gridTemplateColumns = `${dims.d1}fr 1px ${dims.d2}fr`;
             this.d1 = $e1.getBoundingClientRect().width;
             this.d2 = $e2.getBoundingClientRect().width;
 
@@ -2145,7 +2145,7 @@
                 this.isDragging = false;
                 Logger.Log(TAG$g, `mouseup: ${e.clientX}`);
                 e.preventDefault();
-                PubSub$1.publish(Constants$1.GRID_H_RESIZED, {
+                PubSub.publish(Constants$1.GRID_H_RESIZED, {
                     d1: this.d1,
                     d2: this.d2,
                 });
@@ -2296,7 +2296,7 @@
         }
 
         onSortRequested(order, event) {
-            PubSub$1.publish(Constants$1.SORT_REQUESTED, {
+            PubSub.publish(Constants$1.SORT_REQUESTED, {
                 column: this.params.column.colDef.field,
                 order: order
             });
@@ -2379,7 +2379,7 @@
                 }
 
                 Logger.Log(TAG$d, "Cancel clicked");
-                PubSub$1.publish(Constants$1.QUERY_CANCELLED, {});
+                PubSub.publish(Constants$1.QUERY_CANCELLED, {});
             });
         }
 
@@ -2401,7 +2401,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub$1.publish(Constants$1.STREAM_ERROR, {
+                    PubSub.publish(Constants$1.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -2481,7 +2481,7 @@
                 },
                 onCellClicked: () => {
                     Logger.Log(TAG$d, "onCellClicked");
-                    PubSub$1.publish(Constants$1.GRID_HAS_FOCUS, {});
+                    PubSub.publish(Constants$1.GRID_HAS_FOCUS, {});
                 }
             };
 
@@ -2507,7 +2507,7 @@
             Logger.Log(TAG$d, "onSelectionChanged:" + JSON.stringify(selectedRows));
             for (let k in selectedRows[0]) {
                 if (k == fkMap['primary-key'] + '-' + fkMap['primary-key-id']) {
-                    PubSub$1.publish(Constants$1.ROW_SELECTED, {
+                    PubSub.publish(Constants$1.ROW_SELECTED, {
                         'key': fkMap['primary-key'],
                         'value': selectedRows[0][k]
                     });
@@ -2587,7 +2587,7 @@
                 try {
                     row = await stream.get();
                 } catch (e) {
-                    PubSub$1.publish(Constants$1.STREAM_ERROR, {
+                    PubSub.publish(Constants$1.STREAM_ERROR, {
                         'error': e
                     });
                     err = e;
@@ -2656,7 +2656,7 @@
             let colField = params.colDef.field;
             let colValue = params.data[`${colField}-${colId}`];
 
-            PubSub$1.publish(Constants$1.CELL_EDITED, {
+            PubSub.publish(Constants$1.CELL_EDITED, {
                 key: {
                     'name': key,
                     'value': keyValue,
@@ -2839,7 +2839,7 @@
                     });
 
                     this.editor.session.on('change', (e) => {
-                        PubSub$1.publish(Constants$1.EDITOR_TEXT_CHANGED, {
+                        PubSub.publish(Constants$1.EDITOR_TEXT_CHANGED, {
                             text: this.editor.getValue()
                         });
                     });
@@ -3014,7 +3014,7 @@
                     mac: Constants$1.SHIFT_R,
                 },
                 exec: (editor) => {
-                    PubSub$1.publish(Constants$1.CMD_RUN_QUERY, {});
+                    PubSub.publish(Constants$1.CMD_RUN_QUERY, {});
                 },
                 readOnly: true // false if this command should not apply in readOnly mode
             });
@@ -3026,7 +3026,7 @@
                     mac: Constants$1.SHIFT_N,
                 },
                 exec: (editor) => {
-                    PubSub$1.publish(Constants$1.CMD_NEXT_ROWS, {});
+                    PubSub.publish(Constants$1.CMD_NEXT_ROWS, {});
                 },
                 readOnly: true // false if this command should not apply in readOnly mode
             });
@@ -3038,7 +3038,7 @@
                     mac: Constants$1.SHIFT_P,
                 },
                 exec: (editor) => {
-                    PubSub$1.publish(Constants$1.CMD_PREV_ROWS, {});
+                    PubSub.publish(Constants$1.CMD_PREV_ROWS, {});
                 },
                 readOnly: true // false if this command should not apply in readOnly mode
             });
@@ -3050,7 +3050,7 @@
                     mac: Constants$1.SHIFT_E,
                 },
                 exec: (editor) => {
-                    PubSub$1.publish(Constants$1.CMD_EXPORT, {});
+                    PubSub.publish(Constants$1.CMD_EXPORT, {});
                 },
                 readOnly: true // false if this command should not apply in readOnly mode
             });
@@ -3063,7 +3063,7 @@
                 },
                 exec: (editor) => {
                     Logger.Log(TAG$b, "format");
-                    PubSub$1.publish(Constants$1.CMD_FORMAT_QUERY, {});
+                    PubSub.publish(Constants$1.CMD_FORMAT_QUERY, {});
                 },
                 readOnly: true // false if this command should not apply in readOnly mode
             });
@@ -3076,7 +3076,7 @@
                 },
                 exec: (editor) => {
                     Logger.Log(TAG$b, "runall");
-                    PubSub$1.publish(Constants$1.CMD_RUN_ALL, {});
+                    PubSub.publish(Constants$1.CMD_RUN_ALL, {});
                 },
                 readOnly: true // false if this command should not apply in readOnly mode
             });
@@ -3093,24 +3093,24 @@
             Logger.Log(TAG$a, `sessionId: ${sessionId}`);
             this.init();
 
-            PubSub$1.subscribe(Constants$1.STREAM_ERROR, (err) => {
+            PubSub.subscribe(Constants$1.STREAM_ERROR, (err) => {
                 Logger.Log(TAG$a, `${Constants$1.STREAM_ERROR}: ${JSON.stringify(err)}`);
                 Err.handle(err);
             });
 
-            PubSub$1.subscribe(Constants$1.QUERY_CANCELLED, () => {
+            PubSub.subscribe(Constants$1.QUERY_CANCELLED, () => {
                 DbUtils.cancel(this.sessionId, this.cursorId);
             });
 
-            PubSub$1.subscribe(Constants$1.GRID_H_RESIZED, () => {
+            PubSub.subscribe(Constants$1.GRID_H_RESIZED, () => {
                 this.editor.resize();
             });
 
-            PubSub$1.subscribe(Constants$1.CELL_EDITED, async (data) => {
+            PubSub.subscribe(Constants$1.CELL_EDITED, async (data) => {
                 this.tableUtils.undo();
             });
 
-            PubSub$1.subscribe(Constants$1.EDITOR_TEXT_CHANGED, async (data) => {
+            PubSub.subscribe(Constants$1.EDITOR_TEXT_CHANGED, async (data) => {
                 if (data.text.trim() == '') {
                     Utils.removeFromSession(QUERY_RUNNER_QUERY);
                     return;
@@ -3129,7 +3129,7 @@
                 Constants$1.CMD_FORMAT_QUERY,
             ].forEach((c) => {
                 ((c) => {
-                    PubSub$1.subscribe(c, () => {
+                    PubSub.subscribe(c, () => {
                         this.handleCmd(c);
                     });
                 })(c);
@@ -3231,7 +3231,7 @@
             let err = await dbUtils.exportResults.apply(this, [q]);
 
             if (err == Err.ERR_NONE) {
-                PubSub$1.publish(Constants$1.QUERY_DISPATCHED, {
+                PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                     query: q,
                     tags: [Constants$1.USER]
                 });
@@ -3263,7 +3263,7 @@
                 }
 
                 if (save) {
-                    PubSub$1.publish(Constants$1.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                         query: q,
                         tags: [Constants$1.USER]
                     });
@@ -3297,7 +3297,7 @@
             if (res.status == "ok") {
                 this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
 
-                PubSub$1.publish(Constants$1.QUERY_DISPATCHED, {
+                PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                     query: q,
                     tags: [Constants$1.USER]
                 });
@@ -3382,11 +3382,11 @@
             this.showQueries(queries);
             Logger.Log(TAG$9, JSON.stringify(queries));
 
-            PubSub$1.subscribe(Constants$1.QUERY_SAVED, async () => {
+            PubSub.subscribe(Constants$1.QUERY_SAVED, async () => {
                 this.reload();
             });
 
-            PubSub$1.subscribe(Constants$1.NEW_QUERIES, async () => {
+            PubSub.subscribe(Constants$1.NEW_QUERIES, async () => {
                 this.reload();
             });
 
@@ -3647,7 +3647,7 @@
                                 Logger.Log(TAG$9, newRec);
 
                                 await this.queryDb.updateTags(newRec);
-                                PubSub$1.publish(Constants$1.QUERY_UPDATED, {id: id});
+                                PubSub.publish(Constants$1.QUERY_UPDATED, {id: id});
                             }
 
                             if (e.key == "Escape") {
@@ -3700,7 +3700,7 @@
                     reader.addEventListener('load', () => {
                         try {
                             let result = JSON.parse(reader.result);
-                            PubSub$1.publish(Constants$1.FILE_UPLOADED, result);
+                            PubSub.publish(Constants$1.FILE_UPLOADED, result);
                         } catch (e) {
                             alert(e);
                             return;
@@ -3724,7 +3724,7 @@
 
     class QueryHistory {
         constructor() {
-            PubSub$1.subscribe(Constants$1.QUERY_DISPATCHED, async (q) => {
+            PubSub.subscribe(Constants$1.QUERY_DISPATCHED, async (q) => {
                 Logger.Log(TAG$7, JSON.stringify(q));
 
                 if (!this.queryDb) {
@@ -3735,10 +3735,10 @@
                 q.terms = Utils.getTerms(q.query);
                 let id = await this.queryDb.save(q); 
                 Logger.Log(TAG$7, `Saved to ${id}`);
-                PubSub$1.publish(Constants$1.QUERY_SAVED, {id: id});
+                PubSub.publish(Constants$1.QUERY_SAVED, {id: id});
             });
 
-            PubSub$1.subscribe(Constants$1.FILE_UPLOADED, async (data) => {
+            PubSub.subscribe(Constants$1.FILE_UPLOADED, async (data) => {
                 await this.handleUpload(data);
             });
 
@@ -3787,8 +3787,8 @@
 
         async handleUpload(data) {
             progressBar.setOptions({});//no buttons
-            PubSub$1.publish(Constants$1.INIT_PROGRESS, {});
-            PubSub$1.publish(Constants$1.START_PROGRESS, {});
+            PubSub.publish(Constants$1.INIT_PROGRESS, {});
+            PubSub.publish(Constants$1.START_PROGRESS, {});
 
             for (let i = 0; i < data.length; i++) {
                 let d = data[i];
@@ -3814,13 +3814,13 @@
                 d.terms = Utils.getTerms(d.query);
                 let id = await this.queryDb.save(d);
 
-                PubSub$1.publish(Constants$1.UPDATE_PROGRESS, {
+                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                     message: `Imported ${i + 1} of ${data.length}`
                 });
 
                 Logger.Log(TAG$7, `Saved to ${id}`);
             }
-            PubSub$1.publish(Constants$1.STOP_PROGRESS, {});
+            PubSub.publish(Constants$1.STOP_PROGRESS, {});
         }
     }
 
@@ -3875,12 +3875,12 @@
                 //close the initial dialog and display a progress dialog
                 this.closeDialog();
                 progressBar.setOptions({});//no buttons
-                PubSub$1.publish(Constants$1.INIT_PROGRESS, {});
-                PubSub$1.publish(Constants$1.START_PROGRESS, {});
+                PubSub.publish(Constants$1.INIT_PROGRESS, {});
+                PubSub.publish(Constants$1.START_PROGRESS, {});
 
                 try {
                     let attribs = await this.getCurrentDbAttribs();
-                    PubSub$1.publish(Constants$1.UPDATE_PROGRESS, {
+                    PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                         message: `Renaming ${this.db} to ${this.$name.value}`
                     });
 
@@ -3888,23 +3888,23 @@
 
                     await this.createNewDb(this.$name.value, attribs);
                     Logger.Log(TAG$5, "Created new DB");
-                    PubSub$1.publish(Constants$1.UPDATE_PROGRESS, {
+                    PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                         message: `Created ${this.$name.value}`
                     });
 
                     await this.renameTables(this.db, this.$name.value);
                     Logger.Log(TAG$5, "Renamed tables");
-                    PubSub$1.publish(Constants$1.UPDATE_PROGRESS, {
+                    PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                         message: `Renamed tables`
                     });
 
-                    PubSub$1.publish(Constants$1.DB_RENAMED, {
+                    PubSub.publish(Constants$1.DB_RENAMED, {
                         'new-db': this.$name.value
                     });
                 } catch (e) {
                     Logger.Log(TAG$5, "Error: " + e);
                 } finally {
-                    PubSub$1.publish(Constants$1.STOP_PROGRESS, {});
+                    PubSub.publish(Constants$1.STOP_PROGRESS, {});
                 }
             });
 
@@ -3938,7 +3938,7 @@
                     throw `${res.msg}`;
                 }
 
-                PubSub$1.publish(Constants$1.UPDATE_PROGRESS, {
+                PubSub.publish(Constants$1.UPDATE_PROGRESS, {
                     message: `Renamed ${t}`
                 });
             }
@@ -4014,7 +4014,7 @@
                 let res = await dbUtils.execute.apply(this, [query]);
 
                 if (res.status == "ok") {
-                    PubSub$1.publish(Constants$1.QUERY_DISPATCHED, {
+                    PubSub.publish(Constants$1.QUERY_DISPATCHED, {
                         query: query,
                         tags: [Constants$1.USER]
                     });
@@ -4024,7 +4024,7 @@
                     this.closeDialog();
                     this.$ok.removeAttribute('disabled');
 
-                    PubSub$1.publish(Constants$1.DB_DELETED, {});
+                    PubSub.publish(Constants$1.DB_DELETED, {});
                     return;
                 }
 
@@ -4150,17 +4150,17 @@
 
                 this.dbMenu.setSessionInfo(this.sessionId, this.db);
                 document.title = this.db;
-                PubSub$1.publish(Constants$1.DB_CHANGED, {db: this.db});
+                PubSub.publish(Constants$1.DB_CHANGED, {db: this.db});
             });
 
-            PubSub$1.subscribe(Constants$1.DB_RENAMED, async (data) => {
+            PubSub.subscribe(Constants$1.DB_RENAMED, async (data) => {
                 Logger.Log(TAG$2, "Db renamed");
                 this.db = data['new-db'];
                 await this.showDatabases();
                 this.$databases.dispatchEvent(new Event('change'));
             });
 
-            PubSub$1.subscribe(Constants$1.DB_DELETED, async (data) => {
+            PubSub.subscribe(Constants$1.DB_DELETED, async (data) => {
                 Logger.Log(TAG$2, "Db deleted");
                 this.db = '';
                 await this.showDatabases();
@@ -4201,7 +4201,7 @@
                         break;
 
                     case Constants$1.NEW_CONNECTIONS:
-                        PubSub$1.publish(Constants$1.NEW_CONNECTIONS, {});
+                        PubSub.publish(Constants$1.NEW_CONNECTIONS, {});
                         break;
                 }
             };
@@ -4218,7 +4218,7 @@
                     break;
 
                 case Constants$1.NEW_QUERIES:
-                    PubSub$1.publish(Constants$1.NEW_QUERIES, {});
+                    PubSub.publish(Constants$1.NEW_QUERIES, {});
                     break;
 
                 case Constants$1.EXECUTE_SAVE_REC:
@@ -4238,7 +4238,9 @@
     }
 
     const TAG = "queries";
-    class Query {
+    const QUERIES_GRID_H_DIMENTIONS = "queries-grid-h-dimensions";
+
+    class Queries {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
                 this.adjustView();
@@ -4249,7 +4251,7 @@
         }
 
         async initHandlers() {
-            PubSub$1.subscribe(Constants$1.DB_CHANGED, async (data) => {
+            PubSub.subscribe(Constants$1.DB_CHANGED, async (data) => {
                 Logger.Log(TAG, "Db changed");
                 this.creds.db = data.db;
                 Utils.saveToSession(Constants$1.CREDS, JSON.stringify(this.creds));
@@ -4261,17 +4263,21 @@
                 this.setSessionInfo();
             });
 
+            PubSub.subscribe(Constants$1.GRID_H_RESIZED, (data) => {
+                Utils.saveToSession(QUERIES_GRID_H_DIMENTIONS, JSON.stringify(data)); 
+            });
+
             this.workers = new Workers();
             this.workers.initQueryWorker();
             this.workers.initConnectionWorker();
 
-            PubSub$1.subscribe(Constants$1.QUERY_SAVED, async () => {
+            PubSub.subscribe(Constants$1.QUERY_SAVED, async () => {
                 this.workers.queryWorker.port.postMessage({
                     type: Constants$1.QUERY_SAVED
                 });
             });
 
-            PubSub$1.subscribe(Constants$1.QUERY_UPDATED, async () => {
+            PubSub.subscribe(Constants$1.QUERY_UPDATED, async () => {
                 this.workers.queryWorker.port.postMessage({
                     type: Constants$1.QUERY_UPDATED
                 });
@@ -4279,6 +4285,17 @@
         }
 
         async init() {
+            let $g1 = document.getElementById('app-content');
+            let $e1 = document.getElementById('app-left-panel-container');
+            let $e2 = document.getElementById('app-right-panel');
+            let $resizer = document.getElementById('app-content-resizer');
+            let grid = new GridResizerH($g1, $e1, $resizer, $e2, {d1: 3, d2: 8});
+            let dims = Utils.getFromSession(QUERIES_GRID_H_DIMENTIONS);
+            if (dims != null) {
+                /*this is in px*/
+                grid.set(JSON.parse(dims));
+            }
+
             MainMenu.init();
 
             let creds = Utils.getFromSession(Constants$1.CREDS);
@@ -4305,12 +4322,6 @@
             if (this.creds.db) {
                 this.setSessionInfo();
             }
-
-            let $g1 = document.getElementById('app-content');
-            let $e1 = document.getElementById('app-left-panel-container');
-            let $e2 = document.getElementById('app-right-panel');
-            let $resizer = document.getElementById('app-content-resizer');
-            new GridResizerH($g1, $e1, $resizer, $e2);
         }
 
         setSessionInfo() {
@@ -4329,6 +4340,6 @@
         }
     }
 
-    new Query();
+    new Queries();
 
 })();

@@ -1,4 +1,5 @@
 import { Logger } from './logger.js'
+import { PubSub } from './pubsub.js'
 
 const TAG = "grid-resizer"
 class GridResizerV {

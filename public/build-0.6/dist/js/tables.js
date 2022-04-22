@@ -4736,9 +4736,9 @@
     const TAG$d = "grid-resizer";
     class GridResizerH {
         //resize two elements contained in grid horizontal direction
-        constructor($grid, $e1, $resizer, $e2) {
+        constructor($grid, $e1, $resizer, $e2, dims) {
             this.$grid = $grid;
-            this.$grid.style.gridTemplateColumns = '2fr 1px 8fr';
+            this.$grid.style.gridTemplateColumns = `${dims.d1}fr 1px ${dims.d2}fr`;
             this.d1 = $e1.getBoundingClientRect().width;
             this.d2 = $e2.getBoundingClientRect().width;
 
@@ -5781,9 +5781,11 @@
             let $e1 = document.getElementById('app-left-panel-container');
             let $e2 = document.getElementById('app-right-panel');
             let $resizer = document.getElementById('app-content-resizer');
-            let grid = new GridResizerH($g1, $e1, $resizer, $e2);
+
+            let grid = new GridResizerH($g1, $e1, $resizer, $e2, /*this is in fr*/{d1: 2, d2: 8});
             let dims = Utils.getFromSession(TABLES_GRID_DIMENTIONS);
             if (dims != null) {
+                /*this is in px*/
                 grid.set(JSON.parse(dims));
             }
 

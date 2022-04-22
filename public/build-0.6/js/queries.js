@@ -13,7 +13,10 @@ import { AppBar } from './modules/appbar.js'
 import { Workers } from './modules/workers.js'
 
 const TAG = "queries"
-class Query {
+const QUERIES_GRID_H_DIMENTIONS = "queries-grid-h-dimensions"
+const QUERIES_GRID_V_DIMENTIONS = "queries-grid-v-dimensions"
+
+class Queries {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.adjustView();
@@ -36,6 +39,10 @@ class Query {
             this.setSessionInfo();
         })
 
+        PubSub.subscribe(Constants.GRID_H_RESIZED, (data) => {
+            Utils.saveToSession(QUERIES_GRID_H_DIMENTIONS, JSON.stringify(data)); 
+        });
+
         this.workers = new Workers();
         this.workers.initQueryWorker();
         this.workers.initConnectionWorker();
@@ -54,6 +61,17 @@ class Query {
     }
 
     async init() {
+        let $g1 = document.getElementById('app-content');
+        let $e1 = document.getElementById('app-left-panel-container');
+        let $e2 = document.getElementById('app-right-panel');
+        let $resizer = document.getElementById('app-content-resizer');
+        let grid = new GridResizerH($g1, $e1, $resizer, $e2, {d1: 3, d2: 8});
+        let dims = Utils.getFromSession(QUERIES_GRID_H_DIMENTIONS);
+        if (dims != null) {
+            /*this is in px*/
+            grid.set(JSON.parse(dims));
+        }
+
         MainMenu.init();
 
         let creds = Utils.getFromSession(Constants.CREDS);
@@ -80,12 +98,6 @@ class Query {
         if (this.creds.db) {
             this.setSessionInfo();
         }
-
-        let $g1 = document.getElementById('app-content');
-        let $e1 = document.getElementById('app-left-panel-container');
-        let $e2 = document.getElementById('app-right-panel');
-        let $resizer = document.getElementById('app-content-resizer');
-        new GridResizerH($g1, $e1, $resizer, $e2);
     }
 
     setSessionInfo() {
@@ -104,4 +116,4 @@ class Query {
     }
 }
 
-new Query()
+new Queries()
