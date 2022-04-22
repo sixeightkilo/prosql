@@ -318,6 +318,10 @@ class Constants {
         return "deleted"
     }
 
+    static get EDITOR_TEXT_CHANGED() {
+        return "editor-text-changed"
+    }
+
     static get EPOCH_TIMESTAMP() {
         return '2021-01-01T00:00:00Z';
     }

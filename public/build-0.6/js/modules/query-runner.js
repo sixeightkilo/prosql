@@ -11,6 +11,7 @@ import { FileDownloader } from './file-downloader.js'
 import { Ace } from './ace.js'
 
 const TAG = "query-runner"
+const QUERY_RUNNER_QUERY = "query-runner-query";
 
 class QueryRunner {
     constructor(sessionId) {
@@ -34,6 +35,15 @@ class QueryRunner {
 
         PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
             this.tableUtils.undo();
+        });
+
+        PubSub.subscribe(Constants.EDITOR_TEXT_CHANGED, async (data) => {
+            if (data.text.trim() == '') {
+                Utils.removeFromSession(QUERY_RUNNER_QUERY);
+                return;
+            }
+
+            Utils.saveToSession(QUERY_RUNNER_QUERY, data.text);
         });
 
         //handle all keyboard shortcuts
@@ -103,6 +113,15 @@ class QueryRunner {
         this.$next.addEventListener('click', async (e) => {
             this.handleCmd(Constants.CMD_NEXT_ROWS);
         })
+
+        this.restoreState();
+    }
+
+    restoreState() {
+        let v = Utils.getFromSession(QUERY_RUNNER_QUERY);
+        if (v != null) {
+            this.editor.setValue(v);
+        }
     }
 
     async handleCmd(cmd) {

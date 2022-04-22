@@ -12,7 +12,9 @@ const DISABLED = [
     'grid-resizer',
     'cell-renderer',
     'table-utils',
-    //'query-db',
+    'query-worker',
+    'connection-worker',
+    'query-db',
     //'query-finder',
 ]
 

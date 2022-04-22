@@ -321,6 +321,10 @@
             return "deleted"
         }
 
+        static get EDITOR_TEXT_CHANGED() {
+            return "editor-text-changed"
+        }
+
         static get EPOCH_TIMESTAMP() {
             return '2021-01-01T00:00:00Z';
         }
@@ -339,7 +343,9 @@
         'grid-resizer',
         'cell-renderer',
         'table-utils',
-        //'query-db',
+        'query-worker',
+        'connection-worker',
+        'query-db',
         //'query-finder',
     ];
 
@@ -2817,6 +2823,12 @@
                         }, 5);
                     });
 
+                    this.editor.session.on('change', (e) => {
+                        PubSub.publish(Constants.EDITOR_TEXT_CHANGED, {
+                            text: this.editor.getValue()
+                        });
+                    });
+
                     this.setKeyBindings();
 
                     resolve();
@@ -3057,6 +3069,7 @@
     }
 
     const TAG$a = "query-runner";
+    const QUERY_RUNNER_QUERY = "query-runner-query";
 
     class QueryRunner {
         constructor(sessionId) {
@@ -3080,6 +3093,15 @@
 
             PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
                 this.tableUtils.undo();
+            });
+
+            PubSub.subscribe(Constants.EDITOR_TEXT_CHANGED, async (data) => {
+                if (data.text.trim() == '') {
+                    Utils.removeFromSession(QUERY_RUNNER_QUERY);
+                    return;
+                }
+
+                Utils.saveToSession(QUERY_RUNNER_QUERY, data.text);
             });
 
             //handle all keyboard shortcuts
@@ -3149,6 +3171,15 @@
             this.$next.addEventListener('click', async (e) => {
                 this.handleCmd(Constants.CMD_NEXT_ROWS);
             });
+
+            this.restoreState();
+        }
+
+        restoreState() {
+            let v = Utils.getFromSession(QUERY_RUNNER_QUERY);
+            if (v != null) {
+                this.editor.setValue(v);
+            }
         }
 
         async handleCmd(cmd) {
@@ -3318,6 +3349,8 @@
     const TAG$9 = "query-finder";
     const MAX_DAYS$1 = 10000;
     const VIEW_DAYS = 10;
+    const QUERY_FINDER_TERMS = "query-finder-terms";
+    const QUERY_FINDER_TAGS = "query-finder-tags";
 
     class QueryFinder {
         constructor() {
@@ -3342,10 +3375,50 @@
                 this.reload();
             });
 
+            this.restoreState();
+
             this.initTermInput();
             this.initTagInput();
             this.initTagEditor();
             this.initTooltip();
+
+        }
+
+        restoreState() {
+            //restore tags from stored JSON strings
+            let settings = [
+                {
+                    key: QUERY_FINDER_TERMS,
+                    input: 'term-input'
+                },
+                {
+                    key: QUERY_FINDER_TAGS,
+                    input: 'tags-input'
+                }
+            ];
+
+            for (let i = 0; i < settings.length; i++) {
+                let s = settings[i];
+                let tags = Utils.getFromSession(s.key);
+                if (tags == null) {
+                    continue;
+                }
+
+                tags = JSON.parse(tags);
+                let v = '';
+                tags.forEach((t) => {
+                    v += t.value + ' ';
+                });
+
+                Logger.Log(TAG$9, "restorestate: " + v);
+                let input = document.getElementById(s.input);
+                input.value = v;
+                //we can deal with either terms or tags, not both
+                if (s.key == QUERY_FINDER_TERMS) {
+                    Utils.removeFromSession(QUERY_FINDER_TAGS);
+                }
+                break;
+            }
         }
 
         async reload() {
@@ -3408,17 +3481,17 @@
             let tagify = new Tagify(input, {placeholder: 'Search queries'});
 
             tagify.on('input', async (e) => {
-    			var value = e.detail.value;
+                var value = e.detail.value;
 
-    			tagify.whitelist = null; // reset the whitelist
-    			tagify.loading(true).dropdown.hide();
+                tagify.whitelist = null; // reset the whitelist
+                tagify.loading(true).dropdown.hide();
 
                 let terms = await this.queryDb.listTerms(value);
                 Logger.Log(TAG$9, terms);
 
                 tagify.whitelist = terms;
-    			tagify.loading(false).dropdown.show(value); // render the suggestions dropdown
-    		});
+                tagify.loading(false).dropdown.show(value); // render the suggestions dropdown
+            });
 
             input.addEventListener('change', async (e) => {
                 let terms = [];
@@ -3426,6 +3499,7 @@
                 if (e.target.value == '') {
                     let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
                     this.showQueries(queries);
+                    Utils.removeFromSession(QUERY_FINDER_TERMS);
                     return;
                 }
 
@@ -3439,7 +3513,14 @@
 
                 let queries = await this.queryDb.filter({start: MAX_DAYS$1, end: 0}, [], terms);
                 this.showQueries(queries);
+
+                Utils.saveToSession(QUERY_FINDER_TERMS, e.target.value);
             });
+
+            if (input.value != '') {
+                let e = new Event('change');
+                input.dispatchEvent(e);
+            }
         }
 
         //set up tag input
@@ -3466,6 +3547,7 @@
                 if (e.target.value == '') {
                     let queries = await this.queryDb.filter({start: VIEW_DAYS, end: 0}, [], []);
                     this.showQueries(queries);
+                    Utils.removeFromSession(QUERY_FINDER_TAGS);
                     return;
                 }
 
@@ -3479,7 +3561,14 @@
 
                 let queries = await this.queryDb.filter({start: MAX_DAYS$1, end: 0}, tags, []);
                 this.showQueries(queries);
+
+                Utils.saveToSession(QUERY_FINDER_TAGS, e.target.value);
             });
+
+            if (input.value != '') {
+                let e = new Event('change');
+                input.dispatchEvent(e);
+            }
         }
 
         async showQueries(queries) {
