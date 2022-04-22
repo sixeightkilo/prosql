@@ -19,6 +19,8 @@ class Query {
             this.adjustView();
             this.init();
         })
+
+        Utils.saveToSession(Constants.CURRENT_PAGE, TAG);
     }
 
     async initHandlers() {

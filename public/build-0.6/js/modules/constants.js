@@ -325,5 +325,10 @@ class Constants {
     static get LAST_SYNC_TS() {
         return 'last-sync-ts';
     }
+
+    //session storage keys
+    static get CURRENT_PAGE() {
+        return 'current-page';
+    }
 }
 export { Constants }

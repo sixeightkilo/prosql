@@ -328,6 +328,11 @@
         static get LAST_SYNC_TS() {
             return 'last-sync-ts';
         }
+
+        //session storage keys
+        static get CURRENT_PAGE() {
+            return 'current-page';
+        }
     }
 
     const DISABLED = [
@@ -1374,6 +1379,10 @@
             return window.sessionStorage.getItem(key)
         }
 
+        static removeFromSession(key) {
+            window.sessionStorage.removeItem(key);
+        }
+
         static saveToLocalStorage(key, value) {
             window.localStorage.setItem(key, value);
         }
@@ -1383,7 +1392,7 @@
         }
 
         static removeFromLocalStorage(key) {
-            return window.localStorage.removeItem(key);
+            window.localStorage.removeItem(key);
         }
 
     	static processTemplate(templ, data) {

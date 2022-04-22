@@ -328,6 +328,11 @@
         static get LAST_SYNC_TS() {
             return 'last-sync-ts';
         }
+
+        //session storage keys
+        static get CURRENT_PAGE() {
+            return 'current-page';
+        }
     }
 
     const DISABLED = [
@@ -1374,6 +1379,10 @@
             return window.sessionStorage.getItem(key)
         }
 
+        static removeFromSession(key) {
+            window.sessionStorage.removeItem(key);
+        }
+
         static saveToLocalStorage(key, value) {
             window.localStorage.setItem(key, value);
         }
@@ -1383,7 +1392,7 @@
         }
 
         static removeFromLocalStorage(key) {
-            return window.localStorage.removeItem(key);
+            window.localStorage.removeItem(key);
         }
 
     	static processTemplate(templ, data) {
@@ -4332,7 +4341,7 @@
         }
 
         restoreState() {
-            let v = Utils.getFromLocalStorage(MODULES_TABLES_FILTER_TEXT);
+            let v = Utils.getFromSession(MODULES_TABLES_FILTER_TEXT);
             if (v) {
                 this.$tableFilter.value = v;
                 this.$tableFilter.dispatchEvent(new KeyboardEvent('keyup'));
@@ -4356,10 +4365,10 @@
                 this.filter();
                 let v = this.$tableFilter.value;
                 if (v != '') {
-                    Utils.saveToLocalStorage(MODULES_TABLES_FILTER_TEXT, v);
+                    Utils.saveToSession(MODULES_TABLES_FILTER_TEXT, v);
                     return;
                 }
-                Utils.removeFromLocalStorage(MODULES_TABLES_FILTER_TEXT);
+                Utils.removeFromSession(MODULES_TABLES_FILTER_TEXT);
             });
 
             this.$tableFilter.addEventListener('focus', (e) => {
@@ -5666,12 +5675,15 @@
     }
 
     const TAG = "tables";
+
     class Content {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
                 this.adjustView();
                 this.init();
             });
+
+            Utils.saveToSession(Constants.CURRENT_PAGE, TAG);
         }
 
         async initHandlers() {

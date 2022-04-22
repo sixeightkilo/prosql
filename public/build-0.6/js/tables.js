@@ -14,12 +14,15 @@ import { Workers } from './modules/workers.js'
 import { OpsMenu } from './modules/ops-menu/main.js'
 
 const TAG = "tables"
+
 class Content {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.adjustView()
             this.init()
         })
+
+        Utils.saveToSession(Constants.CURRENT_PAGE, TAG);
     }
 
     async initHandlers() {

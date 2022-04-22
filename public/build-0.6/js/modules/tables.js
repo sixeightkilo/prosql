@@ -28,7 +28,7 @@ class Tables {
     }
 
     restoreState() {
-        let v = Utils.getFromLocalStorage(MODULES_TABLES_FILTER_TEXT);
+        let v = Utils.getFromSession(MODULES_TABLES_FILTER_TEXT);
         if (v) {
             this.$tableFilter.value = v;
             this.$tableFilter.dispatchEvent(new KeyboardEvent('keyup'));
@@ -52,10 +52,10 @@ class Tables {
             this.filter();
             let v = this.$tableFilter.value;
             if (v != '') {
-                Utils.saveToLocalStorage(MODULES_TABLES_FILTER_TEXT, v);
+                Utils.saveToSession(MODULES_TABLES_FILTER_TEXT, v);
                 return;
             }
-            Utils.removeFromLocalStorage(MODULES_TABLES_FILTER_TEXT);
+            Utils.removeFromSession(MODULES_TABLES_FILTER_TEXT);
         });
 
         this.$tableFilter.addEventListener('focus', (e) => {
