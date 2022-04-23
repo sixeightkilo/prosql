@@ -23,7 +23,9 @@ script(type="code" id="fk-cell-template")
     div.fk-cell
         div.value {value}
         div.icon
-            i.fas.fa-arrow-circle-right.fk-icon(data-table="{table}" data-column="{column}" data-value="{value}")
+            i.fas.fa-arrow-circle-right.fk-icon(
+                data-table="{table}" data-column="{column}" data-value="{value}"
+                data-source-col="{source-col}" data-source-id="{source-id}" data-row-index="{row-index}")
 
 script(type="code" id="cell-template")
     span(class="{cls}") {value}

@@ -5,8 +5,9 @@ html
             link(rel="stylesheet" href="/#{root}/css/index.css?ver=#{version}")
     body
         section.section
-            h1.is-size-1 Prosql
-                sup alpha
+            .full-logo
+                img(src='/#{root}/images/logo.png', width="292.4", height="55.6")
+                div.superscript beta
 
         section.section
             h2.is-size-4 A fast, simple, cross-platform MySQL client that runs right in your browser!
@@ -14,7 +15,7 @@ html
                 a(href="/read-more") Read more
 
         section.section
-            button#get-started.button Get Started!
+            button#get-started.button.is-primary Get Started!
 
         script(type='module' src='/#{root}/dist/js/index.js?ver=#{version}')
 

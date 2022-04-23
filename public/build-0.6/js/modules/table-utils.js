@@ -123,6 +123,10 @@ class TableUtils {
             rowSelection: 'single',
             onSelectionChanged: () => {
                 this.onSelectionChanged(fkMap);
+            },
+            onCellClicked: () => {
+                Logger.Log(TAG, "onCellClicked");
+                PubSub.publish(Constants.GRID_HAS_FOCUS, {});
             }
         };
 
@@ -195,6 +199,10 @@ class TableUtils {
                     let c = params.colDef.field;
                     params.data[`${c}-${id}`] = params.newValue;
                     return true;
+                },
+                headerValueGetter: params => {
+                    Logger.Log(TAG, "headerValueGetter:" + JSON.stringify(params.colDef));
+                    return params.colDef.field;
                 }
             })
         }
@@ -338,6 +346,11 @@ class TableUtils {
         let rows = (n == 1) ? 'row' : 'rows';
         this.$timeTaken.innerText = `${t} ms`;
         this.$rowsAffected.innerText = `${n} ${rows} affected`;
+    }
+
+    scrollTo(t) {
+        this.api.ensureIndexVisible(parseInt(t), "middle");
+        this.api.getRowNode(t).setSelected(true);
     }
 }
 

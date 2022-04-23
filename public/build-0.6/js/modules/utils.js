@@ -16,6 +16,9 @@ class Utils {
         return window.sessionStorage.getItem(key)
     }
 
+    static removeFromSession(key) {
+        window.sessionStorage.removeItem(key);
+    }
 
     static saveToLocalStorage(key, value) {
         window.localStorage.setItem(key, value);
@@ -23,6 +26,10 @@ class Utils {
 
     static getFromLocalStorage(key) {
         return window.localStorage.getItem(key) ?? null;
+    }
+
+    static removeFromLocalStorage(key) {
+        window.localStorage.removeItem(key);
     }
 
 	static processTemplate(templ, data) {

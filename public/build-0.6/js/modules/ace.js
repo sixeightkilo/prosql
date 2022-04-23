@@ -40,6 +40,12 @@ class Ace {
                     }, 5);
                 });
 
+                this.editor.session.on('change', (e) => {
+                    PubSub.publish(Constants.EDITOR_TEXT_CHANGED, {
+                        text: this.editor.getValue()
+                    });
+                });
+
                 this.setKeyBindings();
 
                 resolve()

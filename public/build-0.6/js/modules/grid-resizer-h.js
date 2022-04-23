@@ -2,10 +2,12 @@ import { Logger } from './logger.js'
 import { PubSub } from './pubsub.js'
 import { Constants } from './constants.js'
 
-const TAG = "grid-resizer"
+const TAG = "grid-resizer-h"
 class GridResizerH {
     //resize two elements contained in grid horizontal direction
-    constructor($grid, $e1, $resizer, $e2) {
+    constructor($grid, $e1, $resizer, $e2, dims) {
+        this.$grid = $grid;
+        this.$grid.style.gridTemplateColumns = `${dims.d1}fr 1px ${dims.d2}fr`;
         this.d1 = $e1.getBoundingClientRect().width;
         this.d2 = $e2.getBoundingClientRect().width;
 
@@ -28,7 +30,7 @@ class GridResizerH {
             this.d2 += -1 * delta;
             Logger.Log(TAG, `${delta} ${this.d1} ${this.d2}`);
 
-            $grid.style.gridTemplateColumns = `${this.d1}px 2px ${this.d2}px`;
+            this.$grid.style.gridTemplateColumns = `${this.d1}px 1px ${this.d2}px`;
             this.startx = e.clientX;
             e.preventDefault();
         });
@@ -37,8 +39,17 @@ class GridResizerH {
             this.isDragging = false;
             Logger.Log(TAG, `mouseup: ${e.clientX}`);
             e.preventDefault();
-            PubSub.publish(Constants.GRID_H_RESIZED, {});
+            PubSub.publish(Constants.GRID_H_RESIZED, {
+                d1: this.d1,
+                d2: this.d2,
+            });
         })
+    }
+
+    set(dims) {
+        this.d1 = dims.d1;
+        this.d2 = dims.d2;
+        this.$grid.style.gridTemplateColumns = `${this.d1}px 1px ${this.d2}px`;
     }
 }
 

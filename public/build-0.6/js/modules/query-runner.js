@@ -11,6 +11,8 @@ import { FileDownloader } from './file-downloader.js'
 import { Ace } from './ace.js'
 
 const TAG = "query-runner"
+const QUERY_RUNNER_QUERY = "query-runner-query";
+const QUERY_RUNNER_GRID_V_DIMENTIONS = "query-runner-grid-v-dimensions"
 
 class QueryRunner {
     constructor(sessionId) {
@@ -32,8 +34,22 @@ class QueryRunner {
             this.editor.resize();
         });
 
+        PubSub.subscribe(Constants.GRID_V_RESIZED, (data) => {
+            this.editor.resize();
+            Utils.saveToSession(QUERY_RUNNER_GRID_V_DIMENTIONS, JSON.stringify(data));
+        });
+
         PubSub.subscribe(Constants.CELL_EDITED, async (data) => {
             this.tableUtils.undo();
+        });
+
+        PubSub.subscribe(Constants.EDITOR_TEXT_CHANGED, async (data) => {
+            if (data.text.trim() == '') {
+                Utils.removeFromSession(QUERY_RUNNER_QUERY);
+                return;
+            }
+
+            Utils.saveToSession(QUERY_RUNNER_QUERY, data.text);
         });
 
         //handle all keyboard shortcuts
@@ -65,18 +81,24 @@ class QueryRunner {
         this.$timeTaken = document.getElementById('time-taken')
         this.$rowsAffected = document.getElementById('rows-affected')
 
+        this.editor = new Ace('query-editor');
+        await this.editor.init();
+
         let $g1 = document.getElementById('query-container');
         let $e1 = document.getElementById('query-editor');
         let $e2 = document.getElementById('query-results');
         let $resizer = document.getElementById('query-container-resizer');
-        new GridResizerV($g1, $e1, $resizer, $e2);
+        let grid = new GridResizerV($g1, $e1, $resizer, $e2);
+        let dims = Utils.getFromSession(QUERY_RUNNER_GRID_V_DIMENTIONS);
+        if (dims != null) {
+            grid.set(JSON.parse(dims));
+            this.editor.resize();
+        }
 
         this.$queryResults = document.getElementById('query-results')
         this.$table = this.$queryResults.querySelector('table')
         this.tableUtils = new TableUtils(this.$queryResults);
 
-        this.editor = new Ace('query-editor');
-        await this.editor.init();
 
         this.$formatQuery = document.getElementById('format-query')
 
@@ -103,6 +125,15 @@ class QueryRunner {
         this.$next.addEventListener('click', async (e) => {
             this.handleCmd(Constants.CMD_NEXT_ROWS);
         })
+
+        this.restoreState();
+    }
+
+    restoreState() {
+        let v = Utils.getFromSession(QUERY_RUNNER_QUERY);
+        if (v != null) {
+            this.editor.setValue(v);
+        }
     }
 
     async handleCmd(cmd) {

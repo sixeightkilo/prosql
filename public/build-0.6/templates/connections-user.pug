@@ -7,7 +7,8 @@ html
         include navbar.pug
         div#container.content
             div#left-container
-                #recents-title Recent Connections
+                #recents-title
+                    span Recent Connections
                     #conn-list
             div#right-container
                 div#form-container.control
@@ -70,8 +71,8 @@ html
         script(type='module' src='/#{root}/dist/js/connections.js?ver=#{version}')
         script(type='code' id='conn-template')
             .conn-container
-                div
-                    i.fas.fa-server
+                div.conn
+                    i.fas.fa-server.server-icon
                 div.conn.has-text-left(data-id="{id}") &nbsp;&nbsp;{item}
                 div
                     i.fas.fa-trash.del-conn(data-id="{id}")

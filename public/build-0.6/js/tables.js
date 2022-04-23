@@ -14,12 +14,16 @@ import { Workers } from './modules/workers.js'
 import { OpsMenu } from './modules/ops-menu/main.js'
 
 const TAG = "tables"
+const TABLES_GRID_DIMENTIONS = "tables-grid-dimensions"
+
 class Content {
     constructor() {
         document.addEventListener('DOMContentLoaded', async () => {
             this.adjustView()
             this.init()
         })
+
+        Utils.saveToSession(Constants.CURRENT_PAGE, TAG);
     }
 
     async initHandlers() {
@@ -42,6 +46,20 @@ class Content {
         PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
             this.tableContents.reset();
             this.tableContents.show(data.table);
+        });
+
+        PubSub.subscribe(Constants.GRID_H_RESIZED, (data) => {
+            Utils.saveToSession(TABLES_GRID_DIMENTIONS, JSON.stringify(data)); 
+        });
+
+        PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
+            window.location = '/signin';
+        });
+
+        PubSub.subscribe(Constants.QUERY_SAVED, async () => {
+            this.workers.queryWorker.port.postMessage({
+                type: Constants.QUERY_SAVED
+            });
         });
     }
 
@@ -75,7 +93,6 @@ class Content {
 
         this.initHandlers();
 
-
         if (this.creds.db) {
             this.setSessionInfo();
 
@@ -86,21 +103,17 @@ class Content {
         let $e1 = document.getElementById('app-left-panel-container');
         let $e2 = document.getElementById('app-right-panel');
         let $resizer = document.getElementById('app-content-resizer');
-        new GridResizerH($g1, $e1, $resizer, $e2);
 
-        PubSub.subscribe(Constants.SIGNIN_REQUIRED, async () => {
-            window.location = '/signin';
-        });
+        let grid = new GridResizerH($g1, $e1, $resizer, $e2, /*this is in fr*/{d1: 2, d2: 8});
+        let dims = Utils.getFromSession(TABLES_GRID_DIMENTIONS);
+        if (dims != null) {
+            /*this is in px*/
+            grid.set(JSON.parse(dims));
+        }
 
         this.workers = new Workers();
         this.workers.initQueryWorker();
         this.workers.initConnectionWorker();
-
-        PubSub.subscribe(Constants.QUERY_SAVED, async () => {
-            this.workers.queryWorker.port.postMessage({
-                type: Constants.QUERY_SAVED
-            });
-        });
     }
 
     adjustView() {

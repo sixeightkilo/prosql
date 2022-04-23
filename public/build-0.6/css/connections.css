@@ -5,14 +5,31 @@
 }
 
 #left-container {
-	background-color:#eee;
+	background-color: var(--grey-lightest);
 	height:100%;
 }
 
 #recents-title {
-	font-family:sans-serif;
+	font-family:'Open Sans', sans-serif;
 	text-align:center;
 	padding:0.5em;
+	font-weight:bold;
+}
+
+.server-icon {
+	color: #5D8ABA;
+}
+
+.conn {
+	color:var(--dark-grey);
+}
+
+.highlight .conn {
+	color:#fff;
+}
+
+.highlight .server-icon {
+	color:#fff;
 }
 
 #form-container {
@@ -20,7 +37,7 @@
 	width: 30em;
 	display:grid;
 	padding:0.5em;
-	background-color:#eee;
+	background-color:var(--grey-lightest);
 	margin-top:2em;
 	border-radius:5px;
 	row-gap:0.25em;
@@ -32,6 +49,7 @@
 	left: 5px;
 	top: 5px;
 	cursor:pointer;
+	color:var(--dark-blue);
 }
 
 #form-container input {
@@ -129,4 +147,26 @@
 	margin-left:auto;
 	margin-right:auto;
 	text-align:center;
+}
+
+.label {
+	color:var(--grey-dark);
+}
+
+#recents-title > span {
+	border-radius:3px;
+	padding-left:0.5em;
+	padding-right:0.5em;
+	padding-top:0.25em;
+	padding-bottom:0.25em;
+	background-color:var(--dark-blue);
+	color:#fff;
+}
+
+#conn-list {
+	margin-top:1em;
+}
+
+#form-container {
+	font-family:'Open Sans', sans-serif;
 }

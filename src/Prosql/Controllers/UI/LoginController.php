@@ -80,6 +80,9 @@ class LoginController extends BaseController {
         }
 
         $user = $this->sm->getTempUser();
+        if (!$user) {
+            throw new \Exception("No details provided");
+        }
         $this->logger->debug("Signing up:" . print_r($user, true));
         $userId = $this->user->save([
             'first_name' => $user['first-name'],

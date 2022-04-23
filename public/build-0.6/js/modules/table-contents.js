@@ -36,6 +36,7 @@ class TableContents {
 
         this.sessionId = sessionId
         this.init()
+        this.scrollPositions = {};
     }
 
     //public method
@@ -139,9 +140,28 @@ class TableContents {
     }
 
     async initHandlers() {
+        //focus events
+        this.$operators.addEventListener('focus', () => {
+            PubSub.publish(Constants.SEARCH_BAR_HAS_FOCUS, {});
+        });
+
+        this.$columNames.addEventListener('focus', () => {
+            PubSub.publish(Constants.SEARCH_BAR_HAS_FOCUS, {});
+        });
+
+        this.$searchText.addEventListener('focus', () => {
+            PubSub.publish(Constants.SEARCH_BAR_HAS_FOCUS, {});
+        });
+
         this.$search.addEventListener('click', async () => {
             this.search()
-            this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
+            this.stack.push({
+                'type': 'search',
+                'table': this.table,
+                'column': this.$columNames.value,
+                'operator': this.$operators.value,
+                'value': this.$searchText.value,
+            });
         })
 
         this.$searchText.addEventListener('keyup', async (e) => {
@@ -153,7 +173,13 @@ class TableContents {
 
             if (e.key == "Enter") {
                 this.search()
-                this.stack.push(this.table, this.$columNames.value, this.$operators.value, this.$searchText.value)
+                this.stack.push({
+                    'type': 'search',
+                    'table': this.table,
+                    'column': this.$columNames.value,
+                    'operator': this.$operators.value,
+                    'value': this.$searchText.value,
+                });
             }
         })
 
@@ -166,10 +192,20 @@ class TableContents {
 
             let value = target.dataset.value;
 
+            //save scroll position of currently displayed table so that when we 
+            //come back we can restore it
+            this.saveScrollPos(target.dataset.rowIndex);
+
             Logger.Log(TAG, `${target.dataset.table}:${target.dataset.column}:${value}`)
+
             await this.showFkRef(target.dataset.table, target.dataset.column, value)
             PubSub.publish(Constants.TABLE_CHANGED, {table: target.dataset.table});
-            this.stack.push(target.dataset.table, target.dataset.column, value)
+            this.stack.push({
+                'type': 'fk-ref',
+                'table': target.dataset.table,
+                'column': target.dataset.column,
+                'value': value,
+            });
         })
 
         this.$operators.addEventListener('change', () => {
@@ -187,6 +223,19 @@ class TableContents {
         this.$clearFilter.addEventListener('click', async (e) => {
             this.handleCmd(Constants.CMD_CLEAR_FILTER);
         })
+    }
+
+    saveScrollPos(rowIndex) {
+        this.scrollPositions[this.table] = rowIndex;
+    }
+
+    restoreScrollPos() {
+        let n = this.scrollPositions[this.table] ?? null;
+        if (!n) {
+            return;
+        }
+        
+        this.tableUtils.scrollTo(n);
     }
 
     async handleSort(data) {
@@ -301,7 +350,10 @@ class TableContents {
         this.colSelector.init(this.table, this.columns);
 
         this.stack.reset()
-        this.stack.push(this.table)
+        this.stack.push({
+            'type': 'table',
+            'table': this.table
+        });
 
         //the base query currently in operation
         this.query = `select * from \`${this.table}\``;
@@ -348,7 +400,11 @@ class TableContents {
 
     async showContents(query, fkMap, sel = true) {
         this.tableUtils.clearInfo.apply(this);
-        this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
+        try {
+            this.cursorId = await DbUtils.fetchCursorId(this.sessionId, query);
+        } catch (e) {
+            return;
+        }
 
         let params = {
             'session-id': this.sessionId,
@@ -366,6 +422,7 @@ class TableContents {
             this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
         }
 
+        this.restoreScrollPos();
         return res;
     }
 
@@ -436,17 +493,17 @@ class TableContents {
     }
 
     async navigate(e) {
-        Logger.Log(TAG, JSON.stringify(e))
+        Logger.Log(TAG, JSON.stringify(e));
         PubSub.publish(Constants.TABLE_CHANGED, {table: e.table});
 
         switch (e.type) {
             case 'table':
-                await this.show(e.table)
-                break
+                await this.show(e.table);
+                break;
 
             case 'fk-ref':
-                await this.showFkRef(e.table, e.column, e.value)
-                break
+                await this.showFkRef(e.table, e.column, e.value);
+                break;
 
             case 'search':
                 await this.initTable(e.table);
@@ -456,10 +513,10 @@ class TableContents {
                 this.$operators.value = e.operator;
                 this.$searchText.value = e.value;
 
-                await this.search()
-                break
+                await this.search();
+                break;
         }
-        Logger.Log(TAG, "Done navigate")
+        Logger.Log(TAG, "Done navigate");
     }
 }
 

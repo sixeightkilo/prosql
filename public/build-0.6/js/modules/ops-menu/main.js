@@ -90,6 +90,10 @@ class OpsMenu {
         PubSub.subscribe(Constants.TABLE_SELECTED, (data) => {
             this.table = data.table;
         });
+
+        PubSub.subscribe(Constants.TABLE_UNSELECTED, (data) => {
+            this.table = null;
+        });
     }
 }
 

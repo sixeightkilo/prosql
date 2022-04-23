@@ -242,6 +242,13 @@ class Connections {
             Logger.Log(TAG, JSON.stringify(res));
 
             if (res.status == "ok") {
+                //if current page is available use that, other use tables as default
+                let currPage = Utils.getFromSession(Constants.CURRENT_PAGE);
+                if (currPage) {
+                    window.location = `/app/${currPage}`;
+                    return;
+                }
+
                 window.location = '/app/tables';
                 return;
             }
