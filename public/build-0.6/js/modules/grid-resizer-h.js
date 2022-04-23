@@ -2,7 +2,7 @@ import { Logger } from './logger.js'
 import { PubSub } from './pubsub.js'
 import { Constants } from './constants.js'
 
-const TAG = "grid-resizer"
+const TAG = "grid-resizer-h"
 class GridResizerH {
     //resize two elements contained in grid horizontal direction
     constructor($grid, $e1, $resizer, $e2, dims) {

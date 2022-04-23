@@ -14,7 +14,6 @@ import { Workers } from './modules/workers.js'
 
 const TAG = "queries"
 const QUERIES_GRID_H_DIMENTIONS = "queries-grid-h-dimensions"
-const QUERIES_GRID_V_DIMENTIONS = "queries-grid-v-dimensions"
 
 class Queries {
     constructor() {

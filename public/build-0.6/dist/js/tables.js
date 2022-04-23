@@ -4733,7 +4733,7 @@
         }
     }
 
-    const TAG$d = "grid-resizer";
+    const TAG$d = "grid-resizer-h";
     class GridResizerH {
         //resize two elements contained in grid horizontal direction
         constructor($grid, $e1, $resizer, $e2, dims) {

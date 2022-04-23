@@ -1,5 +1,6 @@
 #app-content {
 	display:grid;
+	grid-template-columns: 3fr 2px 8fr;
 	height:100%;
 }
 

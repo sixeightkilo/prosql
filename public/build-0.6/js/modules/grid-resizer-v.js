@@ -1,10 +1,12 @@
 import { Logger } from './logger.js'
 import { PubSub } from './pubsub.js'
+import { Constants } from './constants.js'
 
-const TAG = "grid-resizer"
+const TAG = "grid-resizer-v"
 class GridResizerV {
     //resize two elements contained in grid vertical direction
     constructor($grid, $e1, $resizer, $e2) {
+        this.$grid = $grid;
         this.d1 = $e1.getBoundingClientRect().height;
         this.d2 = $e2.getBoundingClientRect().height;
 
@@ -27,7 +29,7 @@ class GridResizerV {
             this.d2 += -1 * delta;
             Logger.Log(TAG, `${delta} ${this.d1} ${this.d2}`);
 
-            $grid.style.gridTemplateRows = `${this.d1}px 1px ${this.d2}px`;
+            this.$grid.style.gridTemplateRows = `${this.d1}px 2px ${this.d2}px`;
             this.starty = e.clientY;
             e.preventDefault();
         });
@@ -41,6 +43,12 @@ class GridResizerV {
                 d2: this.d2,
             });
         })
+    }
+
+    set(dims) {
+        this.d1 = dims.d1;
+        this.d2 = dims.d2;
+        this.$grid.style.gridTemplateRows = `${this.d1}px 2px ${this.d2}px`;
     }
 }
 
