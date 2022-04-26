@@ -1,1 +1,1961 @@
-!function(){"use strict";class t{static get SHIFT_A(){return"Alt+Shift+A"}static get SHIFT_R(){return"Alt+Shift+R"}static get SHIFT_T(){return"Alt+Shift+T"}static get SHIFT_O(){return"Alt+Shift+O"}static get SHIFT_E(){return"Alt+Shift+E"}static get SHIFT_N(){return"Alt+Shift+N"}static get SHIFT_P(){return"Alt+Shift+P"}static get SHIFT_L(){return"Alt+Shift+L"}static get SHIFT_S(){return"Alt+Shift+S"}static get SHIFT_BACK(){return"Alt+Shift+,"}static get UP_ARROW(){return 38}static get DOWN_ARROW(){return 40}static get CMD_RUN_QUERY(){return"cmd.run-query"}static get CMD_RUN_ALL(){return"cmd.run-all"}static get CMD_FORMAT_QUERY(){return"cmd.format-query"}static get CMD_EXPORT(){return"cmd.export"}static get CMD_CLEAR_FILTER(){return"cmd.clear-filter"}static get CMD_NEXT_ROWS(){return"cmd.next-rows"}static get CMD_PREV_ROWS(){return"cmd.prev-rows"}static get CMD_FORMAT_QUERY(){return"cmd.format-query"}static get CMD_EXPORT_TABLE(){return"cmd.export-table"}static get CMD_SEARCH_TABLES(){return"cmd.search-tables"}static get CMD_BACK(){return"cmd.back"}static get GRID_HAS_FOCUS(){return"grid-has-focus"}static get SEARCH_BAR_HAS_FOCUS(){return"search-bar-has-focus"}static get DB_RENAMED(){return"db-menu.db-renamed"}static get DB_DELETED(){return"db-menu.db-deleted"}static get TABLE_RENAMED(){return"ops-menu.table-renamed"}static get TABLE_TRUNCATED(){return"ops-menu.table-truncated"}static get ROW_SELECTED(){return"table-utils.row-selected"}static get ROW_DELETED(){return"row-deleter.row-deleted"}static get COLUMNS_SELECTED(){return"cmd.columns-selected"}static get STREAM_ERROR(){return"stream.stream-error"}static get SORT_REQUESTED(){return"table-utils.sort-requested"}static get QUERY_CANCELLED(){return"table-utils.query-cancelled"}static get TABLE_SELECTED(){return"tables.table-selected"}static get TABLE_UNSELECTED(){return"tables.table-unselected"}static get CELL_EDITED(){return"tables.cell-edited"}static get TABLE_CHANGED(){return"table-contents.table-changed"}static get DB_CHANGED(){return"appbar.db-changed"}static get GRID_H_RESIZED(){return"gridh.resized"}static get QUERY_DISPATCHED(){return"query-dispatched"}static get FILE_UPLOADED(){return"file-uploaded"}static get QUERY_SAVED(){return"query-saved"}static get CONNECTION_SAVED(){return"connection-saved"}static get CONNECTION_DELETED(){return"connection-deleted"}static get QUERY_UPDATED(){return"query-updated"}static get SESSION_ID(){return"session-id"}static get URL(){return"http://localhost:23890"}static get WS_URL(){return"ws://localhost:23890"}static get DB_NAME(){return"prosql"}static get DB_VERSION(){return 1}static get CONNECTIONS(){return"connections"}static get COLUMN_SELECTIONS(){return"column-selections"}static get BATCH_SIZE(){return 1e3}static get BATCH_SIZE_WS(){return 1e3}static get CREDS(){return"creds"}static get SYSTEM(){return"system"}static get USER(){return"user"}static get DB_ID_INDEX(){return"db-id-index"}static get CONNECTIONS_META_KEY(){return 1}static get QUERIES_META_KEY(){return 2}static get CONNECTIONS_META_DB_VERSION(){return 1}static get QUERIES_META_DB_VERSION(){return 1}static get QUERY_DB_VERSION(){return 39}static get CONN_DB_VERSION(){return 4}static get INIT_PROGRESS(){return"init-progress"}static get START_PROGRESS(){return"start-progress"}static get STOP_PROGRESS(){return"stop-progress"}static get UPDATE_PROGRESS(){return"update-progress"}static get DEBUG_LOG(){return"worker.debug-log"}static get SIGNIN_REQUIRED(){return"worker.signin-required"}static get NEW_CONNECTIONS(){return"worker.new-connection"}static get NEW_QUERIES(){return"worker.new-queries"}static get EXECUTE_SAVE_REC(){return"worker.execute-save-rec"}static get EXECUTE_SUCCESS(){return"app.execute-success"}static get EXECUTE_ERROR(){return"app.execute-error"}static get STATUS_ACTIVE(){return"active"}static get STATUS_DELETED(){return"deleted"}static get EDITOR_TEXT_CHANGED(){return"editor-text-changed"}static get EPOCH_TIMESTAMP(){return"2021-01-01T00:00:00Z"}static get LAST_SYNC_TS(){return"last-sync-ts"}static get CURRENT_PAGE(){return"current-page"}}const e=["grid-resizer","cell-renderer","table-utils","query-worker","connection-worker","query-db"];class r{constructor(t=null){this.port=t}log(s,n){e.includes(s)||(this.port?this.port.postMessage({type:t.DEBUG_LOG,payload:`${s}: ${n}`}):r.print(s,n))}static Log(t,s){e.includes(t)||r.print(t,s)}static print(t,e){let[r,s,n]=(new Date).toLocaleDateString("en-US").split("/"),[i,a,o]=(new Date).toLocaleTimeString("en-US").split(/:| /),c=`${s}-${r}-${n} ${i}:${a}:${o}:::${t}: ${e}`;console.log(c)}}class s{static get ERR_NONE(){return"none"}static get ERR_NO_AGENT(){return"no-agent"}static get ERR_INVALID_USER_INPUT(){return"invalid-user-input"}static get ERR_INVALID_SESSION_ID(){return"invalid-session-id"}static get ERR_SIGNIN_REQUIRED(){return"signin-required"}static get ERR_INVALID_CURSOR_ID(){return"invalid-cursor-id"}static get ERR_DB_ERROR(){return"db-error"}static get ERR_UNRECOVERABLE(){return"unrecoverable-error"}static handle(t){t.error!=s.ERR_NO_AGENT?t.error!=s.ERR_INVALID_SESSION_ID?alert(t.error):window.location="/connections":window.location="/install"}}const n="base-db";class i{constructor(t,e){this.logger=t,this.version=e.version,this.dbName=e.dbName}async open(){return new Promise(((t,e)=>{let r=indexedDB.open(this.dbName,this.version);r.onsuccess=e=>{this.logger.log(n,"open.onsuccess"),this.db=r.result,t(0)},r.onerror=t=>{this.logger.log(n,t.target.error),e(t.target.errorCode)},r.onupgradeneeded=t=>{this.onUpgrade(t)}}))}async save(t,e){return new Promise(((r,s)=>{let i=this.db.transaction([t],"readwrite").objectStore(t).add(e);i.onsuccess=t=>{r(t.target.result)},i.onerror=t=>{this.logger.log(n,t.target.error),r(-1)}}))}async put(t,e){return new Promise(((r,s)=>{let i=this.db.transaction([t],"readwrite").objectStore(t);e.updated_at=new Date;let a=i.put(e);a.onsuccess=t=>{r(0)},a.onerror=t=>{this.logger.log(n,t.target.error),r(-1)}}))}async destroy(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.store,"readwrite").objectStore(this.store).delete(t);s.onsuccess=t=>{e(0)},s.onerror=t=>{e(t.target.error)}}))}async del(e){return new Promise(((r,s)=>{let n=this.db.transaction(this.store,"readwrite").objectStore(this.store),i=n.get(e);i.onsuccess=e=>{let s=e.target.result;s.status=t.STATUS_DELETED;let i=n.put(s);i.onerror=t=>{r(t.target.error)},i.onsuccess=t=>{r(0)}},i.onerror=t=>{r(t.target.error)}}))}async get(t,e=[]){return new Promise(((r,s)=>{let i=this.db.transaction(this.store).objectStore(this.store).get(t);i.onsuccess=t=>{let s=[];if(e.length>0)for(let t in i.result)e.includes(t)&&(s[t]=i.result[t]);else s=i.result;this.logger.log(n,JSON.stringify(s)),r(s)},i.onerror=t=>{r(null)}}))}async getAll(t=[]){return new Promise(((e,r)=>{let s=this.db.transaction(this.store).objectStore(this.store),n=[];s.openCursor().onsuccess=r=>{var s=r.target.result;if(s){if(t.length>0){let e={};for(let r in s.value)t.includes(r)&&(e[r]=s.value[r]);n.push(e)}else n.push(s.value);s.continue()}else e(n)}}))}async reset(e){return new Promise(((r,s)=>{let n=this.db.transaction(this.store,"readwrite").objectStore(this.store),i=n.get(e.id);i.onsuccess=e=>{let s=e.target.result;s.db_id=null,s.synced_at=new Date(t.EPOCH_TIMESTAMP);let i=n.put(s);i.onerror=t=>{r(t.target.error)},i.onsuccess=t=>{r(0)}},i.onerror=t=>{r(t.target.error)}}))}async sync(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.store,"readwrite").objectStore(this.store),n=s.get(t.id);n.onsuccess=r=>{let n=r.target.result;n.db_id=t.db_id,n.synced_at=new Date;let i=s.put(n);i.onerror=t=>{e(t.target.error)},i.onsuccess=t=>{e(0)}},n.onerror=t=>{e(t.target.error)}}))}async findByDbId(e){return new Promise(((r,s)=>{this.logger.log(n,"findByDbId");let i=this.db.transaction(this.store).objectStore(this.store).index(t.DB_ID_INDEX).get(IDBKeyRange.only([e]));i.onsuccess=t=>{r(i.result)},i.onerror=t=>{this.logger.log(n,"error"),r(t.target.error)}}))}static toDb(t={}){let e={};for(let r in t)e[r.replaceAll(/-/g,"_")]=t[r];return e}static toDbArray(t=[]){let e=[];return t.forEach((t=>{e.push(t.replaceAll(/-/g,"_"))})),e}static fromDbArray(t=[]){let e=[];return t.forEach((t=>{let r={};for(let e in t)r[e.replaceAll(/_/g,"-")]=t[e];e.push(r)})),e}static fromDb(t={}){let e={};for(let r in t)e[r.replaceAll(/_/g,"-")]=t[r];return e}}const a="query-db",o="created-at-index",c="term-index",l="tag-index";class g extends i{constructor(t,e){e.dbName="queries",super(t,e),this.logger=t,this.store="queries",this.searchIndex="search-index",this.tagIndex="tag-index"}onUpgrade(e){if(this.logger.log(a,`onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`),e.oldVersion<2){let t=e.target.result.createObjectStore(this.store,{keyPath:"id",autoIncrement:!0});t.createIndex(o,"created_at",{unique:!1}),t=e.target.result.createObjectStore(this.searchIndex,{keyPath:"id",autoIncrement:!0}),t.createIndex(c,"term",{unique:!0}),t=e.target.result.createObjectStore(this.tagIndex,{keyPath:"id",autoIncrement:!0}),t.createIndex(l,"tag",{unique:!0})}if(e.oldVersion<37){e.currentTarget.transaction.objectStore(this.store).createIndex(t.DB_ID_INDEX,["db_id"])}}async save(t){return new Promise((async(e,r)=>{t.query=t.query.replace(/[ ]{2,}/g," "),this.logger.log(a,JSON.stringify(t.terms));let s=-1;try{if(t.created_at||(t.created_at=new Date),s=await super.save(this.store,t),-1==s)return void e(-1);await this.updateSearchIndex(s,t.terms),await this.updateTagIndex(s,t.tags),e(s)}catch(t){this.logger.log(a,`error: ${JSON.stringify(t.message)}`),r(t.message)}}))}async updateSearchIndex(t,e){for(let r=0;r<e.length;r++){let s=e[r];if(s=s.trim(),!(s.length<=1)){s=this.cleanup(s);try{let e=await this.findByTerm(s);if(null==e){await super.save(this.searchIndex,{term:s,queries:[t]});continue}e.queries.push(t),this.logger.log(a,JSON.stringify(e)),super.put(this.searchIndex,{id:e.id,term:s,queries:e.queries})}catch(t){this.logger.log(a,"error: e.message")}}}}async findByTerm(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.searchIndex).objectStore(this.searchIndex).index(c),n=IDBKeyRange.only(t);s.openCursor(n).onsuccess=t=>{let r=t.target.result;if(r)return this.logger.log(a,JSON.stringify(r.value)),void e(r.value);e(null)}}))}async updateTagIndex(t,e){for(let r=0;r<e.length;r++){let s=e[r];if(s=s.trim(),!(s.length<=1)){s=this.cleanup(s);try{let e=await this.findByTag(s);if(null==e){await super.save(this.tagIndex,{tag:s,queries:[t]});continue}e.queries.push(t),this.logger.log(a,JSON.stringify(e)),super.put(this.tagIndex,{id:e.id,tag:s,queries:e.queries})}catch(t){this.logger.log(a,"error: e.message")}}}}async findByTag(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.tagIndex).objectStore(this.tagIndex).index(l),n=IDBKeyRange.only(t);s.openCursor(n).onsuccess=t=>{let r=t.target.result;if(r)return this.logger.log(a,JSON.stringify(r.value)),void e(r.value);e(null)}}))}async findByQuery(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.dbName).objectStore(this.store).index("query-index"),n=IDBKeyRange.only(t);s.openCursor(n).onsuccess=t=>{let r=t.target.result;if(r)return this.logger.log(a,JSON.stringify(r.value)),void e(r.value);e([])}}))}cleanup(t){let e=["`","`"," ",'"',"'",",",";","+","-","=","!=","<",">",">=","<="],r=0,s=(t=t.replace(/^\S+\./,"")).length;for(;r<s&&e.indexOf(t[r])>=0;)++r;for(;s>r&&e.indexOf(t[s-1])>=0;)--s;return r>0||s<t.length?t.substring(r,s):t}async filter(t,e,r){let s,n;this.logger.log(a,`filter: days ${JSON.stringify(t)} tags ${e} terms ${r}`),t.hasOwnProperty("start")&&(s=new Date(Date.now()-24*t.start*60*60*1e3),s.setHours(0),s.setMinutes(0),s.setSeconds(0)),t.hasOwnProperty("end")&&(n=new Date(Date.now()-24*t.end*60*60*1e3),n.setHours(23),n.setMinutes(59),n.setSeconds(59));let i=[];if((s||n)&&(this.logger.log(a,"filtering"),i=await this.searchByCreatedAt(s,n),0==i.length))return[];if(e.length>0){let t=await this.searchByTags(e);if(i=i.filter((e=>t.includes(e))),0==i.length)return[]}if(r.length>0){let t=await this.searchByTerms(r);if(i=i.filter((e=>t.includes(e))),0==i.length)return[]}let o=[];this.logger.log(a,`${i}`);for(let t=0;t<i.length;t++)o.push(await super.get(i[t]));return o}async findByIds(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.store).objectStore(this.store),n=[];s.openCursor(null,"prev").onsuccess=r=>{let s=r.target.result;s?(t.includes(s.value.id)&&n.push(s.value),s.continue()):e(n)}}))}async updateTags(t){await super.put(this.store,t),await this.updateTagIndex(t.id,t.tags)}searchByTerms(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.searchIndex).objectStore(this.searchIndex),n=[];s.openCursor().onsuccess=r=>{let s=r.target.result;s?(t.includes(s.value.term)&&(n=n.concat(s.value.queries)),s.continue()):e(n)}}))}searchByTags(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.tagIndex).objectStore(this.tagIndex),n=[];s.openCursor().onsuccess=r=>{let s=r.target.result;s?(t.includes(s.value.tag)&&(n=n.concat(s.value.queries)),s.continue()):e(n)}}))}listTags(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.tagIndex).objectStore(this.tagIndex).index(l),n=[];IDBKeyRange.lowerBound(t),s.openCursor().onsuccess=t=>{let r=t.target.result;r?(n.push(r.value.tag),r.continue()):e(n)}}))}listTerms(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.searchIndex).objectStore(this.searchIndex).index(c),n=[];IDBKeyRange.lowerBound(t),s.openCursor().onsuccess=t=>{let r=t.target.result;r?(n.push(r.value.term),r.continue()):e(n)}}))}searchByCreatedAt(t,e){return new Promise(((r,s)=>{this.logger.log(a,`s: ${t} e: ${e}`);let n,i=this.db.transaction(this.store).objectStore(this.store).index(o);if(t&&e)n=IDBKeyRange.bound(t,e);else if(t)n=IDBKeyRange.lowerBound(t);else{if(!e)return void r([]);n=IDBKeyRange.upperBound(e)}let c=[];i.openCursor(n,"prev").onsuccess=t=>{let e=t.target.result;e?(this.logger.log(a,`id: ${e.value.created_at.toISOString()}`),c.push(e.value.id),e.continue()):r(c)}}))}}class u extends i{async getDb(){let t=await super.get(parseInt(1));return null==t?"":t.db??""}async setDb(t){this.logger.log("base-meta-db","setDb");let e=await super.get(parseInt(1));null!=e?(e.db=t,await this.put(this.store,e)):await this.save(this.store,{id:parseInt(1),db:t})}async getLastSyncTs(){let e=await super.get(parseInt(1));return null==e?new Date(t.EPOCH_TIMESTAMP):e.last_sync_ts??new Date(t.EPOCH_TIMESTAMP)}async setLastSyncTs(){let t=await super.get(parseInt(1));null!=t?(t.last_sync_ts=new Date,await super.put(this.store,t)):await super.save(this.store,{id:parseInt(1),last_sync_ts:new Date})}async get(){return await super.get(parseInt(1))}async destroy(){return await super.destroy(parseInt(1))}}class d extends u{constructor(t,e){e.dbName="queries_meta",super(t,e),this.logger=t,this.store="queries_meta"}onUpgrade(t){this.logger.log("queries-meta-db",`onUpgrade: o: ${t.oldVersion} n: ${t.newVersion}`),t.oldVersion<1&&t.target.result.createObjectStore(this.store,{keyPath:"id",autoIncrement:!0})}}const h="connection-db",E="connection-index";class _ extends i{constructor(t,e){e.dbName="connections",super(t,e),this.logger=t,this.store="connections"}onUpgrade(e){if(this.logger.log(h,`open.onupgradeneeded: ${e.oldVersion}`),e.oldVersion<1){e.currentTarget.result.createObjectStore(this.store,{keyPath:"id",autoIncrement:!0}).createIndex(E,["name","user","pass","port","db"],{unique:!0})}if(e.oldVersion<2){e.currentTarget.transaction.objectStore(this.store).createIndex(t.DB_ID_INDEX,["id","db_id"],{unique:!0})}if(e.oldVersion<3){let r=e.currentTarget.transaction.objectStore(this.store);r.deleteIndex(E),r.deleteIndex(t.DB_ID_INDEX),r.createIndex(E,["name","user","port","db"],{unique:!0}),r.createIndex(t.DB_ID_INDEX,["db_id"],{unique:!0})}if(e.oldVersion<4){let t=e.currentTarget.transaction.objectStore(this.store);t.deleteIndex(E),t.createIndex(E,["name","user","host","port","db"],{unique:!0})}}async save(t){try{if(1==t.is_default){let t=await super.getAll();for(let e=0;e<t.length;e++)await this.put(t[e].id,t[e].pass,!1)}let e=await this.search(t);return e?(await this.put(e.id,t.pass,t.is_default),e.id):await super.save(this.store,t)}catch(t){this.logger.log(h,t.message)}}async put(t,e,r){return new Promise(((s,n)=>{let i=this.db.transaction(this.store,"readwrite").objectStore(this.store),a=i.get(t);a.onsuccess=t=>{let n=t.target.result;e&&(n.pass=e),n.is_default!=r&&(n.updated_at=new Date),n.is_default=r;let a=i.put(n);a.onerror=t=>{s(t.target.error)},a.onsuccess=t=>{s(0)}},a.onerror=t=>{s(t.target.error)}}))}async search(t){return new Promise(((e,r)=>{let s=this.db.transaction(this.store).objectStore(this.store).index(E).get(IDBKeyRange.only([t.name,t.user,t.host,t.port,t.db]));s.onsuccess=t=>{e(s.result)},s.onerror=t=>{e(t.target.error)}}))}}class S extends u{constructor(t,e){e.dbName="connections_meta",super(t,e),this.logger=t,this.store="connections_meta"}onUpgrade(t){this.logger.log("connections-meta-db",`onUpgrade: o: ${t.oldVersion} n: ${t.newVersion}`),t.oldVersion<1&&t.target.result.createObjectStore(this.store,{keyPath:"id",autoIncrement:!0})}}const p="utils";class w{static saveToSession(t,e){window.sessionStorage.setItem(t,e)}static getFromSession(t){return window.sessionStorage.getItem(t)}static removeFromSession(t){window.sessionStorage.removeItem(t)}static saveToLocalStorage(t,e){window.localStorage.setItem(t,e)}static getFromLocalStorage(t){return window.localStorage.getItem(t)??null}static removeFromLocalStorage(t){window.localStorage.removeItem(t)}static processTemplate(t,e){var r=new RegExp(/{(.*?)}/g);return t=t.replace(r,(function(t,r){return e[r]||0==e[r]||""==e[r]?e[r]:t}))}static generateNode(t,e){t=w.processTemplate(t,e);let r=document.createElement("template");return r.innerHTML=t.trim(),r.content}static async get(t,e=!0,n={}){try{let e={"X-Request-ID":w.uuid()};e={...e,...n};let s=await fetch(t,{headers:e}),i=await s.json();if(r.Log(p,JSON.stringify(i)),"error"==i.status)throw i;return i}catch(t){r.Log(p,JSON.stringify(t));let n={status:"error",data:null};if(t instanceof TypeError)return e?void(window.location="/install"):(n.msg=s.ERR_NO_AGENT,n);if(n.msg=t.msg,n.msg==s.ERR_INVALID_SESSION_ID)return void(window.location="/connections");if(!e)return n;if(n.msg==s.ERR_INVALID_CURSOR_ID)return n;if(n.msg)return alert(n.msg),n}}static async post(t,e,n=!0,i={}){try{let s={"X-Request-ID":w.uuid()};s={...s,...i};let n=new FormData;for(let t in e)n.append(t,e[t]);let a=await fetch(t,{headers:s,body:n,method:"post"}),o=await a.json();if(r.Log(p,JSON.stringify(o)),"error"==o.status)throw o;return o}catch(t){r.Log(p,JSON.stringify(t));let e={status:"error",data:null};if(t instanceof TypeError)return n?void(window.location="/install"):(e.msg=s.ERR_NO_AGENT,e);if(e.msg=t.msg,e.msg==s.ERR_SIGNIN_REQUIRED)return void(window.location="/signin");if(!n)return e;if(e.msg==s.ERR_INVALID_CURSOR_ID)return e;if(e.msg)return alert(e.msg),e}}static async setOptions(t,e,r){t.replaceChildren();let s=document.getElementById("option-template").innerHTML;e.forEach((e=>{let r=w.generateNode(s,{value:e});t.append(r)})),t.value=r}static showAlert(t,e){let r=document.getElementById("alert");r.querySelector(".msg").innerHTML=t,r.style.display="block";let s=document.querySelector("body").getBoundingClientRect();r.style.left=s.width/2+"px",setTimeout((()=>{r.style.display="none"}),e)}static showNoData(){r.Log(p,"No data")}static uuid(){return"_"+Math.random().toString(36).substr(2,9)}static getOffset(t){const e=t.getBoundingClientRect();return{left:e.left+window.scrollX,top:e.top+window.scrollY,width:e.width,height:e.height}}static extractColumns(t){let e=[];return t.forEach((t=>{e.push(t[1])})),e}static truncate(t,e){return t.length>e?t.substring(0,e)+"...":t}static getTimestamp(){return(new Date).toISOString().replace(/T/," ").replace(/\..*$/,"")}static getRandomIntegerInclusive(t,e){return Math.floor(Math.random()*(e-t+1))+t}static isEmpty(t){for(var e in t)return!1;return!0}static async resetAll(){let e=new _(new r,{version:t.CONN_DB_VERSION});await e.open();let s=await e.getAll();r.Log(p,"Resetting connections..");for(let t=0;t<s.length;t++)await e.reset(s[t]);r.Log(p,"Done.");let n=new g(new r,{version:t.QUERY_DB_VERSION});await n.open();let i=await n.getAll();r.Log(p,"Resetting queries..");for(let t=0;t<i.length;t++)await n.reset(i[t]);r.Log(p,"Done."),r.Log(p,"Resetting QueriesMetaDB");let a=new d(new r,{version:t.QUERIES_META_DB_VERSION});await a.open(),await a.destroy(),r.Log(p,"Done."),r.Log(p,"Resetting connectionsMetaDb");let o=new S(new r,{version:t.CONNECTIONS_META_DB_VERSION});await o.open(),await o.destroy(),r.Log(p,"Done.")}static async delay(t){return new Promise(((e,r)=>{setTimeout((()=>{e()}),t)}))}static getTerms(t){let e=[];return sqlFormatter.format(t,{language:"mysql"}).tokens.forEach((t=>{"string"!=t.type&&"number"!=t.type?/^reserved/.test(t.type)&&e.push(t.value):e.push(t.value)})),e}}const D="base";const y="main",I="/worker-api/sqlite";class b extends class{constructor(t){this.port=t,this.logger=new r(this.port),this.port.onmessage=t=>{this.handleMessage(t)}}async init(){let e=await w.get(t.URL+"/about",!1);"error"!=e.status?(this.deviceId=e.data["device-id"],e=await w.post("/worker-api/devices/register",{"device-id":e.data["device-id"],version:e.data.version,os:e.data.os},!1),this.logger.log(D,JSON.stringify(e)),"error"!=e.status?this.db=e.data.db:this.port.postMessage({type:t.SIGNIN_REQUIRED})):this.logger.log(D,JSON.stringify(e))}async reset(t){let e=await t.getAll();for(let r=0;r<e.length;r++)await t.reset(e[r])}}{async handleMessage(e){switch(this.logger.log(y,JSON.stringify(e.data)),e.data.type){case t.CONNECTION_SAVED:case t.CONNECTION_DELETED:this.syncUp()}}async init(){await super.init(),this.logger.log(y,"db:"+this.db),this.db?(this.connectionDb=new _(this.logger,{version:t.CONN_DB_VERSION}),await this.connectionDb.open(),this.metaDB=new S(this.logger,{version:t.CONNECTIONS_META_DB_VERSION}),await this.metaDB.open(),this.logger.log(y,"metadb.get: "+await this.metaDB.get()),await this.metaDB.getDb()!=this.db&&(await this.reset(this.connectionDb),this.logger.log(y,"Reset connectionDb"),await this.metaDB.destroy(),await this.metaDB.setDb(this.db)),this.syncDown(),this.syncUp()):this.logger.log(y,"No db")}async syncDown(){let e=await this.connectionDb.getAll(),r=await this.metaDB.getLastSyncTs();r=r.toISOString(),this.logger.log(y,`after: ${r}`);let s=await w.get(`${I}/connections/updated`,!1,{db:this.db,after:r});if(this.logger.log(y,"Sync down: "+JSON.stringify(s)),"ok"!=s.status)return void this.logger.log(y,"Sync down error: "+s.msg);let n=!1;e=s.data.connections??[];for(let t=0;t<e.length;t++){let r=await this.connectionDb.findByDbId(e[t].id);if("deleted"!=e[t].status)if(null==r){e[t].db_id=e[t].id,delete e[t].id,e[t].synced_at=new Date,e[t].created_at=new Date(e[t].created_at),e[t].updated_at=new Date(e[t].updated_at);let r=await this.connectionDb.save(e[t]);this.logger.log(y,`saved to : ${r}`),r>=1&&(n=!0)}else await this.connectionDb.put(r.id,r.pass,e[t].is_default),await this.connectionDb.sync(r),n=!0,this.logger.log(y,`Updated ${r.id}`);else{if(null==r){this.logger.log(y,`already deleted: ${e[t].id}`);continue}this.logger.log(y,`deleting: ${JSON.stringify(r)}`),await this.connectionDb.del(r.id),n=!0}}n&&this.port.postMessage({type:t.NEW_CONNECTIONS}),this.logger.log(y,"Setting last_sync_ts"),await this.metaDB.setLastSyncTs(),this.logger.log(y,"Done last_sync_ts")}async syncUp(){let e=await this.connectionDb.getAll();if(0==e.length)return void this.logger.log(y,"Nothing to sync");let r=[];for(let s=0;s<e.length;s++){if((e[s].status??t.STATUS_ACTIVE)==t.STATUS_DELETED){if(this.logger.log(y,`Deleting ${e[s].id}`),!e[s].db_id){this.connectionDb.del(e[s].id);continue}r.push(e[s]);continue}let n=e[s].updated_at??new Date(t.EPOCH_TIMESTAMP);if(e[s].db_id&&e[s].synced_at>n){this.logger.log(y,`Skipping ${e[s].id}: ${e[s].db_id}`);continue}let i=await fetch(`${I}/connections`,{body:JSON.stringify(e[s]),method:"POST",headers:{db:this.db,"Content-Type":"application/json"}});i=await i.json(),this.logger.log(y,JSON.stringify(i)),"ok"==i.status&&(e[s].db_id=i.data.db_id,this.logger.log(y,`syncing: ${JSON.stringify(e[s])}`),this.connectionDb.sync(e[s]))}this.syncDeleted(r)}async syncDeleted(t){if(0==t.length)return;let e=[];t.forEach((t=>{e.push(t.db_id)})),this.logger.log(y,JSON.stringify(e));let r=await fetch(`${I}/connections`,{body:JSON.stringify(e),method:"DELETE",headers:{db:this.db,"Content-Type":"application/json"}});r=await r.json(),this.logger.log(y,JSON.stringify(r));for(let t=0;t<r.data.ids.length;t++){let e=await this.connectionDb.findByDbId(r.data.ids[t]);await this.connectionDb.destroy(e.id),this.logger.log(y,`Destroyed: ${e.id}`)}}}onconnect=async t=>{let e=t.ports[0];new b(e).init()}}();
+(function () {
+    'use strict';
+
+    class Constants {
+        //hotkeys
+        static get SHIFT_A() {
+            return 'Alt+Shift+A'
+        }
+
+        static get SHIFT_R() {
+            return 'Alt+Shift+R'
+        }
+
+        static get SHIFT_T() {
+            return 'Alt+Shift+T'
+        }
+
+        static get SHIFT_O() {
+            return 'Alt+Shift+O'
+        }
+
+        static get SHIFT_E() {
+            return 'Alt+Shift+E'
+        }
+
+        static get SHIFT_N() {
+            return 'Alt+Shift+N'
+        }
+
+        static get SHIFT_P() {
+            return 'Alt+Shift+P'
+        }
+
+        static get SHIFT_L() {
+            return 'Alt+Shift+L'
+        }
+
+        static get SHIFT_S() {
+            return 'Alt+Shift+S'
+        }
+
+        static get SHIFT_BACK() {
+            return 'Alt+Shift+,'
+        }
+
+        static get UP_ARROW() {
+            return 38;
+        }
+
+        static get DOWN_ARROW() {
+            return 40;
+        }
+
+        //commands triggered by user
+        static get CMD_RUN_QUERY() {
+            return 'cmd.run-query'
+        }
+
+        static get CMD_RUN_ALL() {
+            return 'cmd.run-all'
+        }
+
+        static get CMD_FORMAT_QUERY() {
+            return 'cmd.format-query'
+        }
+
+        static get CMD_EXPORT() {
+            return 'cmd.export'
+        }
+
+        static get CMD_CLEAR_FILTER() {
+            return 'cmd.clear-filter'
+        }
+
+        static get CMD_NEXT_ROWS() {
+            return 'cmd.next-rows'
+        }
+
+        static get CMD_PREV_ROWS() {
+            return 'cmd.prev-rows'
+        }
+
+        static get CMD_FORMAT_QUERY() {
+            return 'cmd.format-query'
+        }
+
+        static get CMD_EXPORT_TABLE() {
+            return 'cmd.export-table'
+        }
+
+        static get CMD_SEARCH_TABLES() {
+            return 'cmd.search-tables'
+        }
+
+        static get CMD_BACK() {
+            return 'cmd.back'
+        }
+
+        //events
+        static get GRID_HAS_FOCUS() {
+            return 'grid-has-focus'
+        }
+
+        static get SEARCH_BAR_HAS_FOCUS() {
+            return 'search-bar-has-focus'
+        }
+
+        static get DB_RENAMED() {
+            return 'db-menu.db-renamed'
+        }
+
+        static get DB_DELETED() {
+            return 'db-menu.db-deleted'
+        }
+
+        static get TABLE_RENAMED() {
+            return 'ops-menu.table-renamed'
+        }
+
+        static get TABLE_TRUNCATED() {
+            return 'ops-menu.table-truncated'
+        }
+
+        static get ROW_SELECTED() {
+            return 'table-utils.row-selected'
+        }
+
+        static get ROW_DELETED() {
+            return 'row-deleter.row-deleted'
+        }
+
+        static get COLUMNS_SELECTED() {
+            return 'cmd.columns-selected'
+        }
+
+        static get STREAM_ERROR() {
+            return 'stream.stream-error'
+        }
+
+        static get SORT_REQUESTED() {
+            return "table-utils.sort-requested"
+        }
+
+        static get QUERY_CANCELLED() {
+            return 'table-utils.query-cancelled'
+        }
+
+        static get TABLE_SELECTED() {
+            return 'tables.table-selected'
+        }
+
+        static get TABLE_UNSELECTED() {
+            return 'tables.table-unselected'
+        }
+
+        static get CELL_EDITED() {
+            return 'tables.cell-edited'
+        }
+
+        static get TABLE_CHANGED() {
+            return 'table-contents.table-changed'
+        }
+
+        static get DB_CHANGED() {
+            return 'appbar.db-changed'
+        }
+
+        static get GRID_H_RESIZED() {
+            return "gridh.resized"
+        }
+
+        static get QUERY_DISPATCHED() {
+            return 'query-dispatched'
+        }
+
+        static get FILE_UPLOADED() {
+            return 'file-uploaded'
+        }
+
+        static get QUERY_SAVED() {
+            return 'query-saved'
+        }
+
+        static get CONNECTION_SAVED() {
+            return 'connection-saved'
+        }
+
+        static get CONNECTION_DELETED() {
+            return 'connection-deleted'
+        }
+
+        static get QUERY_UPDATED() {
+            return 'query-updated'
+        }
+
+        static get SESSION_ID() {
+            return 'session-id'
+        }
+
+        static get URL() {
+            return 'http://localhost:23890'
+        }
+
+        static get WS_URL() {
+            return 'ws://localhost:23890'
+        }
+
+        static get DB_NAME() {
+            return 'prosql'
+        }
+
+        static get DB_VERSION() {
+            return 1
+        }
+
+        static get CONNECTIONS() {
+            return 'connections'
+        }
+
+        static get COLUMN_SELECTIONS() {
+            return 'column-selections'
+        }
+
+        static get BATCH_SIZE() {
+            return 1000
+        }
+
+        static get BATCH_SIZE_WS() {
+            return 1000
+        }
+
+        static get CREDS() {
+            return 'creds'
+        }
+
+        static get SYSTEM() {
+            return 'system'
+        }
+
+        static get USER() {
+            return 'user'
+        }
+
+        static get DB_ID_INDEX() {
+            return "db-id-index";
+        }
+
+        static get CONNECTIONS_META_KEY() {
+            return 1;
+        }
+
+        static get QUERIES_META_KEY() {
+            return 2;
+        }
+
+        static get CONNECTIONS_META_DB_VERSION() {
+            return 1;
+        }
+
+        static get QUERIES_META_DB_VERSION() {
+            return 1;
+        }
+
+        static get QUERY_DB_VERSION() {
+            return 39;
+        }
+
+        static get CONN_DB_VERSION() {
+            return 4
+        }
+
+        static get INIT_PROGRESS() {
+            return "init-progress"
+        }
+
+        static get START_PROGRESS() {
+            return "start-progress"
+        }
+
+        static get STOP_PROGRESS() {
+            return "stop-progress"
+        }
+
+        static get UPDATE_PROGRESS() {
+            return "update-progress"
+        }
+
+        static get DEBUG_LOG() {
+            return "worker.debug-log"
+        }
+
+        static get SIGNIN_REQUIRED() {
+            return "worker.signin-required"
+        }
+
+        static get NEW_CONNECTIONS() {
+            return "worker.new-connection"
+        }
+
+        static get NEW_QUERIES() {
+            return "worker.new-queries"
+        }
+
+        static get EXECUTE_SAVE_REC() {
+            return "worker.execute-save-rec"
+        }
+
+        static get EXECUTE_SUCCESS() {
+            return "app.execute-success"
+        }
+
+        static get EXECUTE_ERROR() {
+            return "app.execute-error"
+        }
+
+        static get STATUS_ACTIVE() {
+            return "active"
+        }
+
+        static get STATUS_DELETED() {
+            return "deleted"
+        }
+
+        static get EDITOR_TEXT_CHANGED() {
+            return "editor-text-changed"
+        }
+
+        static get EPOCH_TIMESTAMP() {
+            return '2021-01-01T00:00:00Z';
+        }
+
+        static get LAST_SYNC_TS() {
+            return 'last-sync-ts';
+        }
+
+        //session storage keys
+        static get CURRENT_PAGE() {
+            return 'current-page';
+        }
+    }
+
+    const DISABLED = [
+        'grid-resizer',
+        'cell-renderer',
+        'table-utils',
+        'query-worker',
+        'connection-worker',
+        'query-db',
+        //'query-finder',
+    ];
+
+    //workers do not support console.log. How to debug ? 
+    // We send a message to the module that initiated worker and 
+    // have it print the debug log
+    // But sending message requires port which is available only in 
+    // worker. How to use a common logger for entire system?
+    // We create static "Log" method which can use used for all code that 
+    // does not get directly called from worker. For any code that gets
+    // called from worker we use the "log" method.
+
+    class Logger {
+        constructor(port = null) {
+            this.port = port;
+        }
+
+        log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
+
+            if (this.port) {
+                this.port.postMessage({
+                    type: Constants.DEBUG_LOG,
+                    payload: `${tag}: ${str}`
+                });
+                return
+            }
+
+            Logger.print(tag, str);
+        }
+
+        static Log(tag, str) {
+            if (DISABLED.includes(tag)) {
+                return;
+            }
+
+            Logger.print(tag, str);
+        }
+
+        static print(tag, str) {
+            let [month, date, year]    = new Date().toLocaleDateString("en-US").split("/");
+            let [hour, minute, second] = new Date().toLocaleTimeString("en-US").split(/:| /);
+
+            let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
+            console.log(o);
+        }
+    }
+
+    class Err {
+        static get ERR_NONE () {
+            return 'none'
+        }
+
+        static get ERR_NO_AGENT () {
+            return 'no-agent'
+        }
+
+        static get ERR_INVALID_USER_INPUT() {
+            return 'invalid-user-input'
+        }
+
+        static get ERR_INVALID_SESSION_ID() {
+            return 'invalid-session-id'
+        }
+
+        static get ERR_SIGNIN_REQUIRED() {
+            return 'signin-required'
+        }
+
+        static get ERR_INVALID_CURSOR_ID() {
+            return 'invalid-cursor-id'
+        }
+
+        static get ERR_DB_ERROR() {
+            return 'db-error'
+        }
+
+        static get ERR_UNRECOVERABLE() {
+            return 'unrecoverable-error'
+        }
+
+        static handle(err) {
+            if (err.error == Err.ERR_NO_AGENT) {
+                window.location = '/install';
+                return;
+            }
+
+            if (err.error == Err.ERR_INVALID_SESSION_ID) {
+                window.location = '/connections';
+                return;
+            }
+
+            alert(err.error);
+        }
+    }
+
+    const TAG$8 = "base-db";
+    class BaseDB {
+        constructor(logger, options) {
+            this.logger = logger;
+            this.version = options.version;
+            this.dbName = options.dbName;
+        }
+
+        async open() {
+            return new Promise((resolve, reject) => {
+                let req = indexedDB.open(this.dbName, this.version);
+                    req.onsuccess = (e) => {
+                        this.logger.log(TAG$8, "open.onsuccess");
+                        this.db = req.result;
+                        resolve(0);
+                    };
+
+                    req.onerror = (e) => {
+                        this.logger.log(TAG$8, e.target.error);
+                        reject(e.target.errorCode);
+                    };
+
+                    req.onupgradeneeded = (evt) => {
+                        this.onUpgrade(evt);
+                    };
+            })
+        }
+
+        async save(store, rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction([store], "readwrite");
+
+                let objectStore = transaction.objectStore(store);
+                let request = objectStore.add(rec);
+                request.onsuccess = (e) => {
+                    resolve(e.target.result);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$8, e.target.error);
+                    resolve(-1);
+                };
+            })
+        }
+
+        async put(store, rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction([store], "readwrite");
+                let objectStore = transaction.objectStore(store);
+
+                rec.updated_at = new Date();
+                let request = objectStore.put(rec);
+                request.onsuccess = (e) => {
+                    resolve(0);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$8, e.target.error);
+                    resolve(-1);
+                };
+            })
+        }
+
+        //delete completely from indexeddb
+    	async destroy(id) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.delete(id);
+
+                request.onsuccess = (e) => {
+                    resolve(0);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        //just mark status as deleted
+        async del(id) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o.status = Constants.STATUS_DELETED;
+                    let requestUpdate = objectStore.put(o);
+
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async get(id, keys = []) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    let result = [];
+                    if (keys.length > 0) {
+                        for (let k in request.result) {
+                            if (keys.includes(k)) {
+                                result[k] = request.result[k];
+                            }
+                        }
+                    } else {
+                        result = request.result;
+                    }
+
+                    this.logger.log(TAG$8, JSON.stringify(result));
+                    resolve(result);
+                };
+
+                request.onerror = (e) => {
+                    resolve(null);
+                };
+            })
+        }
+
+        async getAll(keys = []) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+
+                let results = [];
+                objectStore.openCursor().onsuccess = (e) => {
+                    var cursor = e.target.result;
+                    if (cursor) {
+                        if (keys.length > 0) {
+                            let r = {};
+                            for (let k in cursor.value) {
+                                if (keys.includes(k)) {
+                                    r[k] = cursor.value[k];
+                                }
+                            }
+                            results.push(r);
+                        } else {
+                            results.push(cursor.value);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(results);
+                    }
+                };
+            })
+        }
+
+        //remove db_id so that this record can be synced again with 
+        //a different db
+        async reset(rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(rec.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = null;
+                    o['synced_at'] = new Date(Constants.EPOCH_TIMESTAMP);
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async sync(rec) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(rec.id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+                    o['db_id'] = rec.db_id;
+                    o['synced_at'] = new Date();
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async findByDbId(id) {
+            return new Promise((resolve, reject) => {
+                this.logger.log(TAG$8, "findByDbId");
+
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(Constants.DB_ID_INDEX);
+
+                let request = index.get(IDBKeyRange.only([id]));
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    this.logger.log(TAG$8, "error");
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        static toDb(o = {}) {
+            //convert all "-" to "_"
+            let r = {};
+            for (let k in o) {
+                r[k.replaceAll(/-/g, '_')] = o[k];
+            }
+            return r
+        }
+
+        static toDbArray(keys = []) {
+            //convert all "-" to "_"
+            let result = [];
+            keys.forEach((k) => {
+                result.push(k.replaceAll(/-/g, '_'));
+            });
+            return result
+        }
+
+        static fromDbArray(vals = []) {
+            //convert all "_" to "-"
+            let result = [];
+            vals.forEach((o) => {
+                let r = {};
+                for (let k in o) {
+                    r[k.replaceAll(/_/g, '-')] = o[k];
+                }
+                result.push(r);
+            });
+            return result;
+        }
+
+        static fromDb(o = {}) {
+            //convert all "_" to "-"
+            let r = {};
+            for (let k in o) {
+                r[k.replaceAll(/_/g, '-')] = o[k];
+            }
+            return r
+        }
+    }
+
+    const TAG$7 = "query-db";
+    const CREATED_AT_INDEX = "created-at-index";
+    const QUERY_INDEX = "query-index";
+    const TERM_INDEX = "term-index";
+    const TAG_INDEX = "tag-index";
+
+    class QueryDB extends BaseDB {
+        constructor(logger, options) {
+            options.dbName = "queries";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "queries";
+            this.searchIndex = "search-index";
+            this.tagIndex = "tag-index";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$7, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 2) {
+                let store = e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CREATED_AT_INDEX, "created_at", { unique : false });
+
+                store = e.target.result.createObjectStore(
+                    this.searchIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TERM_INDEX, "term", { unique : true });
+
+                store = e.target.result.createObjectStore(
+                    this.tagIndex, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(TAG_INDEX, "tag", { unique : true });
+            }
+
+            if (e.oldVersion < 37) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"]);
+            }
+        }
+
+        async save(rec) {
+            return new Promise(async (resolve, reject) => {
+                //remove all new lines
+                //rec.query = rec.query.replace(/\r?\n|\r/g, " ");
+                //remove extra white spaces
+                rec.query = rec.query.replace(/[ ]{2,}/g, " ");
+                //let terms = rec.query.split(' ');
+
+                //get all unique terms
+                //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
+                //terms = [...new Set(terms)];
+
+                this.logger.log(TAG$7, JSON.stringify(rec.terms));
+                let id = -1;
+                try {
+                    //apppend timestamp if required
+                    if (!rec.created_at) {
+                        rec.created_at = new Date();
+                    }
+
+                    id = await super.save(this.store, rec);
+                    if (id == -1) {
+                        resolve(-1);
+                        return;
+                    }
+
+                    await this.updateSearchIndex(id, rec.terms);
+                    await this.updateTagIndex(id, rec.tags);
+
+                    resolve(id);
+                } catch (e) {
+                    this.logger.log(TAG$7, `error: ${JSON.stringify(e.message)}`);
+                    reject(e.message);
+                }
+            })
+        }
+
+        async updateSearchIndex(id, terms) {
+            //add id to each of the tags
+            for (let i = 0; i < terms.length; i++) {
+                let t = terms[i];
+                t = t.trim();
+
+                if (t.length <= 1) {
+                    continue;
+                }
+
+                t = this.cleanup(t);
+                try {
+                    let rec = await this.findByTerm(t);
+                    //add a new tag
+                    if (rec == null) {
+                        await super.save(this.searchIndex, {
+                            term: t,
+                            queries:[id]
+                        });
+                        continue;
+                    }
+
+                    //update tag
+                    rec['queries'].push(id);
+                    this.logger.log(TAG$7, JSON.stringify(rec));
+                    super.put(this.searchIndex, {
+                        id: rec.id,
+                        term: t,
+                        queries: rec['queries']
+                    });
+
+                } catch (e) {
+                    this.logger.log(TAG$7, `error: e.message`);
+                }
+            }
+        }
+
+        async findByTerm(term) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let index = objectStore.index(TERM_INDEX);
+
+                let key = IDBKeyRange.only(term);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve(null);
+                };
+            })
+        }
+
+        async updateTagIndex(id, tags) {
+            //add id to each of the tags
+            for (let i = 0; i < tags.length; i++) {
+                let t = tags[i];
+                t = t.trim();
+
+                if (t.length <= 1) {
+                    continue;
+                }
+
+                t = this.cleanup(t);
+                try {
+                    let rec = await this.findByTag(t);
+                    //add a new tag
+                    if (rec == null) {
+                        await super.save(this.tagIndex, {
+                            tag: t,
+                            queries:[id]
+                        });
+                        continue;
+                    }
+
+                    //update tag
+                    rec['queries'].push(id);
+                    this.logger.log(TAG$7, JSON.stringify(rec));
+                    super.put(this.tagIndex, {
+                        id: rec.id,
+                        tag: t,
+                        queries: rec['queries']
+                    });
+
+                } catch (e) {
+                    this.logger.log(TAG$7, `error: e.message`);
+                }
+            }
+        }
+
+        async findByTag(tag) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let index = objectStore.index(TAG_INDEX);
+
+                let key = IDBKeyRange.only(tag);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve(null);
+                };
+            })
+        }
+
+        async findByQuery(query) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.dbName);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(QUERY_INDEX);
+
+                let key = IDBKeyRange.only(query);
+                index.openCursor(key).onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
+                        resolve(cursor.value);
+                        return;
+                    }
+
+                    resolve([]);
+                };
+            })
+        }
+
+        //https://stackoverflow.com/questions/26156292/trim-specific-character-from-a-string
+        cleanup(str) {
+            //remove table qualifiers like table_name.<...>
+            str = str.replace(/^\S+\./, "");
+
+            //remove punctuation marks
+            let chars = ['`', '`', ' ', '"', '\'', ',', ';', '+', '-', '=', '!=', '<', '>', '>=', '<='];
+            let start = 0, 
+                end = str.length;
+
+            while (start < end && chars.indexOf(str[start]) >= 0)
+                ++start;
+
+            while (end > start && chars.indexOf(str[end - 1]) >= 0)
+                --end;
+
+            return (start > 0 || end < str.length) ? str.substring(start, end) : str;
+        }
+
+        async filter(days, tags, terms) {
+            //days supercedes everything
+            //if days are provided get queries by days first
+            //then filter by terms and tags if provided
+            this.logger.log(TAG$7, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+
+            let start, end;
+            if (days.hasOwnProperty('start')) {
+                start = new Date(Date.now() - (days.start * 24 * 60 * 60 * 1000));
+                start.setHours(0);
+                start.setMinutes(0);
+                start.setSeconds(0);
+            }
+
+            if (days.hasOwnProperty('end')) {
+                end = new Date(Date.now() - (days.end * 24 * 60 * 60 * 1000));
+                end.setHours(23);
+                end.setMinutes(59);
+                end.setSeconds(59);
+            }
+
+
+            let ids = [];
+            if (start || end) {
+                this.logger.log(TAG$7, 'filtering');
+                ids = await this.searchByCreatedAt(start, end);
+
+                if (ids.length == 0) {
+                    //if days were provided and we did not find anything
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            if (tags.length > 0) {
+                let idsByTag = await this.searchByTags(tags);
+
+                ids = ids.filter(x => idsByTag.includes(x));
+                if (ids.length == 0) {
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            if (terms.length > 0) {
+                let idsByTerm = await this.searchByTerms(terms);
+
+                ids = ids.filter(x => idsByTerm.includes(x));
+                if (ids.length == 0) {
+                    //no need to process further
+                    return [];
+                }
+            }
+
+            let results = [];
+            this.logger.log(TAG$7, `${ids}`);
+            for (let i = 0; i < ids.length; i++) {
+                results.push(await super.get(ids[i]));
+            }
+
+            return results;
+        }
+
+        async findByIds(ids) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let queries = [];
+
+                objectStore.openCursor(null, 'prev').onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (ids.includes(cursor.value.id)) {
+                            queries.push(cursor.value);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(queries);
+                    }
+                };
+            });
+        }
+
+        async updateTags(rec) {
+            await super.put(this.store, rec);
+            await this.updateTagIndex(rec.id, rec.tags);
+        }
+
+        searchByTerms(terms) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let ids = [];
+
+                objectStore.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (terms.includes(cursor.value.term)) {
+                            ids = ids.concat(cursor.value.queries);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(ids);
+                    }
+                };
+            });
+        }
+
+        searchByTags(tags) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let ids = [];
+
+                objectStore.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        if (tags.includes(cursor.value.tag)) {
+                            ids = ids.concat(cursor.value.queries);
+                        }
+                        cursor.continue();
+                    } else {
+                        resolve(ids);
+                    }
+                };
+            });
+        } 
+
+        listTags(startingWith) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.tagIndex);
+                let objectStore = transaction.objectStore(this.tagIndex);
+                let index = objectStore.index(TAG_INDEX);
+                let tags = [];
+
+                IDBKeyRange.lowerBound(startingWith);
+                index.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        tags.push(cursor.value.tag);
+                        cursor.continue();
+                    } else {
+                        resolve(tags);
+                    }
+                };
+            });
+        }
+
+        listTerms(startingWith) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.searchIndex);
+                let objectStore = transaction.objectStore(this.searchIndex);
+                let index = objectStore.index(TERM_INDEX);
+                let terms = [];
+
+                IDBKeyRange.lowerBound(startingWith);
+                index.openCursor().onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        terms.push(cursor.value.term);
+                        cursor.continue();
+                    } else {
+                        resolve(terms);
+                    }
+                };
+            });
+        }
+
+        searchByCreatedAt(s, e) {
+            return new Promise((resolve, reject) => {
+                this.logger.log(TAG$7, `s: ${s} e: ${e}`);
+
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(CREATED_AT_INDEX);
+
+                // s -----> e ----> now
+                let key;
+                if (s && e) {
+                    key = IDBKeyRange.bound(s, e);
+                } else if (s) {
+                    key = IDBKeyRange.lowerBound(s);
+                } else if (e) {
+                    key = IDBKeyRange.upperBound(e);
+                } else {
+                    resolve([]);
+                    return;
+                }
+
+                let queries = [];
+                index.openCursor(key, "prev").onsuccess = (ev) => {
+                    let cursor = ev.target.result;
+                    if (cursor) {
+                        this.logger.log(TAG$7, `id: ${cursor.value.created_at.toISOString()}`);
+                        queries.push(cursor.value.id);
+                        cursor.continue();
+                    } else {
+                        resolve(queries);
+                    }
+                };
+            });
+        }
+    }
+
+    const TAG$6 = "base-meta-db";
+    const ID = 1;
+
+    class BaseMetaDB extends BaseDB {
+        async getDb() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return '';
+            }
+
+            return rec.db ?? '';
+        }
+
+        async setDb(db) {
+            this.logger.log(TAG$6, "setDb");
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await this.save(this.store, {
+                    id: parseInt(ID),
+                    db: db
+                });
+                return;
+            }
+
+            rec.db = db;
+            await this.put(this.store, rec);
+        }
+
+        async getLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+            if (rec == null) {
+                return new Date(Constants.EPOCH_TIMESTAMP);
+            }
+
+            return rec.last_sync_ts ?? new Date(Constants.EPOCH_TIMESTAMP);
+        }
+
+        async setLastSyncTs() {
+            let rec = await super.get(parseInt(ID));
+
+            if (rec == null) {
+                await super.save(this.store, {
+                    id: parseInt(ID),
+                    last_sync_ts: new Date()
+                });
+                return;
+            }
+
+            rec.last_sync_ts = new Date();
+            await super.put(this.store, rec);
+        }
+
+        async get() {
+            return await super.get(parseInt(ID));
+        }
+
+        async destroy() {
+            return await super.destroy(parseInt(ID));
+        }
+    }
+
+    const TAG$5 = "queries-meta-db";
+
+    class QueriesMetaDB extends BaseMetaDB {
+        constructor(logger, options) {
+            options.dbName = "queries_meta";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "queries_meta";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$5, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 1) {
+                e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+            }
+        }
+    }
+
+    const TAG$4 = "connection-db";
+    const CONNECTION_INDEX = "connection-index";
+    const DB_NAME = "connections";
+
+    class ConnectionDB extends BaseDB {
+        constructor(logger, options) {
+            options.dbName = DB_NAME;
+            super(logger, options);
+            this.logger = logger;
+            this.store = "connections";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$4, `open.onupgradeneeded: ${e.oldVersion}`);
+            if (e.oldVersion < 1) {
+                let store = e.currentTarget.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "pass", "port", "db"], { unique: true });
+            }
+
+            if (e.oldVersion < 2) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.createIndex(Constants.DB_ID_INDEX, ["id", "db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 3) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+                store.deleteIndex(Constants.DB_ID_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "port", "db"], { unique: true });
+                store.createIndex(Constants.DB_ID_INDEX, ["db_id"], {unique: true});
+            }
+
+            if (e.oldVersion < 4) {
+                let store = e.currentTarget.transaction.objectStore(this.store);
+                store.deleteIndex(CONNECTION_INDEX);
+
+                store.createIndex(CONNECTION_INDEX, ["name", "user", "host", "port", "db"], { unique: true });
+            }
+        }
+
+        async save(conn) {
+            try {
+                //make sure there is only one connection with is_default = true
+                if (conn['is_default'] == true) {
+                    let conns = await super.getAll();
+                    for (let i = 0; i < conns.length; i++) {
+                        await this.put(conns[i].id, conns[i].pass, false);
+                    }
+                }
+
+                //search if this connection exists
+                let rec = await this.search(conn);
+                if (rec) {
+                    //if exists , update and return
+                    await this.put(rec.id, conn['pass'], conn['is_default']);
+                    return rec.id;
+                }
+
+                //create new record
+                return await super.save(this.store, conn);
+
+            } catch (e) {
+                this.logger.log(TAG$4, e.message);
+            }
+        }
+
+        async put(id, password, isDefault) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store, "readwrite");
+                let objectStore = transaction.objectStore(this.store);
+                let request = objectStore.get(id);
+
+                request.onsuccess = (e) => {
+                    let o = e.target.result;
+
+                    if (password) {
+                        o.pass = password;
+                    }
+
+                    if (o.is_default != isDefault) {
+                        //we set updated at only if is_default has changed. We don't
+                        //care about password change
+                        o.updated_at = new Date();
+                    }
+                    o.is_default = isDefault;
+
+                    let requestUpdate = objectStore.put(o);
+                    requestUpdate.onerror = (e) => {
+                        resolve(e.target.error);
+                    };
+                    requestUpdate.onsuccess = (e) => {
+                        resolve(0);
+                    };
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+
+        async search(conn) {
+            return new Promise((resolve, reject) => {
+                let transaction = this.db.transaction(this.store);
+                let objectStore = transaction.objectStore(this.store);
+                let index = objectStore.index(CONNECTION_INDEX);
+
+                let request = index.get(IDBKeyRange.only([conn.name, conn.user, conn.host, conn.port, conn.db]));
+                request.onsuccess = (e) => {
+                    resolve(request.result);
+                };
+
+                request.onerror = (e) => {
+                    resolve(e.target.error);
+                };
+            })
+        }
+    }
+
+    const TAG$3 = "connections-meta-db";
+
+    class ConnectionsMetaDB extends BaseMetaDB {
+        constructor(logger, options) {
+            options.dbName = "connections_meta";
+            super(logger, options);
+            this.logger = logger;
+            this.store = "connections_meta";
+        }
+
+        onUpgrade(e) {
+            this.logger.log(TAG$3, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            if (e.oldVersion < 1) {
+                e.target.result.createObjectStore(
+                    this.store, { keyPath: 'id', autoIncrement: true });
+            }
+        }
+    }
+
+    const TAG$2 = "utils";
+    class Utils {
+        static saveToSession(key, val) {
+            window.sessionStorage.setItem(key, val);
+        }
+
+        static getFromSession(key) {
+            return window.sessionStorage.getItem(key)
+        }
+
+        static removeFromSession(key) {
+            window.sessionStorage.removeItem(key);
+        }
+
+        static saveToLocalStorage(key, value) {
+            window.localStorage.setItem(key, value);
+        }
+
+        static getFromLocalStorage(key) {
+            return window.localStorage.getItem(key) ?? null;
+        }
+
+        static removeFromLocalStorage(key) {
+            window.localStorage.removeItem(key);
+        }
+
+    	static processTemplate(templ, data) {
+    		var re = new RegExp(/{(.*?)}/g);
+    		templ = templ.replace(re, function(match, p1) {
+    			if (data[p1] || data[p1] == 0 || data[p1] == '') {
+    				return data[p1];
+    			} else {
+    				return match;
+    			}
+    		});
+    		return templ;
+    	}
+
+    	//https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro
+    	static generateNode(templ, data) {
+            templ = Utils.processTemplate(templ, data);	
+            let template = document.createElement('template');
+            template.innerHTML = templ.trim();
+            return template.content
+        }
+
+        static async get(url, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let response = await fetch(url, {
+                    headers: hdrs
+                });
+
+                let json = await response.json();
+                Logger.Log(TAG$2, JSON.stringify(json));
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$2, JSON.stringify(e));
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_INVALID_SESSION_ID) {
+                    //user must login
+                    window.location = '/connections';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async post(url, body, handleError = true, headers = {}) {
+            try {
+                let hdrs = {
+                    'X-Request-ID': Utils.uuid()
+                };
+                hdrs = {...hdrs, ...headers};
+                let formData = new FormData();
+
+                for (let k in body) {
+                    formData.append(k, body[k]);
+                }
+
+                let response = await fetch(url, {
+                    headers: hdrs,
+                    body: formData,
+                    method: "post"
+                });
+
+                let json = await response.json();
+                Logger.Log(TAG$2, JSON.stringify(json));
+
+                if (json.status == 'error') {
+                    throw json
+                }
+
+                return json
+            } catch (e) {
+                Logger.Log(TAG$2, JSON.stringify(e));
+                let res = {
+                    'status' : 'error',
+                    'data': null,
+                };
+
+                if (e instanceof TypeError) {
+                    if (!handleError) {
+                        res.msg = Err.ERR_NO_AGENT;
+                        return res;
+                    }
+                    //user must install agent
+                    window.location = '/install';
+                    return;
+                }
+
+                res.msg = e.msg;
+                if (res.msg == Err.ERR_SIGNIN_REQUIRED) {
+                    window.location = '/signin';
+                    return;
+                }
+
+                //let client handle this
+                if (!handleError) {
+                    return res
+                }
+
+                if (res.msg == Err.ERR_INVALID_CURSOR_ID) {
+                    //let caller handle this too
+                    return res
+                }
+
+                //common error handling
+                if (res.msg) {
+                    //normal error. Display to user
+                    alert(res.msg);
+                    return res
+                }
+            }
+        }
+
+        static async setOptions($ctx, values, def) {
+            $ctx.replaceChildren();
+
+            let $ot = document.getElementById('option-template');
+            let ot = $ot.innerHTML;
+
+            values.forEach((v) => {
+                let h = Utils.generateNode(ot, {value: v});
+                $ctx.append(h);
+            });
+
+            $ctx.value = def;
+        }
+
+        static showAlert(msg, t) {
+            let $alrt = document.getElementById('alert');
+            let $msg = $alrt.querySelector('.msg');
+            $msg.innerHTML = msg;
+            $alrt.style.display = 'block';
+
+            let bodyDims = document.querySelector('body').getBoundingClientRect();
+            $alrt.style.left = (bodyDims.width / 2) + 'px';
+
+            setTimeout(() => {
+                $alrt.style.display = 'none';
+            }, t);
+        }
+
+        static showNoData() {
+            Logger.Log(TAG$2, "No data");
+        }
+
+        //https://gist.github.com/gordonbrander/2230317
+        static uuid() {
+            // Math.random should be unique because of its seeding algorithm.
+            // Convert it to base 36 (numbers + letters), and grab the first 9 characters
+            // after the decimal.
+            return '_' + Math.random().toString(36).substr(2, 9);
+        };
+
+        static getOffset(el) {
+            const rect = el.getBoundingClientRect();
+            return {
+                left: rect.left + window.scrollX,
+                top: rect.top + window.scrollY,
+                width: rect.width,
+                height: rect.height,
+            };
+        }
+
+       static extractColumns(arr) {
+            let cols = [];
+            arr.forEach((e) => {
+                cols.push(e[1]);
+            });
+
+            return cols
+        }
+
+        static truncate(s, max) {
+    		if (s.length > max) {
+    			return s.substring(0, max) + '...';
+    		}
+    		return s;
+    	}
+
+        static getTimestamp() {
+            let d = (new Date()).toISOString();
+            return d.replace(/T/, ' ').replace(/\..*$/, '');
+        }
+
+    	static getRandomIntegerInclusive(min, max) {
+    		return Math.floor(Math.random() * (max - min + 1)) + min;
+    	}
+
+        static isEmpty(obj) { 
+            for (var x in obj) {
+                return false; 
+            }
+            return true;
+        }
+
+        static async resetAll() {
+            let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
+            await connDb.open();
+            let conns = await connDb.getAll();
+            Logger.Log(TAG$2, "Resetting connections..");
+            for (let i = 0; i < conns.length; i++) {
+                await connDb.reset(conns[i]);
+            }
+            Logger.Log(TAG$2, "Done.");
+
+            let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
+            await queryDb.open();
+            let queries = await queryDb.getAll();
+            Logger.Log(TAG$2, "Resetting queries..");
+            for (let i = 0; i < queries.length; i++) {
+                await queryDb.reset(queries[i]);
+            }
+            Logger.Log(TAG$2, "Done.");
+
+            Logger.Log(TAG$2, "Resetting QueriesMetaDB");
+            let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
+            await queriesMetaDb.open();
+            await queriesMetaDb.destroy();
+            Logger.Log(TAG$2, "Done.");
+
+            Logger.Log(TAG$2, "Resetting connectionsMetaDb");
+            let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await connectionsMetaDb.open();
+            await connectionsMetaDb.destroy();
+            Logger.Log(TAG$2, "Done.");
+        }
+
+        static async delay(t) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve();
+                }, t);
+            });
+        }
+
+        static getTerms(query) {
+            let terms = [];
+            let tokens = sqlFormatter.format(query, {language: "mysql"}).tokens;
+            //select only reserved*, string and number
+            tokens.forEach((t) => {
+                if (t.type == "string") {
+                    terms.push(t.value);
+                    return;
+                }
+
+                if (t.type == "number") {
+                    terms.push(t.value);
+                    return;
+                }
+
+                if (/^reserved/.test(t.type)) {
+                    terms.push(t.value);
+                    return;
+                }
+            });
+            return terms;
+        }
+    }
+
+    const TAG$1 = "base";
+
+    class BaseWorker {
+        constructor(port) {
+            this.port = port;
+            this.logger = new Logger(this.port);
+
+            this.port.onmessage = (m) => {
+                this.handleMessage(m);
+            };
+
+            //this.logger.log(TAG, self.sqlFormatter.format("select * from table"));
+        }
+
+        async init() {
+            let res = await Utils.get(Constants.URL + '/about', false);
+            if (res.status == "error") {
+                this.logger.log(TAG$1, JSON.stringify(res));
+                return
+            }
+
+            this.deviceId = res.data['device-id'];
+
+            //regiser this device with backend.
+            //If signin-required, force user to signin/signup
+            //After user signs up clear all db_id, because we are moving to a new db
+
+            res = await Utils.post('/worker-api/devices/register', {
+                'device-id': res.data['device-id'],
+                'version': res.data['version'],
+                'os': res.data['os'],
+            }, false);
+
+            this.logger.log(TAG$1, JSON.stringify(res));
+
+            if (res.status == "error") {
+                this.port.postMessage({
+                    type: Constants.SIGNIN_REQUIRED
+                });
+                return;
+            }
+
+            this.db = res.data.db;
+        }
+
+        async reset(db) {
+            let recs = await db.getAll();
+            for (let i = 0; i < recs.length; i++) {
+                await db.reset(recs[i]);
+            }
+        }
+    }
+
+    const TAG = "main";
+    const URL = '/worker-api/sqlite';
+
+    class ConnectionWorker extends BaseWorker {
+        async handleMessage(m) {
+            this.logger.log(TAG, JSON.stringify(m.data));
+            switch (m.data.type) {
+                case Constants.CONNECTION_SAVED:
+                case Constants.CONNECTION_DELETED:
+                    this.syncUp();
+                    break
+            }
+        }
+
+        async init() {
+            await super.init();
+            this.logger.log(TAG, "db:" + this.db);
+
+            if (!this.db) {
+                this.logger.log(TAG, "No db");
+                return;
+            }
+
+            this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
+            await this.connectionDb.open();
+
+            this.metaDB = new ConnectionsMetaDB(this.logger, {version: Constants.CONNECTIONS_META_DB_VERSION});
+            await this.metaDB.open();
+            this.logger.log(TAG, "metadb.get: " + await this.metaDB.get());
+
+            if (await this.metaDB.getDb() != this.db) {
+                await this.reset(this.connectionDb);
+                this.logger.log(TAG, "Reset connectionDb");
+                await this.metaDB.destroy();
+                await this.metaDB.setDb(this.db);
+            }
+
+            this.syncDown();
+            this.syncUp();
+        }
+
+        async syncDown() {
+            let conns = await this.connectionDb.getAll();
+
+            let after = await this.metaDB.getLastSyncTs();
+            after = after.toISOString();
+            this.logger.log(TAG, `after: ${after}`);
+
+            let res = await Utils.get(`${URL}/connections/updated`, false, {
+                db: this.db,
+                after: after
+            });
+
+            this.logger.log(TAG, "Sync down: " + JSON.stringify(res));
+
+            if (res.status != "ok") {
+                this.logger.log(TAG, "Sync down error: " + res.msg);
+                return;
+            }
+
+            let updateUI = false;
+            conns = res.data.connections ?? [];
+
+            for (let i = 0; i < conns.length; i++) {
+                //check if the remore connection is already present in local db
+                let c = await this.connectionDb.findByDbId(conns[i].id);
+
+                //this may be deleted on the server. Handle this first
+                if (conns[i].status == "deleted") {
+                    if (c == null) {
+                        this.logger.log(TAG, `already deleted: ${conns[i].id}`);
+                        continue;
+                    }
+
+                    this.logger.log(TAG, `deleting: ${JSON.stringify(c)}`);
+                    await this.connectionDb.del(c.id);
+                    updateUI = true;
+                    continue;
+                }
+
+                //this looks like a new connection
+                if (c == null) {
+                    conns[i].db_id = conns[i].id;
+                    delete conns[i].id;
+
+                    conns[i].synced_at = new Date();
+                    conns[i].created_at = new Date(conns[i].created_at);
+                    conns[i].updated_at = new Date(conns[i].updated_at);
+
+                    let id = await this.connectionDb.save(conns[i]);
+                    this.logger.log(TAG, `saved to : ${id}`);
+                    if (id >= 1) {
+                        updateUI = true;
+                    }
+                } else {
+                    //nope. may be is-default got updated..
+                    await this.connectionDb.put(c.id, c.pass, conns[i].is_default);
+                    await this.connectionDb.sync(c);
+                    updateUI = true;
+                    this.logger.log(TAG, `Updated ${c.id}`);
+                }
+            }
+
+            if (updateUI) {
+                this.port.postMessage({
+                    type: Constants.NEW_CONNECTIONS,
+                });
+            }
+
+            this.logger.log(TAG, "Setting last_sync_ts");
+            await this.metaDB.setLastSyncTs();
+            this.logger.log(TAG, "Done last_sync_ts");
+        }
+
+        async syncUp() {
+            //find all records missing db_id and sync them up to cloud
+            let conns = await this.connectionDb.getAll();
+            if (conns.length == 0) {
+                this.logger.log(TAG, "Nothing to sync");
+                return;
+            }
+
+            let deleted = [];
+            for (let i = 0; i < conns.length; i++) {
+                //when we delete from UI, we just mark the status as deleted, then sync up later
+                let isDeleted = ((conns[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+
+                if (isDeleted) {
+                    this.logger.log(TAG, `Deleting ${conns[i].id}`);
+                    if (!conns[i].db_id) {
+                        //this has not been synced yet. We can safely delete
+                        this.connectionDb.del(conns[i].id);
+                        continue;
+                    }
+
+                    deleted.push(conns[i]);
+                    continue;
+                }
+
+                //every record may or may not have updated_at
+                let updatedAt = conns[i].updated_at ?? new Date(Constants.EPOCH_TIMESTAMP);
+
+                if (conns[i].db_id) {
+                    //if it has a db_id , it is guaranteed to haved synced_at
+                    if (conns[i].synced_at > updatedAt) {
+                        this.logger.log(TAG, `Skipping ${conns[i].id}: ${conns[i].db_id}`);
+                        continue;
+                    }
+                }
+
+                let res = await fetch(`${URL}/connections`, {
+                    body: JSON.stringify(conns[i]),
+                    method: "POST",
+                    headers: {
+                        db: this.db,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                res = await res.json();
+                this.logger.log(TAG, JSON.stringify(res));
+
+                if (res.status == "ok") {
+                    conns[i].db_id = res.data.db_id;
+                    this.logger.log(TAG, `syncing: ${JSON.stringify(conns[i])}`);
+                    this.connectionDb.sync(conns[i]);
+                }
+            }
+
+            this.syncDeleted(deleted);
+        }
+
+        async syncDeleted(deleted) {
+            if (deleted.length == 0) {
+                return;
+            }
+
+            let ids = [];
+            deleted.forEach((d) => {
+                ids.push(d.db_id);
+            });
+
+            this.logger.log(TAG, JSON.stringify(ids));
+            let res = await fetch(`${URL}/connections`, {
+                body: JSON.stringify(ids),
+                method: "DELETE",
+                headers: {
+                    db: this.db,
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            res = await res.json();
+            this.logger.log(TAG, JSON.stringify(res));
+            //delete from local db
+            for (let i = 0; i < res.data.ids.length; i++) {
+                let c = await this.connectionDb.findByDbId(res.data.ids[i]);
+                await this.connectionDb.destroy(c.id);
+                this.logger.log(TAG, `Destroyed: ${c.id}`);
+            }
+        }
+    }
+
+    onconnect = async (e) => {
+        let port = e.ports[0];
+        let w = new ConnectionWorker(port);
+        w.init();
+    };
+
+})();
