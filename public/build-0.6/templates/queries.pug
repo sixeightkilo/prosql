@@ -2,12 +2,12 @@ doctype html
 html
     head
         include head.pug
-        script(src="https://unpkg.com/@yaireo/tagify")https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js
-        script(src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js")
+        script(src="/#{root}/js/tagify")
+        script(src="/#{root}/js/tagify.polyfills.min.js")
         script(src="/#{root}/dist/js/sql-formatter.js")
-        link(href="https://unpkg.com/@yaireo/tagify/dist/tagify.css" rel="stylesheet" type="text/css")
+        link(href="/#{root}/css/tagify.css" rel="stylesheet" type="text/css")
         link(rel="stylesheet" href="/#{root}/css/queries.css?ver=#{version}")
-        link(rel="stylesheet" href="https://unpkg.com/tippy.js@6/dist/svg-arrow.css")
+        link(rel="stylesheet" href="/#{root}/css/svg-arrow.css")
     body
         include common.pug
         include appbar.pug
@@ -16,6 +16,6 @@ html
         include query-content.pug
         input#version(type="hidden" value="#{version}")
 
-        script(src="https://unpkg.com/@popperjs/core@2")
-        script(src="https://unpkg.com/tippy.js@6")
+        script(src="/#{root}/js/core@2")
+            script(src="/#{root}/js/tippy.js@6")
         script(type='module' src='/#{root}/dist/js/queries.js?ver=#{version}')
