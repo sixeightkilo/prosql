@@ -62,6 +62,7 @@ class Renderer {
         case 'connections':
             return $this->renderConnections($res);
 
+        case 'connections-faq':
         case 'read-more':
         case 'signup':
         case 'signin':

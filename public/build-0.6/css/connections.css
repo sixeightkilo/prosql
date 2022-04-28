@@ -42,11 +42,20 @@
 	border-radius:5px;
 	row-gap:0.25em;
 	position:relative;
+	font-family:'Open Sans', sans-serif;
 }
 
 #add-new {
 	position:absolute;
 	left: 5px;
+	top: 5px;
+	cursor:pointer;
+	color:var(--dark-blue);
+}
+
+#connections-faq {
+	position:absolute;
+	left: 25px;
 	top: 5px;
 	cursor:pointer;
 	color:var(--dark-blue);
@@ -167,6 +176,6 @@
 	margin-top:1em;
 }
 
-#form-container {
-	font-family:'Open Sans', sans-serif;
+#icon-container {
+	position:absolute;
 }

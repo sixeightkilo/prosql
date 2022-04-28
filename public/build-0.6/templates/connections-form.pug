@@ -1,0 +1,45 @@
+div#form-container.control
+    div#icon-container
+        i#add-new.fas.fa-plus-circle(title="New connection")
+        a(href="/connections-faq")
+            i#connections-faq.fas.fa-question-circle(title="Connections FAQ")
+    div#name-container.field.is-horizontal
+        .field-label.is-normal
+            label.label(for="name") Connection Name
+        .field-body
+            .field
+                input(type="text" id="name" value="" placeholder="")
+
+    div#user-container.field.is-horizontal
+        .field-label.is-normal
+            label.label(for="user") Username
+        .field-body
+            .field
+                input(type="text" id="user" value="" placeholder="")
+    div#pass-container.field.is-horizontal
+        .field-label.is-normal
+            label.label(for="pass") Password
+        .field-body
+            input(type="password" id="pass" value="" placeholder="")
+    div#host-container.field.is-horizontal
+        .field-label.is-normal
+            label.label(for="host") Host
+        .field-body
+            input(type="text" id="host" value="" placeholder="")
+    div#port-container.field.is-horizontal
+        .field-label.is-normal
+            label.label(for="port") Port
+        .field-body
+            input(type="text" id="port" value="" placeholder="")
+    div#db-container.field.is-horizontal
+        .field-label.is-normal
+            label.label(for="db") Database
+        .field-body
+            input(type="text" id="db" value="" placeholder="optional")
+
+    div#default-container.field.is-horizontal
+        .field-label.is-normal
+            label.label(for="default") Default
+        .field-body
+            input(type="checkbox" id="is-default")
+

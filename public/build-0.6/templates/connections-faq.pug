@@ -1,0 +1,29 @@
+doctype html
+html
+    head
+        include head.pug
+        link(rel="stylesheet" href="/#{root}/css/pages.css?ver=#{version}")
+    body
+        include navbar.pug
+        .columns
+            .column	
+            .column.is-three-fifths
+                section
+                    .content
+                        .h3.is-size-3 How to connect to remote MySQL server?
+                        p.has-text-justified
+                            |The recommended way is to use what is variously known as "port forwarding" or "tunneling".
+                            |This is the most secure way to access remote applications/servers which are not exposed
+                            |to public network. Digitalocean has a detailed explanation
+                            |#[a(href="https://www.digitalocean.com/community/tutorials/ssh-essentials-working-with-ssh-servers-clients-and-keys#configuring-local-tunneling-to-a-server") here.]#[br]
+                            |Briefly the steps are as follows:#[br]
+                            ol
+                                li Generate SSH public/private key pair on your computer
+                                li Copy your pubic key to remote server
+                                li Create a tunnel to the remote server #[br]
+                                    pre ssh -L 3306:localhost:3306 user@remote-server
+                                    | Here a secure "tunnel" is being created from port 3306
+                                    | on your computer to port 3306 on the remote server.
+                                li Then from Prosql connections page connect to the remote MySQL server using Host as "localhost"
+                                    | and Port as 3306 (or whatever you used as the first number in above command)
+            .column	
