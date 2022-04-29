@@ -9,3 +9,8 @@ html, body {
 .tab-content.windows {
 	display:block;
 }
+
+#update-notice {
+	background-color: var(--main);
+	color:white;
+}
