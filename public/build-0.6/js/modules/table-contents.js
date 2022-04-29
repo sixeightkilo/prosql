@@ -72,7 +72,7 @@ class TableContents {
     initDom() {
         this.$columNames = document.getElementById('column-names')
         this.$operators = document.getElementById('operators')
-        this.$searchText = document.getElementById('search-text')
+        this.$searchText = document.querySelector('[name="field2"]')
         this.$search = document.getElementById('search')
         this.$tableContents = document.getElementById('table-contents')
         this.$contents = document.getElementById('table-contents')
