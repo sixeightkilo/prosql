@@ -190,7 +190,7 @@ class QueryRunner {
 
         q = q.trim();
 
-        if (!/^select|show/i.test(q)) {
+        if (!/^select|show|explain/i.test(q)) {
             let s = Date.now();
 
             this.tableUtils.showLoader();
