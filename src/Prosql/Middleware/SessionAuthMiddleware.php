@@ -26,7 +26,8 @@ class SessionAuthMiddleware {
             return $res->withStatus(302)->withHeader('Location', '/connections');
         }
 
-        if (in_array($path, ['/', '/signin', '/signup', '/read-more', '/install', '/connections'])) {
+        if (in_array($path,
+            ['/', '/signin', '/signup', '/read-more', '/install', '/connections', '/connections-faq'])) {
             $this->sm->write();
             $response = $handler->handle($request);
             return $response;
