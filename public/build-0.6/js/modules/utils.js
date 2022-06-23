@@ -307,8 +307,14 @@ class Utils {
         let terms = [];
         let tokens = sqlFormatter.format(query, {language: "mysql"}).tokens;
         //select only reserved*, string and number
+        Logger.Log(TAG, JSON.stringify(tokens));
         tokens.forEach((t) => {
             if (t.type == "string") {
+                terms.push(t.value);
+                return;
+            }
+
+            if (t.type == "word") {
                 terms.push(t.value);
                 return;
             }
