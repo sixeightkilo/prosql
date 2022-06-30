@@ -25,6 +25,7 @@ class AppBar {
             this.dbMenu.setSessionInfo(this.sessionId, this.db);
             document.title = this.db;
             PubSub.publish(Constants.DB_CHANGED, {db: this.db});
+            this.$databases.blur();
         })
 
         PubSub.subscribe(Constants.DB_RENAMED, async (data) => {
@@ -32,6 +33,7 @@ class AppBar {
             this.db = data['new-db'];
             await this.showDatabases();
             this.$databases.dispatchEvent(new Event('change'));
+            this.$databases.blur();
         });
 
         PubSub.subscribe(Constants.DB_DELETED, async (data) => {
@@ -39,6 +41,7 @@ class AppBar {
             this.db = '';
             await this.showDatabases();
             this.$databases.dispatchEvent(new Event('change'));
+            this.$databases.blur();
         });
     }
 
