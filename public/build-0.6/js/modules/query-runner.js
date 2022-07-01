@@ -236,10 +236,12 @@ class QueryRunner {
         if (res.status == "ok") {
             this.tableUtils.showInfo.apply(this, [res['time-taken'], res['rows-affected']]);
 
-            PubSub.publish(Constants.QUERY_DISPATCHED, {
-                query: q,
-                tags: [Constants.USER]
-            })
+            if (save) {
+                PubSub.publish(Constants.QUERY_DISPATCHED, {
+                    query: q,
+                    tags: [Constants.USER]
+                })
+            }
         }
 
         return res;
