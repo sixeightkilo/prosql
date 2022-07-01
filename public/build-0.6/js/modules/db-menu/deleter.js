@@ -16,16 +16,27 @@ class Deleter {
         this.$body = this.$dialog.querySelector('.modal-card-body');
         this.$body.innerHTML = "This operation will delete the database. Are you sure?";
         this.$title = this.$dialog.querySelector('.modal-card-title');
+        this.time = this.$dialog.querySelector('.time');
 
         this.$ok.addEventListener('click', async () => {
             this.$ok.setAttribute('disabled', 'disabled');
+            this.$cancel.setAttribute('disabled', 'disabled');
+
             this.$title.innerHTML = `Deleting ${this.db}..`;
+
+            let elapsed = 0;
+            let timer = setInterval(() => {
+                elapsed++;
+                this.time.innerHTML = `${elapsed} s`;
+            }, 1000);
 
             let query = `drop database \`${this.db}\``;
             Logger.Log(TAG, query);
 
             let dbUtils = new DbUtils();
             let res = await dbUtils.execute.apply(this, [query]);
+
+            clearInterval(timer);
 
             if (res.status == "ok") {
                 PubSub.publish(Constants.QUERY_DISPATCHED, {
@@ -43,7 +54,6 @@ class Deleter {
             }
 
             this.$title.innerHTML = this.title;
-            this.$ok.removeAttribute('disabled');
         });
 
         this.$cancel.addEventListener('click', () => {
@@ -55,6 +65,9 @@ class Deleter {
 
     openDialog() {
         this.$dialog.classList.add('is-active');
+        this.time.innerHTML = '';
+        this.$ok.removeAttribute('disabled');
+        this.$cancel.removeAttribute('disabled');
     }
 
     closeDialog() {
