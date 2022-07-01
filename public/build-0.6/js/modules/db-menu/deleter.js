@@ -53,6 +53,8 @@ class Deleter {
                 return;
             }
 
+            this.$ok.removeAttribute('disabled');
+            this.$cancel.removeAttribute('disabled');
             this.$title.innerHTML = this.title;
         });
 
