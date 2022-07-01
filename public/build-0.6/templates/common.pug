@@ -16,6 +16,11 @@
         .box.message
         .time 1 sec
 
+script(type="code" id="copy-filename-template")
+    span {text}
+    span &nbsp;&nbsp;
+    i.fa.fa-copy.copy-filename(data-filename="{file-name}")
+
 #alert.button.is-info
     span.msg
 

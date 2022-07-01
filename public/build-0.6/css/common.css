@@ -264,4 +264,6 @@ sup {
 	font-weight:bold;
 }
 
-
+.copy-filename {
+	cursor:pointer;
+}

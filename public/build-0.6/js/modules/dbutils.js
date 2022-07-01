@@ -132,6 +132,7 @@ class DbUtils {
         let fileName = '';
         let n = 0;
         let err = Err.ERR_NONE;
+        let template = document.getElementById('copy-filename-template').innerHTML;
 
         while (true) {
             let row
@@ -152,8 +153,12 @@ class DbUtils {
             if (row[0] == "header") {
                 fileName = row[2];
 
+                let html = Utils.processTemplate(template, {
+                    text: `Exporting to ${fileName}`,
+                    'file-name': fileName
+                });
                 PubSub.publish(Constants.START_PROGRESS, {
-                    title: `Exporting to ${fileName}`
+                    title: html
                 });
 
                 //If we are here query was OK, save to DB

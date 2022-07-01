@@ -60,6 +60,18 @@ class ProgressBar {
         PubSub.subscribe(Constants.UPDATE_PROGRESS, (data) => {
             this.message.innerHTML = data.message;
         });
+
+        //May be this is not the best place to do it. But where else?
+        document.addEventListener('click', (e) => {
+            if (!e.target.classList.contains('copy-filename')) {
+                return;
+            }
+
+            let name = e.target.dataset.filename;
+            navigator.clipboard.writeText(name).then(() => {
+                Utils.showAlert('Copied', 500);
+            });
+        });
     }
 
     setOptions(options) {
