@@ -1,0 +1,19 @@
+sup {
+	font-size:x-small;
+}
+
+h2, p {
+	color: var(--dark-grey);
+}
+
+a {
+	color: var(--secondary);
+}
+
+section {
+	font-family: 'Open Sans', sans-serif;
+}
+
+#get-started {
+	font-weight:bold;
+}

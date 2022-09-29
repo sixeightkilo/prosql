@@ -1,0 +1,26 @@
+:go:func Index(root string, version string)
+
+- var css = "/static/css/index.css?ver=" + version;
+- var js = "/static/dist/js/index.js?ver=" + version;
+
+doctype html
+html
+    head
+        include head.jade
+            link(rel="stylesheet" href= css)
+    body
+        section.section
+            .full-logo
+                img(src='/static/images/logo.png', width="292.4", height="55.6")
+                div.superscript beta
+
+        section.section
+            h2.is-size-4 A fast, simple, cross-platform MySQL client that runs right in your browser!
+            p
+                a(href="/read-more") Read more
+
+        section.section
+            button#get-started.button.is-primary Get Started!
+
+        script(type='module' src= js)
+

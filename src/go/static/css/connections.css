@@ -1,0 +1,183 @@
+#container {
+	display:grid;
+	grid-template-columns: 2fr 8fr;
+	height:100%;
+}
+
+#left-container {
+	background-color: var(--grey-lightest);
+	height:100%;
+}
+
+#recents-title {
+	font-family:'Open Sans', sans-serif;
+	text-align:center;
+	padding:0.5em;
+	font-weight:bold;
+}
+
+.server-icon {
+	color: #5D8ABA;
+}
+
+.conn {
+	color:var(--dark-grey);
+}
+
+.highlight .conn {
+	color:#fff;
+}
+
+.highlight .server-icon {
+	color:#fff;
+}
+
+#form-container {
+	margin:auto;
+	width: 30em;
+	display:grid;
+	padding:0.75em;
+	background-color:var(--grey-lightest);
+	margin-top:2em;
+	border-radius:5px;
+	row-gap:0.25em;
+	position:relative;
+	font-family:'Open Sans', sans-serif;
+}
+
+#add-new {
+	position:absolute;
+	left: 5px;
+	top: 5px;
+	cursor:pointer;
+	color:var(--dark-blue);
+}
+
+#connections-faq {
+	position:absolute;
+	left: 25px;
+	top: 5px;
+	cursor:pointer;
+	color:var(--dark-blue);
+}
+
+#form-container input {
+	border-radius:5px;
+	border:1px solid #ddd;
+	font-size:larger;
+}
+
+
+#name-container,
+#user-container,
+#pass-container,
+#host-container,
+#port-container,
+#db-container,
+#default-container {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+}
+
+#btn-container {
+	display:grid;
+	grid-template-columns: 1fr 3fr;
+	padding:0;
+	margin-top:1em;
+	margin-left:auto;
+	margin-right:auto;
+	width: 30em;
+	column-gap:0.5em;
+}
+
+#login-btn-container {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+	column-gap:0.2em;
+}
+
+.bookmark  {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.bookmark i {
+	font-size:x-large;
+	cursor:pointer;
+}
+
+.conn {
+	cursor:pointer;
+}
+
+.conn-container {
+	display:grid;
+	grid-template-columns:1fr 9fr 1fr;
+}
+
+.del-conn {
+	visibility:hidden;
+	cursor:pointer;
+}
+
+.conn-container:hover .del-conn {
+	visibility:visible;
+}
+
+#is-default {
+	margin-top:8px;
+}
+
+#btn-container-user {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+	padding:0;
+	margin-top:1em;
+	margin-left:auto;
+	margin-right:auto;
+	width: 30em;
+	column-gap:0.5em;
+}
+
+#start-btn-container {
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+	column-gap:0.2em;
+}
+
+#signin-container {
+	margin-left:auto;
+	margin-right:auto;
+	text-align:center;
+}
+
+#signout-container {
+	margin-left:auto;
+	margin-right:auto;
+	text-align:center;
+}
+
+.label {
+	color:var(--grey-dark);
+}
+
+#recents-title > span {
+	border-radius:3px;
+	padding-left:0.5em;
+	padding-right:0.5em;
+	padding-top:0.25em;
+	padding-bottom:0.25em;
+	background-color:var(--dark-blue);
+	color:#fff;
+}
+
+#conn-list {
+	margin-top:1em;
+}
+
+#icon-container {
+	position:absolute;
+	left:5px;
+	top:5px;
+}
