@@ -3,3 +3,6 @@ tags
 node_modules
 logs
 config.php
+config.dev.json
+config.prod.json
+prosql.log

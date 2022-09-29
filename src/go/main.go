@@ -20,7 +20,7 @@ func main() {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 
 	//dynamic pages
-	r.HandleFunc("/{song:[a-z-]*?}", views.Page).Methods("Get")
+	r.HandleFunc("/{page:[a-z-]*?}", views.Page).Methods("Get")
 
 	srv := &http.Server{
 		Handler:      r,

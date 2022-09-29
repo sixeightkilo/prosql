@@ -29,3 +29,5 @@
 {"fl":"/var/www/dev-prosql/public-html/prosql-web/src/go/views/index.go:23","level":"debug","msg":"Index","req-id":"req-id","time":"Sep 29 09:38:24.136"}
 {"fl":"/var/www/dev-prosql/public-html/prosql-web/src/go/views/index.go:23","level":"debug","msg":"Index","req-id":"req-id","time":"Sep 29 09:38:24.207"}
 {"fl":"/var/www/dev-prosql/public-html/prosql-web/src/go/views/index.go:23","level":"debug","msg":"Index","req-id":"req-id","time":"Sep 29 09:38:42.527"}
+{"fl":"/var/www/dev-prosql/public-html/prosql-web/src/go/views/index.go:23","level":"debug","msg":"Index","req-id":"req-id","time":"Sep 29 09:44:28.278"}
+{"fl":"/var/www/dev-prosql/public-html/prosql-web/src/go/views/index.go:23","level":"debug","msg":"Index","req-id":"req-id","time":"Sep 29 09:52:53.922"}

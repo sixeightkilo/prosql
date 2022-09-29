@@ -1,7 +1,7 @@
-:go:func Index(root string, version string)
+:go:func Index(root string, rev string)
 
-- var css = "/static/css/index.css?ver=" + version;
-- var js = "/static/dist/js/index.js?ver=" + version;
+- var css = "/static/" + root + "/" + "css/index.css?rev=" + rev;
+- var js = "/static/" + root + "/" + "dist/js/index.js?rev=" + rev;
 
 doctype html
 html

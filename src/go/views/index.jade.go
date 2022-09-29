@@ -7,20 +7,32 @@ import (
 )
 
 const (
-	index__0 = `<!DOCTYPE html><html><head><title>Prosql</title><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="/static/css/all.min.css"/><link rel="stylesheet" href="/static/css/bulma.css"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/><link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&amp;display=swap" rel="stylesheet"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/><link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&amp;display=swap" rel="stylesheet"/><link rel="stylesheet" href="/static/css/common.css?ver=#{version}"/><link rel="stylesheet" href="`
-	index__1 = `"/></head><body><section class="section"><div class="full-logo"><img src="/static/images/logo.png" width="292.4" height="55.6"/><div class="superscript">beta</div></div></section><section class="section"><h2 class="is-size-4">A fast, simple, cross-platform MySQL client that runs right in your browser!</h2><p><a href="/read-more">Read more</a></p></section><section class="section"><button id="get-started" class="button is-primary">Get Started!</button></section><script type="module" src="`
-	index__2 = `"></script></body></html>`
+	index__0 = `<!DOCTYPE html><html><head>`
+	index__1 = `<title>Prosql</title><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="`
+	index__2 = `"/><link rel="stylesheet" href="`
+	index__3 = `"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/><link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&amp;display=swap" rel="stylesheet"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/><link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&amp;display=swap" rel="stylesheet"/><link rel="stylesheet" href="`
+	index__5 = `"/></head><body><section class="section"><div class="full-logo"><img src="/static/images/logo.png" width="292.4" height="55.6"/><div class="superscript">beta</div></div></section><section class="section"><h2 class="is-size-4">A fast, simple, cross-platform MySQL client that runs right in your browser!</h2><p><a href="/read-more">Read more</a></p></section><section class="section"><button id="get-started" class="button is-primary">Get Started!</button></section><script type="module" src="`
+	index__6 = `"></script></body></html>`
 )
 
-func Index(root string, version string, wr io.Writer) {
+func Index(root string, rev string, wr io.Writer) {
 	buffer := &WriterAsBuffer{wr}
 
-	var css = "/static/css/index.css?ver=" + version
-	var js = "/static/dist/js/index.js?ver=" + version
+	var css = "/static/" + root + "/css/index.css?rev=" + rev
+	var js = "/static/" + root + "/dist/js/index.js?rev=" + rev
 	buffer.WriteString(index__0)
-	WriteEscString(css, buffer)
+
+	var common = "/static/" + root + "//css/common.css?rev=" + rev
 	buffer.WriteString(index__1)
-	WriteEscString(js, buffer)
+	WriteEscString("/static/"+root+"/css/all.min.css", buffer)
 	buffer.WriteString(index__2)
+	WriteEscString("/static/"+root+"/css/bulma.css", buffer)
+	buffer.WriteString(index__3)
+	WriteEscString(common, buffer)
+	buffer.WriteString(index__2)
+	WriteEscString(css, buffer)
+	buffer.WriteString(index__5)
+	WriteEscString(js, buffer)
+	buffer.WriteString(index__6)
 
 }
