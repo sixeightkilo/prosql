@@ -1,13 +1,13 @@
 package main
 
 import (
-	"os"
-	"net/http"
-	"time"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/sessions"
 	"github.com/kargirwar/prosql-go/views"
 	log "github.com/sirupsen/logrus"
-	"github.com/gorilla/sessions"
+	"net/http"
+	"os"
+	"time"
 )
 
 var store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))

@@ -2,14 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/views"
-	"github.com/kargirwar/prosql-go/constants"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
 	"time"
-	"fmt"
 )
 
 const LOG_FILE = "prosql.log"
@@ -24,7 +24,6 @@ func init() {
 	config := parseConfig()
 
 	views.SetConfig(config)
-	views.SetContentPath(dir + "/static")
 	views.SetSessionStore(store, constants.SESSION_NAME)
 }
 
@@ -44,7 +43,7 @@ func parseConfig() *types.Config {
 	}
 
 	log.WithFields(log.Fields{
-		"config":  fmt.Sprintf("%#v", config),
+		"config": fmt.Sprintf("%#v", config),
 	}).Debug("config")
 
 	return &config

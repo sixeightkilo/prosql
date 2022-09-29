@@ -1,24 +1,19 @@
 package views
 
 import (
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
-	"github.com/kargirwar/prosql-agent/utils"
+	"github.com/kargirwar/golang/utils"
 	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/types"
 	"net/http"
 	"regexp"
 	"strconv"
-	"math/rand"
 )
 
-var contentPath string
 var store *sessions.CookieStore
 var sessionName string
 var config *types.Config
-
-func SetContentPath(path string) {
-	contentPath = path
-}
 
 func SetSessionStore(s *sessions.CookieStore, session string) {
 	store = s
@@ -33,7 +28,14 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	utils.Dbg(r.Context(), "Index")
 
 	root, rev := getApplicationRootAndRevision(r)
-	Index(root, rev, w)
+	page := mux.Vars(r)["page"]
+	switch page {
+	case "":
+		Index(root, rev, w)
+
+	case "connections":
+		Connections(root, rev, w)
+	}
 }
 
 //for each major version of the app there are going to 
@@ -55,7 +57,7 @@ func getApplicationRootAndRevision(r *http.Request) (string, string) {
 	root := "build-" + string(version)
 
 	if config.Env == "dev" {
-		rev := strconv.Itoa(rand.Intn(1000 - 1) + 1)
+		rev := strconv.Itoa(utils.RandInt(1, 1000))
 		return root, rev
 	}
 

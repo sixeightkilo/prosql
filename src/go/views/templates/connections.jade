@@ -1,0 +1,46 @@
+:go:func Connections(root string, rev string)
+
+- var css = "/static/" + root + "/css/connections.css?rev=" + rev;
+- var js = "/static/" + root + "/dist/js/connections.js?rev=" + rev;
+
+doctype html
+html
+    head
+        include head.jade
+        link(rel="stylesheet" href= css)
+    body
+        include navbar.jade
+        div#container.content
+            div#left-container
+                #recents-title 
+                    span Recent Connections
+                    #conn-list
+            div#right-container
+                include connections-form.jade
+                div#btn-container
+                    button.button(id="test")
+                        span Test connection
+                        span.icon.is-small
+                            i.test-icon.fas
+
+                    div#login-btn-container
+                        button.button(id="signup")
+                            a(href="/signup") Signup 
+                        button.button(id="login") Continue as guest
+
+                div#signin-container
+                    br
+                    span Already registered? Please 
+                        span
+                            a(href="/signin") Signin.
+
+        input#version(type="hidden" value="#{version}")
+
+        script(type='module' src= js)
+        script(type='code' id='conn-template')
+            .conn-container
+                div
+                    i.fas.fa-server.server-icon
+                div.conn.has-text-left(data-id="{id}") &nbsp;&nbsp;{item}
+                div
+                    i.fas.fa-trash.del-conn(data-id="{id}")

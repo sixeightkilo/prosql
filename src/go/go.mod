@@ -14,6 +14,7 @@ require (
 	github.com/Joker/hpp v1.0.0 // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/kargirwar/golang v0.0.0-20220928124404-6654799b82e8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	golang.org/x/net v0.0.0-20190327091125-710a502c58a2 // indirect
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
