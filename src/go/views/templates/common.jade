@@ -1,0 +1,56 @@
+.modal#progress-bar-with-buttons
+    .modal-background
+    .modal-card
+        header.modal-card-head
+            p.modal-card-title.is-size-6
+        section.modal-card-body
+            .content.message
+        footer.modal-card-foot
+            button.button.is-success.ok(disabled) OK
+            button.button.cancel Cancel
+        .time 1 sec
+
+.modal#progress-bar-no-buttons
+    .modal-background
+    .modal-content
+        .box.message
+        .time 1 sec
+
+script(type="code" id="copy-filename-template")
+    span {text}
+    span &nbsp;&nbsp;
+    i.fa.fa-copy.copy-filename(data-filename="{file-name}")
+
+#alert.button.is-info
+    span.msg
+
+script(type="code" id="fk-cell-template")
+    div.fk-cell
+        div.value {value}
+        div.icon
+            i.fas.fa-arrow-circle-right.fk-icon(
+                data-table="{table}" data-column="{column}" data-value="{value}"
+                data-source-col="{source-col}" data-source-id="{source-id}" data-row-index="{row-index}")
+
+script(type="code" id="cell-template")
+    span(class="{cls}") {value}
+
+script(type='code' id='table-loader-template')
+    div.table-loader
+        button.button.is-info.is-light#cancel-query
+            span.icon
+                i.fas.fa-spinner.fa-spin.is
+            span Cancel
+
+script(type='code' id='table-header-template')
+    div
+        .customHeaderLabel {col}
+        .customSortDownLabel.inactive
+            i.fa.fa-long-arrow-alt-down
+        .customSortUpLabel.inactive
+            i.fa.fa-long-arrow-alt-up
+        .customSortRemoveLabel.inactive
+            i.fa.fa-times
+
+script(type="code" id="option-template")
+    option(value="{value}") {value}

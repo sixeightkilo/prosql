@@ -1,0 +1,51 @@
+:go:func Signin(root string, rev string, version string)
+
+- var css = "/static/" + root + "/css/signin.css?rev=" + rev;
+- var js = "/static/" + root + "/dist/js/signin.js?rev=" + rev;
+
+doctype html
+html
+    head
+        include head.jade
+        link(rel="stylesheet" href= css)
+    body
+        include common.jade
+        include navbar.jade
+        div#container.content
+            //dummy
+            div
+            div#form-container.control
+                div#email-container.field.is-horizontal
+                    .field-label.is-normal
+                        label.label(for="email") Email
+                    .field-body
+                        input(type="text" id="email" value="" placeholder="")
+
+                div#get-otp-container.field.is-horizontal
+                    .field-label.is-normal
+                        label.label(for="")
+                    .field-body
+                        button.button#get-otp.is-info.is-full-width Get OTP
+
+                div#otp-container.field.is-horizontal
+                    .field-label.is-normal
+                        label.label(for="otp") OTP
+                    .field-body
+                        input(type="text" id="otp" value="" placeholder="")
+
+                div#signin-container.field.is-horizontal
+                    .field-label.is-normal
+                        label.label(for="signup")
+                    .field-body
+                        button.button#signin.is-info.is-full-width Signin!
+                div
+                    br
+                    span Not registered? Please&nbsp;
+                        span
+                            a(href="/signup") signup.
+            //dummy
+            div
+
+        input#version(type="hidden" value= version)
+
+        script(type='module' src= js)

@@ -27,7 +27,8 @@ func SetConfig(c *types.Config) {
 func Page(w http.ResponseWriter, r *http.Request) {
 	utils.Dbg(r.Context(), "Index")
 
-	root, rev := getApplicationRootAndRevision(r)
+	version := getAppVersion(r)
+	root, rev := getApplicationRootAndRevision(version)
 	page := mux.Vars(r)["page"]
 	switch page {
 	case "":
@@ -35,6 +36,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	case "connections":
 		Connections(root, rev, w)
+
+	case "signin":
+		Signin(root, rev, version, w)
 	}
 }
 
@@ -44,16 +48,7 @@ func Page(w http.ResponseWriter, r *http.Request) {
 //each set of build-* files will have a revision. We will 
 //keep track of versions by git tags like so: build-0.6-r20
 //This function returns the app root dir: build-{ver} and revision
-func getApplicationRootAndRevision(r *http.Request) (string, string) {
-	session, _ := store.Get(r, sessionName)
-
-	agentVersion, present := session.Values[constants.AGENT_VERSION]
-	if !present {
-		agentVersion = config.Version
-	}
-
-	re := regexp.MustCompile(`([0-9]+).([0-9]+).*$`)
-	version := re.ReplaceAll([]byte(agentVersion.(string)), []byte("$1.$2"))
+func getApplicationRootAndRevision(version string) (string, string) {
 	root := "build-" + string(version)
 
 	if config.Env == "dev" {
@@ -69,4 +64,17 @@ func getApplicationRootAndRevision(r *http.Request) (string, string) {
 
 	//we should never reach here
 	return "build-0.6", "1"
+}
+
+func getAppVersion(r *http.Request) string {
+	session, _ := store.Get(r, sessionName)
+
+	agentVersion, present := session.Values[constants.AGENT_VERSION]
+	if !present {
+		agentVersion = config.Version
+	}
+
+	re := regexp.MustCompile(`([0-9]+).([0-9]+).*$`)
+	version := re.ReplaceAll([]byte(agentVersion.(string)), []byte("$1.$2"))
+	return string(version)
 }
