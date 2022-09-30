@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"github.com/gorilla/mux"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/kargirwar/prosql-go/views"
 	"github.com/kargirwar/prosql-go/ui"

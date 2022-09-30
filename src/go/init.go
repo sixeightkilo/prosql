@@ -6,6 +6,7 @@ import (
 	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/views"
+	"github.com/kargirwar/prosql-go/db"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
@@ -25,6 +26,8 @@ func init() {
 
 	views.SetConfig(config)
 	views.SetSessionStore(store, constants.SESSION_NAME)
+
+	db.SetDbPath(config.DbPath)
 }
 
 func parseConfig() *types.Config {

@@ -17,6 +17,9 @@ require (
 	github.com/kargirwar/prosql-agent v0.6.3-0.20211023040659-29942bd18429 // indirect
 	github.com/kargirwar/prosql-sqlite v0.0.0-20211227084359-60e9f74acfdd // indirect
 	github.com/mattn/go-sqlite3 v1.14.15 // indirect
+	github.com/tidwall/gjson v1.14.3 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
