@@ -10,16 +10,16 @@ import (
 )
 
 type User struct {
+	Id int	`json:"id"`
 	FirstName string `json:"first_name"`
 	LastName string `json:"last_name"`
 	Email string `json:"email"`
 }
 
-
 func GetByEmail(ctx context.Context, db *sql.DB, email string) (*[]User, error) {
 	var users []User
 	query := `
-		select first_name, last_name, email
+		select id, first_name, last_name, email
 		from
 		  users where email = ?`
 
@@ -34,7 +34,7 @@ func GetByEmail(ctx context.Context, db *sql.DB, email string) (*[]User, error) 
 
 	for rows.Next() {
 		var u User
-		err := rows.Scan(&u.FirstName, &u.LastName, &u.Email)
+		err := rows.Scan(&u.Id, &u.FirstName, &u.LastName, &u.Email)
 		if err != nil {
 			utils.Dbg(ctx, err.Error())
 			return nil, err

@@ -5,4 +5,5 @@ type Config struct {
 	DbPath string `json:"db-path"`
 	SendGridKey string `json:"sendgrid-key"`
 	AppVersions map[string]string `json:"app-versions"`
+	Email map[string]string `json:"email"`
 }
