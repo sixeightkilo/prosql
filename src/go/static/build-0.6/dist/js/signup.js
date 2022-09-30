@@ -1830,8 +1830,8 @@
 
     new ProgressBar();
 
-    const TAG = 'signin';
-    class Signin {
+    const TAG = 'signup';
+    class Signup {
         constructor() {
             document.addEventListener('DOMContentLoaded', async () => {
                 await this.init();
@@ -1839,42 +1839,67 @@
         }
 
         async init() {
+            this.$firstName = document.getElementById('first-name');
+            this.$lastName = document.getElementById('last-name');
             this.$email = document.getElementById('email');
             this.$image = document.getElementById('image');
+            this.$captcha = document.getElementById('captcha');
             this.$getOtp = document.getElementById('get-otp');
+            this.$reset = document.getElementById('reset');
             this.$otp = document.getElementById('otp');
-            this.$signin = document.getElementById('signin');
+            this.$signup = document.getElementById('signup');
 
-            this.$signin.addEventListener('click', () => {
-                this.signin();
-            });
+            await this.setCaptcha();
 
             this.$getOtp.addEventListener('click', () => {
                 this.getOtp();
             });
-        }
 
-        async signin() {
-            let json = await Utils.post('/go-browser-api/login/signin', {
-                'otp': this.$otp.value,
+            this.$reset.addEventListener('click', () => {
+                this.setCaptcha();
             });
 
-            if (json.status == "ok") ;
+            this.$signup.addEventListener('click', () => {
+                this.signup();
+            });
+        }
+
+        async signup() {
+            let json = await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
+
+            if (json.status == "ok") {
+                window.location = '/connections';
+            }
+        }
+
+        async setCaptcha() {
+            this.$captcha.value = '';
+            let json = await Utils.get('/browser-api/login/get-captcha');
+            Logger.Log(TAG, JSON.stringify(json));
+            if (json.status == "ok") {
+                this.$image.src = json.data.image;
+                this.$image.dataset.id = json.data['captcha-id'];
+            }
         }
 
         async getOtp() {
             let res = await Utils.get(Constants.URL + '/about');
             let params = {
+                'first-name': this.$firstName.value,
+                'last-name': this.$lastName.value,
                 'email': this.$email.value,
+                'captcha-id': this.$image.dataset.id,
+                'captcha-value': this.$captcha.value,
                 'device-id': res.data['device-id'],
                 'version': res.data['version'],
                 'os': res.data['os'],
             };
 
-            let json = await Utils.post('/go-browser-api/login/set-signin-otp', params, false);
+            let json = await Utils.post('/browser-api/login/set-signup-otp', params, false);
             Logger.Log(TAG, JSON.stringify(json));
             if (json.status == "error") {
                 alert(json.msg);
+                this.setCaptcha();
                 return;
             }
 
@@ -1882,6 +1907,6 @@
         }
     }
 
-    new Signin();
+    new Signup();
 
 })();

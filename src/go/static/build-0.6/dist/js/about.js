@@ -1,54 +1,6 @@
 (function () {
     'use strict';
 
-    class Err {
-        static get ERR_NONE () {
-            return 'none'
-        }
-
-        static get ERR_NO_AGENT () {
-            return 'no-agent'
-        }
-
-        static get ERR_INVALID_USER_INPUT() {
-            return 'invalid-user-input'
-        }
-
-        static get ERR_INVALID_SESSION_ID() {
-            return 'invalid-session-id'
-        }
-
-        static get ERR_SIGNIN_REQUIRED() {
-            return 'signin-required'
-        }
-
-        static get ERR_INVALID_CURSOR_ID() {
-            return 'invalid-cursor-id'
-        }
-
-        static get ERR_DB_ERROR() {
-            return 'db-error'
-        }
-
-        static get ERR_UNRECOVERABLE() {
-            return 'unrecoverable-error'
-        }
-
-        static handle(err) {
-            if (err.error == Err.ERR_NO_AGENT) {
-                window.location = '/install';
-                return;
-            }
-
-            if (err.error == Err.ERR_INVALID_SESSION_ID) {
-                window.location = '/connections';
-                return;
-            }
-
-            alert(err.error);
-        }
-    }
-
     class Constants {
         //hotkeys
         static get SHIFT_A() {
@@ -441,6 +393,54 @@
 
             let o = `${date}-${month}-${year} ${hour}:${minute}:${second}:::${tag}: ${str}`;
             console.log(o);
+        }
+    }
+
+    class Err {
+        static get ERR_NONE () {
+            return 'none'
+        }
+
+        static get ERR_NO_AGENT () {
+            return 'no-agent'
+        }
+
+        static get ERR_INVALID_USER_INPUT() {
+            return 'invalid-user-input'
+        }
+
+        static get ERR_INVALID_SESSION_ID() {
+            return 'invalid-session-id'
+        }
+
+        static get ERR_SIGNIN_REQUIRED() {
+            return 'signin-required'
+        }
+
+        static get ERR_INVALID_CURSOR_ID() {
+            return 'invalid-cursor-id'
+        }
+
+        static get ERR_DB_ERROR() {
+            return 'db-error'
+        }
+
+        static get ERR_UNRECOVERABLE() {
+            return 'unrecoverable-error'
+        }
+
+        static handle(err) {
+            if (err.error == Err.ERR_NO_AGENT) {
+                window.location = '/install';
+                return;
+            }
+
+            if (err.error == Err.ERR_INVALID_SESSION_ID) {
+                window.location = '/connections';
+                return;
+            }
+
+            alert(err.error);
         }
     }
 
@@ -1702,186 +1702,73 @@
         }
     }
 
-    let subscribers = {};
+    const TAG = "tabs";
 
-    class PubSub {
-        static subscribe(evt, cb) {
-            if (!subscribers[evt]) {
-                subscribers[evt] = new Set();
-            }
-            subscribers[evt].add(cb);
+    class Tabs {
+        constructor() {
+            document.addEventListener('DOMContentLoaded', async () => {
+                Logger.Log(TAG, 'DOMContentLoaded');
+                this.$tabs = document.querySelector('.tabs');
+                this.$contents = document.querySelectorAll('.tab-content');
+                this.init();
+            });
         }
 
-        static publish(evt, data) {
-            let list = subscribers[evt];
-            if (!list) {
-                return;
-            }
-            for (let s of list) {
-                s(data);
-            }
+        init() {
+            let list = this.$tabs.querySelectorAll('li');
+            list.forEach((t) => {
+                t.addEventListener('click', (e) => {
+                    let li = e.target.parentElement;
+                    if (li.classList.contains('is-active')) {
+                        return;
+                    }
+
+                    //disable currently active tab
+                    this.$tabs.querySelector('.is-active').classList.remove('is-active');
+                    this.$contents.forEach((e) => {
+                        e.style.display = "none";
+                    });
+
+                    //activate current tab
+                    li.classList.add('is-active');
+
+                    //and the content
+                    let target = e.target;
+                    Logger.Log(TAG, target.className);
+                    this.$contents.forEach(($c) => {
+                        if ($c.classList.contains(`${target.className}`)) {
+                            $c.style.display = "block";
+                        }
+                    });
+                });
+            });
         }
     }
 
-    class ProgressBar {
-        constructor(options = {}) {
-    		document.addEventListener("DOMContentLoaded", () => {
-    			this.progressBar = document.getElementById('progress-bar-no-buttons');
-    			this.message = this.progressBar.querySelector('.message');
-    			this.time = this.progressBar.querySelector('.time');
-    			this.hasButtons = false;
-    		});
+    const LATEST_VERSION = "0.6.4";
+    class About {
+        constructor() {
+            document.addEventListener('DOMContentLoaded', async () => {
 
-            //todo: why can't we have simple function calls?
-            PubSub.subscribe(Constants.INIT_PROGRESS, (data) => {
-                this.time.innerHTML = '';
-                this.message.innerHTML = '';
-                this.elapsed = 0;
-
-                if (this.hasButtons) {
-                    this.title.innerHTML = data.title;
-                }
-
-                this.message.innerHTML = data.message;
-
-                this.timer = setInterval(() => {
-                    this.elapsed++;
-                    this.time.innerHTML = this.elapsed + ' s';
-                }, 1000);
-
-                this.progressBar.classList.add('is-active');
-            });
-
-            PubSub.subscribe(Constants.START_PROGRESS, (data) => {
-                this.time.innerHTML = '';
-                this.message.innerHTML = '';
-                this.elapsed = 0;
-
-                if (this.hasButtons) {
-                    this.title.innerHTML = data.title;
-                }
-            });
-
-            PubSub.subscribe(Constants.STOP_PROGRESS, () => {
-                clearInterval(this.timer);
-
-                //if we have buttons, wait till user clicks ok
-                if (this.ok) {
-                    this.ok.disabled = false;
-                    this.cancel.disabled = true;
-                    return
-                }
-
-                //otherwise close ourselves immediately
-                this.progressBar.classList.remove('is-active');
-            });
-
-            PubSub.subscribe(Constants.UPDATE_PROGRESS, (data) => {
-                this.message.innerHTML = data.message;
-            });
-
-            //May be this is not the best place to do it. But where else?
-            document.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('copy-filename')) {
+                let response = await Utils.get(Constants.URL + '/about', false);
+                if (response.status == "ok") {
+                    let $ver = document.querySelector('#agent-version');
+                    $ver.innerHTML = response.data.version;
+                    if (response.data.version < LATEST_VERSION) {
+                        let $updateNotice = document.querySelector('#update-notice');
+                        $updateNotice.innerText = `Please update to ${LATEST_VERSION}`;
+                        $updateNotice.classList.remove('is-hidden');
+                    }
                     return;
                 }
 
-                let name = e.target.dataset.filename;
-                navigator.clipboard.writeText(name).then(() => {
-                    Utils.showAlert('Copied', 500);
-                });
+                $ver.innerHTML = 'Not detected';
             });
-        }
 
-        setOptions(options) {
-            if (options.buttons) {
-                this.progressBar = document.getElementById('progress-bar-with-buttons');
-                this.title = this.progressBar.querySelector('.modal-card-title');
-                this.ok = this.progressBar.querySelector('.ok');
-                this.cancel = this.progressBar.querySelector('.cancel');
-                this.cancelFunc = options.cancel;
-
-                this.ok.disabled = true;
-                this.cancel.disabled = false;
-
-                this.ok.addEventListener('click', () => {
-                    this.progressBar.classList.remove('is-active');
-                });
-
-                this.cancel.addEventListener('click', () => {
-                    this.cancelFunc();
-                    this.progressBar.classList.remove('is-active');
-                });
-
-                this.hasButtons = true;
-
-            } else {
-                this.ok = null;
-                this.cancel = null;
-                this.cancelFunc = null;
-                this.progressBar = document.getElementById('progress-bar-no-buttons');
-                this.hasButtons = false;
-            }
-
-            this.message = this.progressBar.querySelector('.message');
-            this.time = this.progressBar.querySelector('.time');
+            new Tabs();
         }
     }
 
-    new ProgressBar();
-
-    const TAG = 'signin';
-    class Signin {
-        constructor() {
-            document.addEventListener('DOMContentLoaded', async () => {
-                await this.init();
-            });
-        }
-
-        async init() {
-            this.$email = document.getElementById('email');
-            this.$image = document.getElementById('image');
-            this.$getOtp = document.getElementById('get-otp');
-            this.$otp = document.getElementById('otp');
-            this.$signin = document.getElementById('signin');
-
-            this.$signin.addEventListener('click', () => {
-                this.signin();
-            });
-
-            this.$getOtp.addEventListener('click', () => {
-                this.getOtp();
-            });
-        }
-
-        async signin() {
-            let json = await Utils.post('/go-browser-api/login/signin', {
-                'otp': this.$otp.value,
-            });
-
-            if (json.status == "ok") ;
-        }
-
-        async getOtp() {
-            let res = await Utils.get(Constants.URL + '/about');
-            let params = {
-                'email': this.$email.value,
-                'device-id': res.data['device-id'],
-                'version': res.data['version'],
-                'os': res.data['os'],
-            };
-
-            let json = await Utils.post('/go-browser-api/login/set-signin-otp', params, false);
-            Logger.Log(TAG, JSON.stringify(json));
-            if (json.status == "error") {
-                alert(json.msg);
-                return;
-            }
-
-            alert(`Otp sent to ${this.$email.value}`);
-        }
-    }
-
-    new Signin();
+    new About();
 
 })();

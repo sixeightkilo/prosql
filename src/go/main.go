@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	//"github.com/gorilla/mux"
 	"github.com/gorilla/sessions"
 	"github.com/kargirwar/prosql-go/views"
+	"github.com/kargirwar/prosql-go/ui"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -18,6 +19,9 @@ func main() {
 
 	//static files
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	//api
+	r.HandleFunc("/go-browser-api/login/{action:[a-z-]*?}", ui.LoginHandler).Methods("Post")
 
 	//dynamic pages
 	r.HandleFunc("/{page:[a-z-]*?}", views.Page).Methods("Get")

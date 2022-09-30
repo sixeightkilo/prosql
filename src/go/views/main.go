@@ -42,6 +42,21 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//Each major version of the agent maps to corresponding
+//major version of the web app
+func getAppVersion(r *http.Request) string {
+	session, _ := store.Get(r, sessionName)
+
+	agentVersion, present := session.Values[constants.AGENT_VERSION]
+	if !present {
+		agentVersion = config.Version
+	}
+
+	re := regexp.MustCompile(`([0-9]+).([0-9]+).*$`)
+	version := re.ReplaceAll([]byte(agentVersion.(string)), []byte("$1.$2"))
+	return string(version)
+}
+
 //for each major version of the app there are going to 
 //be separate set of static files. These will be stored under:
 // build-{ver}
@@ -64,17 +79,4 @@ func getApplicationRootAndRevision(version string) (string, string) {
 
 	//we should never reach here
 	return "build-0.6", "1"
-}
-
-func getAppVersion(r *http.Request) string {
-	session, _ := store.Get(r, sessionName)
-
-	agentVersion, present := session.Values[constants.AGENT_VERSION]
-	if !present {
-		agentVersion = config.Version
-	}
-
-	re := regexp.MustCompile(`([0-9]+).([0-9]+).*$`)
-	version := re.ReplaceAll([]byte(agentVersion.(string)), []byte("$1.$2"))
-	return string(version)
 }

@@ -1,54 +1,6 @@
 (function () {
     'use strict';
 
-    class Err {
-        static get ERR_NONE () {
-            return 'none'
-        }
-
-        static get ERR_NO_AGENT () {
-            return 'no-agent'
-        }
-
-        static get ERR_INVALID_USER_INPUT() {
-            return 'invalid-user-input'
-        }
-
-        static get ERR_INVALID_SESSION_ID() {
-            return 'invalid-session-id'
-        }
-
-        static get ERR_SIGNIN_REQUIRED() {
-            return 'signin-required'
-        }
-
-        static get ERR_INVALID_CURSOR_ID() {
-            return 'invalid-cursor-id'
-        }
-
-        static get ERR_DB_ERROR() {
-            return 'db-error'
-        }
-
-        static get ERR_UNRECOVERABLE() {
-            return 'unrecoverable-error'
-        }
-
-        static handle(err) {
-            if (err.error == Err.ERR_NO_AGENT) {
-                window.location = '/install';
-                return;
-            }
-
-            if (err.error == Err.ERR_INVALID_SESSION_ID) {
-                window.location = '/connections';
-                return;
-            }
-
-            alert(err.error);
-        }
-    }
-
     class Constants {
         //hotkeys
         static get SHIFT_A() {
@@ -444,7 +396,55 @@
         }
     }
 
-    const TAG$7 = "base-db";
+    class Err {
+        static get ERR_NONE () {
+            return 'none'
+        }
+
+        static get ERR_NO_AGENT () {
+            return 'no-agent'
+        }
+
+        static get ERR_INVALID_USER_INPUT() {
+            return 'invalid-user-input'
+        }
+
+        static get ERR_INVALID_SESSION_ID() {
+            return 'invalid-session-id'
+        }
+
+        static get ERR_SIGNIN_REQUIRED() {
+            return 'signin-required'
+        }
+
+        static get ERR_INVALID_CURSOR_ID() {
+            return 'invalid-cursor-id'
+        }
+
+        static get ERR_DB_ERROR() {
+            return 'db-error'
+        }
+
+        static get ERR_UNRECOVERABLE() {
+            return 'unrecoverable-error'
+        }
+
+        static handle(err) {
+            if (err.error == Err.ERR_NO_AGENT) {
+                window.location = '/install';
+                return;
+            }
+
+            if (err.error == Err.ERR_INVALID_SESSION_ID) {
+                window.location = '/connections';
+                return;
+            }
+
+            alert(err.error);
+        }
+    }
+
+    const TAG$8 = "base-db";
     class BaseDB {
         constructor(logger, options) {
             this.logger = logger;
@@ -456,13 +456,13 @@
             return new Promise((resolve, reject) => {
                 let req = indexedDB.open(this.dbName, this.version);
                     req.onsuccess = (e) => {
-                        this.logger.log(TAG$7, "open.onsuccess");
+                        this.logger.log(TAG$8, "open.onsuccess");
                         this.db = req.result;
                         resolve(0);
                     };
 
                     req.onerror = (e) => {
-                        this.logger.log(TAG$7, e.target.error);
+                        this.logger.log(TAG$8, e.target.error);
                         reject(e.target.errorCode);
                     };
 
@@ -483,7 +483,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$7, e.target.error);
+                    this.logger.log(TAG$8, e.target.error);
                     resolve(-1);
                 };
             })
@@ -501,7 +501,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$7, e.target.error);
+                    this.logger.log(TAG$8, e.target.error);
                     resolve(-1);
                 };
             })
@@ -569,7 +569,7 @@
                         result = request.result;
                     }
 
-                    this.logger.log(TAG$7, JSON.stringify(result));
+                    this.logger.log(TAG$8, JSON.stringify(result));
                     resolve(result);
                 };
 
@@ -663,7 +663,7 @@
 
         async findByDbId(id) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$7, "findByDbId");
+                this.logger.log(TAG$8, "findByDbId");
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -675,7 +675,7 @@
                 };
 
                 request.onerror = (e) => {
-                    this.logger.log(TAG$7, "error");
+                    this.logger.log(TAG$8, "error");
                     resolve(e.target.error);
                 };
             })
@@ -722,7 +722,7 @@
         }
     }
 
-    const TAG$6 = "query-db";
+    const TAG$7 = "query-db";
     const CREATED_AT_INDEX = "created-at-index";
     const QUERY_INDEX = "query-index";
     const TERM_INDEX = "term-index";
@@ -739,7 +739,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$6, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$7, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 2) {
                 let store = e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -772,7 +772,7 @@
                 //https://stackoverflow.com/questions/1960473/get-all-unique-values-in-a-javascript-array-remove-duplicates
                 //terms = [...new Set(terms)];
 
-                this.logger.log(TAG$6, JSON.stringify(rec.terms));
+                this.logger.log(TAG$7, JSON.stringify(rec.terms));
                 let id = -1;
                 try {
                     //apppend timestamp if required
@@ -791,7 +791,7 @@
 
                     resolve(id);
                 } catch (e) {
-                    this.logger.log(TAG$6, `error: ${JSON.stringify(e.message)}`);
+                    this.logger.log(TAG$7, `error: ${JSON.stringify(e.message)}`);
                     reject(e.message);
                 }
             })
@@ -821,7 +821,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$6, JSON.stringify(rec));
+                    this.logger.log(TAG$7, JSON.stringify(rec));
                     super.put(this.searchIndex, {
                         id: rec.id,
                         term: t,
@@ -829,7 +829,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$6, `error: e.message`);
+                    this.logger.log(TAG$7, `error: e.message`);
                 }
             }
         }
@@ -844,7 +844,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -878,7 +878,7 @@
 
                     //update tag
                     rec['queries'].push(id);
-                    this.logger.log(TAG$6, JSON.stringify(rec));
+                    this.logger.log(TAG$7, JSON.stringify(rec));
                     super.put(this.tagIndex, {
                         id: rec.id,
                         tag: t,
@@ -886,7 +886,7 @@
                     });
 
                 } catch (e) {
-                    this.logger.log(TAG$6, `error: e.message`);
+                    this.logger.log(TAG$7, `error: e.message`);
                 }
             }
         }
@@ -901,7 +901,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -921,7 +921,7 @@
                 index.openCursor(key).onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$6, JSON.stringify(cursor.value));
+                        this.logger.log(TAG$7, JSON.stringify(cursor.value));
                         resolve(cursor.value);
                         return;
                     }
@@ -954,7 +954,7 @@
             //days supercedes everything
             //if days are provided get queries by days first
             //then filter by terms and tags if provided
-            this.logger.log(TAG$6, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
+            this.logger.log(TAG$7, `filter: days ${JSON.stringify(days)} tags ${tags} terms ${terms}`);
 
             let start, end;
             if (days.hasOwnProperty('start')) {
@@ -974,7 +974,7 @@
 
             let ids = [];
             if (start || end) {
-                this.logger.log(TAG$6, 'filtering');
+                this.logger.log(TAG$7, 'filtering');
                 ids = await this.searchByCreatedAt(start, end);
 
                 if (ids.length == 0) {
@@ -1005,7 +1005,7 @@
             }
 
             let results = [];
-            this.logger.log(TAG$6, `${ids}`);
+            this.logger.log(TAG$7, `${ids}`);
             for (let i = 0; i < ids.length; i++) {
                 results.push(await super.get(ids[i]));
             }
@@ -1120,7 +1120,7 @@
 
         searchByCreatedAt(s, e) {
             return new Promise((resolve, reject) => {
-                this.logger.log(TAG$6, `s: ${s} e: ${e}`);
+                this.logger.log(TAG$7, `s: ${s} e: ${e}`);
 
                 let transaction = this.db.transaction(this.store);
                 let objectStore = transaction.objectStore(this.store);
@@ -1143,7 +1143,7 @@
                 index.openCursor(key, "prev").onsuccess = (ev) => {
                     let cursor = ev.target.result;
                     if (cursor) {
-                        this.logger.log(TAG$6, `id: ${cursor.value.created_at.toISOString()}`);
+                        this.logger.log(TAG$7, `id: ${cursor.value.created_at.toISOString()}`);
                         queries.push(cursor.value.id);
                         cursor.continue();
                     } else {
@@ -1154,7 +1154,7 @@
         }
     }
 
-    const TAG$5 = "base-meta-db";
+    const TAG$6 = "base-meta-db";
     const ID = 1;
 
     class BaseMetaDB extends BaseDB {
@@ -1168,7 +1168,7 @@
         }
 
         async setDb(db) {
-            this.logger.log(TAG$5, "setDb");
+            this.logger.log(TAG$6, "setDb");
             let rec = await super.get(parseInt(ID));
 
             if (rec == null) {
@@ -1216,7 +1216,7 @@
         }
     }
 
-    const TAG$4 = "queries-meta-db";
+    const TAG$5 = "queries-meta-db";
 
     class QueriesMetaDB extends BaseMetaDB {
         constructor(logger, options) {
@@ -1227,7 +1227,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$4, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$5, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 1) {
                 e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -1235,7 +1235,7 @@
         }
     }
 
-    const TAG$3 = "connection-db";
+    const TAG$4 = "connection-db";
     const CONNECTION_INDEX = "connection-index";
     const DB_NAME = "connections";
 
@@ -1248,7 +1248,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$3, `open.onupgradeneeded: ${e.oldVersion}`);
+            this.logger.log(TAG$4, `open.onupgradeneeded: ${e.oldVersion}`);
             if (e.oldVersion < 1) {
                 let store = e.currentTarget.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -1299,7 +1299,7 @@
                 return await super.save(this.store, conn);
 
             } catch (e) {
-                this.logger.log(TAG$3, e.message);
+                this.logger.log(TAG$4, e.message);
             }
         }
 
@@ -1356,7 +1356,7 @@
         }
     }
 
-    const TAG$2 = "connections-meta-db";
+    const TAG$3 = "connections-meta-db";
 
     class ConnectionsMetaDB extends BaseMetaDB {
         constructor(logger, options) {
@@ -1367,7 +1367,7 @@
         }
 
         onUpgrade(e) {
-            this.logger.log(TAG$2, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
+            this.logger.log(TAG$3, `onUpgrade: o: ${e.oldVersion} n: ${e.newVersion}`);
             if (e.oldVersion < 1) {
                 e.target.result.createObjectStore(
                     this.store, { keyPath: 'id', autoIncrement: true });
@@ -1375,7 +1375,7 @@
         }
     }
 
-    const TAG$1 = "utils";
+    const TAG$2 = "utils";
     class Utils {
         static saveToSession(key, val) {
             window.sessionStorage.setItem(key, val);
@@ -1432,7 +1432,7 @@
                 });
 
                 let json = await response.json();
-                Logger.Log(TAG$1, JSON.stringify(json));
+                Logger.Log(TAG$2, JSON.stringify(json));
 
                 if (json.status == 'error') {
                     throw json
@@ -1440,7 +1440,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$1, JSON.stringify(e));
+                Logger.Log(TAG$2, JSON.stringify(e));
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -1501,7 +1501,7 @@
                 });
 
                 let json = await response.json();
-                Logger.Log(TAG$1, JSON.stringify(json));
+                Logger.Log(TAG$2, JSON.stringify(json));
 
                 if (json.status == 'error') {
                     throw json
@@ -1509,7 +1509,7 @@
 
                 return json
             } catch (e) {
-                Logger.Log(TAG$1, JSON.stringify(e));
+                Logger.Log(TAG$2, JSON.stringify(e));
                 let res = {
                     'status' : 'error',
                     'data': null,
@@ -1579,7 +1579,7 @@
         }
 
         static showNoData() {
-            Logger.Log(TAG$1, "No data");
+            Logger.Log(TAG$2, "No data");
         }
 
         //https://gist.github.com/gordonbrander/2230317
@@ -1636,32 +1636,32 @@
             let connDb = new ConnectionDB(new Logger(), {version: Constants.CONN_DB_VERSION});
             await connDb.open();
             let conns = await connDb.getAll();
-            Logger.Log(TAG$1, "Resetting connections..");
+            Logger.Log(TAG$2, "Resetting connections..");
             for (let i = 0; i < conns.length; i++) {
                 await connDb.reset(conns[i]);
             }
-            Logger.Log(TAG$1, "Done.");
+            Logger.Log(TAG$2, "Done.");
 
             let queryDb = new QueryDB(new Logger(), {version: Constants.QUERY_DB_VERSION});
             await queryDb.open();
             let queries = await queryDb.getAll();
-            Logger.Log(TAG$1, "Resetting queries..");
+            Logger.Log(TAG$2, "Resetting queries..");
             for (let i = 0; i < queries.length; i++) {
                 await queryDb.reset(queries[i]);
             }
-            Logger.Log(TAG$1, "Done.");
+            Logger.Log(TAG$2, "Done.");
 
-            Logger.Log(TAG$1, "Resetting QueriesMetaDB");
+            Logger.Log(TAG$2, "Resetting QueriesMetaDB");
             let queriesMetaDb = new QueriesMetaDB(new Logger(), {version: Constants.QUERIES_META_DB_VERSION});
             await queriesMetaDb.open();
             await queriesMetaDb.destroy();
-            Logger.Log(TAG$1, "Done.");
+            Logger.Log(TAG$2, "Done.");
 
-            Logger.Log(TAG$1, "Resetting connectionsMetaDb");
+            Logger.Log(TAG$2, "Resetting connectionsMetaDb");
             let connectionsMetaDb = new ConnectionsMetaDB(new Logger(), {version: Constants.CONNECTIONS_META_DB_VERSION});
             await connectionsMetaDb.open();
             await connectionsMetaDb.destroy();
-            Logger.Log(TAG$1, "Done.");
+            Logger.Log(TAG$2, "Done.");
         }
 
         static async delay(t) {
@@ -1676,7 +1676,7 @@
             let terms = [];
             let tokens = sqlFormatter.format(query, {language: "mysql"}).tokens;
             //select only reserved*, string and number
-            Logger.Log(TAG$1, JSON.stringify(tokens));
+            Logger.Log(TAG$2, JSON.stringify(tokens));
             tokens.forEach((t) => {
                 if (t.type == "string") {
                     terms.push(t.value);
@@ -1702,186 +1702,296 @@
         }
     }
 
-    let subscribers = {};
+    const TAG$1 = "base";
 
-    class PubSub {
-        static subscribe(evt, cb) {
-            if (!subscribers[evt]) {
-                subscribers[evt] = new Set();
-            }
-            subscribers[evt].add(cb);
+    class BaseWorker {
+        constructor(port) {
+            this.port = port;
+            this.logger = new Logger(this.port);
+
+            this.port.onmessage = (m) => {
+                this.handleMessage(m);
+            };
+
+            //this.logger.log(TAG, self.sqlFormatter.format("select * from table"));
         }
 
-        static publish(evt, data) {
-            let list = subscribers[evt];
-            if (!list) {
+        async init() {
+            let res = await Utils.get(Constants.URL + '/about', false);
+            if (res.status == "error") {
+                this.logger.log(TAG$1, JSON.stringify(res));
+                return
+            }
+
+            this.deviceId = res.data['device-id'];
+
+            //regiser this device with backend.
+            //If signin-required, force user to signin/signup
+            //After user signs up clear all db_id, because we are moving to a new db
+
+            res = await Utils.post('/worker-api/devices/register', {
+                'device-id': res.data['device-id'],
+                'version': res.data['version'],
+                'os': res.data['os'],
+            }, false);
+
+            this.logger.log(TAG$1, JSON.stringify(res));
+
+            if (res.status == "error") {
+                this.port.postMessage({
+                    type: Constants.SIGNIN_REQUIRED
+                });
                 return;
             }
-            for (let s of list) {
-                s(data);
+
+            this.db = res.data.db;
+        }
+
+        async reset(db) {
+            let recs = await db.getAll();
+            for (let i = 0; i < recs.length; i++) {
+                await db.reset(recs[i]);
             }
         }
     }
 
-    class ProgressBar {
-        constructor(options = {}) {
-    		document.addEventListener("DOMContentLoaded", () => {
-    			this.progressBar = document.getElementById('progress-bar-no-buttons');
-    			this.message = this.progressBar.querySelector('.message');
-    			this.time = this.progressBar.querySelector('.time');
-    			this.hasButtons = false;
-    		});
+    const TAG = "main";
+    const URL = '/worker-api/sqlite';
+    const LIMIT = 50;
 
-            //todo: why can't we have simple function calls?
-            PubSub.subscribe(Constants.INIT_PROGRESS, (data) => {
-                this.time.innerHTML = '';
-                this.message.innerHTML = '';
-                this.elapsed = 0;
+    class QueryWorker extends BaseWorker {
+        async handleMessage(m) {
+            this.logger.log(TAG, JSON.stringify(m.data));
+            switch (m.data.type) {
+            case Constants.QUERY_SAVED:
+            case Constants.QUERY_UPDATED:
+                this.syncUp();
+                break
 
-                if (this.hasButtons) {
-                    this.title.innerHTML = data.title;
+            case Constants.EXECUTE_SUCCESS:
+                if (this.execResolve) {
+                    this.execResolve(m.data.data);
                 }
+                break;
 
-                this.message.innerHTML = data.message;
-
-                this.timer = setInterval(() => {
-                    this.elapsed++;
-                    this.time.innerHTML = this.elapsed + ' s';
-                }, 1000);
-
-                this.progressBar.classList.add('is-active');
-            });
-
-            PubSub.subscribe(Constants.START_PROGRESS, (data) => {
-                this.time.innerHTML = '';
-                this.message.innerHTML = '';
-                this.elapsed = 0;
-
-                if (this.hasButtons) {
-                    this.title.innerHTML = data.title;
+            case Constants.EXECUTE_ERROR:
+                if (this.execReject) {
+                    this.execReject(m.data.data);
                 }
-            });
-
-            PubSub.subscribe(Constants.STOP_PROGRESS, () => {
-                clearInterval(this.timer);
-
-                //if we have buttons, wait till user clicks ok
-                if (this.ok) {
-                    this.ok.disabled = false;
-                    this.cancel.disabled = true;
-                    return
-                }
-
-                //otherwise close ourselves immediately
-                this.progressBar.classList.remove('is-active');
-            });
-
-            PubSub.subscribe(Constants.UPDATE_PROGRESS, (data) => {
-                this.message.innerHTML = data.message;
-            });
-
-            //May be this is not the best place to do it. But where else?
-            document.addEventListener('click', (e) => {
-                if (!e.target.classList.contains('copy-filename')) {
-                    return;
-                }
-
-                let name = e.target.dataset.filename;
-                navigator.clipboard.writeText(name).then(() => {
-                    Utils.showAlert('Copied', 500);
-                });
-            });
-        }
-
-        setOptions(options) {
-            if (options.buttons) {
-                this.progressBar = document.getElementById('progress-bar-with-buttons');
-                this.title = this.progressBar.querySelector('.modal-card-title');
-                this.ok = this.progressBar.querySelector('.ok');
-                this.cancel = this.progressBar.querySelector('.cancel');
-                this.cancelFunc = options.cancel;
-
-                this.ok.disabled = true;
-                this.cancel.disabled = false;
-
-                this.ok.addEventListener('click', () => {
-                    this.progressBar.classList.remove('is-active');
-                });
-
-                this.cancel.addEventListener('click', () => {
-                    this.cancelFunc();
-                    this.progressBar.classList.remove('is-active');
-                });
-
-                this.hasButtons = true;
-
-            } else {
-                this.ok = null;
-                this.cancel = null;
-                this.cancelFunc = null;
-                this.progressBar = document.getElementById('progress-bar-no-buttons');
-                this.hasButtons = false;
             }
-
-            this.message = this.progressBar.querySelector('.message');
-            this.time = this.progressBar.querySelector('.time');
         }
-    }
 
-    new ProgressBar();
+        executeRequest(msg, data) {
+            return new Promise((resolve, reject) => {
+                this.port.postMessage({
+                    type: msg,
+                    data: data
+                });
 
-    const TAG = 'signin';
-    class Signin {
-        constructor() {
-            document.addEventListener('DOMContentLoaded', async () => {
-                await this.init();
+                this.execResolve = resolve;
+                this.execReject = reject;
             });
         }
 
         async init() {
-            this.$email = document.getElementById('email');
-            this.$image = document.getElementById('image');
-            this.$getOtp = document.getElementById('get-otp');
-            this.$otp = document.getElementById('otp');
-            this.$signin = document.getElementById('signin');
+            await super.init();
 
-            this.$signin.addEventListener('click', () => {
-                this.signin();
-            });
+            this.logger.log(TAG, "deviceid:" + this.deviceId);
+            this.logger.log(TAG, "db:" + this.db);
 
-            this.$getOtp.addEventListener('click', () => {
-                this.getOtp();
-            });
-        }
-
-        async signin() {
-            let json = await Utils.post('/go-browser-api/login/signin', {
-                'otp': this.$otp.value,
-            });
-
-            if (json.status == "ok") ;
-        }
-
-        async getOtp() {
-            let res = await Utils.get(Constants.URL + '/about');
-            let params = {
-                'email': this.$email.value,
-                'device-id': res.data['device-id'],
-                'version': res.data['version'],
-                'os': res.data['os'],
-            };
-
-            let json = await Utils.post('/go-browser-api/login/set-signin-otp', params, false);
-            Logger.Log(TAG, JSON.stringify(json));
-            if (json.status == "error") {
-                alert(json.msg);
+            if (!this.db) {
+                this.logger.log(TAG, "No db");
                 return;
             }
 
-            alert(`Otp sent to ${this.$email.value}`);
+            this.queryDb = new QueryDB(this.logger, {version: Constants.QUERY_DB_VERSION});
+            await this.queryDb.open();
+
+            this.metaDB = new QueriesMetaDB(this.logger, {version: Constants.QUERIES_META_DB_VERSION});
+            await this.metaDB.open();
+
+            if (await this.metaDB.getDb() != this.db) {
+                await this.reset(this.queryDb);
+                this.logger.log(TAG, "Reset queryDb");
+                await this.metaDB.destroy();
+                await this.metaDB.setDb(this.db);
+            }
+
+            this.syncDown();
+            this.syncUp();
+        }
+
+        async syncUp() {
+            //find all records missing db_id and sync them up to cloud
+            let queries = await this.queryDb.getAll();
+            if (queries.length == 0) {
+                this.logger.log(TAG, "Nothing to sync");
+                return;
+            }
+
+            let deleted = [];
+            for (let i = 0; i < queries.length; i++) {
+                //when we delete from UI, we just mark the status as deleted, then sync up later
+                let isDeleted = ((queries[i].status ?? Constants.STATUS_ACTIVE) == Constants.STATUS_DELETED) ? true : false;
+
+                if (isDeleted) {
+                    this.logger.log(TAG, `Deleting ${queries[i].id}`);
+                    if (!queries[i].db_id) {
+                        //this has not been synced yet. We can safely delete
+                        this.queryDb.del(queries[i].id);
+                        continue;
+                    }
+
+                    deleted.push(queries[i]);
+                    continue;
+                }
+
+                if (queries[i].db_id) {
+                    //every record may or may not have updated_at
+                    let updatedAt = queries[i].updated_at ?? new Date(Constants.EPOCH_TIMESTAMP);
+
+                    //if it has a db_id , it is guaranteed to haved synced_at
+                    if (queries[i].synced_at > updatedAt) {
+                        this.logger.log(TAG, `Skipping ${queries[i].id}: ${queries[i].db_id}`);
+                        continue;
+                    }
+                }
+
+                let res = await fetch(`${URL}/queries`, {
+                    body: JSON.stringify(queries[i]),
+                    method: "POST",
+                    headers: {
+                        'db': this.db,
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                res = await res.json();
+                this.logger.log(TAG, JSON.stringify(res));
+
+                if (res.status == "ok") {
+                    queries[i].db_id = res.data.db_id;
+                    this.logger.log(TAG, `syncing: ${JSON.stringify(queries[i])}`);
+                    this.queryDb.sync(queries[i]);
+                }
+            }
+        }
+
+        async syncDown() {
+            this.logger.log(TAG, "syncDown");
+            let after = await this.metaDB.getLastSyncTs();
+            after = after.toISOString();
+            this.logger.log(TAG, `after: ${after}`);
+
+            let updateUI = false;
+
+            let offset = 0;
+            do {
+                let res = await this.fetchRecs(after, LIMIT, offset);
+                this.logger.log(TAG, `${JSON.stringify(res)}`);
+                if (res.status == "error") {
+                    this.logger.log(TAG, "Syncdown error: " + res.msg);
+                    return;
+                }
+
+                let queries = res.data.queries ?? [];
+
+                if (queries.length == 0) {
+                    break;
+                }
+
+                for (let i = 0; i < queries.length; i++) {
+                    //check if the remote query is already present in local db
+                    this.logger.log(TAG, `syncDown: ${i}`);
+                    let q = await this.queryDb.findByDbId(queries[i].id);
+
+                    //this may be deleted on the server. Handle this first
+                    if (queries[i].status == "deleted") {
+                        await this.deleteRec(q);
+                        updateUI = true;
+                        continue;
+                    }
+
+                    //this looks like a new query
+                    if (q == null) {
+                        let id = await this.insertRec(queries[i]);
+                        if (id >= 1) {
+                            updateUI = true;
+                        }
+                    } else {
+                        //nope. may be tags got updated
+                        await this.updateRec(q, queries[i].tags);
+                        updateUI = true;
+                    }
+                }
+
+                offset += LIMIT;
+            } while (true);
+
+            if (updateUI) {
+                this.port.postMessage({
+                    type: Constants.NEW_QUERIES,
+                });
+            }
+
+            this.logger.log(TAG, `setLastSyncTs:start`);
+            await this.metaDB.setLastSyncTs();
+            this.logger.log(TAG, `setLastSyncTs:done`);
+        }
+
+        async fetchRecs(after, limit, offset) {
+            return await Utils.get(`${URL}/queries/updated`, false, {
+                'db': this.db,
+                after: after,
+                limit: limit,
+                offset: offset
+            });
+        }
+
+        async insertRec(rec) {
+            this.logger.log(TAG, `inserting: ${JSON.stringify(rec.id)}`);
+            rec.db_id = rec.id;
+            delete rec.id;
+
+            rec.synced_at = new Date();
+            rec.created_at = new Date(rec.created_at);//convert string to date object.
+            rec.updated_at = new Date(rec.updated_at);
+
+            //let id = await this.queryDb.save(rec);
+            let p = this.executeRequest(Constants.EXECUTE_SAVE_REC, rec);
+            let id = 0;
+            try {
+                id = await p;
+                this.logger.log(TAG, `execSuccess: ${id}`);
+            } catch (e) {
+                this.logger.log(TAG, `execError: ${e}`);
+            } finally {
+                return id;
+            }
+        }
+
+        async updateRec(q, tags) {
+            q.tags = tags;
+            await this.queryDb.updateTags(q);
+            await this.queryDb.sync(q);
+            this.logger.log(TAG, `Updated ${q.id}`);
+        }
+
+        async deleteRec(q) {
+            if (q == null) {
+                this.logger.log(TAG, `already deleted`);
+                return;
+            }
+
+            this.logger.log(TAG, `deleting: ${JSON.stringify(q)}`);
+            await this.queryDb.del(q.id);
         }
     }
 
-    new Signin();
+    onconnect = async (e) => {
+        let port = e.ports[0];
+        let w = new QueryWorker(port);
+        w.init();
+    };
 
 })();
