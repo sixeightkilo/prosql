@@ -6,7 +6,9 @@ import (
 	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/views"
+	"github.com/kargirwar/prosql-go/ui"
 	"github.com/kargirwar/prosql-go/db"
+	"github.com/kargirwar/golang/utils/emailer"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"os"
@@ -25,7 +27,10 @@ func init() {
 	config := parseConfig()
 
 	views.SetConfig(config)
+	emailer.SetKey(config.SendGridKey)
+
 	views.SetSessionStore(store, constants.SESSION_NAME)
+	ui.SetSessionStore(store, constants.SESSION_NAME)
 
 	db.SetDbPath(config.DbPath)
 }
