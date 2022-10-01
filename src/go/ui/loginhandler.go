@@ -23,6 +23,8 @@ import (
 	"encoding/gob"
 	"fmt"
 	"github.com/Joker/jade"
+	_ "github.com/Joker/hpp"
+	_ "github.com/valyala/bytebufferpool"
 	"html/template"
 	"strconv"
 )

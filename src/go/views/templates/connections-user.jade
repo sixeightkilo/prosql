@@ -1,4 +1,4 @@
-:go:func Connections(root string, rev string, version string)
+:go:func Connections_User(root string, rev string, version string)
 
 - var css = "/static/" + root + "/css/connections.css?rev=" + rev;
 - var js = "/static/" + root + "/dist/js/connections.js?rev=" + rev;
@@ -17,29 +17,26 @@ html
                     #conn-list
             div#right-container
                 include connections-form.jade
-                div#btn-container
+                div#btn-container-user
                     button.button(id="test")
                         span Test connection
                         span.icon.is-small
                             i.test-icon.fas
 
-                    div#login-btn-container
-                        button.button(id="signup")
-                            a(href="/signup") Signup 
-                        button.button(id="login") Continue as guest
+                    button.button(id="login").is-full-width
+                        span Start session
 
-                div#signin-container
+                div#signout-container
                     br
-                    span Already registered? Please 
-                        span
-                            a(href="/signin") Signin.
+                    span 
+                        a(href="/signout") Signout
 
         input#version(type="hidden" value= version)
 
         script(type='module' src= js)
         script(type='code' id='conn-template')
             .conn-container
-                div
+                div.conn
                     i.fas.fa-server.server-icon
                 div.conn.has-text-left(data-id="{id}") &nbsp;&nbsp;{item}
                 div

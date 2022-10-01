@@ -6,6 +6,7 @@ import (
 	"github.com/kargirwar/golang/utils"
 	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/types"
+	"github.com/kargirwar/prosql-go/models/user"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -35,11 +36,24 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		Index(root, rev, w)
 
 	case "connections":
-		Connections(root, rev, w)
+		//Connections(root, rev, w)
+		renderConnections(w, r, root, rev, version)
 
 	case "signin":
 		Signin(root, rev, version, w)
 	}
+}
+
+func renderConnections(w http.ResponseWriter, r *http.Request, root, rev, version string) {
+	session, _ := store.Get(r, sessionName)
+	v := session.Values[constants.USER]
+	if _, ok := v.(user.User); ok {
+		//user is signed in
+		Connections_User(root, rev, version, w)
+		return
+	}
+
+	Connections(root, rev, version, w)
 }
 
 //Each major version of the agent maps to corresponding

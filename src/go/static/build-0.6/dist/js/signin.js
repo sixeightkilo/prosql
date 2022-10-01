@@ -1859,7 +1859,9 @@
                 'otp': this.$otp.value,
             });
 
-            if (json.status == "ok") ;
+            if (json.status == "ok") {
+                window.location = '/connections';
+            }
         }
 
         async getOtp() {

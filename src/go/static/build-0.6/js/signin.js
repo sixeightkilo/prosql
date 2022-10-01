@@ -38,7 +38,7 @@ class Signin {
         });
 
         if (json.status == "ok") {
-            //window.location = '/connections';
+            window.location = '/connections';
         }
     }
 
