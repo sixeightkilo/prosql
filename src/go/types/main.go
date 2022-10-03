@@ -1,9 +1,17 @@
 package types
-type Config struct {
-	Env string `json:"env"`
-	Version string `json:"version"`
-	DbPath string `json:"db-path"`
-	SendGridKey string `json:"sendgrid-key"`
-	AppVersions map[string]string `json:"app-versions"`
-	Email map[string]string `json:"email"`
+
+import (
+	"context"
+)
+
+const SERVICE_EMAILER = "service-emailer"
+
+//type ServiceProvider func(string) interface{}
+
+type ServiceProvider interface {
+	Get(s string) interface{}
+}
+
+type Emailer interface {
+	Send(ctx context.Context, toEmail, fromName, fromEmail, subject, msg string) error
 }

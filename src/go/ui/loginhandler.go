@@ -1,34 +1,35 @@
 package ui
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
+	//"github.com/gorilla/mux"
+	//"github.com/gorilla/sessions"
 	"github.com/kargirwar/golang/utils"
-	"github.com/kargirwar/golang/utils/emailer"
-	"github.com/kargirwar/prosql-go/constants"
-	"github.com/kargirwar/prosql-go/db"
-	"github.com/kargirwar/prosql-go/models/user"
-	"github.com/kargirwar/prosql-go/models/device"
+	//"github.com/kargirwar/golang/utils/emailer"
+	//"github.com/kargirwar/prosql-go/constants"
+	//"github.com/kargirwar/prosql-go/db"
+	//"github.com/kargirwar/prosql-go/models/user"
+	//"github.com/kargirwar/prosql-go/models/device"
 	"github.com/kargirwar/prosql-go/types"
+	//"github.com/kargirwar/prosql-go/app"
 	//log "github.com/sirupsen/logrus"
 	//"github.com/tidwall/gjson"
-	"errors"
+	//"errors"
 	"net/http"
 	//"encoding/json"
 	//"os"
 	//"time"
 	//"io"
-	"bytes"
-	"context"
-	"encoding/gob"
-	"fmt"
-	"github.com/Joker/jade"
-	_ "github.com/Joker/hpp"
-	_ "github.com/valyala/bytebufferpool"
-	"html/template"
-	"strconv"
+	//"bytes"
+	//"context"
+	//"encoding/gob"
+	//"fmt"
+	//"github.com/Joker/jade"
+	//_ "github.com/Joker/hpp"
+	//_ "github.com/valyala/bytebufferpool"
+	//"html/template"
+	//"strconv"
 )
-
+/*
 const MIN_OTP = 100000
 const MAX_OTP = 999999
 
@@ -198,4 +199,19 @@ func sendSigninOtp(ctx context.Context, u user.User, otp string) error {
 
 	return emailer.Send(ctx, u.Email,
 		config.Email["from-name"], config.Email["from-email"], "Otp for signining in", out.String())
+}
+
+*/
+var service types.ServiceProvider
+func SetServiceProvider(sp types.ServiceProvider) {
+	service = sp
+}
+//debug
+func TestHandler(w http.ResponseWriter, r *http.Request) {
+	s := service.Get(types.SERVICE_EMAILER)
+	if e, ok := s.(types.Emailer); ok {
+		e.Send(r.Context(), "kargirwar@gmail.com", "PK", "tech@prosql.io", "Test", "Test")
+	}
+
+	utils.SendSuccess(r.Context(), w, nil)
 }

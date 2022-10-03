@@ -1,8 +1,10 @@
 package main
 
 import (
-	"encoding/json"
+	"os"
+	"time"
 	"fmt"
+	"encoding/json"
 	"github.com/kargirwar/golang/utils/emailer"
 	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/db"
@@ -11,8 +13,6 @@ import (
 	"github.com/kargirwar/prosql-go/views"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/natefinch/lumberjack.v2"
-	"os"
-	"time"
 )
 
 const LOG_FILE = "prosql.log"
