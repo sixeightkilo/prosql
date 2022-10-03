@@ -2,7 +2,6 @@ package views
 
 import (
 	"github.com/gorilla/mux"
-	"github.com/gorilla/sessions"
 	"github.com/kargirwar/golang/utils"
 	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/types"
@@ -12,17 +11,9 @@ import (
 	"strconv"
 )
 
-var store *sessions.CookieStore
-var sessionName string
-var config *types.Config
-
-func SetSessionStore(s *sessions.CookieStore, session string) {
-	store = s
-	sessionName = session
-}
-
-func SetConfig(c *types.Config) {
-	config = c
+var service types.ServiceProvider
+func SetServiceProvider(sp types.ServiceProvider) {
+	service = sp
 }
 
 func Page(w http.ResponseWriter, r *http.Request) {
@@ -45,8 +36,8 @@ func Page(w http.ResponseWriter, r *http.Request) {
 }
 
 func renderConnections(w http.ResponseWriter, r *http.Request, root, rev, version string) {
-	session, _ := store.Get(r, sessionName)
-	v := session.Values[constants.USER]
+	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+	v, _ := sm.Get(r, constants.USER)
 	if _, ok := v.(user.User); ok {
 		//user is signed in
 		Connections_User(root, rev, version, w)
@@ -59,10 +50,10 @@ func renderConnections(w http.ResponseWriter, r *http.Request, root, rev, versio
 //Each major version of the agent maps to corresponding
 //major version of the web app
 func getAppVersion(r *http.Request) string {
-	session, _ := store.Get(r, sessionName)
-
-	agentVersion, present := session.Values[constants.AGENT_VERSION]
+	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+	agentVersion, present := sm.Get(r, constants.AGENT_VERSION)
 	if !present {
+		config := service.Get(types.SERVICE_CONFIG).(types.Config)
 		agentVersion = config.Version
 	}
 
@@ -79,6 +70,7 @@ func getAppVersion(r *http.Request) string {
 //This function returns the app root dir: build-{ver} and revision
 func getApplicationRootAndRevision(version string) (string, string) {
 	root := "build-" + string(version)
+	config := service.Get(types.SERVICE_CONFIG).(types.Config)
 
 	if config.Env == "dev" {
 		rev := strconv.Itoa(utils.RandInt(1, 1000))

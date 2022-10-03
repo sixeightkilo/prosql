@@ -1,35 +1,33 @@
 package ui
 
 import (
-	//"github.com/gorilla/mux"
-	//"github.com/gorilla/sessions"
+	"github.com/gorilla/mux"
 	"github.com/kargirwar/golang/utils"
 	//"github.com/kargirwar/golang/utils/emailer"
-	//"github.com/kargirwar/prosql-go/constants"
-	//"github.com/kargirwar/prosql-go/db"
-	//"github.com/kargirwar/prosql-go/models/user"
-	//"github.com/kargirwar/prosql-go/models/device"
+	"github.com/kargirwar/prosql-go/constants"
+	"github.com/kargirwar/prosql-go/db"
+	"github.com/kargirwar/prosql-go/models/user"
+	"github.com/kargirwar/prosql-go/models/device"
 	"github.com/kargirwar/prosql-go/types"
 	//"github.com/kargirwar/prosql-go/app"
 	//log "github.com/sirupsen/logrus"
 	//"github.com/tidwall/gjson"
-	//"errors"
+	"errors"
 	"net/http"
 	//"encoding/json"
 	//"os"
 	//"time"
 	//"io"
-	//"bytes"
-	//"context"
+	"bytes"
+	"context"
 	//"encoding/gob"
-	//"fmt"
-	//"github.com/Joker/jade"
-	//_ "github.com/Joker/hpp"
-	//_ "github.com/valyala/bytebufferpool"
-	//"html/template"
-	//"strconv"
+	"fmt"
+	"github.com/Joker/jade"
+	_ "github.com/Joker/hpp"
+	_ "github.com/valyala/bytebufferpool"
+	"html/template"
+	"strconv"
 )
-/*
 const MIN_OTP = 100000
 const MAX_OTP = 999999
 
@@ -39,22 +37,9 @@ const DEVICE_ID = "device-id"
 const VERSION = "version"
 const OS = "os"
 
-var store *sessions.CookieStore
-var sessionName string
-var config *types.Config
-
-func init() {
-	//https://stackoverflow.com/questions/24834480/using-custom-types-with-gorilla-sessions
-	gob.Register(user.User{})
-}
-
-func SetSessionStore(s *sessions.CookieStore, session string) {
-	store = s
-	sessionName = session
-}
-
-func SetConfig(c *types.Config) {
-	config = c
+var service types.ServiceProvider
+func SetServiceProvider(sp types.ServiceProvider) {
+	service = sp
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,8 +54,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func signin(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, sessionName)
-	otp := session.Values[OTP]
+	session := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+	otp, _ := session.Get(r, OTP)
 	utils.Dbg(r.Context(), "otp: "+otp.(string))
 
 	if otp != r.FormValue("otp") {
@@ -78,14 +63,14 @@ func signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, present := session.Values[TEMP_USER]
+	u, present := session.Get(r, TEMP_USER)
 	if !present {
 		utils.Dbg(r.Context(), "temp user not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
 		return
 	}
 
-	deviceId, present := session.Values[DEVICE_ID]
+	deviceId, present := session.Get(r, DEVICE_ID)
 	if !present {
 		utils.Dbg(r.Context(), "device id not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
@@ -104,11 +89,9 @@ func signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Values[TEMP_USER] = ""
-	session.Values[OTP] = ""
-
-	session.Values[constants.USER] = u
-	session.Values[OTP] = ""
+	session.Set(r, TEMP_USER, "")
+	session.Set(r, OTP,  "")
+	session.Set(r, constants.USER, u)
 
 	err = session.Save(r, w)
 	if err != nil {
@@ -152,15 +135,15 @@ func setSigninOtp(w http.ResponseWriter, r *http.Request) {
 
 	utils.Dbg(r.Context(), fmt.Sprintf("%v", (*users)[0]))
 
-	session, _ := store.Get(r, sessionName)
+	session := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
 
 	otp := utils.RandInt(MIN_OTP, MAX_OTP)
-	session.Values[OTP] = strconv.Itoa(otp)
-	session.Values[TEMP_USER] = (*users)[0]
+	session.Set(r, OTP, strconv.Itoa(otp))
+	session.Set(r, TEMP_USER, (*users)[0])
 
-	session.Values[DEVICE_ID] = r.FormValue("device-id")
-	session.Values[VERSION] = r.FormValue("version")
-	session.Values[OS] = r.FormValue("os")
+	session.Set(r, DEVICE_ID, r.FormValue("device-id"))
+	session.Set(r, VERSION, r.FormValue("version"))
+	session.Set(r, OS, r.FormValue("os"))
 
 	err = session.Save(r, w)
 	if err != nil {
@@ -197,15 +180,12 @@ func sendSigninOtp(ctx context.Context, u user.User, otp string) error {
 		return err
 	}
 
+	config := service.Get(types.SERVICE_CONFIG).(types.Config)
+	emailer := service.Get(types.SERVICE_EMAILER).(types.Emailer)
 	return emailer.Send(ctx, u.Email,
 		config.Email["from-name"], config.Email["from-email"], "Otp for signining in", out.String())
 }
 
-*/
-var service types.ServiceProvider
-func SetServiceProvider(sp types.ServiceProvider) {
-	service = sp
-}
 //debug
 func TestHandler(w http.ResponseWriter, r *http.Request) {
 	s := service.Get(types.SERVICE_EMAILER)

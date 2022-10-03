@@ -3,9 +3,10 @@ package app
 import (
 	"github.com/gorilla/mux"
 	//"github.com/gorilla/sessions"
+	"github.com/kargirwar/prosql-go/db"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/ui"
-	//"github.com/kargirwar/prosql-go/views"
+	"github.com/kargirwar/prosql-go/views"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -18,19 +19,8 @@ import (
 
 const LOG_FILE = "prosql.log"
 
-type Config struct {
-	Env string `json:"env"`
-	LogDir string `json:"log-dir"`
-	Version string `json:"version"`
-	DbPath string `json:"db-path"`
-	SendGridKey string `json:"sendgrid-key"`
-	AppVersions map[string]string `json:"app-versions"`
-	Email map[string]string `json:"email"`
-}
-
-
 type App struct {
-	config *Config
+	config *types.Config
 	serviceProvider types.ServiceProvider
 	router *mux.Router
 }
@@ -51,39 +41,45 @@ func (a *App) GetRouter() mux.Router {
 	return *a.router
 }
 
-func (a *App) GetConfig() Config {
+func (a *App) GetConfig() types.Config {
 	return *a.config
 }
 
-//called my main
 func (a *App) init(env string, sp types.ServiceProvider) {
 	file := "config." + env + ".json"
 	a.config = parseConfig(file)
 	a.serviceProvider = sp
 	setupLogger(a.config.LogDir)
 	a.router = setupRoutes()
+
+	db.SetDbPath(a.config.DbPath)
 }
 
 func setupRoutes() *mux.Router {
 	ui.SetServiceProvider(app.serviceProvider)
+	views.SetServiceProvider(app.serviceProvider)
 
 	r := mux.NewRouter()
+	//static files
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+
+	//api
 	r.HandleFunc("/go-browser-api/test", ui.TestHandler).Methods("Get")
+	r.HandleFunc("/go-browser-api/login/{action:[a-z-]*?}", ui.LoginHandler).Methods("Post")
+
+	//dynamic pages
+	r.HandleFunc("/{page:[a-z-]*?}", views.Page).Methods("Get")
+
 	return r
 }
 
-//called my main
-func (a *App) SetServiceProvider(s types.ServiceProvider) {
-	a.serviceProvider = s
-}
-
-func parseConfig(file string) *Config {
+func parseConfig(file string) *types.Config {
 	f, err := os.Open(file)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	var config Config
+	var config types.Config
 	jsonParser := json.NewDecoder(f)
 	if err = jsonParser.Decode(&config); err != nil {
 		log.Fatal(err.Error())
