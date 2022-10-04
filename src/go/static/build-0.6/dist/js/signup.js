@@ -1865,7 +1865,7 @@
         }
 
         async signup() {
-            let json = await Utils.post('/browser-api/login/signup', {'otp': this.$otp.value});
+            let json = await Utils.post('/go-browser-api/login/signup', {'otp': this.$otp.value});
 
             if (json.status == "ok") {
                 window.location = '/connections';
@@ -1874,7 +1874,7 @@
 
         async setCaptcha() {
             this.$captcha.value = '';
-            let json = await Utils.get('/browser-api/login/captcha/get');
+            let json = await Utils.get('/go-browser-api/login/captcha/get');
             Logger.Log(TAG, JSON.stringify(json));
             if (json.status == "ok") {
                 this.$image.src = json.data.image;
@@ -1895,7 +1895,7 @@
                 'os': res.data['os'],
             };
 
-            let json = await Utils.post('/browser-api/login/set-signup-otp', params, false);
+            let json = await Utils.post('/go-browser-api/login/set-signup-otp', params, false);
             Logger.Log(TAG, JSON.stringify(json));
             if (json.status == "error") {
                 alert(json.msg);

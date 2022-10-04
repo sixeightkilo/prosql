@@ -10,16 +10,16 @@ import (
 )
 
 type Device struct {
-	Id int	`json:"id"`
+	Id int64`json:"id"`
 	DeviceId string	`json:"device_id"`
-	UserId int	`json:"user_id"`
+	UserId int64 `json:"user_id"`
 	Version string `json:"version"`
 	Os string `json:"os"`
 	CreatedAt string `json:"created_at"`
 	UpdatedAt string `json:"updated_at"`
 }
 
-func SetUserId(ctx context.Context, db *sql.DB, deviceId string, userId int) error {
+func SetUserId(ctx context.Context, db *sql.DB, deviceId string, userId int64) error {
 	stmt, err :=
 		db.Prepare("update devices set user_id = ? where device_id = ?")
 

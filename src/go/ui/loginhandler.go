@@ -1,33 +1,27 @@
 package ui
 
 import (
-	"github.com/gorilla/mux"
-	"github.com/kargirwar/golang/utils"
-	//"github.com/kargirwar/golang/utils/emailer"
-	"github.com/kargirwar/prosql-go/constants"
-	"github.com/kargirwar/prosql-go/db"
-	"github.com/kargirwar/prosql-go/models/user"
-	"github.com/kargirwar/prosql-go/models/device"
-	"github.com/kargirwar/prosql-go/types"
-	//"github.com/kargirwar/prosql-go/app"
-	//log "github.com/sirupsen/logrus"
-	//"github.com/tidwall/gjson"
-	"errors"
-	"net/http"
-	//"encoding/json"
-	//"os"
-	//"time"
-	//"io"
 	"bytes"
 	"context"
-	//"encoding/gob"
+	"errors"
 	"fmt"
-	"github.com/Joker/jade"
 	_ "github.com/Joker/hpp"
+	"github.com/Joker/jade"
+	"github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/gorilla/mux"
+	"github.com/kargirwar/golang/utils"
+	"github.com/kargirwar/prosql-go/constants"
+	"github.com/kargirwar/prosql-go/db"
+	"github.com/kargirwar/prosql-go/models/device"
+	"github.com/kargirwar/prosql-go/models/user"
+	"github.com/kargirwar/prosql-go/types"
 	_ "github.com/valyala/bytebufferpool"
 	"html/template"
+	"net/http"
 	"strconv"
 )
+
 const MIN_OTP = 100000
 const MAX_OTP = 999999
 
@@ -38,6 +32,7 @@ const VERSION = "version"
 const OS = "os"
 
 var service types.ServiceProvider
+
 func SetServiceProvider(sp types.ServiceProvider) {
 	service = sp
 }
@@ -50,7 +45,77 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	case "set-signin-otp":
 		setSigninOtp(w, r)
+
+	case "set-signup-otp":
+		setSignupOtp(w, r)
+
+	case "signup":
+		signup(w, r)
 	}
+}
+
+func signup(w http.ResponseWriter, r *http.Request) {
+	session := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+	otp, _ := session.Get(r, OTP)
+	utils.Dbg(r.Context(), "otp: "+otp.(string))
+
+	if otp != r.FormValue("otp") {
+		utils.SendError(r.Context(), w, errors.New("Invalid otp"), "invalid-input")
+		return
+	}
+
+	u, present := session.Get(r, TEMP_USER)
+	if !present {
+		utils.Dbg(r.Context(), "temp user not found")
+		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
+		return
+	}
+
+	usr := u.(user.User)
+
+	sqlite, err := db.OpenDb(r.Context(), "data.db")
+	if err != nil {
+		utils.SendError(r.Context(), w, err, "db-error")
+		return
+	}
+
+	//save user to web DB
+	id, err := user.Save(r.Context(), sqlite, usr)
+	if err != nil {
+		utils.Dbg(r.Context(), err.Error())
+		utils.SendError(r.Context(), w, err, "internal-server-error")
+		return
+	}
+
+	usr.Id = id
+
+	deviceId, present := session.Get(r, DEVICE_ID)
+	if !present {
+		utils.Dbg(r.Context(), "device id not found")
+		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
+		return
+	}
+
+	err = device.SetUserId(r.Context(), sqlite, deviceId.(string), usr.Id)
+	if err != nil {
+		utils.SendError(r.Context(), w, err, "db-error")
+		return
+	}
+
+	session.Set(r, TEMP_USER, "")
+	session.Set(r, OTP, "")
+	session.Set(r, constants.USER, usr)
+
+	err = session.Save(r, w)
+	if err != nil {
+		utils.Dbg(r.Context(), err.Error())
+		utils.SendError(r.Context(), w, errors.New("Unable to process"), "interal-server-error")
+		return
+	}
+
+	defer sqlite.Close()
+
+	utils.SendSuccess(r.Context(), w, nil)
 }
 
 func CaptchaHandler(w http.ResponseWriter, r *http.Request) {
@@ -67,28 +132,10 @@ func CaptchaHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		utils.SendSuccess(r.Context(), w, struct{
-			Id string `json:"id"`
+		utils.SendSuccess(r.Context(), w, struct {
+			Id  string `json:"id"`
 			Img string `json:"image"`
 		}{Id: id, Img: img})
-		return
-
-	case "verify":
-		result, err := captchaService.IsValid(r.FormValue("id"), r.FormValue("value"))
-		if err != nil {
-			utils.Dbg(r.Context(), err.Error())
-			utils.SendError(r.Context(), w,
-				errors.New("unable to verify"), "internal-server-error")
-			return
-		}
-
-		if result {
-			utils.SendSuccess(r.Context(), w, nil)
-			return
-		}
-
-		utils.SendError(r.Context(), w,
-			errors.New("Invalid captcha"), "internal-server-error")
 		return
 	}
 }
@@ -130,7 +177,7 @@ func signin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	session.Set(r, TEMP_USER, "")
-	session.Set(r, OTP,  "")
+	session.Set(r, OTP, "")
 	session.Set(r, constants.USER, u)
 
 	err = session.Save(r, w)
@@ -145,14 +192,106 @@ func signin(w http.ResponseWriter, r *http.Request) {
 	utils.SendSuccess(r.Context(), w, nil)
 }
 
-func setSigninOtp(w http.ResponseWriter, r *http.Request) {
-	if r.Body == nil {
-		utils.SendError(r.Context(), w, errors.New("invalid-input"), "invalid-input")
+func setSignupOtp(w http.ResponseWriter, r *http.Request) {
+	err := validate(r)
+	if err != nil {
+		utils.SendError(r.Context(), w, err, "invalid-input")
 		return
 	}
 
-	defer r.Body.Close()
+	//check existing user
+	sqlite, err := db.OpenDb(r.Context(), "data.db")
+	if err != nil {
+		utils.SendError(r.Context(), w, err, "db-error")
+		return
+	}
 
+	defer sqlite.Close()
+
+	users, err := user.GetByEmail(r.Context(), sqlite, r.FormValue("email"))
+
+	if err != nil {
+		utils.SendError(r.Context(), w, err, "db-error")
+		return
+	}
+
+	if len(*users) != 0 {
+		utils.SendError(r.Context(), w, errors.New("Already registered. Please sign in"), "invalid-input")
+		return
+	}
+
+	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+
+	otp := utils.RandInt(MIN_OTP, MAX_OTP)
+	sm.Set(r, OTP, strconv.Itoa(otp))
+	u := user.User{
+		FirstName: r.FormValue("first-name"),
+		LastName:  r.FormValue("last-name"),
+		Email:     r.FormValue("email"),
+	}
+	sm.Set(r, TEMP_USER, u)
+
+	sm.Set(r, DEVICE_ID, r.FormValue("device-id"))
+	sm.Set(r, VERSION, r.FormValue("version"))
+	sm.Set(r, OS, r.FormValue("os"))
+
+	err = sm.Save(r, w)
+	if err != nil {
+		utils.Dbg(r.Context(), err.Error())
+		utils.SendError(r.Context(), w, errors.New("Unable to process"), "interal-server-error")
+		return
+	}
+
+	if err = sendOtp(r.Context(), u,
+		strconv.Itoa(otp), "Otp for signing up!"); err != nil {
+		utils.Dbg(r.Context(), err.Error())
+		utils.SendError(r.Context(), w, errors.New("Unable to process"), "interal-server-error")
+		return
+	}
+
+	utils.SendSuccess(r.Context(), w, nil)
+}
+
+func validate(r *http.Request) error {
+	//validate captcha
+	err := validateCaptcha(r)
+	if err != nil {
+		return err
+	}
+
+	//validate rest of form
+	err = validation.Errors{
+		"First name": validation.Validate(r.FormValue("first-name"), validation.Required),
+		"Last name":  validation.Validate(r.FormValue("last-name"), validation.Required),
+		"Email":      validation.Validate(r.FormValue("email"), validation.Required, is.Email),
+	}.Filter()
+
+	return err
+}
+
+func validateCaptcha(r *http.Request) error {
+	captchaId := r.FormValue("captcha-id")
+	captchaValue := r.FormValue("captcha-value")
+
+	utils.Dbg(r.Context(), "id: "+captchaId)
+	utils.Dbg(r.Context(), "value: "+captchaValue)
+
+	captchaService := service.Get(types.SERVICE_CAPTCHA).(types.CaptchService)
+	valid, err := captchaService.IsValid(captchaId, captchaValue)
+	if err != nil {
+		utils.Dbg(r.Context(), err.Error())
+		return err
+	}
+
+	if !valid {
+		err := errors.New("Invalid captcha")
+		return err
+	}
+
+	return nil
+}
+
+func setSigninOtp(w http.ResponseWriter, r *http.Request) {
 	sqlite, err := db.OpenDb(r.Context(), "data.db")
 	if err != nil {
 		utils.SendError(r.Context(), w, err, "db-error")
@@ -192,7 +331,8 @@ func setSigninOtp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err = sendSigninOtp(r.Context(), (*users)[0], strconv.Itoa(otp)); err != nil {
+	if err = sendOtp(r.Context(), (*users)[0],
+		strconv.Itoa(otp), "Otp for signing in"); err != nil {
 		utils.Dbg(r.Context(), err.Error())
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "interal-server-error")
 		return
@@ -201,7 +341,7 @@ func setSigninOtp(w http.ResponseWriter, r *http.Request) {
 	utils.SendSuccess(r.Context(), w, nil)
 }
 
-func sendSigninOtp(ctx context.Context, u user.User, otp string) error {
+func sendOtp(ctx context.Context, u user.User, otp, subject string) error {
 	tmpl, err := jade.Parse("jade", []byte(otpTemplate))
 
 	if err != nil {
@@ -223,7 +363,7 @@ func sendSigninOtp(ctx context.Context, u user.User, otp string) error {
 	config := service.Get(types.SERVICE_CONFIG).(types.Config)
 	emailer := service.Get(types.SERVICE_EMAILER).(types.Emailer)
 	return emailer.Send(ctx, u.Email,
-		config.Email["from-name"], config.Email["from-email"], "Otp for signining in", out.String())
+		config.Email["from-name"], config.Email["from-email"], subject, out.String())
 }
 
 //debug

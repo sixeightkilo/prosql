@@ -58,7 +58,6 @@ func setupRoutes() *mux.Router {
 	//api
 	r.HandleFunc("/go-browser-api/test", ui.TestHandler).Methods("Get")
 	r.HandleFunc("/go-browser-api/login/captcha/{action:[a-z-]*?}", ui.CaptchaHandler).Methods("Get")
-	r.HandleFunc("/go-browser-api/login/captcha/{action:[a-z-]*?}", ui.CaptchaHandler).Methods("Post")
 	r.HandleFunc("/go-browser-api/login/{action:[a-z-]*?}", ui.LoginHandler).Methods("Post")
 
 	//dynamic pages

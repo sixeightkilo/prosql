@@ -10,10 +10,54 @@ import (
 )
 
 type User struct {
-	Id int	`json:"id"`
+	Id int64 `json:"id"`
 	FirstName string `json:"first_name"`
 	LastName string `json:"last_name"`
 	Email string `json:"email"`
+}
+
+func Save(ctx context.Context, db *sql.DB, u User) (int64, error) {
+	//start transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return -1, err
+	}
+
+	id, err := insertQuery(ctx, tx, u)
+	if err != nil {
+		tx.Rollback()
+		return -1, err
+	}
+
+	tx.Commit()
+
+	return id, nil
+}
+
+func insertQuery(ctx context.Context, tx *sql.Tx, u User) (int64, error) {
+	sql := `insert into users (first_name, last_name, email)
+		values (?, ?, ?)`
+
+	stmt, err := tx.Prepare(sql)
+	if err != nil {
+		return -1, err
+	}
+
+	res, err := stmt.Exec(u.FirstName, u.LastName, u.Email)
+
+	if err != nil {
+		return -1, err
+	}
+
+	defer stmt.Close()
+
+	id, err := res.LastInsertId()
+
+	if err != nil {
+		return -1, err
+	}
+
+	return id, nil
 }
 
 func GetByEmail(ctx context.Context, db *sql.DB, email string) (*[]User, error) {
