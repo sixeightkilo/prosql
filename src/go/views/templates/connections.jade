@@ -1,4 +1,4 @@
-:go:func Connections(root string, rev string, version string)
+:go:func Connections(root string, rev string)
 
 - var css = "/static/" + root + "/css/connections.css?rev=" + rev;
 - var js = "/static/" + root + "/dist/js/connections.js?rev=" + rev;
@@ -34,7 +34,7 @@ html
                         span
                             a(href="/signin") Signin.
 
-        input#version(type="hidden" value= version)
+        input#rev(type="hidden" value= rev)
 
         script(type='module' src= js)
         script(type='code' id='conn-template')

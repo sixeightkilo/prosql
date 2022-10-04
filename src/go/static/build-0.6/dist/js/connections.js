@@ -1768,8 +1768,8 @@
     const TAG$1 = "workers";
     class Workers {
         constructor() {
-            this.$version = document.getElementById('version');
-            Logger.Log(TAG$1, `ver: ${this.$version.value}`);
+            this.$rev = document.getElementById('rev');
+            Logger.Log(TAG$1, `ver: ${this.$rev.value}`);
         }
 
         async initDb() {
@@ -1779,7 +1779,8 @@
 
         initConnectionWorker() {
             //init must be called after dom is loaded
-            this.connectionWorker = new SharedWorker(`/build-0.6/dist/js/connection-worker.js?ver=${this.$version.value}`);
+            //todo: the root of worker is harcoded. Should be taken from version
+            this.connectionWorker = new SharedWorker(`/static/build-0.6/dist/js/connection-worker.js?rev=${this.$rev.value}`);
             this.connectionWorker.port.onmessage = (e) => {
                 switch (e.data.type) {
                     case Constants.DEBUG_LOG:
@@ -1796,7 +1797,8 @@
         async initQueryWorker() {
             await this.initDb();
 
-            this.queryWorker = new SharedWorker(`/build-0.6/dist/js/query-worker.js?ver=${this.$version.value}`);
+            //todo: the root of worker is harcoded. Should be taken from version
+            this.queryWorker = new SharedWorker(`/static/build-0.6/dist/js/query-worker.js?rev=${this.$rev.value}`);
             this.queryWorker.port.onmessage = async (e) => {
                 switch (e.data.type) {
                 case Constants.DEBUG_LOG:

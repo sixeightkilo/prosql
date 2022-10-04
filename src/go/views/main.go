@@ -27,24 +27,23 @@ func Page(w http.ResponseWriter, r *http.Request) {
 		Index(root, rev, w)
 
 	case "connections":
-		//Connections(root, rev, w)
-		renderConnections(w, r, root, rev, version)
+		renderConnections(w, r, root, rev)
 
 	case "signin":
-		Signin(root, rev, version, w)
+		Signin(root, rev, w)
 	}
 }
 
-func renderConnections(w http.ResponseWriter, r *http.Request, root, rev, version string) {
+func renderConnections(w http.ResponseWriter, r *http.Request, root, rev string) {
 	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
 	v, _ := sm.Get(r, constants.USER)
 	if _, ok := v.(user.User); ok {
 		//user is signed in
-		Connections_User(root, rev, version, w)
+		Connections_User(root, rev, w)
 		return
 	}
 
-	Connections(root, rev, version, w)
+	Connections(root, rev, w)
 }
 
 //Each major version of the agent maps to corresponding
@@ -69,7 +68,7 @@ func getAppVersion(r *http.Request) string {
 //keep track of versions by git tags like so: build-0.6-r20
 //This function returns the app root dir: build-{ver} and revision
 func getApplicationRootAndRevision(version string) (string, string) {
-	root := "build-" + string(version)
+	root := "build-" + version
 	config := service.Get(types.SERVICE_CONFIG).(types.Config)
 
 	if config.Env == "dev" {

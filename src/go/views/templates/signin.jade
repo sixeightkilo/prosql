@@ -1,4 +1,4 @@
-:go:func Signin(root string, rev string, version string)
+:go:func Signin(root string, rev string)
 
 - var css = "/static/" + root + "/css/signin.css?rev=" + rev;
 - var js = "/static/" + root + "/dist/js/signin.js?rev=" + rev;
@@ -45,7 +45,5 @@ html
                             a(href="/signup") signup.
             //dummy
             div
-
-        input#version(type="hidden" value= version)
 
         script(type='module' src= js)
