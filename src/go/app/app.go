@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"encoding/json"
 	//"fmt"
 	"path/filepath"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -20,17 +19,16 @@ import (
 const LOG_FILE = "prosql.log"
 
 type App struct {
-	config *types.Config
 	serviceProvider types.ServiceProvider
 	router *mux.Router
 }
 
 var app *App
 
-func NewApp(env string, sp types.ServiceProvider) *App {
+func NewApp(config types.Config, sp types.ServiceProvider) *App {
 	if app == nil {
 		app = &App{}
-		app.init(env, sp)
+		app.init(config, sp)
 		return app
 	}
 
@@ -41,18 +39,12 @@ func (a *App) GetRouter() mux.Router {
 	return *a.router
 }
 
-func (a *App) GetConfig() types.Config {
-	return *a.config
-}
-
-func (a *App) init(env string, sp types.ServiceProvider) {
-	file := "config." + env + ".json"
-	a.config = parseConfig(file)
+func (a *App) init(config types.Config, sp types.ServiceProvider) {
 	a.serviceProvider = sp
-	setupLogger(a.config.LogDir)
+	setupLogger(config.LogDir)
 	a.router = setupRoutes()
 
-	db.SetDbPath(a.config.DbPath)
+	db.SetDbPath(config.DbPath)
 }
 
 func setupRoutes() *mux.Router {
@@ -65,27 +57,14 @@ func setupRoutes() *mux.Router {
 
 	//api
 	r.HandleFunc("/go-browser-api/test", ui.TestHandler).Methods("Get")
+	r.HandleFunc("/go-browser-api/login/captcha/{action:[a-z-]*?}", ui.CaptchaHandler).Methods("Get")
+	r.HandleFunc("/go-browser-api/login/captcha/{action:[a-z-]*?}", ui.CaptchaHandler).Methods("Post")
 	r.HandleFunc("/go-browser-api/login/{action:[a-z-]*?}", ui.LoginHandler).Methods("Post")
 
 	//dynamic pages
 	r.HandleFunc("/{page:[a-z-]*?}", views.Page).Methods("Get")
 
 	return r
-}
-
-func parseConfig(file string) *types.Config {
-	f, err := os.Open(file)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	var config types.Config
-	jsonParser := json.NewDecoder(f)
-	if err = jsonParser.Decode(&config); err != nil {
-		log.Fatal(err.Error())
-	}
-
-	return &config
 }
 
 func setupLogger(dir string) {

@@ -33,6 +33,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 	case "signin":
 		Signin(root, rev, w)
 
+	case "signup":
+		Signup(root, rev, w)
+
 	case "signout":
 		signout(w, r)
 	}

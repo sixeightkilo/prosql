@@ -8,6 +8,7 @@ import (
 const SERVICE_CONFIG = "service-config"
 const SERVICE_EMAILER = "service-emailer"
 const SERVICE_SESSION_MANAGER = "service-session-manager"
+const SERVICE_CAPTCHA = "service-captcha"
 
 type Config struct {
 	Env string `json:"env"`
@@ -23,6 +24,11 @@ type Config struct {
 
 type ServiceProvider interface {
 	Get(s string) interface{}
+}
+
+type CaptchService interface {
+	Get() (string, string, error)
+	IsValid(id, value string) (bool, error)
 }
 
 type Emailer interface {

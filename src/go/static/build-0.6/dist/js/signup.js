@@ -1874,11 +1874,11 @@
 
         async setCaptcha() {
             this.$captcha.value = '';
-            let json = await Utils.get('/browser-api/login/get-captcha');
+            let json = await Utils.get('/browser-api/login/captcha/get');
             Logger.Log(TAG, JSON.stringify(json));
             if (json.status == "ok") {
                 this.$image.src = json.data.image;
-                this.$image.dataset.id = json.data['captcha-id'];
+                this.$image.dataset.id = json.data['id'];
             }
         }
 

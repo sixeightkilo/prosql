@@ -53,6 +53,46 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func CaptchaHandler(w http.ResponseWriter, r *http.Request) {
+	captchaService := service.Get(types.SERVICE_CAPTCHA).(types.CaptchService)
+
+	action := mux.Vars(r)["action"]
+	switch action {
+	case "get":
+		id, img, err := captchaService.Get()
+		if err != nil {
+			utils.Dbg(r.Context(), err.Error())
+			utils.SendError(r.Context(), w,
+				errors.New("unable to get captcha"), "internal-server-error")
+			return
+		}
+
+		utils.SendSuccess(r.Context(), w, struct{
+			Id string `json:"id"`
+			Img string `json:"image"`
+		}{Id: id, Img: img})
+		return
+
+	case "verify":
+		result, err := captchaService.IsValid(r.FormValue("id"), r.FormValue("value"))
+		if err != nil {
+			utils.Dbg(r.Context(), err.Error())
+			utils.SendError(r.Context(), w,
+				errors.New("unable to verify"), "internal-server-error")
+			return
+		}
+
+		if result {
+			utils.SendSuccess(r.Context(), w, nil)
+			return
+		}
+
+		utils.SendError(r.Context(), w,
+			errors.New("Invalid captcha"), "internal-server-error")
+		return
+	}
+}
+
 func signin(w http.ResponseWriter, r *http.Request) {
 	session := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
 	otp, _ := session.Get(r, OTP)

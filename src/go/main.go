@@ -3,15 +3,14 @@ import (
 	"os"
 	//"fmt"
 	//"context"
-	"github.com/kargirwar/golang/utils/emailer"
+	"encoding/json"
+	"log"
 	"github.com/kargirwar/golang/utils/sm"
 	"github.com/kargirwar/prosql-go/app"
+	"github.com/kargirwar/prosql-go/sp"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/models/user"
 )
-
-type ServiceProvider struct {
-}
 
 func init() {
 	//this is required so that non primitive types can 
@@ -21,28 +20,26 @@ func init() {
 	sm.RegisterTypes(types)
 }
 
-func (s ServiceProvider) Get(service string) interface{} {
-	config := App.GetConfig()
-	switch service {
-	case types.SERVICE_EMAILER:
-		var e emailer.Emailer
-		e.SetKey(config.SendGridKey)
-		return &e
-
-	case types.SERVICE_CONFIG:
-		return config
-
-	case types.SERVICE_SESSION_MANAGER:
-		return sm.NewSessionManager(config.SessionKey, config.SessionName)
-
-	default:
-		return nil
-	}
-}
 var App *app.App
-
 func main() {
 	env := os.Getenv("PROSQL_ENV")
-	App = app.NewApp(env, ServiceProvider{})
+	file := "config." + env + ".json"
+	config := parseConfig(file)
+	App = app.NewApp(config, sp.ServiceProvider{Config: config})
 	App.Run()
+}
+
+func parseConfig(file string) types.Config {
+	f, err := os.Open(file)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	var config types.Config
+	jsonParser := json.NewDecoder(f)
+	if err = jsonParser.Decode(&config); err != nil {
+		log.Fatal(err.Error())
+	}
+
+	return config
 }
