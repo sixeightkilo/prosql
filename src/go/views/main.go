@@ -4,14 +4,15 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kargirwar/golang/utils"
 	"github.com/kargirwar/prosql-go/constants"
-	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/models/user"
+	"github.com/kargirwar/prosql-go/types"
 	"net/http"
 	"regexp"
 	"strconv"
 )
 
 var service types.ServiceProvider
+
 func SetServiceProvider(sp types.ServiceProvider) {
 	service = sp
 }
@@ -31,7 +32,16 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	case "signin":
 		Signin(root, rev, w)
+
+	case "signout":
+		signout(w, r)
 	}
+}
+
+func signout(w http.ResponseWriter, r *http.Request) {
+	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+	sm.Kill(r, w)
+	http.Redirect(w, r, "/connections", 302)
 }
 
 func renderConnections(w http.ResponseWriter, r *http.Request, root, rev string) {
@@ -49,22 +59,26 @@ func renderConnections(w http.ResponseWriter, r *http.Request, root, rev string)
 //Each major version of the agent maps to corresponding
 //major version of the web app
 func getAppVersion(r *http.Request) string {
+	utils.Dbg(r.Context(), "getAppVersion")
 	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
 	agentVersion, present := sm.Get(r, constants.AGENT_VERSION)
 	if !present {
 		config := service.Get(types.SERVICE_CONFIG).(types.Config)
+		utils.Dbg(r.Context(), "version: "  + config.Version)
 		agentVersion = config.Version
 	}
+
+	utils.Dbg(r.Context(), "agentVersion:" + agentVersion.(string))
 
 	re := regexp.MustCompile(`([0-9]+).([0-9]+).*$`)
 	version := re.ReplaceAll([]byte(agentVersion.(string)), []byte("$1.$2"))
 	return string(version)
 }
 
-//for each major version of the app there are going to 
+//for each major version of the app there are going to
 //be separate set of static files. These will be stored under:
 // build-{ver}
-//each set of build-* files will have a revision. We will 
+//each set of build-* files will have a revision. We will
 //keep track of versions by git tags like so: build-0.6-r20
 //This function returns the app root dir: build-{ver} and revision
 func getApplicationRootAndRevision(version string) (string, string) {

@@ -33,4 +33,5 @@ type SessionManager interface {
 	Set(r *http.Request, k string, v interface{})
 	Get(r *http.Request, k string) (interface{}, bool)
 	Save(r *http.Request, w http.ResponseWriter) error
+	Kill(r *http.Request, w http.ResponseWriter) error
 }
