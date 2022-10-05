@@ -233,7 +233,7 @@ class Connections {
 
             //set agent version for the rest of web app
             let res = await Utils.get(Constants.URL + '/about');
-            res = await Utils.post('/browser-api/devices/register', {
+            res = await Utils.post('/go-browser-api/devices/register', {
                 'device-id': res.data['device-id'],
                 'version': res.data['version'],
                 'os': res.data['os'],

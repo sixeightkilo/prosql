@@ -11,7 +11,7 @@ import (
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gorilla/mux"
 	"github.com/kargirwar/golang/utils"
-	"github.com/kargirwar/prosql-go/constants"
+	//"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/db"
 	"github.com/kargirwar/prosql-go/models/device"
 	"github.com/kargirwar/prosql-go/models/user"
@@ -21,21 +21,6 @@ import (
 	"net/http"
 	"strconv"
 )
-
-const MIN_OTP = 100000
-const MAX_OTP = 999999
-
-const OTP = "otp"
-const TEMP_USER = "temp-user"
-const DEVICE_ID = "device-id"
-const VERSION = "version"
-const OS = "os"
-
-var service types.ServiceProvider
-
-func SetServiceProvider(sp types.ServiceProvider) {
-	service = sp
-}
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	action := mux.Vars(r)["action"]
@@ -104,7 +89,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 
 	session.Set(r, TEMP_USER, "")
 	session.Set(r, OTP, "")
-	session.Set(r, constants.USER, usr)
+	session.Set(r, USER, usr)
 
 	err = session.Save(r, w)
 	if err != nil {
@@ -178,7 +163,7 @@ func signin(w http.ResponseWriter, r *http.Request) {
 
 	session.Set(r, TEMP_USER, "")
 	session.Set(r, OTP, "")
-	session.Set(r, constants.USER, u)
+	session.Set(r, USER, u)
 
 	err = session.Save(r, w)
 	if err != nil {

@@ -1,5 +1,6 @@
 package user
 
+
 import (
 	"context"
 	"database/sql"
@@ -8,6 +9,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	//"strconv"
 )
+
+const MAX_GUEST_DAYS = 15
+const GUEST_FIRST_NAME = "Guest";
+const GUEST_LAST_NAME = "";
+const GUEST_EMAIL = "guest@prosql.io";
 
 type User struct {
 	Id int64 `json:"id"`
