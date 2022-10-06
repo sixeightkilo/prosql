@@ -7,6 +7,8 @@ import (
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/controllers/ui"
 	"github.com/kargirwar/prosql-go/views"
+	"github.com/kargirwar/prosql-go/models/user"
+	"github.com/kargirwar/golang/utils/sm"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
@@ -24,6 +26,14 @@ type App struct {
 }
 
 var app *App
+
+func init() {
+	//this is required so that non primitive types can 
+	//be serialzed and saved by session store
+	types := make([]interface{}, 0)
+	types = append(types, user.User{})
+	sm.RegisterTypes(types)
+}
 
 func NewApp(config types.Config, sp types.ServiceProvider) *App {
 	if app == nil {

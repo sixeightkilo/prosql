@@ -2,6 +2,7 @@ package mocks
 import (
 	"context"
 	"testing"
+	"github.com/kargirwar/golang/utils"
 	"github.com/kargirwar/prosql-go/types"
 )
 
@@ -10,6 +11,7 @@ type MockEmailer struct {
 }
 
 func (e MockEmailer) Send(ctx context.Context, toEmail, fromName, fromEmail, subject, msg string) error {
+	utils.Dbg(ctx, "MockEmailer.Send")
 	e.t.Log("MockEmailer.Send")
 	return nil
 }
