@@ -94,7 +94,9 @@ func signinRequired(ctx context.Context, r *http.Request, d *device.Device) (boo
 		return false, err
 	}
 
-	now := time.Now()
+	clock := service.Get(types.SERVICE_CLOCK).(types.Clock)
+
+	now := clock.Now()
 	diff := now.Sub(registeredAt)
 	days := diff.Hours() / 24
 

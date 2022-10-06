@@ -40,8 +40,8 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func signup(w http.ResponseWriter, r *http.Request) {
-	session := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
-	otp, _ := session.Get(r, OTP)
+	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+	otp, _ := sm.Get(r, OTP)
 	utils.Dbg(r.Context(), "otp: "+otp.(string))
 
 	if otp != r.FormValue("otp") {
@@ -49,7 +49,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, present := session.Get(r, TEMP_USER)
+	u, present := sm.Get(r, TEMP_USER)
 	if !present {
 		utils.Dbg(r.Context(), "temp user not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
@@ -74,7 +74,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 
 	usr.Id = id
 
-	deviceId, present := session.Get(r, DEVICE_ID)
+	deviceId, present := sm.Get(r, DEVICE_ID)
 	if !present {
 		utils.Dbg(r.Context(), "device id not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
@@ -87,11 +87,11 @@ func signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Set(r, TEMP_USER, "")
-	session.Set(r, OTP, "")
-	session.Set(r, USER, usr)
+	sm.Set(r, TEMP_USER, "")
+	sm.Set(r, OTP, "")
+	sm.Set(r, USER, usr)
 
-	err = session.Save(r, w)
+	err = sm.Save(r, w)
 	if err != nil {
 		utils.Dbg(r.Context(), err.Error())
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "interal-server-error")
@@ -126,23 +126,28 @@ func CaptchaHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func signin(w http.ResponseWriter, r *http.Request) {
-	session := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
-	otp, _ := session.Get(r, OTP)
-	utils.Dbg(r.Context(), "otp: "+otp.(string))
+	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+	otp, present := sm.Get(r, OTP)
+	if !present {
+		utils.Dbg(r.Context(), "otp not found")
+		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
+		return
+	}
+	//utils.Dbg(r.Context(), "otp: "+otp.(string))
 
 	if otp != r.FormValue("otp") {
 		utils.SendError(r.Context(), w, errors.New("Invalid otp"), "invalid-input")
 		return
 	}
 
-	u, present := session.Get(r, TEMP_USER)
+	u, present := sm.Get(r, TEMP_USER)
 	if !present {
 		utils.Dbg(r.Context(), "temp user not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
 		return
 	}
 
-	deviceId, present := session.Get(r, DEVICE_ID)
+	deviceId, present := sm.Get(r, DEVICE_ID)
 	if !present {
 		utils.Dbg(r.Context(), "device id not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
@@ -161,11 +166,11 @@ func signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	session.Set(r, TEMP_USER, "")
-	session.Set(r, OTP, "")
-	session.Set(r, USER, u)
+	sm.Set(r, TEMP_USER, "")
+	sm.Set(r, OTP, "")
+	sm.Set(r, USER, u)
 
-	err = session.Save(r, w)
+	err = sm.Save(r, w)
 	if err != nil {
 		utils.Dbg(r.Context(), err.Error())
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "interal-server-error")
@@ -299,17 +304,17 @@ func setSigninOtp(w http.ResponseWriter, r *http.Request) {
 
 	utils.Dbg(r.Context(), fmt.Sprintf("%v", (*users)[0]))
 
-	session := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
+	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
 
 	otp := utils.RandInt(MIN_OTP, MAX_OTP)
-	session.Set(r, OTP, strconv.Itoa(otp))
-	session.Set(r, TEMP_USER, (*users)[0])
+	sm.Set(r, OTP, strconv.Itoa(otp))
+	sm.Set(r, TEMP_USER, (*users)[0])
 
-	session.Set(r, DEVICE_ID, r.FormValue("device-id"))
-	session.Set(r, VERSION, r.FormValue("version"))
-	session.Set(r, OS, r.FormValue("os"))
+	sm.Set(r, DEVICE_ID, r.FormValue("device-id"))
+	sm.Set(r, VERSION, r.FormValue("version"))
+	sm.Set(r, OS, r.FormValue("os"))
 
-	err = session.Save(r, w)
+	err = sm.Save(r, w)
 	if err != nil {
 		utils.Dbg(r.Context(), err.Error())
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "interal-server-error")

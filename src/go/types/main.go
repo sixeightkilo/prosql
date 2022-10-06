@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"time"
 	"net/http"
 )
 
@@ -9,6 +10,7 @@ const SERVICE_CONFIG = "service-config"
 const SERVICE_EMAILER = "service-emailer"
 const SERVICE_SESSION_MANAGER = "service-session-manager"
 const SERVICE_CAPTCHA = "service-captcha"
+const SERVICE_CLOCK = "service-clock"
 
 type Config struct {
 	Env string `json:"env"`
@@ -40,4 +42,8 @@ type SessionManager interface {
 	Get(r *http.Request, k string) (interface{}, bool)
 	Save(r *http.Request, w http.ResponseWriter) error
 	Kill(r *http.Request, w http.ResponseWriter) error
+}
+
+type Clock interface {
+	Now() time.Time
 }

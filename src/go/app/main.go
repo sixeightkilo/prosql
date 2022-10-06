@@ -45,6 +45,14 @@ func NewApp(config types.Config, sp types.ServiceProvider) *App {
 	return app
 }
 
+//sometimes it is necessary to switch ServiceProvider , especially 
+//during testing
+func (a *App) SetServiceProvider(sp types.ServiceProvider) {
+	a.serviceProvider = sp
+	ui.SetServiceProvider(a.serviceProvider)
+	views.SetServiceProvider(a.serviceProvider)
+}
+
 func (a *App) GetRouter() mux.Router {
 	return *a.router
 }
