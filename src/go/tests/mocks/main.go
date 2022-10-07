@@ -7,6 +7,7 @@ import (
 	"github.com/kargirwar/golang/utils"
 	"github.com/kargirwar/prosql-go/types"
 	"regexp"
+	"github.com/benbjohnson/clock"
 )
 
 type Emailer struct {
@@ -67,6 +68,7 @@ type ServiceProvider struct {
 	Emailer Emailer
 	SessMgr SessionManager
 	Config types.Config
+	GetClock func() clock.Clock
 }
 
 func (s ServiceProvider) Get(service string) interface{} {
@@ -79,6 +81,9 @@ func (s ServiceProvider) Get(service string) interface{} {
 
 	case types.SERVICE_CONFIG:
 		return s.Config
+
+	case types.SERVICE_CLOCK:
+		return s.GetClock()
 
 	default:
 		return nil
