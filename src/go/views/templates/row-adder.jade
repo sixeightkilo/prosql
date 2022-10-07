@@ -1,0 +1,18 @@
+.modal#row-adder-dialog
+    .modal-background
+    .modal-card
+        header.modal-card-head
+            p.modal-card-title.is-size-6
+        section.modal-card-body
+        footer.modal-card-foot
+            button.button.is-success.ok OK
+            button.button.cancel Cancel
+
+    script(type="code" id="col-input-template")
+        .field.is-horizontal
+            .field-label.is-normal
+                label.label {col}
+            .field-body
+                .field
+                    .control
+                        input.input(data-col="{col}" type='text')

@@ -38,6 +38,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	case "signout":
 		signout(w, r)
+
+	case "tables":
+		Tables(root, rev, w)
 	}
 }
 

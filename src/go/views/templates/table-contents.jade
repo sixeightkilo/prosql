@@ -1,0 +1,66 @@
+#app-content
+    #app-left-panel-container
+        #app-left-panel
+            div#tables-title
+                div Tables and Views
+                div 
+                    .dropdown
+                        .dropdown-trigger
+                            i.fas.fa-bars#table-operations(title="Table operations")
+                        .dropdown-menu(role='menu')
+                            .dropdown-content
+                                a.dropdown-item#rename-table
+                                    | Rename table
+                                a.dropdown-item#truncate-table
+                                    | Truncate table
+                                a.dropdown-item#delete-table
+                                    | Delete table
+
+
+                    i.fas.fa-file-export#export-table(title="Export selected table contents(Alt+Shift+L)")
+            div#tables-search-container.field
+                p.control.has-icons-left
+                    //https://stackoverflow.com/questions/15738259/disabling-chrome-autofill
+                    input.input(type="text" id="field1" placeholder="Search tables"
+                    autocomplete="do-not-autocomplete")
+                    span.icon.is-small.is-left
+                        i.fas.fa-search
+            div#tables
+
+    #app-content-resizer
+
+    #app-right-panel
+        #search-bar
+            div
+                i.fas.fa-info-circle#table-info(title="Table info")
+                i.fas.fa-plus-circle#add-row(title="Add new row")
+                i.fas.fa-check-circle#select-cols(title="Select columns")
+                i.fas.fa-trash.fa-disabled#del-row(title="Delete selected row")
+            div Search
+            div.select.is-small
+                select#column-names
+            div.select.is-small
+                select#operators
+            div#search-text-container.field
+                input.input.is-small(name="field2" type="text" autocomplete="do-not-autocomplete")
+                div#clear-filter.has-text-danger
+                    i.fas.fa-times-circle
+            div
+                button.button.is-small.is-primary#search Filter
+            div
+                i.fas.fa-file-export#export-filtered-results(title="Export filtered results(Alt+Shift+E)")
+                i.fas.fa-backward.pager-disable#prev(title="Previous rows(Alt+Shift+P)")
+                i.fas.fa-forward#next(title="Next rows(Alt+Shift+N)")
+        #table-contents
+        #info
+            span#time-taken
+            //&nbsp;&nbsp;&nbsp;
+            span#rows-affected
+
+    script(type="code" id="table-template")
+        div(class="{highlight}")
+            i.icon-table 
+            span.table-name {table}
+
+    script(type="code" id="dropdown-item-template")
+        a.dropdown-item(href="#") {item}

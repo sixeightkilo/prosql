@@ -1,0 +1,55 @@
+#appbar
+    #appbar-left-panel
+        .logo
+            a(href="/connections")
+                img(src= icon, width="60", height="43.35")
+        div#connection-container
+            #conn-name
+            #select-container
+                .field
+                    .control
+                        .select.is-small
+                            select#databases
+            #dropdown-container
+                .dropdown
+                    .dropdown-trigger
+                        i.fas.fa-tools#db-operations(title="Database operations")
+                    #db-dropdown-menu.dropdown-menu(role='menu')
+                        .dropdown-content
+                            a.db-dropdown-item.dropdown-item#rename-db
+                                | Rename database
+                            a.db-dropdown-item.dropdown-item#delete-db
+                                | Delete database
+
+                
+    #appbar-right-panel
+        //dummy
+        div
+        div#content-menu
+            div
+                div
+                    i.fas.fa-table
+                div Tables
+
+        div#query-menu
+            div
+                div
+                    i.fas.fa-edit
+                div Queries
+
+        div#help-menu
+            div
+                div
+                    i.fas.fa-question
+                div Help
+
+        div#about-menu
+            div
+                div
+                    i.fas.fa-cog
+                div About
+
+        div#dummy
+        div#conn
+        div#nav
+            i.fas.fa-arrow-circle-left.stack-disable#back(title="Back to previous view(Alt+Shift+<")

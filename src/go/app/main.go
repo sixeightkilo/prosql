@@ -80,6 +80,7 @@ func setupRoutes() *mux.Router {
 	r.HandleFunc("/go-browser-api/devices/{action:[a-z-]*?}", ui.DevicesController).Methods("Post")
 
 	//dynamic pages
+	r.HandleFunc("/app/{page:[a-z-]*?}", views.Page).Methods("Get")
 	r.HandleFunc("/{page:[a-z-]*?}", views.Page).Methods("Get")
 
 	return r

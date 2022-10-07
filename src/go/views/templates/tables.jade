@@ -1,0 +1,30 @@
+:go:func Tables(root string, rev string)
+
+- var css = "/static/" + root + "/css/tables.css?rev=" + rev
+- var js = "/static/" + root + "/dist/js/tables.js?rev=" + rev
+- var sqlFormatter = "/static/" + root + "/dist/js/sql-formatter.js"
+- var icon = "/static/images/icon.png"
+
+doctype html
+html
+    head
+        include head.jade
+        script(src= sqlFormatter)
+        link(rel="stylesheet" href= css)
+    body
+        include common.jade
+        include appbar.jade
+        include db-renamer.jade
+        include db-deleter.jade
+        include table-renamer.jade
+        include table-truncater.jade
+        include table-deleter.jade
+        include table-contents.jade
+        include row-adder.jade
+        include row-deleter.jade
+        include table-info.jade
+        include column-selector.jade
+
+        input#rev(type="hidden" value= rev)
+
+        script(type='module' src= js)
