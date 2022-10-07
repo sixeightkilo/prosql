@@ -1,18 +1,18 @@
 package tests
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-	//"context"
 
 	"github.com/gorilla/mux"
+	u "github.com/kargirwar/golang/utils"
 	"github.com/kargirwar/prosql-go/app"
 	"github.com/kargirwar/prosql-go/tests/mocks"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/utils"
-	//u "github.com/kargirwar/golang/utils"
 )
 
 var config types.Config
@@ -54,4 +54,33 @@ func getServiceProvider(t *testing.T) mocks.ServiceProvider {
 	}
 
 	return sp
+}
+
+func setupSessionManager(sm *mocks.SessionManager) {
+	session := make(map[string]interface{})
+	sm.Setter = func(k string, v interface{}) {
+		u.Dbg(context.Background(), "Saving :"+k)
+		session[k] = v
+	}
+
+	sm.Getter = func(k string) (interface{}, bool) {
+		u.Dbg(context.Background(), "Getting :"+k)
+		v, present := session[k]
+		return v, present
+	}
+
+	sm.Killer = func() {
+		for k, _ := range session {
+			delete(session, k)
+		}
+	}
+}
+
+func getEmailerCallBack(otp *string) func(s string) {
+	f := func(s string) {
+		u.Dbg(context.Background(), "Callback")
+		*otp = s
+	}
+
+	return f
 }

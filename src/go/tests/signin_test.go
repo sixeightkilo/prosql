@@ -28,12 +28,7 @@ func TestSigninInvalidUser(t *testing.T) {
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; param=value")
 	response := executeRequest(App.GetRouter(), req)
 
-	var s struct {
-		Status    string `json:"status"`
-		Msg       string `json:"msg"`
-		ErrorCode string `json:"error-code"`
-	}
-
+	s := Response{}
 	json.NewDecoder(response.Body).Decode(&s)
 	fmt.Printf("%+v", s)
 
@@ -48,10 +43,7 @@ func TestSignInOtp(t *testing.T) {
 	sp := getServiceProvider(t)
 
 	otp := ""
-	sp.Emailer.Callback = func(s string) {
-		utils.Dbg(context.Background(), "Callback")
-		otp = s
-	}
+	sp.Emailer.Callback = getEmailerCallBack(&otp)
 
 	App.SetServiceProvider(sp)
 
@@ -82,28 +74,8 @@ func TestSignIn(t *testing.T) {
 	sp := getServiceProvider(t)
 
 	otp := ""
-	sp.Emailer.Callback = func(s string) {
-		utils.Dbg(context.Background(), "Callback")
-		otp = s
-	}
-
-	session := make(map[string]interface{})
-	sp.SessMgr.Setter = func(k string, v interface{}) {
-		utils.Dbg(context.Background(), "Saving :"+k)
-		session[k] = v
-	}
-
-	sp.SessMgr.Getter = func(k string) (interface{}, bool) {
-		utils.Dbg(context.Background(), "Getting :"+k)
-		v, present := session[k]
-		return v, present
-	}
-
-	sp.SessMgr.Killer = func() {
-		for k, _ := range session {
-			delete(session, k)
-		}
-	}
+	sp.Emailer.Callback = getEmailerCallBack(&otp)
+	setupSessionManager(&sp.SessMgr)
 
 	App.SetServiceProvider(sp)
 
@@ -111,6 +83,25 @@ func TestSignIn(t *testing.T) {
 	getOtp(t)
 	utils.Dbg(context.Background(), "Got OTP: "+otp)
 	signin(t, otp)
+}
+
+func TestMockSm(t *testing.T) {
+	sp1 := getServiceProvider(t)
+	setupSessionManager(&sp1.SessMgr)
+	sp1.SessMgr.Setter("k", "v1")
+
+	sp2 := getServiceProvider(t)
+	setupSessionManager(&sp2.SessMgr)
+	sp2.SessMgr.Setter("k", "v2")
+
+	v1, _ := sp1.SessMgr.Getter("k")
+	v2, _ := sp2.SessMgr.Getter("k")
+
+	utils.Dbg(context.Background(), fmt.Sprintf("v1 %s v2 %s", v1, v2))
+
+	if v1 == v2 {
+		t.Errorf("Failed v1 %s v2 %s", v1, v2)
+	}
 }
 
 func getOtp(t *testing.T) {
