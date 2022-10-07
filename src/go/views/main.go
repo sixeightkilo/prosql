@@ -41,6 +41,9 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	case "tables":
 		Tables(root, rev, w)
+
+	case "queries":
+		Queries(root, rev, w)
 	}
 }
 

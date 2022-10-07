@@ -13,7 +13,7 @@ class Ace {
     init() {
         return new Promise((resolve, reject) => {
             let script = document.createElement('script');
-            script.src = '/ace-builds/src-min/ace.js'
+            script.src = '/static/ace-builds/src-min/ace.js'
             document.head.appendChild(script);
 
             script.onload = () => {

@@ -1,0 +1,33 @@
+:go:func Queries(root string, rev string)
+
+- var css = "/static/" + root + "/css/queries.css?rev=" + rev
+- var js = "/static/" + root + "/dist/js/queries.js?rev=" + rev
+- var tagify = "/static/" + root + "/js/tagify"
+- var tagifyPolyfill = "/static/" + root + "/js/tagify.polyfills.min.js"
+- var tagifyCss = "/static/" + root + "/css/tagify.css"
+- var sqlFormatter = "/static/" + root + "/dist/js/sql-formatter.js"
+- var core = "/static/" + root + "/js/core@2"
+- var tippy = "/static/" + root + "/js/tippy.js@6"
+- var icon = "/static/images/icon.png"
+
+doctype html
+html
+    head
+        include head.jade
+        script(src= tagify)
+        script(src= tagifyPolyfill)
+        script(src= sqlFormatter)
+        link(href= tagifyCss rel="stylesheet" type="text/css")
+        link(rel="stylesheet" href= css)
+        //link(rel="stylesheet" href="/#{root}/css/svg-arrow.css")
+    body
+        include common.jade
+        include appbar.jade
+        include db-renamer.jade
+        include db-deleter.jade
+        include query-content.jade
+        input#rev(type="hidden" value= rev)
+
+        script(src= core)
+        script(src= tippy)
+        script(type='module' src= js)
