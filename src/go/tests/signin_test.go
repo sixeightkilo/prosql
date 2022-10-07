@@ -118,7 +118,6 @@ func getOtp(t *testing.T) {
 
 	s := Response{}
 	json.NewDecoder(response.Body).Decode(&s)
-	fmt.Printf("%+v", s)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 
@@ -138,7 +137,6 @@ func signin(t *testing.T, otp string) {
 
 	s := Response{}
 	json.NewDecoder(response.Body).Decode(&s)
-	fmt.Printf("%+v", s)
 
 	checkResponseCode(t, http.StatusOK, response.Code)
 

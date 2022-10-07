@@ -62,6 +62,7 @@ func DevicesController(w http.ResponseWriter, r *http.Request) {
 	if u.Email != "" {
 		//already logged in
 		sm.Save(r, w)
+		utils.SendSuccess(r.Context(), w, nil)
 		return
 	}
 

@@ -7,16 +7,20 @@ import (
 	"os"
 	"testing"
 
+	"github.com/benbjohnson/clock"
 	"github.com/gorilla/mux"
 	u "github.com/kargirwar/golang/utils"
 	"github.com/kargirwar/prosql-go/app"
+	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/tests/mocks"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/utils"
+	"time"
 )
 
 var config types.Config
 var App *app.App
+var deviceId string
 
 type Response struct {
 	Status    string `json:"status"`
@@ -27,6 +31,7 @@ type Response struct {
 func init() {
 	file := "config.test.json"
 	config = utils.ParseConfig(file)
+	deviceId = u.RandomString(10)
 }
 
 func executeRequest(router mux.Router, req *http.Request) *httptest.ResponseRecorder {
@@ -83,4 +88,14 @@ func getEmailerCallBack(otp *string) func(s string) {
 	}
 
 	return f
+}
+
+func setupClock(sp *mocks.ServiceProvider, ts string) {
+	sp.GetClock = func() clock.Clock {
+		mock := clock.NewMock()
+
+		t, _ := time.Parse(constants.SQLITE_TIMESTAMP_FORMAT, ts)
+		mock.Set(t)
+		return mock
+	}
 }
