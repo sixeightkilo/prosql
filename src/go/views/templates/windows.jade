@@ -1,0 +1,41 @@
+- var ver = "0.4"
+- var os = "windows"
+| Download the latest release for windows from 
+| #[a(href="https://git.io/ctl-#{ver}-#{os}" target="_blank") github.] #[br]
+| Extract contents of the zip file. #[br]
+| Type "cmd" in the windows search bar. "Command Prompt" should be listed. Right click
+| on "Command Prompt" and select #[span(class="button is-small is-warning") Run as Administrator].#[br]
+| Navigate to the folder where you extracted
+| the zip file. #[br]
+| Usually you will have to type something similar:#[br]
+pre 
+    | $cd C:\Users\Your Name\Downloads\prosqlctl-v#{ver}-#{os}
+| Next steps:#[br]
+pre 
+    | $cd prosqlctl
+    | $prosqlctl.exe -install
+| #[br]
+| If all goes well you should see:
+pre
+    |Downloading release 0.6 .. Done.
+    |Extracting files.. Done.
+    |Creating C:\Program Files\ProsqlAgent
+    |Copying agent to C:\Program Files\ProsqlAgent
+    |Installing agent.. Done.
+    |Setting app directory.. Done.
+    |Setting home directory.. Done.
+    |Starting agent.. Done.
+    |Cleaning up.. Done.
+    |Installed successfully!
+| #[br]
+| To uninstall:
+pre
+    | $prosqlctl.exe -uninstall
+| #[br]
+| To update:
+pre
+    | $prosqlctl.exe -update
+| #[br]
+| To see all options:
+pre
+    | $prosqlctl.exe -help

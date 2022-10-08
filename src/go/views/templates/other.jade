@@ -1,0 +1,8 @@
+| You can build and run yourself!
+pre
+    | $curl -L https://tinyurl.com/src-v064 > prosql-agent.zip
+    | $unzip prosql-agent.zip
+    | $cd prosql-agent-0.6.4
+    | $go build -ldflags="-X 'main.VERSION=0.6.4' -X 'main.ALLOW=https://prosql.io' -X 'main.OS=other'"
+|#[br]
+|You will have to figure out how to daemonize prosql-agent on your system.

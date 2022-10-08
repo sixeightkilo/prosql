@@ -1,0 +1,30 @@
+| Open a terminal. Then do (sudo access required) :#[br]
+pre
+    | $curl -L https://git.io/ctl-0.4-mac > prosqlctl.zip
+    | $unzip prosqlctl.zip
+    | $cd prosqlctl
+    | $sudo ./prosqlctl -install
+
+| You should see something like: #[br]
+pre Copying agent to /usr/local/bin ... 
+    |Downloading release 0.6 .. Done.
+    |Extracting files ..Done.
+    |Copying agent to /usr/local/bin ...
+    |Creating unit ...
+    |Reloading serivces...
+    |Enabling prosql-agent...
+    |Starting prosql-agent...
+    |Cleaning up ..Done.
+    |Installed successfully!
+| #[br]
+| To uninstall:
+pre
+    | $sudo ./prosqlctl -uninstall
+| #[br]
+| To update:
+pre
+    | $sudo ./prosqlctl -update
+| #[br]
+| To see all options:
+pre
+    | $./prosqlctl -help

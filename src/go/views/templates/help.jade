@@ -1,0 +1,38 @@
+:go:func Help(root string, rev string)
+
+- var css = "/static/" + root + "/css/pages.css?rev=" + rev;
+- var js = "/static/" + root + "/dist/js/help.js?rev=" + rev;
+
+doctype html
+html
+    head
+        include head.jade
+        link(rel="stylesheet" href= css)
+    body
+        include navbar.jade
+        .columns
+            .column	
+            .column.is-two-fifths
+                
+                section
+                    .h1.is-size-3.has-text-justified 
+                        |Can I run prosql in multiple tabs?
+                    p.has-text-justified
+                        |Yes. You can open as many tabs as you want. Each tab can connect to 
+                        |a different server.
+
+                section
+                    .h1.is-size-3.has-text-justified 
+                        |On the tables page, the like search does not seem to work ..
+                    p.has-text-justified
+                        |Please use wildcard qualifier % before and/or after the search string.
+
+                section
+                    .h1.is-size-3.has-text-justified 
+                        |I did not use prosql for sometime. Now I cannot see my old queries!
+                    p.has-text-justified
+                        |By default only queries that you ran in last 10 days are visible. 
+                        |If you want to view older queries, please search using keywords or tags
+
+            .column	
+        script(type='module' src= js)

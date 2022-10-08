@@ -44,6 +44,12 @@ func Page(w http.ResponseWriter, r *http.Request) {
 
 	case "queries":
 		Queries(root, rev, w)
+
+	case "help":
+		Help(root, rev, w)
+
+	case "about":
+		About(root, rev, w)
 	}
 }
 
