@@ -11,7 +11,7 @@ import (
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/gorilla/mux"
 	"github.com/kargirwar/golang/utils"
-	//"github.com/kargirwar/prosql-go/constants"
+	"github.com/kargirwar/prosql-go/constants"
 	"github.com/kargirwar/prosql-go/db"
 	"github.com/kargirwar/prosql-go/models/device"
 	"github.com/kargirwar/prosql-go/models/user"
@@ -41,7 +41,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 func signup(w http.ResponseWriter, r *http.Request) {
 	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
-	otp, _ := sm.Get(r, OTP)
+	otp, _ := sm.Get(r, constants.OTP)
 	utils.Dbg(r.Context(), "otp: "+otp.(string))
 
 	if otp != r.FormValue("otp") {
@@ -49,7 +49,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, present := sm.Get(r, TEMP_USER)
+	u, present := sm.Get(r, constants.TEMP_USER)
 	if !present {
 		utils.Dbg(r.Context(), "temp user not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
@@ -74,7 +74,7 @@ func signup(w http.ResponseWriter, r *http.Request) {
 
 	usr.Id = id
 
-	deviceId, present := sm.Get(r, DEVICE_ID)
+	deviceId, present := sm.Get(r, constants.DEVICE_ID)
 	if !present {
 		utils.Dbg(r.Context(), "device id not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
@@ -87,9 +87,9 @@ func signup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sm.Set(r, TEMP_USER, "")
-	sm.Set(r, OTP, "")
-	sm.Set(r, USER, usr)
+	sm.Set(r, constants.TEMP_USER, "")
+	sm.Set(r, constants.OTP, "")
+	sm.Set(r, constants.USER, usr)
 
 	err = sm.Save(r, w)
 	if err != nil {
@@ -127,7 +127,7 @@ func CaptchaHandler(w http.ResponseWriter, r *http.Request) {
 
 func signin(w http.ResponseWriter, r *http.Request) {
 	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
-	otp, present := sm.Get(r, OTP)
+	otp, present := sm.Get(r, constants.OTP)
 	if !present {
 		utils.Dbg(r.Context(), "otp not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
@@ -140,14 +140,14 @@ func signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, present := sm.Get(r, TEMP_USER)
+	u, present := sm.Get(r, constants.TEMP_USER)
 	if !present {
 		utils.Dbg(r.Context(), "temp user not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
 		return
 	}
 
-	deviceId, present := sm.Get(r, DEVICE_ID)
+	deviceId, present := sm.Get(r, constants.DEVICE_ID)
 	if !present {
 		utils.Dbg(r.Context(), "device id not found")
 		utils.SendError(r.Context(), w, errors.New("Unable to process"), "internal-server-error")
@@ -166,9 +166,9 @@ func signin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sm.Set(r, TEMP_USER, "")
-	sm.Set(r, OTP, "")
-	sm.Set(r, USER, u)
+	sm.Set(r, constants.TEMP_USER, "")
+	sm.Set(r, constants.OTP, "")
+	sm.Set(r, constants.USER, u)
 
 	err = sm.Save(r, w)
 	if err != nil {
@@ -213,17 +213,17 @@ func setSignupOtp(w http.ResponseWriter, r *http.Request) {
 	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
 
 	otp := utils.RandInt(MIN_OTP, MAX_OTP)
-	sm.Set(r, OTP, strconv.Itoa(otp))
+	sm.Set(r, constants.OTP, strconv.Itoa(otp))
 	u := user.User{
 		FirstName: r.FormValue("first-name"),
 		LastName:  r.FormValue("last-name"),
 		Email:     r.FormValue("email"),
 	}
-	sm.Set(r, TEMP_USER, u)
+	sm.Set(r, constants.TEMP_USER, u)
 
-	sm.Set(r, DEVICE_ID, r.FormValue("device-id"))
-	sm.Set(r, VERSION, r.FormValue("version"))
-	sm.Set(r, OS, r.FormValue("os"))
+	sm.Set(r, constants.DEVICE_ID, r.FormValue("device-id"))
+	sm.Set(r, constants.VERSION, r.FormValue("version"))
+	sm.Set(r, constants.OS, r.FormValue("os"))
 
 	err = sm.Save(r, w)
 	if err != nil {
@@ -307,12 +307,12 @@ func setSigninOtp(w http.ResponseWriter, r *http.Request) {
 	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
 
 	otp := utils.RandInt(MIN_OTP, MAX_OTP)
-	sm.Set(r, OTP, strconv.Itoa(otp))
-	sm.Set(r, TEMP_USER, (*users)[0])
+	sm.Set(r, constants.OTP, strconv.Itoa(otp))
+	sm.Set(r, constants.TEMP_USER, (*users)[0])
 
-	sm.Set(r, DEVICE_ID, r.FormValue("device-id"))
-	sm.Set(r, VERSION, r.FormValue("version"))
-	sm.Set(r, OS, r.FormValue("os"))
+	sm.Set(r, constants.DEVICE_ID, r.FormValue("device-id"))
+	sm.Set(r, constants.VERSION, r.FormValue("version"))
+	sm.Set(r, constants.OS, r.FormValue("os"))
 
 	err = sm.Save(r, w)
 	if err != nil {

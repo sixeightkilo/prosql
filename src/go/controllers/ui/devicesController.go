@@ -6,6 +6,7 @@ import (
 	"github.com/kargirwar/golang/utils"
 	"time"
 	"github.com/kargirwar/prosql-go/constants"
+	u "github.com/kargirwar/prosql-go/utils"
 	"github.com/kargirwar/prosql-go/db"
 	"github.com/kargirwar/prosql-go/models/device"
 	"github.com/kargirwar/prosql-go/models/user"
@@ -42,7 +43,7 @@ func DevicesController(w http.ResponseWriter, r *http.Request) {
 	d := (*devices)[0]
 
 	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
-	req, err := signinRequired(r.Context(), r, &d)
+	req, err := u.SigninRequired(r, service, &d)
 	if err != nil {
 		utils.SendError(r.Context(), w, err, "db-error")
 		return
@@ -54,11 +55,11 @@ func DevicesController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sm.Set(r, DEVICE_ID, deviceId)
-	sm.Set(r, VERSION, version)
-	sm.Set(r, OS, os)
+	sm.Set(r, constants.DEVICE_ID, deviceId)
+	sm.Set(r, constants.VERSION, version)
+	sm.Set(r, constants.OS, os)
 
-	u := getLoggedInUser(r)
+	u := u.GetLoggedInUser(r, service)
 	if u.Email != "" {
 		//already logged in
 		sm.Save(r, w)
@@ -66,7 +67,7 @@ func DevicesController(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sm.Set(r, USER, user.User{
+	sm.Set(r, constants.USER, user.User{
 		FirstName: user.GUEST_FIRST_NAME,
 		LastName: user.GUEST_LAST_NAME,
 		Email: user.GUEST_EMAIL,
@@ -78,7 +79,7 @@ func DevicesController(w http.ResponseWriter, r *http.Request) {
 
 func getLoggedInUser(r *http.Request) *user.User {
 	sm := service.Get(types.SERVICE_SESSION_MANAGER).(types.SessionManager)
-	u, _ := sm.Get(r, USER)
+	u, _ := sm.Get(r, constants.USER)
 	usr, ok := u.(user.User); if ok {
 		return &usr
 	}
