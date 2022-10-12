@@ -2,6 +2,7 @@ doctype html
 html
     head
         include head.pug
+        script(src="/#{root}/dist/js/sql-formatter.js")
         link(rel="stylesheet" href="/#{root}/css/connections.css?ver=#{version}")
     body
         include navbar.pug
