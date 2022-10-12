@@ -2,11 +2,13 @@
 
 - var css = "/static/" + root + "/css/connections.css?rev=" + rev;
 - var js = "/static/" + root + "/dist/js/connections.js?rev=" + rev;
+- var sqlFormatter = "/static/" + root + "/dist/js/sql-formatter.js"
 
 doctype html
 html
     head
         include head.jade
+        script(src= sqlFormatter)
         link(rel="stylesheet" href= css)
     body
         include navbar.jade

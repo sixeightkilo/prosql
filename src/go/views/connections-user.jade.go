@@ -11,9 +11,11 @@ const (
 	connectionsuser__1 = `<title>Prosql</title><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="`
 	connectionsuser__2 = `"/><link rel="stylesheet" href="`
 	connectionsuser__3 = `"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/><link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&amp;display=swap" rel="stylesheet"/><link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/><link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&amp;display=swap" rel="stylesheet"/><link rel="stylesheet" href="`
-	connectionsuser__5 = `"/></head><body><div id="navbar"><div class="logo"><a href="/"><img src="/static/images/icon.png" width="60" height="43.35"/></a></div><div class="email {email-class}"><button class="button contact is-pulled-right"><i class="fas fa-envelope"></i><span>&nbsp;&nbsp;</span><span>tech@prosql.io</span></button></div></div><div id="container" class="content"><div id="left-container"><div id="recents-title"><span>Recent Connections</span><div id="conn-list"></div></div></div><div id="right-container"><div id="form-container" class="control"><i id="add-new" class="fas fa-plus-circle" title="New connection"></i><a href="/connections-faq"><i id="connections-faq" class="fas fa-question-circle" title="Connections FAQ"></i></a><div id="name-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="name">Connection Name</label></div><div class="field-body"><div class="field"><input type="text" id="name" value="" placeholder=""/></div></div></div><div id="user-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="user">Username</label></div><div class="field-body"><div class="field"><input type="text" id="user" value="" placeholder=""/></div></div></div><div id="pass-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="pass">Password</label></div><div class="field-body"><input type="password" id="pass" value="" placeholder=""/></div></div><div id="host-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="host">Host</label></div><div class="field-body"><input type="text" id="host" value="" placeholder=""/></div></div><div id="port-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="port">Port</label></div><div class="field-body"><input type="text" id="port" value="" placeholder=""/></div></div><div id="db-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="db">Database</label></div><div class="field-body"><input type="text" id="db" value="" placeholder="optional"/></div></div><div id="default-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="default">Default</label></div><div class="field-body"><input type="checkbox" id="is-default"/></div></div></div><div id="btn-container-user"><button class="button" id="test"><span>Test connection</span><span class="icon is-small"><i class="test-icon fas"></i></span></button><button class="button is-full-width" id="login"><span>Start session</span></button></div><div id="signout-container"><br/><span><a href="/signout">Signout</a></span></div></div></div><input id="rev" type="hidden" value="`
-	connectionsuser__6 = `"/><script type="module" src="`
-	connectionsuser__7 = `"></script><script type="code" id="conn-template"><div class="conn-container"><div class="conn"><i class="fas fa-server server-icon"></i></div><div class="conn has-text-left" data-id="{id}">&nbsp;&nbsp;{item}</div><div><i class="fas fa-trash del-conn" data-id="{id}"></i></div></div></script></body></html>`
+	connectionsuser__4 = `"/><script src="`
+	connectionsuser__5 = `"></script><link rel="stylesheet" href="`
+	connectionsuser__6 = `"/></head><body><div id="navbar"><div class="logo"><a href="/"><img src="/static/images/icon.png" width="60" height="43.35"/></a></div><div class="email {email-class}"><button class="button contact is-pulled-right"><i class="fas fa-envelope"></i><span>&nbsp;&nbsp;</span><span>tech@prosql.io</span></button></div></div><div id="container" class="content"><div id="left-container"><div id="recents-title"><span>Recent Connections</span><div id="conn-list"></div></div></div><div id="right-container"><div id="form-container" class="control"><i id="add-new" class="fas fa-plus-circle" title="New connection"></i><a href="/connections-faq"><i id="connections-faq" class="fas fa-question-circle" title="Connections FAQ"></i></a><div id="name-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="name">Connection Name</label></div><div class="field-body"><div class="field"><input type="text" id="name" value="" placeholder=""/></div></div></div><div id="user-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="user">Username</label></div><div class="field-body"><div class="field"><input type="text" id="user" value="" placeholder=""/></div></div></div><div id="pass-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="pass">Password</label></div><div class="field-body"><input type="password" id="pass" value="" placeholder=""/></div></div><div id="host-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="host">Host</label></div><div class="field-body"><input type="text" id="host" value="" placeholder=""/></div></div><div id="port-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="port">Port</label></div><div class="field-body"><input type="text" id="port" value="" placeholder=""/></div></div><div id="db-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="db">Database</label></div><div class="field-body"><input type="text" id="db" value="" placeholder="optional"/></div></div><div id="default-container" class="field is-horizontal"><div class="field-label is-normal"><label class="label" for="default">Default</label></div><div class="field-body"><input type="checkbox" id="is-default"/></div></div></div><div id="btn-container-user"><button class="button" id="test"><span>Test connection</span><span class="icon is-small"><i class="test-icon fas"></i></span></button><button class="button is-full-width" id="login"><span>Start session</span></button></div><div id="signout-container"><br/><span><a href="/signout">Signout</a></span></div></div></div><input id="rev" type="hidden" value="`
+	connectionsuser__7 = `"/><script type="module" src="`
+	connectionsuser__8 = `"></script><script type="code" id="conn-template"><div class="conn-container"><div class="conn"><i class="fas fa-server server-icon"></i></div><div class="conn has-text-left" data-id="{id}">&nbsp;&nbsp;{item}</div><div><i class="fas fa-trash del-conn" data-id="{id}"></i></div></div></script></body></html>`
 )
 
 func Connections_User(root string, rev string, wr io.Writer) {
@@ -21,21 +23,24 @@ func Connections_User(root string, rev string, wr io.Writer) {
 
 	var css = "/static/" + root + "/css/connections.css?rev=" + rev
 	var js = "/static/" + root + "/dist/js/connections.js?rev=" + rev
+	var sqlFormatter = "/static/" + root + "/dist/js/sql-formatter.js"
 	buffer.WriteString(connectionsuser__0)
 
-	var common = "/static/" + root + "//css/common.css?rev=" + rev
+	var common = "/static/" + root + "/css/common.css?rev=" + rev
 	buffer.WriteString(connectionsuser__1)
 	WriteEscString("/static/"+root+"/css/all.min.css", buffer)
 	buffer.WriteString(connectionsuser__2)
 	WriteEscString("/static/"+root+"/css/bulma.css", buffer)
 	buffer.WriteString(connectionsuser__3)
 	WriteEscString(common, buffer)
-	buffer.WriteString(connectionsuser__2)
-	WriteEscString(css, buffer)
+	buffer.WriteString(connectionsuser__4)
+	WriteEscString(sqlFormatter, buffer)
 	buffer.WriteString(connectionsuser__5)
-	WriteEscString(rev, buffer)
+	WriteEscString(css, buffer)
 	buffer.WriteString(connectionsuser__6)
-	WriteEscString(js, buffer)
+	WriteEscString(rev, buffer)
 	buffer.WriteString(connectionsuser__7)
+	WriteEscString(js, buffer)
+	buffer.WriteString(connectionsuser__8)
 
 }

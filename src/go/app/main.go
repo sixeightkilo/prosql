@@ -6,6 +6,7 @@ import (
 	"github.com/kargirwar/prosql-go/db"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/controllers/ui"
+	"github.com/kargirwar/prosql-go/controllers/workers"
 	"github.com/kargirwar/prosql-go/views"
 	"github.com/kargirwar/prosql-go/models/user"
 	"github.com/kargirwar/golang/utils/sm"
@@ -49,8 +50,7 @@ func NewApp(config types.Config, sp types.ServiceProvider) *App {
 //during testing
 func (a *App) SetServiceProvider(sp types.ServiceProvider) {
 	a.serviceProvider = sp
-	ui.SetServiceProvider(a.serviceProvider)
-	views.SetServiceProvider(a.serviceProvider)
+	setServiceProviders()
 }
 
 func (a *App) GetRouter() mux.Router {
@@ -65,9 +65,14 @@ func (a *App) init(config types.Config, sp types.ServiceProvider) {
 	db.SetDbPath(config.DbPath)
 }
 
-func setupRoutes() *mux.Router {
+func setServiceProviders() {
 	ui.SetServiceProvider(app.serviceProvider)
+	workers.SetServiceProvider(app.serviceProvider)
 	views.SetServiceProvider(app.serviceProvider)
+}
+
+func setupRoutes() *mux.Router {
+	setServiceProviders()
 
 	r := mux.NewRouter()
 	//static files
@@ -78,6 +83,7 @@ func setupRoutes() *mux.Router {
 	r.HandleFunc("/go-browser-api/login/captcha/{action:[a-z-]*?}", ui.CaptchaHandler).Methods("Get")
 	r.HandleFunc("/go-browser-api/login/{action:[a-z-]*?}", ui.LoginHandler).Methods("Post")
 	r.HandleFunc("/go-browser-api/devices/{action:[a-z-]*?}", ui.DevicesController).Methods("Post")
+	r.HandleFunc("/go-worker-api/devices/{action:[a-z-]*?}", workers.DevicesController).Methods("Post")
 
 	//dynamic pages
 	r.HandleFunc("/app/{page:[a-z-]*?}", views.Page).Methods("Get")

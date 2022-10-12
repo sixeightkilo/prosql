@@ -16,11 +16,12 @@ class BaseWorker {
             this.handleMessage(m);
         }
 
-        //this.logger.log(TAG, self.sqlFormatter.format("select * from table"));
+        this.logger.log(TAG, "BaseWorker")
     }
 
     async init() {
         let res = await Utils.get(Constants.URL + '/about', false);
+        this.logger.log(TAG, JSON.stringify(res));
         if (res.status == "error") {
             this.logger.log(TAG, JSON.stringify(res));
             return
@@ -32,7 +33,7 @@ class BaseWorker {
         //If signin-required, force user to signin/signup
         //After user signs up clear all db_id, because we are moving to a new db
 
-        res = await Utils.post('/worker-api/devices/register', {
+        res = await Utils.post('/go-worker-api/devices/register', {
             'device-id': res.data['device-id'],
             'version': res.data['version'],
             'os': res.data['os'],

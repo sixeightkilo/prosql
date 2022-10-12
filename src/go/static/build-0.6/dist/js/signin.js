@@ -391,8 +391,8 @@
         'grid-resizer',
         'cell-renderer',
         'table-utils',
-        'query-worker',
-        'connection-worker',
+        //'query-worker',
+        //'connection-worker',
         'query-db',
         //'query-finder',
     ];
