@@ -6,7 +6,7 @@ import { QueriesMetaDB } from './queries-meta-db.js'
 import { BaseWorker } from './base-worker.js'
 
 const TAG = "main"
-const URL = '/worker-api/sqlite'
+const URL = '/go-worker-api/sqlite'
 const LIMIT = 50;
 
 class QueryWorker extends BaseWorker {

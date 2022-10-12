@@ -5,7 +5,7 @@ import { QueryDB } from './query-db.js'
 import { MetaDB } from './meta-db.js'
 
 const TAG = "base"
-const URL = '/worker-api/sqlite'
+const URL = '/go-worker-api/sqlite'
 
 class BaseWorker {
     constructor(port) {

@@ -1757,7 +1757,7 @@
     }
 
     const TAG = "main";
-    const URL = '/worker-api/sqlite';
+    const URL = '/go-worker-api/sqlite';
     const LIMIT = 50;
 
     class QueryWorker extends BaseWorker {

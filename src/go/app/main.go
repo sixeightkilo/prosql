@@ -3,10 +3,13 @@ package app
 import (
 	"github.com/gorilla/mux"
 	//"github.com/gorilla/sessions"
-	"github.com/kargirwar/prosql-go/db"
+	webDb "github.com/kargirwar/prosql-go/db"
+	clientDb "github.com/kargirwar/prosql-sqlite/dbutils"
 	"github.com/kargirwar/prosql-go/types"
 	"github.com/kargirwar/prosql-go/controllers/ui"
 	"github.com/kargirwar/prosql-go/controllers/workers"
+	"github.com/kargirwar/prosql-go/controllers/sqlite/connections"
+	"github.com/kargirwar/prosql-go/controllers/sqlite/queries"
 	"github.com/kargirwar/prosql-go/views"
 	"github.com/kargirwar/prosql-go/models/user"
 	"github.com/kargirwar/golang/utils/sm"
@@ -62,7 +65,8 @@ func (a *App) init(config types.Config, sp types.ServiceProvider) {
 	setupLogger(config.LogDir)
 	a.router = setupRoutes()
 
-	db.SetDbPath(config.DbPath)
+	webDb.SetDbPath(config.WebDbPath)
+	clientDb.SetDbPath(config.ClientDbPath)
 }
 
 func setServiceProviders() {
@@ -84,6 +88,17 @@ func setupRoutes() *mux.Router {
 	r.HandleFunc("/go-browser-api/login/{action:[a-z-]*?}", ui.LoginHandler).Methods("Post")
 	r.HandleFunc("/go-browser-api/devices/{action:[a-z-]*?}", ui.DevicesController).Methods("Post")
 	r.HandleFunc("/go-worker-api/devices/{action:[a-z-]*?}", workers.DevicesController).Methods("Post")
+
+	//connections
+	r.HandleFunc(
+		"/go-worker-api/sqlite/connections/{path}", connections.ConnectionHandler).Methods(http.MethodGet)
+	r.HandleFunc("/go-worker-api/sqlite/connections", connections.ConnectionHandler).Methods(http.MethodPost)
+	r.HandleFunc("/go-worker-api/sqlite/connections", connections.ConnectionHandler).Methods(http.MethodDelete)
+
+	//queries
+	r.HandleFunc(
+		"/go-worker-api/sqlite/queries/{path}", queries.QueryHandler).Methods(http.MethodGet)
+	r.HandleFunc("/go-worker-api/sqlite/queries", queries.QueryHandler).Methods(http.MethodPost)
 
 	//dynamic pages
 	r.HandleFunc("/app/{page:[a-z-]*?}", views.Page).Methods("Get")

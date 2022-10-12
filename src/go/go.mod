@@ -20,6 +20,9 @@ require (
 	github.com/benbjohnson/clock v1.3.0 // indirect
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible // indirect
 	github.com/gorilla/securecookie v1.1.1 // indirect
+	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/kargirwar/prosql-agent v0.6.3-0.20211023040659-29942bd18429 // indirect
+	github.com/kargirwar/prosql-sqlite v0.0.0-20211227084359-60e9f74acfdd // indirect
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.12.0+incompatible // indirect
 	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect

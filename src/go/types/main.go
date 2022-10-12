@@ -18,7 +18,8 @@ type Config struct {
 	SessionName string `json:"session-name"`
 	LogDir string `json:"log-dir"`
 	Version string `json:"version"`
-	DbPath string `json:"db-path"`
+	WebDbPath string `json:"web-db-path"`
+	ClientDbPath string `json:"client-db-path"`
 	SendGridKey string `json:"sendgrid-key"`
 	AppVersions map[string]string `json:"app-versions"`
 	Email map[string]string `json:"email"`

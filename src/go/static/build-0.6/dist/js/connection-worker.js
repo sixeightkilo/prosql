@@ -1757,7 +1757,7 @@
     }
 
     const TAG = "main";
-    const URL = '/worker-api/sqlite';
+    const URL = '/go-worker-api/sqlite';
 
     class ConnectionWorker extends BaseWorker {
         async handleMessage(m) {

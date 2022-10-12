@@ -6,7 +6,7 @@ import { ConnectionsMetaDB } from './connections-meta-db.js'
 import { BaseWorker } from './base-worker.js'
 
 const TAG = "main"
-const URL = '/worker-api/sqlite'
+const URL = '/go-worker-api/sqlite'
 
 class ConnectionWorker extends BaseWorker {
     async handleMessage(m) {
