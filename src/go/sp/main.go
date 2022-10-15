@@ -22,9 +22,7 @@ func init() {
 func (s ServiceProvider) Get(service string) interface{} {
 	switch service {
 	case types.SERVICE_EMAILER:
-		var e emailer.Emailer
-		e.SetKey(s.Config.SendGridKey)
-		return &e
+		return emailer.New(s.Config.SendGridKey)
 
 	case types.SERVICE_CONFIG:
 		return s.Config
