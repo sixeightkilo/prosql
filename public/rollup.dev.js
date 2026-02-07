@@ -1,3 +1,18 @@
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import terser from '@rollup/plugin-terser';
+
+const plugins = [
+    resolve({
+        browser: true,
+        preferBuiltins: false,
+        extensions: ['.js'],
+        dedupe: ['ace-builds']
+    }),
+    commonjs(),
+    terser()
+];
+
 export default [
     {
 		'input': 'build-0.6/js/install.js',
@@ -5,6 +20,7 @@ export default [
             'file': 'build-0.6/dist/js/install.js',
             'format': 'iife'
         },
+        plugins,
 	},
     {
 		'input': 'build-0.6/js/index.js',
@@ -12,6 +28,7 @@ export default [
             'file': 'build-0.6/dist/js/index.js',
             'format': 'iife'
         },
+        plugins,
 	},
 	{
 		'input': 'build-0.6/js/connections.js',
@@ -19,6 +36,7 @@ export default [
             'file': 'build-0.6/dist/js/connections.js',
             'format': 'iife'
         },
+        plugins,
 	},
     {
 		'input': 'build-0.6/js/signup.js',
@@ -26,6 +44,7 @@ export default [
             'file': 'build-0.6/dist/js/signup.js',
             'format': 'iife'
         },
+        plugins,
 	},
     {
 		'input': 'build-0.6/js/signin.js',
@@ -33,6 +52,7 @@ export default [
             'file': 'build-0.6/dist/js/signin.js',
             'format': 'iife'
         },
+        plugins,
 	},
     {
         'input': 'build-0.6/js/tables.js',
@@ -40,6 +60,7 @@ export default [
             'file': 'build-0.6/dist/js/tables.js',
             'format': 'iife'
         },
+        plugins,
     },
     {
         'input': 'build-0.6/js/queries.js',
@@ -47,6 +68,7 @@ export default [
             'file': 'build-0.6/dist/js/queries.js',
             'format': 'iife'
         },
+        plugins
     },
     {
         'input': 'build-0.6/js/about.js',
@@ -54,6 +76,7 @@ export default [
             'file': 'build-0.6/dist/js/about.js',
             'format': 'iife'
         },
+        plugins,
     },
     {
         'input': 'build-0.6/js/help.js',
@@ -61,6 +84,7 @@ export default [
             'file': 'build-0.6/dist/js/help.js',
             'format': 'iife'
         },
+        plugins,
     },
     {
         'input': 'build-0.6/js/connection-worker.js',
@@ -68,6 +92,7 @@ export default [
             'file': 'build-0.6/dist/js/connection-worker.js',
             'format': 'iife'
         },
+        plugins,
     },
     {
         'input': 'build-0.6/js/query-worker.js',
@@ -75,5 +100,6 @@ export default [
             'file': 'build-0.6/dist/js/query-worker.js',
             'format': 'iife'
         },
+        plugins,
     },
 ]
