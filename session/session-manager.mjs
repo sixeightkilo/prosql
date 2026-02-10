@@ -44,12 +44,32 @@ export default class SessionManager {
         this.req.session.version = v;
     }
 
+    getVersion(v) {
+        return this.req.session.version;
+    }
+
     setOs(o) {
         this.req.session.os = o;
     }
 
     dump() {
         return `${this.req.session.deviceId}:${this.req.session.version}:${JSON.stringify(this.req.session.user)}`;
+    }
+
+    write() {
+        // PHP: session_write_close()
+        // Node: sessions are non-blocking
+        // We keep this for API parity
+
+        if (typeof this.req.session.save === 'function') {
+            this.req.session.save(() => {});
+        }
+    }
+
+    kill() {
+        if (this.req?.session) {
+            this.req.session.destroy(() => {});
+        }
     }
 }
 

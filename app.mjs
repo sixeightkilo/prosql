@@ -2,7 +2,7 @@ import express from 'express';
 import session from 'express-session';
 import bodyParser from 'body-parser';
 import 'dotenv/config';
-
+import config from './config/config.mjs';
 
 import logger from './logger.mjs';
 import SessionManager from './session/session-manager.mjs';
@@ -10,19 +10,30 @@ import SessionManager from './session/session-manager.mjs';
 // controllers
 import WorkerDevicesController from './controllers/worker-devices.mjs';
 import UIDevicesController from './controllers/ui-devices.mjs';
-// import LoginController from './controllers/login.mjs';
+import LoginController from './controllers/login.mjs';
 // import SqlController from './controllers/sql.mjs';
-// import Renderer from './controllers/renderer.mjs';
+import Renderer from './controllers/renderer.mjs';
 
 // middleware
 import SessionAuthMiddleware from './middleware/session-auth.mjs';
 import SqliteDB from './db/sqlite.mjs';
 import Device from './models/device.mjs';
 import User from './models/user.mjs';
+import Emailer from './utils/emailer.mjs';
 
 const db = new SqliteDB(process.env.DB_PATH, logger);
 const deviceModel = new Device(logger, db);
 const userModel = new User(logger, db);
+
+
+const emailer = new Emailer(logger, {
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT),
+    secure: false,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+    from: process.env.SMTP_FROM
+});
 
 
 // force UTC (same as PHP)
@@ -33,6 +44,7 @@ const app = express();
 /* -------------------------
  * middleware
  * ------------------------- */
+const sessionAuth = new SessionAuthMiddleware(logger);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -80,6 +92,26 @@ app.use((req, res, next) => {
     };
     next();
 });
+
+app.use((req, res, next) => {
+    req.container = {
+        ...req.container,
+        loginController: new LoginController(logger, req.sm)
+            .setUser(userModel)
+            .setDevice(deviceModel)
+            .setEmailer(emailer)
+            .setDownloadPath(process.env.DOWNLOAD_PATH)
+    };
+    next();
+});
+
+app.use((req, res, next) => {
+    req.container = {
+        ...req.container,
+        renderer: new Renderer(logger, req.sm, config)
+    };
+    next();
+});
 /* -------------------------
  * routes (1:1 with Slim)
  * ------------------------- */
@@ -97,10 +129,10 @@ app.post(
 );
 
 // login
-// app.all(
-//     '/browser-api/login/:action',
-//     LoginController.handle
-// );
+app.all(
+    '/browser-api/login/:action',
+    LoginController.handle
+);
 
 // sql formatter (session protected)
 // app.post(
@@ -109,12 +141,18 @@ app.post(
 //     SqlController.handle
 // );
 
-// renderer (catch-all, session protected)
 // app.get(
 //     '*',
-//     SessionAuthMiddleware.handle,
+//     sessionAuth.handle,
 //     Renderer.handle
 // );
+app.get(
+    '*',
+    sessionAuth.handle,
+    (req, res, next) => req.container.renderer.handle(req, res, next)
+);
+
+
 
 /* -------------------------
  * error handling
