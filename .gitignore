@@ -3,3 +3,4 @@ tags
 node_modules
 logs
 config.php
+.env
