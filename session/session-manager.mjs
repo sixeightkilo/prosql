@@ -35,5 +35,21 @@ export default class SessionManager {
     setDevice(device) {
         this.req.session.device = device;
     }
+
+    setDeviceId(id) {
+        this.req.session.deviceId = id;
+    }
+
+    setVersion(v) {
+        this.req.session.version = v;
+    }
+
+    setOs(o) {
+        this.req.session.os = o;
+    }
+
+    dump() {
+        return `${this.req.session.deviceId}:${this.req.session.version}:${JSON.stringify(this.req.session.user)}`;
+    }
 }
 

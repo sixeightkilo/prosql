@@ -1,6 +1,8 @@
 export default class User {
     static GUEST_EMAIL = '__guest__';
     static MAX_GUEST_DAYS = 15;
+    static GUEST_FIRST_NAME = 'Guest';
+    static GUEST_LAST_NAME = 'User';
 
     constructor(logger, db) {
         this.logger = logger;

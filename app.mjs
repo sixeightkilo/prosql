@@ -9,7 +9,7 @@ import SessionManager from './session/session-manager.mjs';
 
 // controllers
 import WorkerDevicesController from './controllers/worker-devices.mjs';
-// import UIDevicesController from './controllers/ui-devices.mjs';
+import UIDevicesController from './controllers/ui-devices.mjs';
 // import LoginController from './controllers/login.mjs';
 // import SqlController from './controllers/sql.mjs';
 // import Renderer from './controllers/renderer.mjs';
@@ -68,6 +68,18 @@ app.use((req, res, next) => {
     next();
 });
 
+
+app.use((req, res, next) => {
+    req.container = {
+        ...req.container,
+        uiDevicesController: new UIDevicesController(
+            logger,
+            req.sm,
+            deviceModel
+        )
+    };
+    next();
+});
 /* -------------------------
  * routes (1:1 with Slim)
  * ------------------------- */
@@ -79,10 +91,10 @@ app.post(
 );
 
 // browser devices
-// app.post(
-//     '/browser-api/devices/:action',
-//     UIDevicesController.handle
-// );
+app.post(
+    '/browser-api/devices/:action',
+    UIDevicesController.handle
+);
 
 // login
 // app.all(
