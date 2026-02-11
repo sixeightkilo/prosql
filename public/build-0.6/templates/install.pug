@@ -6,7 +6,7 @@ html
     body
         include navbar.pug
         .columns
-            .column	
+            .column
             .column.is-two-fifths
                 .columns.is-flex.is-justify-content-center
                     .column.is-three-fifths
@@ -50,5 +50,5 @@ html
                                 include mac.pug
                             .tab-content.other.has-text-justified
                                 include other.pug
-            .column	
-            script(type='module' src='/#{root}/dist/js/install.js?ver=#{version}')
+            .column
+            script(type='module' src=`/${root}/dist/js/install.js?ver=${version}`)

@@ -41,7 +41,7 @@ export default class SessionAuthMiddleware {
         }
 
         const email = req.sm.getUser()?.email ?? null;
-        this.logger.debug(`email: ${email}`);
+        this.logger.info(TAG, `email: ${email}`);
 
         if (email) {
             // logged in (guest or real user)

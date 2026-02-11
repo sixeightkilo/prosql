@@ -2,6 +2,7 @@ import express from 'express';
 import session from 'express-session';
 import bodyParser from 'body-parser';
 import 'dotenv/config';
+import path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getRequestId } from './context.mjs';
@@ -25,14 +26,15 @@ import Device from './models/device.mjs';
 import User from './models/user.mjs';
 import Emailer from './utils/emailer.mjs';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
 const logger = setupLogger();
 const db = new SqliteDB(process.env.DB_PATH, logger);
 const deviceModel = new Device(logger, db);
 const userModel = new User(logger, db);
 
 function setupLogger() {
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
     const logDir = join(__dirname, 'logs');
     const logFile = 'app.log';
 
@@ -81,6 +83,12 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use(
+    express.static(
+        path.join(__dirname, 'public')
+    )
+);
+
 app.use((req, res, next) => {
     req.container = {
         workerDevicesController: new WorkerDevicesController(
@@ -119,13 +127,13 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use((req, res, next) => {
-    req.container = {
-        ...req.container,
-        renderer: new Renderer(logger, req.sm, config)
-    };
-    next();
-});
+// app.use((req, res, next) => {
+//     req.container = {
+//         ...req.container,
+//         renderer: new Renderer(logger, req.sm, config)
+//     };
+//     next();
+// });
 /* -------------------------
  * routes (1:1 with Slim)
  * ------------------------- */
@@ -160,11 +168,15 @@ app.all(
 //     sessionAuth.handle,
 //     Renderer.handle
 // );
-app.get(
-    '*',
-    sessionAuth.handle,
-    (req, res, next) => req.container.renderer.handle(req, res, next)
-);
+// app.get(
+//     '*',
+//     sessionAuth.handle,
+//     (req, res, next) => req.container.renderer.handle(req, res, next)
+// );
+app.get('*', sessionAuth.handle, (req, res, next) => {
+    const renderer = new Renderer(logger, req.sm, config);
+    renderer.handle(req, res, next);
+});
 
 
 
