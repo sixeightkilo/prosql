@@ -3,6 +3,7 @@
  * Prosql\Middleware\SessionAuthMiddleware
  */
 
+const TAG = 'SessionAuthMiddleware';
 export default class SessionAuthMiddleware {
     constructor(logger) {
         this.logger = logger;
@@ -13,7 +14,7 @@ export default class SessionAuthMiddleware {
      */
     handle = (req, res, next) => {
         const path = req.path;
-        this.logger.debug(`Path: ${path}`);
+        this.logger.info(TAG, `Path: ${path}`);
 
         // signout
         if (path === '/signout') {

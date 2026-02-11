@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const TAG = 'Renderer';
 export default class Renderer {
     constructor(logger, sessionManager, config) {
         this.logger = logger;
@@ -40,6 +41,9 @@ export default class Renderer {
             root,
             'templates'
         );
+
+        this.logger.info(TAG, `Renderer initialized with config: ${JSON.stringify(this.renderConfig)}`);
+        this.logger.info(TAG, `Renderer initialized with templates path: ${this.templatesPath}`);
     }
 
     /* -------------------------
@@ -49,6 +53,7 @@ export default class Renderer {
     handle = (req, res, next) => {
         try {
             const params = req.path.split('/').filter(Boolean);
+            this.logger.info(TAG, `Renderer handling path: ${req.path}, params: ${JSON.stringify(params)}`);
 
             switch (params[0] ?? '') {
                 case '':
@@ -102,7 +107,7 @@ export default class Renderer {
 
     renderApp(res, appPath) {
         const email = this.sm.getUser()?.email ?? null;
-        this.logger.debug(`email: ${email}`);
+        this.logger.info(TAG, `email: ${email}`);
 
         const allowed = ['tables', 'queries', 'help', 'about'];
         if (!allowed.includes(appPath)) {

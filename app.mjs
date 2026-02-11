@@ -2,9 +2,13 @@ import express from 'express';
 import session from 'express-session';
 import bodyParser from 'body-parser';
 import 'dotenv/config';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { getRequestId } from './context.mjs';
 import config from './config/config.mjs';
 
-import logger from './logger.mjs';
+// import logger from './logger.mjs';
+import Logger from 'node-logger';
 import SessionManager from './session/session-manager.mjs';
 
 // controllers
@@ -21,9 +25,19 @@ import Device from './models/device.mjs';
 import User from './models/user.mjs';
 import Emailer from './utils/emailer.mjs';
 
+const logger = setupLogger();
 const db = new SqliteDB(process.env.DB_PATH, logger);
 const deviceModel = new Device(logger, db);
 const userModel = new User(logger, db);
+
+function setupLogger() {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const logDir = join(__dirname, 'logs');
+    const logFile = 'app.log';
+
+    return new Logger(logDir, logFile, getRequestId);
+}
 
 
 const emailer = new Emailer(logger, {
@@ -159,7 +173,7 @@ app.get(
  * ------------------------- */
 
 app.use((err, req, res, next) => {
-    logger.error('Unhandled error', {
+    logger.info('app', {
         message: err.message,
         stack: err.stack
     });
@@ -176,6 +190,6 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT ?? 5001;
 
 app.listen(PORT, () => {
-    logger.info(`Prosql Node backend listening on ${PORT}`);
+    logger.info('app', `Prosql Node backend listening on ${PORT}`);
 });
 

@@ -5,6 +5,7 @@ import SigninTrait from '../traits/signin-trait.mjs';
  * Mirrors:
  * Prosql\Controllers\UI\DevicesController
  */
+const TAG = 'UIDevicesController';
 export default class UIDevicesController extends SigninTrait {
     constructor(logger, sessionManager, deviceModel) {
         super(logger, sessionManager);
@@ -15,10 +16,10 @@ export default class UIDevicesController extends SigninTrait {
      * POST /browser-api/devices/:action
      */
     async handlePost(req, res) {
-        this.logger.debug(`handlepost`);
+        this.logger.info(TAG, `handlepost`);
         const body = req.body ?? {};
 
-        this.logger.debug(`body: ${JSON.stringify(body)}`);
+        this.logger.info(TAG, `body: ${JSON.stringify(body)}`);
         const deviceId = body['device-id'];
         const version = body['version'];
         const os = body['os'] ?? 'unknown';
@@ -35,7 +36,7 @@ export default class UIDevicesController extends SigninTrait {
             [['id', '=', id]]
         )[0];
 
-        this.logger.debug('SESSION STATE:' + this.sm.dump());
+        this.logger.info(TAG, 'SESSION STATE:' + this.sm.dump());
 
 
         // session mutations (order matters)
@@ -43,7 +44,7 @@ export default class UIDevicesController extends SigninTrait {
         this.sm.setVersion(version);
         this.sm.setOs(os);
 
-        this.logger.debug(`device: ${JSON.stringify(device)}`);
+        this.logger.info(TAG, `device: ${JSON.stringify(device)}`);
         const signinRequired = this.signinRequired(device);
 
         // debug toggle existed in PHP – keep behavior identical
@@ -59,7 +60,7 @@ export default class UIDevicesController extends SigninTrait {
 
         if (user?.email) {
             // logged in — return nothing (200 OK, empty body)
-            this.logger.debug('logged in');
+            this.logger.info(TAG, 'logged in');
             res.status(200).end();
             return;
         }

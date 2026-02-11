@@ -29,7 +29,7 @@ export default class Emailer {
     }
 
     async send(to, cc = [], subject, html) {
-        this.logger.debug(`Sending email to ${to}`);
+        this.logger.info('emailer', `Sending email to ${to}`);
 
         await this.transporter.sendMail({
             from: this.from,
