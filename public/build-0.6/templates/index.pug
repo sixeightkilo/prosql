@@ -2,11 +2,11 @@ doctype html
 html
     head
         include head.pug
-            link(rel="stylesheet" href="/#{root}/css/index.css?ver=#{version}")
+        link(rel="stylesheet" href=`/${root}/css/index.css?ver=${version}`)
     body
         section.section
             .full-logo
-                img(src='/#{root}/images/logo.png', width="292.4", height="55.6")
+                img(src=`/${root}/images/logo.png`, width="292.4", height="55.6")
                 div.superscript beta
 
         section.section
@@ -17,5 +17,5 @@ html
         section.section
             button#get-started.button.is-primary Get Started!
 
-        script(type='module' src='/#{root}/dist/js/index.js?ver=#{version}')
+        script(type='module' src=`/${root}/dist/js/index.js?ver=${version}`)
 
