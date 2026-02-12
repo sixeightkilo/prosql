@@ -7,8 +7,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getRequestId } from './context.mjs';
 import config from './config/config.mjs';
+import SigninRequiredError from './errors/signin-required-error.mjs';
 
-// import logger from './logger.mjs';
 import Logger from 'node-logger';
 import SessionManager from './session/session-manager.mjs';
 
@@ -62,9 +62,6 @@ const app = express();
  * ------------------------- */
 const sessionAuth = new SessionAuthMiddleware(logger);
 
-// app.use(bodyParser.json());
-// app.use(bodyParser.urlencoded({ extended: false }));
-
 const upload = multer();
 
 app.use(express.json());                 // handles application/json
@@ -102,12 +99,9 @@ app.use((req, res, next) => {
             req.sm,
             deviceModel
         ),
-        // later:
-        // loginController, uiDevicesController, etc.
     };
     next();
 });
-
 
 app.use((req, res, next) => {
     req.container = {
@@ -133,13 +127,6 @@ app.use((req, res, next) => {
     next();
 });
 
-// app.use((req, res, next) => {
-//     req.container = {
-//         ...req.container,
-//         renderer: new Renderer(logger, req.sm, config)
-//     };
-//     next();
-// });
 /* -------------------------
  * routes (1:1 with Slim)
  * ------------------------- */
@@ -169,36 +156,39 @@ app.all(
 //     SqlController.handle
 // );
 
-// app.get(
-//     '*',
-//     sessionAuth.handle,
-//     Renderer.handle
-// );
-// app.get(
-//     '*',
-//     sessionAuth.handle,
-//     (req, res, next) => req.container.renderer.handle(req, res, next)
-// );
 app.get('*', sessionAuth.handle, (req, res, next) => {
     const renderer = new Renderer(logger, req.sm, config);
     renderer.handle(req, res, next);
 });
-
-
 
 /* -------------------------
  * error handling
  * ------------------------- */
 
 app.use((err, req, res, next) => {
+
     logger.info('app', {
         message: err.message,
         stack: err.stack
     });
 
-    res.status(500).json({
-        error: 'internal-server-error'
-    });
+    // if (err instanceof SigninRequiredError) {
+    //     return res.redirect('/signin');
+    // }
+
+    if (err instanceof SigninRequiredError) {
+        return res.status(401).json({
+            status: 'error',
+            msg: 'signin-required'
+        });
+    }
+
+
+    if (err.status) {
+        return res.status(err.status).json({ error: err.message });
+    }
+
+    res.status(500).json({ error: 'internal-server-error' });
 });
 
 /* -------------------------

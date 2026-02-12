@@ -1,5 +1,6 @@
 import User from '../models/user.mjs';
 import SigninTrait from '../traits/signin-trait.mjs';
+import SigninRequiredError from '../errors/signin-required-error.mjs';
 
 /*
  * Mirrors:
@@ -53,7 +54,8 @@ export default class UIDevicesController extends SigninTrait {
         if (signinRequired) {
             // kill session if any
             this.sm.kill();
-            throw new Error('signin-required');
+            // throw new Error('signin-required');
+            throw new SigninRequiredError();
         }
 
         const user = this.sm.getUser();
