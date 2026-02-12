@@ -72,6 +72,14 @@ export default class SessionManager {
         this.req.session.os = o;
     }
 
+    setCaptcha(captcha) {
+        this.req.session.captcha = captcha;
+    }
+
+    getCaptcha() {
+        return this.req.session.captcha ?? null;
+    }   
+
     dump() {
         return `${this.req.session.deviceId}:${this.req.session.version}:${JSON.stringify(this.req.session.user)}`;
     }

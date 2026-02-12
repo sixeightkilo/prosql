@@ -36,10 +36,14 @@ export default class WorkerDevicesController extends SigninTrait {
             os
         });
 
-        const device = (await this.device.get(
-            ['user_id', 'created_at'],
-            [['id', '=', id]]
-        ))[0];
+        // const device = (await this.device.get(
+        //     ['user_id', 'created_at'],
+        //     [['id', '=', id]]
+        // ))[0];
+
+        const device = this.device.getByDeviceId(deviceId);
+
+        this.logger.info(`Device info: ${JSON.stringify(device)}`);
 
         if (this.signinRequired(device)) {
             throw new Error('signin required');

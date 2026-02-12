@@ -1,3 +1,4 @@
+const TAG = 'DeviceModel';
 export default class Device {
     static TIMESTAMP_FORMAT = 'Y-m-d H:i:s'; // semantic marker only
 
@@ -50,6 +51,11 @@ export default class Device {
         `;
 
         return this.db.prepare(sql).all(...values);
+    }
+
+    getByDeviceId(deviceId) {
+        this.logger.info(TAG, `Fetching device by device_id: ${deviceId}`);
+        return this.db .prepare(`SELECT * FROM devices WHERE device_id = ?`) .get(deviceId); 
     }
 
     setUserId(deviceId, userId) {  

@@ -20,4 +20,22 @@ export default class User {
             .prepare(`SELECT * FROM users WHERE id = ?`)
             .get(id);
     }
+
+    save(user) {
+        const stmt = this.db.prepare(`
+            INSERT INTO users (first_name, last_name, email)
+            VALUES (?, ?, ?)
+            ON CONFLICT(email)
+            DO UPDATE SET
+            first_name = excluded.first_name,
+            last_name = excluded.last_name`);
+
+        const result = stmt.run(
+            user.first_name,
+            user.last_name,
+            user.email
+        );
+
+        return result.lastInsertRowid;
+    }
 }

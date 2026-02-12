@@ -17,6 +17,7 @@
     "node-logger": "github:kargirwar/node-logger",
     "nodemailer": "^8.0.1",
     "pug": "^3.0.3",
+    "svg-captcha": "^1.4.0",
     "winston": "^3.11.0"
   }
 }

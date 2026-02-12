@@ -32,10 +32,11 @@ export default class UIDevicesController extends SigninTrait {
             os
         });
 
-        const device = this.device.get(
-            ['device_id', 'user_id', 'created_at'],
-            [['id', '=', id]]
-        )[0];
+        // const device = this.device.get(
+        //     ['device_id', 'user_id', 'created_at'],
+        //     [['id', '=', id]]
+        // )[0];
+        const device = this.device.getByDeviceId(deviceId);
 
         this.logger.info(TAG, 'SESSION STATE:' + this.sm.dump());
 

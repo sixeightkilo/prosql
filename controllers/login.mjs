@@ -1,5 +1,7 @@
 import fetch from 'node-fetch';
 import pug from 'pug';
+import svgCaptcha from 'svg-captcha';
+import crypto from 'crypto';
 
 import User from '../models/user.mjs';
 import Device from '../models/device.mjs';
@@ -54,7 +56,11 @@ export default class LoginController {
         switch (action) {
             case 'get-captcha': {
                 const result = await this.getCaptcha();
-                res.json(result);
+                // res.json(result);
+                res.json({
+                    status: 'ok',
+                    data: result
+                });
                 return;
             }
 
@@ -108,7 +114,14 @@ export default class LoginController {
     async signup(req) {
         const otp = req.body.otp;
 
-        if (this.sm.getOtp() !== otp) {
+        // if (this.sm.getOtp() !== otp) {
+        //     throw new Error('Invalid otp');
+        // }
+
+        const enteredOtp = Number(req.body.otp);
+        const expectedOtp = Number(this.sm.getOtp());
+
+        if (enteredOtp !== expectedOtp) {
             throw new Error('Invalid otp');
         }
 
@@ -183,7 +196,8 @@ export default class LoginController {
         this.logger.info(TAG, `email: ${email}`);
 
         if (email) {
-            throw new Error('Already registered. Please sign in');
+            // throw new Error('Already registered. Please sign in');
+            throw new AppError('Already registered. Please sign in', 400);
         }
 
         const otp = Math.floor(
@@ -270,46 +284,84 @@ export default class LoginController {
      * captcha
      * ------------------------- */
 
-    async getCaptcha() {
-        const res = await fetch('http://localhost:8777/api/getCaptcha', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                CaptchaType: 'digit',
-                DriverDigit: {
-                    DotCount: 80,
-                    Height: 80,
-                    Length: 6,
-                    MaxSkew: 0.7,
-                    Width: 240
-                }
-            })
+    // async getCaptcha() {
+    //     const res = await fetch('http://localhost:8777/api/getCaptcha', {
+    //         method: 'POST',
+    //         headers: { 'Content-Type': 'application/json' },
+    //         body: JSON.stringify({
+    //             CaptchaType: 'digit',
+    //             DriverDigit: {
+    //                 DotCount: 80,
+    //                 Height: 80,
+    //                 Length: 6,
+    //                 MaxSkew: 0.7,
+    //                 Width: 240
+    //             }
+    //         })
+    //     });
+
+    //     const result = await res.json();
+
+    //     return {
+    //         'captcha-id': result.captchaId,
+    //         image: result.data
+    //     };
+    // }
+
+    // async verifyCaptcha(id, value) {
+    //     const res = await fetch('http://localhost:8777/api/verifyCaptcha', {
+    //         method: 'POST',
+    //         headers: { 'Content-Type': 'application/json' },
+    //         body: JSON.stringify({
+    //             Id: id,
+    //             VerifyValue: value
+    //         })
+    //     });
+
+    //     const result = await res.json();
+
+    //     if (result.msg === 'failed') {
+    //         throw new Error('Invalid captcha');
+    //     }
+    // }
+    async getCaptcha(req) {
+        const captcha = svgCaptcha.create({
+            size: 6,
+            noise: 3,
+            color: true,
+            background: '#ffffff',
+            ignoreChars: 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+            charPreset: '0123456789'
         });
 
-        const result = await res.json();
+        // generate id
+        const captchaId = crypto.randomUUID();
+
+        // store solution in session
+        this.sm.setCaptcha({
+            id: captchaId,
+            value: captcha.text
+        });
 
         return {
-            'captcha-id': result.captchaId,
-            image: result.data
+            'captcha-id': captchaId,
+            image: `data:image/svg+xml;base64,${Buffer.from(captcha.data).toString('base64')}`
         };
     }
 
     async verifyCaptcha(id, value) {
-        const res = await fetch('http://localhost:8777/api/verifyCaptcha', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                Id: id,
-                VerifyValue: value
-            })
-        });
+        const stored = this.sm.getCaptcha();
+        this.logger.info(TAG, `Verifying captcha. Stored: ${JSON.stringify(stored)}, Received: id=${id}, value=${value}`);
 
-        const result = await res.json();
-
-        if (result.msg === 'failed') {
-            throw new Error('Invalid captcha');
+        if (!stored || stored.id !== id || stored.value !== value) {
+            // throw new Error('Invalid captcha');
+            throw new AppError('Invalid captcha', 400);
         }
+
+        // optional: clear after verification
+        this.sm.setCaptcha(null);
     }
+
 
     /* -------------------------
      * express entrypoints

@@ -2,7 +2,7 @@ doctype html
 html
     head
         include head.pug
-        link(rel="stylesheet" href="/#{root}/css/signup.css?ver=#{version}")
+        link(rel="stylesheet" href=`/${root}/css/signup.css?ver=${version}`)
     body
         include common.pug
         include navbar.pug
@@ -65,13 +65,14 @@ html
             //dummy
             div
 
-        input#version(type="hidden" value="#{version}")
+        input#version(type="hidden" value=`${version}`)
 
-        script(type='module' src='/#{root}/dist/js/signup.js?ver=#{version}')
+        script(type='module' src=`/${root}/dist/js/signup.js?ver=${version}`)
         script(type='code' id='conn-template')
             .conn-container
                 div
                     i.fas.fa-server
-                div.conn.has-text-left(data-id="{id}") &nbsp;&nbsp;{item}
+                div.conn.has-text-left(data-id=`{id}`)
+                    | &nbsp;&nbsp;{item}
                 div
                     i.fas.fa-trash.del-conn(data-id="{id}")
