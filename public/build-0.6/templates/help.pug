@@ -2,13 +2,12 @@ doctype html
 html
     head
         include head.pug
-        link(rel="stylesheet" href="/#{root}/css/pages.css?ver=#{version}")
+        link(rel="stylesheet" href=`/${root}/css/pages.css?ver=${version}`)
     body
         include navbar.pug
         .columns
-            .column	
+            .column
             .column.is-two-fifths
-                
                 section
                     .h1.is-size-3.has-text-justified 
                         |Can I run prosql in multiple tabs?
@@ -29,5 +28,5 @@ html
                         |By default only queries that you ran in last 10 days are visible. 
                         |If you want to view older queries, please search using keywords or tags
 
-            .column	
-        script(type='module' src='/#{root}/dist/js/help.js?ver=#{version}')
+            .column
+        script(type='module' src=`/${root}/dist/js/help.js?ver=${version}`)

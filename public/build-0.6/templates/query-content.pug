@@ -35,7 +35,7 @@
             #query-results
         #info
             span#time-taken
-            &nbsp;&nbsp;&nbsp;
+            | &nbsp;&nbsp;&nbsp;
             span#rows-affected
 
     script(type='code' id='results-header-col-template')
@@ -87,7 +87,7 @@
         div.tooltip 
             div.top
                 pre
-                    {query}
+                    | {query}
             div.bottom
-                i.fas.fa-copy.copy-query(data-id="{id}")
+                i.fas.fa-copy.copy-query(data-id=`{id}`)
                 span.copy-status
