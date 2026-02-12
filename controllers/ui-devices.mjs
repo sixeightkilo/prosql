@@ -16,7 +16,7 @@ export default class UIDevicesController extends SigninTrait {
      * POST /browser-api/devices/:action
      */
     async handlePost(req, res) {
-        this.logger.info(TAG, `handlepost`);
+        this.logger.info(TAG, `handlepost: path: ${req.path}, body: ${JSON.stringify(req.body)}`);
         const body = req.body ?? {};
 
         this.logger.info(TAG, `body: ${JSON.stringify(body)}`);

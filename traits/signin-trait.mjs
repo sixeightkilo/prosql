@@ -56,7 +56,7 @@ export default class SigninTrait {
             }
         }
 
-        this.logger.debug(
+        this.logger.info(
             `user_id: ${device.user_id} user: ${userEmail} days: ${days} signin-required ${Number(signinRequired)}`
         );
 

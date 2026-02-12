@@ -1,6 +1,6 @@
 import express from 'express';
 import session from 'express-session';
-import bodyParser from 'body-parser';
+import multer from 'multer';
 import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -62,8 +62,14 @@ const app = express();
  * ------------------------- */
 const sessionAuth = new SessionAuthMiddleware(logger);
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: false }));
+
+const upload = multer();
+
+app.use(express.json());                 // handles application/json
+app.use(express.urlencoded({ extended: false })); // handles application/x-www-form-urlencoded
+app.use(upload.none());
 
 app.use(session({
     name: 'PHPSESSID',          // keep for parity
