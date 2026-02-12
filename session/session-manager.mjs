@@ -32,12 +32,32 @@ export default class SessionManager {
         return this.req.session.device ?? null;
     }
 
+    setOtp(otp) {
+        this.req.session.otp = otp;
+    }
+
+    getOtp() {
+        return this.req.session.otp ?? null;
+    }
+
+    setTempUser(user) {
+        this.req.session.tempUser = user;
+    }
+
+    getTempUser() {
+        return this.req.session.tempUser ?? null;
+    }   
+
     setDevice(device) {
         this.req.session.device = device;
     }
 
     setDeviceId(id) {
         this.req.session.deviceId = id;
+    }
+
+    getDeviceId() {
+        return this.req.session.deviceId;
     }
 
     setVersion(v) {

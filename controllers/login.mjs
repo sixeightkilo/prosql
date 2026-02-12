@@ -4,6 +4,8 @@ import pug from 'pug';
 import User from '../models/user.mjs';
 import Device from '../models/device.mjs';
 import Validator from '../utils/validator.mjs';
+import AppError from '../errors/app-error.mjs';
+const TAG = 'LoginController';
 
 export default class LoginController {
     static MIN = 100000;
@@ -61,34 +63,43 @@ export default class LoginController {
         }
     }
 
-    async handlePost(req, res) {
-        const action = req.params.action;
+    async handlePost(req, res, next) {
+        try {
+            const action = req.params.action;
 
-        switch (action) {
-            case 'set-signup-otp':
-                await this.setSignupOtp(req);
-                res.status(200).end();
-                return;
+            let data = null;
 
-            case 'set-signin-otp':
-                await this.setSigninOtp(req);
-                res.status(200).end();
-                return;
+            switch (action) {
+                case 'set-signup-otp':
+                    data = await this.setSignupOtp(req);
+                    break;
 
-            case 'signup':
-                await this.signup(req);
-                res.status(200).end();
-                return;
+                case 'set-signin-otp':
+                    data = await this.setSigninOtp(req);
+                    break;
 
-            case 'signin':
-                await this.signin(req);
-                res.status(200).end();
-                return;
+                case 'signup':
+                    data = await this.signup(req);
+                    break;
 
-            default:
-                throw new Error('invalid-operation');
+                case 'signin':
+                    data = await this.signin(req);
+                    break;
+
+                default:
+                    throw new Error('invalid-operation');
+            }
+
+            res.json({
+                status: 'ok',
+                data
+            });
+
+        } catch (err) {
+            next(err);
         }
     }
+
 
     /* -------------------------
      * actions
@@ -106,7 +117,7 @@ export default class LoginController {
             throw new Error('No details provided');
         }
 
-        this.logger.debug('Signing up:', user);
+        this.logger.info(TAG, `Signing up: ${JSON.stringify(user)}`);
 
         const userId = this.user.save({
             first_name: user['first-name'],
@@ -125,17 +136,24 @@ export default class LoginController {
     async signin(req) {
         const otp = req.body.otp;
 
-        if (this.sm.getOtp() !== otp) {
+        this.logger.info(TAG, `OTP entered: ${otp}, OTP expected: ${this.sm.getOtp()}`);
+
+        const enteredOtp = Number(req.body.otp);
+        const expectedOtp = Number(this.sm.getOtp());
+
+        if (enteredOtp !== expectedOtp) {
             throw new Error('Invalid otp');
         }
 
         const tempUser = this.sm.getTempUser();
-        this.logger.debug('Signing in:', tempUser);
+        this.logger.info(TAG, `Signing in: ${JSON.stringify(tempUser)}`);
 
-        const user = this.user.get(
-            ['id', 'first_name', 'last_name', 'email'],
-            [['email', '=', tempUser.email]]
-        )[0];
+        // const user = this.user.get(
+        //     ['id', 'first_name', 'last_name', 'email'],
+        //     [['email', '=', tempUser.email]]
+        // )[0];
+
+        const user = this.user.getByEmail(tempUser.email);
 
         this.device.setUserId(this.sm.getDeviceId(), user.id);
 
@@ -156,12 +174,13 @@ export default class LoginController {
             { field: p.email, alias: 'email', rules: ['IS_EMAIL'] }
         ]);
 
-        const email = this.user.get(
-            ['email'],
-            [['email', '=', p.email]]
-        )[0]?.email ?? null;
+        // const email = this.user.get(
+        //     ['email'],
+        //     [['email', '=', p.email]]
+        // )[0]?.email ?? null;
+        const email = this.user.getByEmail(p.email)?.email ?? null;
 
-        this.logger.debug(`email: ${email}`);
+        this.logger.info(TAG, `email: ${email}`);
 
         if (email) {
             throw new Error('Already registered. Please sign in');
@@ -202,15 +221,17 @@ export default class LoginController {
     async setSigninOtp(req) {
         const p = req.body;
 
-        const user = this.user.get(
-            ['first_name', 'last_name', 'email'],
-            [['email', '=', p.email]]
-        )[0] ?? null;
+        // const user = this.user.get(
+        //     ['first_name', 'last_name', 'email'],
+        //     [['email', '=', p.email]]
+        // )[0] ?? null;
+        const user = this.user.getByEmail(p.email);
 
-        this.logger.debug('user:', user);
+        this.logger.info(TAG, `email: ${p.email}, user: ${JSON.stringify(user)}`);
 
         if (!user) {
-            throw new Error('Unknown user. Please sign up first.');
+            // throw new Error('Unknown user. Please sign up first.');
+            throw new AppError('Unknown user. Please sign up first.', 400);
         }
 
         const otp = Math.floor(
@@ -299,9 +320,9 @@ export default class LoginController {
             const controller = req.container.loginController;
 
             if (req.method === 'GET') {
-                await controller.handleGet(req, res);
+                await controller.handleGet(req, res, next);
             } else {
-                await controller.handlePost(req, res);
+                await controller.handlePost(req, res, next);
             }
         } catch (err) {
             next(err);

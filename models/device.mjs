@@ -51,5 +51,13 @@ export default class Device {
 
         return this.db.prepare(sql).all(...values);
     }
+
+    setUserId(deviceId, userId) {  
+        this.db.prepare(`
+            UPDATE devices
+            SET user_id = ?
+            WHERE device_id = ?
+        `).run(userId, deviceId);
+    }
 }
 

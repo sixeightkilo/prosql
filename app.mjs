@@ -172,10 +172,6 @@ app.use((err, req, res, next) => {
         stack: err.stack
     });
 
-    // if (err instanceof SigninRequiredError) {
-    //     return res.redirect('/signin');
-    // }
-
     if (err instanceof SigninRequiredError) {
         return res.status(401).json({
             status: 'error',
@@ -183,9 +179,8 @@ app.use((err, req, res, next) => {
         });
     }
 
-
     if (err.status) {
-        return res.status(err.status).json({ error: err.message });
+        return res.status(err.status).json({ status: 'error', msg: err.message });
     }
 
     res.status(500).json({ error: 'internal-server-error' });
