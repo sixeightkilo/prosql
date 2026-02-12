@@ -2,8 +2,8 @@ doctype html
 html
     head
         include head.pug
-        script(src="/#{root}/dist/js/sql-formatter.js")
-        link(rel="stylesheet" href="/#{root}/css/tables.css?ver=#{version}")
+        script(src=`/${root}/dist/js/sql-formatter.js`)
+        link(rel="stylesheet" href=`/${root}/css/tables.css?ver=${version}`)
     body
         include common.pug
         include appbar.pug
@@ -18,6 +18,6 @@ html
         include table-info.pug
         include column-selector.pug
 
-        input#version(type="hidden" value="#{version}")
+        input#version(type="hidden" value=`${version}`)
 
-        script(type='module' src='/#{root}/dist/js/tables.js?ver=#{version}')
+        script(type='module' src=`/${root}/dist/js/tables.js?ver=${version}`)
