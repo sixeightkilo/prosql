@@ -63,8 +63,13 @@ export default class UIDevicesController extends SigninTrait {
         if (user?.email) {
             // logged in — return nothing (200 OK, empty body)
             this.logger.info(TAG, 'logged in');
-            res.status(200).end();
+            // res.status(200).end();
+            res.json({
+                status: 'ok',
+            });
+
             return;
+
         }
 
         // continue as guest
@@ -74,7 +79,10 @@ export default class UIDevicesController extends SigninTrait {
             'email': User.GUEST_EMAIL
         });
 
-        res.status(200).end();
+        // res.status(200).end();
+        res.json({
+            status: 'ok',
+        });
     }
 
     /*
