@@ -1,5 +1,5 @@
 import express from 'express';
-import session from 'express-session';
+// import session from 'express-session';
 import multer from 'multer';
 import 'dotenv/config';
 import path from 'path';
@@ -25,6 +25,8 @@ import SqliteDB from './db/sqlite.mjs';
 import Device from './models/device.mjs';
 import User from './models/user.mjs';
 import Emailer from './utils/emailer.mjs';
+import session from 'express-session';
+import SQLiteStoreFactory from 'connect-sqlite3';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -68,11 +70,18 @@ app.use(express.json());                 // handles application/json
 app.use(express.urlencoded({ extended: false })); // handles application/x-www-form-urlencoded
 app.use(upload.none());
 
+const SQLiteStore = SQLiteStoreFactory(session);
+
 app.use(session({
-    name: 'PHPSESSID',          // keep for parity
-    secret: 'prosql-secret',   // move to config later
+    name: 'PHPSESSID',
+    secret: process.env.SESSION_SECRET || 'prosql-secret',
     resave: false,
     saveUninitialized: false,
+    store: new SQLiteStore({
+        db: 'sessions.db',
+        dir: process.env.SESSION_PATH,
+        concurrentDB: true
+    }),
     cookie: {
         httpOnly: true,
         sameSite: 'lax'
