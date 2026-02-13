@@ -9,12 +9,12 @@ const TAGS = [
 ]
 
 const DISABLED = [
-    'grid-resizer',
-    'cell-renderer',
-    'table-utils',
-    'query-worker',
-    'connection-worker',
-    'query-db',
+    // 'grid-resizer',
+    // 'cell-renderer',
+    // 'table-utils',
+    // 'query-worker',
+    // 'connection-worker',
+    // 'query-db',
     //'query-finder',
 ]
 

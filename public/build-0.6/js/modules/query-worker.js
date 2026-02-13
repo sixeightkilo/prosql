@@ -11,7 +11,7 @@ const LIMIT = 50;
 
 class QueryWorker extends BaseWorker {
     async handleMessage(m) {
-        this.logger.log(TAG, JSON.stringify(m.data));
+        this.logger.log(TAG, `handleMessage: ${JSON.stringify(m.data)}`);
         switch (m.data.type) {
         case Constants.QUERY_SAVED:
         case Constants.QUERY_UPDATED:

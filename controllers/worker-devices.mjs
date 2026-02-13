@@ -1,6 +1,9 @@
 import User from '../models/user.mjs';
 import SigninTrait from '../traits/signin-trait.mjs';
+import AppError from '../errors/app-error.mjs';
+import SigninRequiredError from '../errors/signin-required-error.mjs';
 
+const TAG = "worker-devices";
 export default class WorkerDevicesController extends SigninTrait {
     constructor(logger, sessionManager, deviceModel) {
         super(logger, sessionManager);
@@ -12,7 +15,10 @@ export default class WorkerDevicesController extends SigninTrait {
             // instance-per-request (closest to Slim behavior)
             const controller = req.container.workerDevicesController;
             const result = await controller.handlePost(req);
-            res.json(result);
+            res.json({
+                status: "ok",
+                data: result
+            });
         } catch (err) {
             next(err);
         }
@@ -25,8 +31,11 @@ export default class WorkerDevicesController extends SigninTrait {
         const version = body['version'];
         const os = body['os'] ?? 'unknown';
 
+        this.logger.info(TAG, `Device registration request: ${JSON.stringify(body)}`);
+
         if (!deviceId || !version) {
-            throw new Error('missing required fields');
+            this.logger.info(TAG, `Device registration request: ${JSON.stringify(body)}`);
+            throw new AppError('device-id and version are required', 400);
         }
 
         // upsert device
@@ -43,10 +52,11 @@ export default class WorkerDevicesController extends SigninTrait {
 
         const device = this.device.getByDeviceId(deviceId);
 
-        this.logger.info(`Device info: ${JSON.stringify(device)}`);
+        this.logger.info(TAG, `Device info: ${JSON.stringify(device)}`);
 
         if (this.signinRequired(device)) {
-            throw new Error('signin required');
+            //throw new Error('signin required');
+            throw new SigninRequiredError();
         }
 
         // resolve db identifier

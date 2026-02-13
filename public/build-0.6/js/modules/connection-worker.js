@@ -21,15 +21,18 @@ class ConnectionWorker extends BaseWorker {
 
     async init() {
         await super.init();
-        this.logger.log(TAG, "db:" + this.db);
+        this.logger.log(TAG, this.db);
 
         if (!this.db) {
             this.logger.log(TAG, "No db");
             return;
         }
 
+        this.logger.log(TAG, "ConnectionDb opening");
         this.connectionDb = new ConnectionDB(this.logger, {version: Constants.CONN_DB_VERSION});
         await this.connectionDb.open();
+
+        this.logger.log(TAG, "ConnectionDb opened");
 
         this.metaDB = new ConnectionsMetaDB(this.logger, {version: Constants.CONNECTIONS_META_DB_VERSION});
         await this.metaDB.open();
@@ -43,7 +46,9 @@ class ConnectionWorker extends BaseWorker {
         }
 
         this.syncDown();
+        this.logger.log(TAG, "Initial sync down done");
         this.syncUp();
+        this.logger.log(TAG, "Initial sync up done");
     }
 
     async syncDown() {

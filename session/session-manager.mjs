@@ -21,10 +21,12 @@ export default class SessionManager {
     }
 
     getUser() {
+        this.logger.info('SessionManager', `Getting user from session: ${JSON.stringify(this.req.session.user)}`);
         return this.req.session.user ?? null;
     }
 
     setUser(user) {
+        this.logger.info('SessionManager', `Setting user in session: ${JSON.stringify(user)}`);
         this.req.session.user = user;
     }
 
@@ -90,12 +92,14 @@ export default class SessionManager {
         // We keep this for API parity
 
         if (typeof this.req.session.save === 'function') {
+            this.logger.info('SessionManager', 'Saving session');
             this.req.session.save(() => {});
         }
     }
 
     kill() {
         if (this.req?.session) {
+            this.logger.info('SessionManager', 'Killing session');
             this.req.session.destroy(() => {});
         }
     }

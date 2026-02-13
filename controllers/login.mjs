@@ -56,7 +56,6 @@ export default class LoginController {
         switch (action) {
             case 'get-captcha': {
                 const result = await this.getCaptcha();
-                // res.json(result);
                 res.json({
                     status: 'ok',
                     data: result
@@ -280,50 +279,6 @@ export default class LoginController {
         );
     }
 
-    /* -------------------------
-     * captcha
-     * ------------------------- */
-
-    // async getCaptcha() {
-    //     const res = await fetch('http://localhost:8777/api/getCaptcha', {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify({
-    //             CaptchaType: 'digit',
-    //             DriverDigit: {
-    //                 DotCount: 80,
-    //                 Height: 80,
-    //                 Length: 6,
-    //                 MaxSkew: 0.7,
-    //                 Width: 240
-    //             }
-    //         })
-    //     });
-
-    //     const result = await res.json();
-
-    //     return {
-    //         'captcha-id': result.captchaId,
-    //         image: result.data
-    //     };
-    // }
-
-    // async verifyCaptcha(id, value) {
-    //     const res = await fetch('http://localhost:8777/api/verifyCaptcha', {
-    //         method: 'POST',
-    //         headers: { 'Content-Type': 'application/json' },
-    //         body: JSON.stringify({
-    //             Id: id,
-    //             VerifyValue: value
-    //         })
-    //     });
-
-    //     const result = await res.json();
-
-    //     if (result.msg === 'failed') {
-    //         throw new Error('Invalid captcha');
-    //     }
-    // }
     async getCaptcha(req) {
         const captcha = svgCaptcha.create({
             size: 6,

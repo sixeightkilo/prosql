@@ -25,6 +25,7 @@ class BaseWorker {
             this.logger.log(TAG, JSON.stringify(res));
             return
         }
+        this.logger.log(TAG, JSON.stringify(res));
 
         this.deviceId = res.data['device-id'];
 
@@ -32,6 +33,7 @@ class BaseWorker {
         //If signin-required, force user to signin/signup
         //After user signs up clear all db_id, because we are moving to a new db
 
+        this.logger.log(TAG, 'registering device');
         res = await Utils.post('/worker-api/devices/register', {
             'device-id': res.data['device-id'],
             'version': res.data['version'],

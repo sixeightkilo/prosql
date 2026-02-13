@@ -1,6 +1,8 @@
 import Device from '../models/device.mjs';
 import User from '../models/user.mjs';
 
+const TAG = 'SigninTrait';
+
 export default class SigninTrait {
     constructor(logger, sessionManager) {
         this.logger = logger;
@@ -25,33 +27,41 @@ export default class SigninTrait {
             (now.getTime() - registeredAt.getTime()) / (1000 * 60 * 60 * 24)
         );
 
+        this.logger.info(TAG,
+            `Device registered at: ${registeredAt.toISOString()}, now: ${now.toISOString()}, days since registration: ${days}`);
+
         /*
          * PHP:
          * $userEmail = $this->sm->getUser()['email'] ?? '';
          */
         const user = this.sm.getUser();
+        this.logger.info(TAG, ` User from session: ${JSON.stringify(user)}`);
         const userEmail = user?.email ?? '';
 
         let signinRequired = false;
 
         if (days > User.MAX_GUEST_DAYS) {
             if (!userEmail) {
+                this.logger.info(TAG, `Device registered ${days} days ago, but no user email in session. Sign-in required.`);
                 signinRequired = true;
             }
 
             // logged in as guest, must sign in
             if (userEmail === User.GUEST_EMAIL) {
+                this.logger.info(TAG, `Device registered ${days} days ago, but signed in as guest. Sign-in required.`);
                 signinRequired = true;
             }
         } else {
             // signed in and then got logged out
             // user_id will have a valid value only if the user has signed up
             if (device.user_id && !userEmail) {
+                this.logger.info(TAG, `Device registered ${days} days ago, but no user email in session. Sign-in required.`);
                 signinRequired = true;
             }
 
             // todo: why do we reach here?
             if (device.user_id && userEmail === User.GUEST_EMAIL) {
+                this.logger.info(TAG, `Device registered ${days} days ago, but signed in as guest. Sign-in required.`);
                 signinRequired = true;
             }
         }
