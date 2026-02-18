@@ -32,7 +32,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const logger = setupLogger();
-const db = new SqliteDB(process.env.DB_PATH, logger);
+const db = new SqliteDB({
+    dir: process.env.DB_PATH,
+    file: 'data.db',
+}, logger);
+
 const deviceModel = new Device(logger, db);
 const userModel = new User(logger, db);
 
@@ -79,7 +83,7 @@ app.use(session({
     saveUninitialized: false,
     store: new SQLiteStore({
         db: 'sessions.db',
-        dir: process.env.SESSION_PATH,
+        dir: process.env.DB_PATH,
         concurrentDB: true
     }),
     cookie: {
