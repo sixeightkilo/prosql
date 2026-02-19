@@ -28,6 +28,7 @@ import Emailer from './utils/emailer.mjs';
 import session from 'express-session';
 import SQLiteStoreFactory from 'connect-sqlite3';
 import WorkerSqliteConnections from './controllers/worker-sqlite-connections.mjs';
+import WorkerSqliteQueries from './controllers/worker-sqlite-queries.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -190,6 +191,23 @@ app.delete(
     '/worker-api/sqlite/connections',
     workerSqliteConnections.handle
 );
+
+
+//queries
+
+const workerSqliteQueries =
+    new WorkerSqliteQueries(logger, db);
+
+app.get(
+    '/worker-api/sqlite/queries/:path?',
+    workerSqliteQueries.handle
+);
+
+app.post(
+    '/worker-api/sqlite/queries',
+    workerSqliteQueries.handle
+);
+
 
 
 app.get('*', sessionAuth.handle, (req, res, next) => {
