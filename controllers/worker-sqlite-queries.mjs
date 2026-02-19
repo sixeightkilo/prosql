@@ -113,6 +113,7 @@ export default class WorkerSqliteQueries {
 
             // Insert tags
             if (Array.isArray(q.tags)) {
+                this.logger.info(TAG, `Inserting tags for owner=${owner}, query_id=${id}: ${q.tags.join(',')}`);
 
                 const insertTag = this.db.prepare(`
                     INSERT INTO tags (owner, query_id, tag)

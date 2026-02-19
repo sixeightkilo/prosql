@@ -1,6 +1,7 @@
 export const up = async ({ context: db }) => {
-    // Enforce foreign keys
     db.exec(`PRAGMA foreign_keys = ON;`);
+
+    const UTC_TS = "DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ','now'))";
 
     /* =========================
        STATUSES
@@ -25,8 +26,8 @@ export const up = async ({ context: db }) => {
             first_name TEXT NOT NULL,
             last_name TEXT NOT NULL,
             email TEXT NOT NULL UNIQUE,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT NOT NULL ${UTC_TS},
+            updated_at TEXT NOT NULL ${UTC_TS}
         );
     `);
 
@@ -40,8 +41,8 @@ export const up = async ({ context: db }) => {
             user_id INTEGER,
             version TEXT NOT NULL,
             os TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TEXT NOT NULL ${UTC_TS},
+            updated_at TEXT NOT NULL ${UTC_TS},
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
         );
     `);
@@ -55,8 +56,8 @@ export const up = async ({ context: db }) => {
             owner TEXT NOT NULL,
             query TEXT NOT NULL,
             status INTEGER NOT NULL DEFAULT 100 REFERENCES statuses(id),
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT NOT NULL ${UTC_TS},
+            updated_at TEXT NOT NULL ${UTC_TS}
         );
 
         CREATE UNIQUE INDEX IF NOT EXISTS idx_queries_owner_query
@@ -75,8 +76,8 @@ export const up = async ({ context: db }) => {
             owner TEXT NOT NULL,
             query_id INTEGER NOT NULL,
             tag TEXT NOT NULL,
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            created_at TEXT NOT NULL ${UTC_TS},
+            updated_at TEXT NOT NULL ${UTC_TS},
             FOREIGN KEY (query_id) REFERENCES queries(id) ON DELETE CASCADE
         );
 
@@ -98,8 +99,8 @@ export const up = async ({ context: db }) => {
             db TEXT NOT NULL,
             is_default INTEGER NOT NULL DEFAULT 0,
             status INTEGER NOT NULL DEFAULT 100 REFERENCES statuses(id),
-            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            created_at TEXT NOT NULL ${UTC_TS},
+            updated_at TEXT NOT NULL ${UTC_TS}
         );
 
         CREATE UNIQUE INDEX IF NOT EXISTS idx_connections_owner_unique

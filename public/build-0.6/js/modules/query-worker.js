@@ -153,6 +153,7 @@ class QueryWorker extends BaseWorker {
             for (let i = 0; i < queries.length; i++) {
                 //check if the remote query is already present in local db
                 this.logger.log(TAG, `syncDown: ${i}`);
+                this.logger.log(TAG, `query: ${JSON.stringify(queries[i])}`);
                 let q = await this.queryDb.findByDbId(queries[i].id)
 
                 //this may be deleted on the server. Handle this first
