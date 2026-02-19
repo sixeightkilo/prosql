@@ -6,3 +6,4 @@ config.php
 .env
 cookies.txt
 prosql-agent
+deploy/dist

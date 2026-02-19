@@ -3,7 +3,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "node app.mjs"
+    "start": "node app.mjs",
+    "setup": "node deploy/setup.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.6.2",
