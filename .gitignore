@@ -5,3 +5,4 @@ logs
 config.php
 .env
 cookies.txt
+prosql-agent
