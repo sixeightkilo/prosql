@@ -7,7 +7,7 @@ import 'dotenv/config';
 const db = new SqliteDB(
     {
         dir: process.env.DB_PATH,
-        file: 'prosql.db'
+        file: 'data.db'
     },
     logger
 );

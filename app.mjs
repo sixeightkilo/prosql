@@ -27,6 +27,7 @@ import User from './models/user.mjs';
 import Emailer from './utils/emailer.mjs';
 import session from 'express-session';
 import SQLiteStoreFactory from 'connect-sqlite3';
+import WorkerSqliteConnections from './controllers/worker-sqlite-connections.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -168,6 +169,28 @@ app.all(
 //     SessionAuthMiddleware.handle,
 //     SqlController.handle
 // );
+
+// connections
+
+
+const workerSqliteConnections =
+    new WorkerSqliteConnections(logger, db);
+
+app.get(
+    '/worker-api/sqlite/connections/:path?',
+    workerSqliteConnections.handle
+);
+
+app.post(
+    '/worker-api/sqlite/connections',
+    workerSqliteConnections.handle
+);
+
+app.delete(
+    '/worker-api/sqlite/connections',
+    workerSqliteConnections.handle
+);
+
 
 app.get('*', sessionAuth.handle, (req, res, next) => {
     const renderer = new Renderer(logger, req.sm, config);

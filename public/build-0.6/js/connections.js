@@ -38,7 +38,7 @@ class Connections {
 
     async init() {
         this.workers = new Workers();
-        this.workers.initQueryWorker();
+        // this.workers.initQueryWorker();
         this.workers.initConnectionWorker();
 
 		this.initDom();
