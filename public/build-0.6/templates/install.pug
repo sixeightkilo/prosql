@@ -8,28 +8,26 @@ html
         .columns
             .column
             .column.is-two-fifths
-                .columns.is-flex.is-justify-content-center
-                    .column.is-three-fifths
-                        section
-                            .card.has-background-light
-                                header.card-header
-                                    p.card-header-title.has-text-black-bis
-                                        | prosql-agent not detected
-                                    button.card-header-icon
-                                        span.icon
-                                            i.fas.fa-spinner.fa-spin
-                section.instructions
-                    section.mt-5
-                        .h1.is-size-2 Just one small step ...
-                    section
-                        p.has-text-justified
-                            | Prosql needs a lightweight agent installed on your computer.
-                            |  No worries!#[br] It's #[a(href="https://github.com/kargirwar/prosql-agent", target="_blank") open source ]
-                            | and completely safe! It takes less than a minute to install with the 
-                            | #[a(href="https://github.com/kargirwar/prosqlctl") prosqlctl] utility! Find instructions
-                            |  below for your operating system. #[br] #[br]
-                            | Once installation is successful, this page will automatically redirect.
-                    
+                section
+                    .card.has-background-light
+                        header.card-header
+                            p.card-header-title.has-text-black-bis
+                                | prosql-agent not detected
+                            span.card-header-icon
+                                span.icon
+                                    i.fas.fa-plug
+
+                section.instructions.mt-5
+                    .h1.is-size-3 Start the local agent
+
+                    p.has-text-justified.mt-4
+                        | ProSQL requires a small local agent running on your computer.
+                        |  This agent was built during setup on your server.
+
+                    p.has-text-justified.mt-4
+                        | Download the correct binary for your operating system from your server
+                        |  (located in <code>deploy/dist</code>), then run it.
+
                     section.mt-5
                         .tabs.is-fullwidth
                             ul
@@ -39,16 +37,34 @@ html
                                     a.linux Linux
                                 li
                                     a.mac Mac
-                                li
-                                    a.other Other
+
                         .container
-                            .tab-content.windows.has-text-justified
-                                include windows.pug
-                            .tab-content.linux.has-text-justified
-                                include linux.pug
-                            .tab-content.mac.has-text-justified
-                                include mac.pug
-                            .tab-content.other.has-text-justified
-                                include other.pug
+                            .tab-content.windows
+                                pre
+                                    code
+                                        | agent-windows.exe
+                                p.mt-2
+                                    | Double-click to run, or execute from Command Prompt.
+
+                            .tab-content.linux
+                                pre
+                                    code
+                                        | chmod +x agent-linux
+                                        | ./agent-linux
+                                p.mt-2
+                                    | Keep the terminal window open while using ProSQL.
+
+                            .tab-content.mac
+                                pre
+                                    code
+                                        | chmod +x agent-mac
+                                        | ./agent-mac
+                                p.mt-2
+                                    | If macOS blocks it, allow it in System Settings → Security.
+
+                    section.mt-5
+                        p.has-text-justified
+                            | Once the agent is running, refresh this page.
+
             .column
-            script(type='module' src=`/${root}/dist/js/install.js?ver=${version}`)
+        script(type='module' src=`/${root}/dist/js/install.js?ver=${version}`)
