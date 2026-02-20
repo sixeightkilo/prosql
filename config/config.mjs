@@ -6,7 +6,7 @@ export default {
 
     // per-build versions (used for cache busting in prod)
     'build-0.6': {
-        version: 35
+        version: 36
     },
 
     // paths (if needed later)

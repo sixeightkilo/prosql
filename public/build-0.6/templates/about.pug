@@ -18,34 +18,4 @@ html
                                     | &nbsp0.6
                         .h2.is-size-5.is-info#update-notice.is-hidden
                 
-                section
-                    br
-                    .h1.is-size-3 Installation and updation
-                    .tabs.is-fullwidth
-                        ul
-                            li.is-active
-                                a.windows Windows
-                            li
-                                a.linux Linux
-                            li
-                                a.mac Mac
-                            li
-                                a.other Other
-                    .container
-                        .tab-content.windows.has-text-justified
-                            include windows.pug
-                        .tab-content.linux.has-text-justified
-                            include linux.pug
-                        .tab-content.mac.has-text-justified
-                            include mac.pug
-                        .tab-content.other.has-text-justified
-                            include other.pug
-                section
-                    br
-                    .h1.is-size-3 Supported browsers
-                    ul
-                        li Latest versions of Chrome, Firefox, Opera and Edge are supported. Safari is #[i not]
-                            |supported.
-            .column
-
         script(type='module' src=`/${root}/dist/js/about.js?ver=${version}`)

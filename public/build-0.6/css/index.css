@@ -17,3 +17,13 @@ section {
 #get-started {
 	font-weight:bold;
 }
+
+.github-link {
+    font-size: 0.9em;
+    color: var(--dark-blue);
+    text-decoration: none;
+}
+
+.github-link:hover {
+    text-decoration: underline;
+}

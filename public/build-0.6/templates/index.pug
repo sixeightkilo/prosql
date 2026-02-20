@@ -5,17 +5,25 @@ html
         link(rel="stylesheet" href=`/${root}/css/index.css?ver=${version}`)
     body
         section.section
-            .full-logo
-                img(src=`/${root}/images/logo.png`, width="292.4", height="55.6")
-                div.superscript beta
+            .container
+                .full-logo
+                    img(src=`/${root}/images/logo.png`, width="292.4", height="55.6")
+                    div.superscript beta
 
         section.section
-            h2.is-size-4 A fast, simple, cross-platform MySQL client that runs right in your browser!
-            p
-                a(href="/read-more") Read more
+            .container
+                h2.is-size-4 A fast, simple, cross-platform MySQL client that runs right in your browser!
+                p
+                    a(href="/read-more") Read more
 
         section.section
-            button#get-started.button.is-primary Get Started!
+            .container
+                .buttons
+                    button#get-started.button.is-primary Get Started!
+
+                p.mt-3
+                    a.github-link(href="https://github.com/sixeightkilo/prosql", target="_blank")
+                        i.fab.fa-github(style="margin-right:6px;")
+                        | View on GitHub
 
         script(type='module' src=`/${root}/dist/js/index.js?ver=${version}`)
-
