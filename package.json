@@ -16,7 +16,7 @@
     "express-session": "^1.17.3",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
-    "node-logger": "github:kargirwar/node-logger",
+    "node-logger": "github:sixeightkilo/node-logger",
     "nodemailer": "^8.0.1",
     "pug": "^3.0.3",
     "svg-captcha": "^1.4.0",
