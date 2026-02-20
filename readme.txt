@@ -39,7 +39,7 @@ Installation
 
 Clone the repository
 
-git clone git@github.com:kargirwar/prosql-web
+git clone git@github.com:kargirwar/prosql
 cd prosql
 npm install
 
