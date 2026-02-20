@@ -158,7 +158,7 @@ async function main() {
     const sslCert = await ask('Path to SSL certificate (.pem)')
     const sslKey = await ask('Path to SSL private key (.key)')
     const port = await ask('Backend port', '5001')
-    const dbPath = await ask('Database path', './data/prosql.db')
+    const dbPath = await ask('Database dir', './data')
 
     console.log('\n--- SMTP Configuration ---')
     const smtpHost = await ask('SMTP host')
