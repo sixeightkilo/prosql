@@ -7,6 +7,7 @@
     "setup": "node deploy/setup.mjs"
   },
   "dependencies": {
+    "ace-builds": "^1.43.6",
     "better-sqlite3": "^12.6.2",
     "body-parser": "^1.20.2",
     "cls-hooked": "^4.2.2",
@@ -22,5 +23,11 @@
     "svg-captcha": "^1.4.0",
     "umzug": "^3.8.2",
     "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^29.0.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.59.0"
   }
 }

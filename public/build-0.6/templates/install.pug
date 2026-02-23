@@ -2,69 +2,100 @@ doctype html
 html
     head
         include head.pug
-        link(rel="stylesheet" href="/#{root}/css/install.css?ver=#{version}")
+        link(rel="stylesheet" href=`/${root}/css/install.css?ver=${version}`)
     body
         include navbar.pug
         .columns
             .column
             .column.is-two-fifths
-                section
-                    .card.has-background-light
-                        header.card-header
-                            p.card-header-title.has-text-black-bis
-                                | prosql-agent not detected
-                            span.card-header-icon
-                                span.icon
-                                    i.fas.fa-plug
-
-                section.instructions.mt-5
-                    .h1.is-size-3 Start the local agent
-
-                    p.has-text-justified.mt-4
-                        | ProSQL requires a small local agent running on your computer.
-                        |  This agent was built during setup on your server.
-
-                    p.has-text-justified.mt-4
-                        | Download the correct binary for your operating system from your server
-                        |  (located in <code>deploy/dist</code>), then run it.
-
+                .columns.is-flex.is-justify-content-center
+                    .column.is-three-fifths
+                        section
+                            .card.has-background-light
+                                header.card-header
+                                    p.card-header-title.has-text-black-bis
+                                        | prosql-agent not detected
+                                    button.card-header-icon
+                                        span.icon
+                                            i.fas.fa-spinner.fa-spin
+                section.instructions
                     section.mt-5
-                        .tabs.is-fullwidth
-                            ul
-                                li.is-active
-                                    a.windows Windows
-                                li
-                                    a.linux Linux
-                                li
-                                    a.mac Mac
+                        .h1.is-size-2 Just one small step ...
 
-                        .container
-                            .tab-content.windows
-                                pre
-                                    code
-                                        | agent-windows.exe
-                                p.mt-2
-                                    | Double-click to run, or execute from Command Prompt.
-
-                            .tab-content.linux
-                                pre
-                                    code
-                                        | chmod +x agent-linux
-                                        | ./agent-linux
-                                p.mt-2
-                                    | Keep the terminal window open while using ProSQL.
-
-                            .tab-content.mac
-                                pre
-                                    code
-                                        | chmod +x agent-mac
-                                        | ./agent-mac
-                                p.mt-2
-                                    | If macOS blocks it, allow it in System Settings → Security.
-
-                    section.mt-5
+                    section
                         p.has-text-justified
-                            | Once the agent is running, refresh this page.
+                            | ProSQL requires a lightweight local agent running on your computer.
+                            |  Download the correct binary below and run it.
+                            |  Once the agent is running, refresh this page.
 
+                    section.mt-6
+                        h2.is-size-5.has-text-weight-bold Windows
+
+                        p.mt-2
+                            a.button.is-link.is-light(
+                                href="/download/agent/windows"
+                            ) Download agent-windows.exe
+
+                        pre.mt-3
+                            code
+                                | agent-windows.exe
+
+                        p.mt-2
+                            | Double-click to run.
+                        p.is-size-6.has-text-grey.mt-1
+                            | If Windows shows a warning, click “More info” → “Run anyway”.
+
+                    section.mt-6
+                        h2.is-size-5.has-text-weight-bold Linux
+
+                        p.mt-2
+                            a.button.is-link.is-light(
+                                href="/download/agent/linux"
+                            ) Download agent-linux
+
+                        pre.mt-3
+                            code
+                                | chmod +x agent-linux
+                                | ./agent-linux
+
+                        p.mt-2
+                            | Keep the terminal window open while using ProSQL.
+
+                    section.mt-6
+                        h2.is-size-5.has-text-weight-bold macOS
+
+                        p.mt-2
+                            a.button.is-link.is-light(
+                                href="/download/agent/mac"
+                            ) Download agent-mac
+
+                        pre.mt-3
+                            code
+                                | chmod +x agent-mac
+                                | ./agent-mac
+
+                        p.mt-2
+                            | If macOS blocks it:
+                        ul.is-size-6.has-text-grey
+                            li Go to System Settings → Privacy & Security
+                            li Click “Allow Anyway”
+                            li Run again and choose “Open” 
+
+                    section.mt-6
+                        h2.is-size-5.has-text-weight-bold Build from source (optional)
+
+                        p.mt-2
+                            | If you prefer, you can build the agent yourself from source.
+
+                        pre.mt-3
+                            code
+                                | git clone https://github.com/sixeightkilo/prosql
+                                | cd prosql/agent
+                                | Mac: go build -ldflags="-X 'main.VERSION=0.6.4' -X 'main.ALLOW=https://prosql.app' -X 'main.OS=mac'"
+                                | Windows: go build -ldflags="-X 'main.VERSION=0.6.4' -X 'main.ALLOW=https://prosql.app' -X 'main.OS=windows'"
+                                | Linux: go build -ldflags="-X 'main.VERSION=0.6.4' -X 'main.ALLOW=https://prosql.app' -X 'main.OS=linux'"
+
+                        p.is-size-6.has-text-grey.mt-2
+                            | Replace https://prosql.app with your own domain if self-hosting.
             .column
-        script(type='module' src=`/${root}/dist/js/install.js?ver=${version}`)
+            script(type='module' src=`/${root}/dist/js/install.js?ver=${version}`)

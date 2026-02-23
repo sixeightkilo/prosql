@@ -65,6 +65,8 @@ process.env.TZ = 'UTC';
 
 const app = express();
 
+console.log('STATIC PATH:', path.join(__dirname, 'public'));
+
 /* -------------------------
  * middleware
  * ------------------------- */
@@ -209,7 +211,22 @@ app.post(
     workerSqliteQueries.handle
 );
 
+const deployDistPath = path.join(__dirname, 'deploy', 'dist');
 
+app.get('/download/agent/linux', (req, res) => {
+    const file = path.join(deployDistPath, 'agent-linux');
+    res.download(file, 'agent-linux');
+});
+
+app.get('/download/agent/mac', (req, res) => {
+    const file = path.join(deployDistPath, 'agent-mac');
+    res.download(file, 'agent-mac');
+});
+
+app.get('/download/agent/windows', (req, res) => {
+    const file = path.join(deployDistPath, 'agent-windows.exe');
+    res.download(file, 'agent-windows.exe');
+});
 
 app.get('*', sessionAuth.handle, (req, res, next) => {
     const renderer = new Renderer(logger, req.sm, config);
