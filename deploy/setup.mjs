@@ -131,21 +131,34 @@ function buildAgent(domain, version) {
     }
 
     const builds = [
-        { os: 'mac', out: 'agent-mac' },
-        { os: 'linux', out: 'agent-linux' },
-        { os: 'windows', out: 'agent-windows.exe' }
+        { goos: 'darwin',  goarch: 'amd64', out: 'agent-mac' },
+        { goos: 'linux',   goarch: 'amd64', out: 'agent-linux' },
+        { goos: 'windows', goarch: 'amd64', out: 'agent-windows.exe' }
     ]
 
-    builds.forEach(({ os, out }) => {
-        const gobin = findGoBinary()
-        const cmd = `
-${gobin} build -ldflags="-X 'main.VERSION=${version}' -X 'main.ALLOW=https://${domain}' -X 'main.OS=${os}'" -o ${path.join(DIST_DIR, out)}`
+    const gobin = findGoBinary()
 
-        execSync(cmd, {
-            cwd: agentDir,
-            stdio: 'inherit'
-        })
+    builds.forEach(({ goos, goarch, out }) => {
+        console.log(`→ Building ${out} (${goos}/${goarch})`)
+
+        const outPath = path.join(DIST_DIR, out)
+
+        execSync(
+            `${gobin} build -ldflags="-X 'main.VERSION=${version}' -X 'main.ALLOW=https://${domain}' -X 'main.OS=${goos}'" -o "${outPath}"`,
+            {
+                cwd: agentDir,
+                stdio: 'inherit',
+                env: {
+                    ...process.env,
+                    GOOS: goos,
+                    GOARCH: goarch,
+                    CGO_ENABLED: '0'   // ensures clean cross compile
+                }
+            }
+        )
     })
+
+    console.log('Agent builds complete.')
 }
 
 

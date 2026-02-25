@@ -36,7 +36,7 @@ Browser -----> Backend (Node + SQLite)
 ### 1. Clone the repository
 
 ```bash
-git clone git@github.com:kargirwar/prosql
+git clone git@github.com:sixeightkilo/prosql
 cd prosql
 npm install
 ```
